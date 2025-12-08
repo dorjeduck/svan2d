@@ -1,0 +1,77 @@
+# ============================================================================
+# svan2D/animations/atomic/rotate.py
+# ============================================================================
+"""Rotate out, switch, rotate in animation"""
+
+from dataclasses import replace
+from svan2d.component import State
+from svan2d.velement.keystate import KeyState, KeyStates
+
+
+def rotate(
+    state1: State,
+    state2: State,
+    at_time: float = 0.5,
+    duration: float = 0.3,
+    angle: float = 360,
+    extend_timeline: bool = False,
+) -> KeyStates:
+    """Rotate out first state, switch attributes, rotate in second state
+
+    Element rotates while fading out, attributes change, then rotates
+    back while fading in. Creates a spinning transition effect.
+
+    Args:
+        state1: Starting state (will rotate out)
+        state2: Ending state (will rotate in)
+        at_time: Center point of the transition (0.0 to 1.0)
+        duration: Total duration of rotate out + rotate in (0.0 to 1.0)
+        angle: Rotation angle in degrees (360 = full rotation)
+        extend_timeline: If True, adds keystates at 0.0 and 1.0 to cover full timeline
+
+    Returns:
+        List of keystates for single element
+
+    Example:
+        >>> from svan2D.animations.atomic import rotate
+        >>>
+        >>> # Element only exists during rotation (partial timeline)
+        >>> keystates = rotate(
+        ...     TextState(text="Before", rotation=0),
+        ...     TextState(text="After", rotation=0),
+        ...     at_time=0.5,
+        ...     angle=180
+        ... )
+        >>> element = VElement(renderer, keystates=keystates)
+    """
+    half = duration / 2
+    t_start = at_time - half
+    t_end = at_time + half
+
+    # Get original rotations
+    orig_rot_1 = getattr(state1, "rotation", 0)
+    orig_rot_2 = getattr(state2, "rotation", 0)
+
+    keystates = [
+        KeyState(time=t_start, state=replace(state1, rotation=orig_rot_1, opacity=1.0)),
+        KeyState(
+            time=at_time,
+            state=replace(state1, rotation=orig_rot_1 + angle, opacity=0.0),
+        ),  # Rotated out
+        KeyState(
+            time=at_time,
+            state=replace(state2, rotation=orig_rot_2 - angle, opacity=0.0),
+        ),  # Switch (rotated)
+        KeyState(
+            time=t_end, state=replace(state2, rotation=orig_rot_2, opacity=1.0)
+        ),  # Rotated in
+    ]
+
+    if extend_timeline:
+        keystates = [
+            KeyState(time=0.0, state=replace(state1, rotation=orig_rot_1, opacity=1.0)),
+            *keystates,
+            KeyState(time=1.0, state=replace(state2, rotation=orig_rot_2)),
+        ]
+
+    return keystates

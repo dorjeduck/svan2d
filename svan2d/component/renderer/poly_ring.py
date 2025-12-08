@@ -1,0 +1,96 @@
+"""Polygon ring renderer - SVG primitive-based for static/keystate rendering"""
+
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+import drawsvg as dw
+import math
+
+from .base import Renderer
+
+if TYPE_CHECKING:
+    from ..state.poly_ring import PolyRingState
+
+from svan2d.core.point2d import Points2D, Point2D
+
+
+class PolyRingRenderer(Renderer):
+    """Renderer for polygon ring elements using SVG primitives
+
+    Uses evenodd fill-rule with SVG paths for clean, high-quality rendering.
+    This is used for static rendering and at keystate endpoints (t=0, t=1).
+
+    During morphing (0 < t < 1), the VertexRenderer is used instead to enable
+    smooth transitions between different shapes.
+    """
+
+    def _render_core(
+        self, state: "PolyRingState", drawing: Optional[dw.Drawing] = None
+    ) -> dw.Group:
+        """Render polygon ring using SVG path primitives with evenodd fill-rule"""
+
+        group = dw.Group()
+
+        # Create a path that defines the polygon ring shape using even-odd fill rule
+        path_kwargs = {
+            "fill_rule": "evenodd",
+            "stroke_linejoin": "round",
+            "stroke_linecap": "round",
+        }
+        self._set_fill_and_stroke_kwargs(state, path_kwargs, drawing)
+
+        path = dw.Path(**path_kwargs)
+
+        # Generate outer polygon vertices (clockwise)
+        outer_vertices = self._generate_polygon_vertices(
+            size=state.outer_size, num_edges=state.num_edges, rotation=0
+        )
+
+        # Draw outer polygon
+        path.M(outer_vertices[0].x, outer_vertices[0].y)
+        for vertex in outer_vertices[1:]:
+            path.L(vertex.x, vertex.y)
+        path.Z()
+
+        # Generate inner polygon vertices (counter-clockwise - creates the hole due to even-odd rule)
+        inner_vertices = self._generate_polygon_vertices(
+            size=state.inner_size,
+            num_edges=state.num_edges,
+            rotation=state.inner_rotation,
+        )
+
+        # Draw inner polygon (reversed direction for hole)
+        path.M(inner_vertices[0].x, inner_vertices[0].y)
+        for vertex in reversed(inner_vertices[1:]):
+            path.L(vertex.x, vertex.y)
+        path.Z()
+
+        group.append(path)
+        return group
+
+    def _generate_polygon_vertices(
+        self, size: float, num_edges: int, rotation: float = 0
+    ) -> Points2D:
+        """Generate vertices for a regular polygon
+
+        Args:
+            size: Distance from center to vertices (circumradius)
+            num_edges: Number of polygon edges
+            rotation: Rotation in degrees (0° = North, 90° = East)
+
+        Returns:
+            List of (x, y) vertex coordinates
+        """
+        vertices = []
+        angle_step = 360.0 / num_edges
+
+        for i in range(num_edges):
+            # Start at North (270° in standard coords) and go clockwise
+            # Svan2D convention: 0° = North, 90° = East
+            angle = -90 + rotation + (i * angle_step)  # -90 to start at North
+            angle_rad = math.radians(angle)
+
+            x = size * math.cos(angle_rad)
+            y = size * math.sin(angle_rad)
+            vertices.append(Point2D(x, y))
+
+        return vertices

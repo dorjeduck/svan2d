@@ -1,0 +1,60 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+
+import drawsvg as dw
+
+from .base import Renderer
+
+if TYPE_CHECKING:
+    from ..state.cross import CrossState
+
+
+class CrossRenderer(Renderer):
+    """Renderer class for rendering cross elements"""
+
+    def __init__(self) -> None:
+        """Initialize circle renderer
+
+        No parameters needed - all attributes come from the state
+        """
+        pass
+
+    def _render_core(
+        self, state: "CrossState", drawing: Optional[dw.Drawing] = None
+    ) -> dw.Lines:
+        """Render cross using SVG polygon primitive"""
+        hw = state.width / 2
+        ht = state.thickness / 2
+
+        # Just the 12 corner points
+        corners = [
+            -ht,
+            -hw,  # 0: top of vertical bar
+            ht,
+            -hw,  # 1
+            ht,
+            -ht,  # 2
+            hw,
+            -ht,  # 3: right of horizontal bar
+            hw,
+            ht,  # 4
+            ht,
+            ht,  # 5
+            ht,
+            hw,  # 6: bottom of vertical bar
+            -ht,
+            hw,  # 7
+            -ht,
+            ht,  # 8
+            -hw,
+            ht,  # 9: left of horizontal bar
+            -hw,
+            -ht,  # 10
+            -ht,
+            -ht,  # 11
+        ]
+
+        cross_kwargs = {}
+        self._set_fill_and_stroke_kwargs(state, cross_kwargs, drawing)
+
+        return dw.Lines(*corners, close=True, **cross_kwargs)

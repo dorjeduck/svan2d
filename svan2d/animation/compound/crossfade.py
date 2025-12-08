@@ -1,0 +1,75 @@
+# ============================================================================
+# svan2D/animations/compound/crossfade.py
+# ============================================================================
+"""Crossfade between two elements with simultaneous fade"""
+
+from typing import Tuple
+from dataclasses import replace
+from svan2d.component import State
+from svan2d.velement.keystate import KeyState, KeyStates
+
+
+def crossfade(
+    state1: State,
+    state2: State,
+    at_time: float = 0.5,
+    duration: float = 0.3,
+    extend_timeline: bool = False,
+) -> Tuple[KeyStates, KeyStates]:
+    """Crossfade between two elements with simultaneous opacity transition
+
+    First element fades out while second element fades in at the same time.
+    Both elements are visible during the transition, creating a smooth blend.
+
+    Args:
+        state1: Starting state (will fade out)
+        state2: Ending state (will fade in)
+        at_time: Center point of the crossfade (0.0 to 1.0)
+        duration: Duration of the crossfade overlap (0.0 to 1.0)
+        extend_timeline: If True, adds keystates at 0.0 and 1.0 to cover full timeline
+
+    Returns:
+        Tuple of (element1_keyframes, element2_keyframes)
+
+    Example:
+        >>> from svan2D.animations.compound import crossfade
+        >>> from svan2D import VElement, VElementGroup
+        >>>
+        >>> kf1, kf2 = crossfade(
+        ...     TextState(text="Hello", pos=Point2D(100, 0)),
+        ...     TextState(text="World", pos=Point2D(100, 0)),
+        ...     at_time=0.5,
+        ...     duration=0.4
+        ... )
+        >>>
+        >>> elem1 = VElement(text_renderer, keystates=kf1)
+        >>> elem2 = VElement(text_renderer, keystates=kf2)
+        >>> group = VElementGroup(elements=[elem1, elem2])
+    """
+    half = duration / 2
+    t_start = at_time - half
+    t_end = at_time + half
+
+    # Element 1: Fade from 1.0 to 0.0
+    keyframes1 = [
+        KeyState(time=t_start, state=replace(state1, opacity=1.0)),
+        KeyState(time=t_end, state=replace(state1, opacity=0.0)),
+    ]
+
+    # Element 2: Fade from 0.0 to 1.0
+    keyframes2 = [
+        KeyState(time=t_start, state=replace(state2, opacity=0.0)),
+        KeyState(time=t_end, state=replace(state2, opacity=1.0)),
+    ]
+
+    if extend_timeline:
+        keyframes1 = [
+            KeyState(time=0.0, state=replace(state1, opacity=1.0)),
+            *keyframes1,
+        ]
+        keyframes2 = [
+            *keyframes2,
+            KeyState(time=1.0, state=replace(state2, opacity=1.0)),
+        ]
+
+    return keyframes1, keyframes2

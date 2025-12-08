@@ -1,0 +1,141 @@
+# Svan2D System Default Configuration
+# This file contains the default values for all configurable parameters in svan2D.
+# Users can override these by creating their own svan2D.toml file.
+
+[scene]
+# Default scene dimensions
+width = 800
+height = 800
+
+# Scene background
+background_color = "none"  # Color.NONE - transparent background
+background_opacity = 1.0
+
+# Origin mode: "center" or "top-left"
+origin_mode = "center"
+
+[state]
+# Common attributes for all states (x, y, scale, opacity, rotation)
+# These are inherited by all state subclasses
+x = 0.0
+y = 0.0
+scale = 1.0
+opacity = 1.0
+rotation = 0.0
+skew_x = 0.0
+skew_y = 0.0
+
+[state.visual]
+# Visual attributes for vertex-based shapes
+# Inherited by: CircleState, EllipseState, StarState, PolygonState, SquareState,
+#               RingState, ArrowState, CrossState, LineState, ArcState, etc.
+fill_color = "none"  # Color.NONE - no fill
+fill_opacity = 1.0
+stroke_color = "none"  # Color.NONE - no stroke
+stroke_opacity = 1.0
+stroke_width = 1.0
+
+# Vertex resolution for morphing
+num_vertices = 128
+
+# Whether shapes are closed by default
+closed = true
+
+[morphing]
+# Morphing/interpolation settings
+
+# Hole matching strategy for shapes with different hole counts
+# Options (ordered by sophistication):
+#   "clustering" - Balanced k-means clustering (default, best for visual quality)
+#   "hungarian"  - Optimal assignment (globally minimal distance, requires scipy)
+#   "greedy"     - Fast greedy nearest-centroid matching (simpler, may be unbalanced)
+#   "discrete"   - Discrete transitions (some vertex loops move, others appear/disappear)
+#   "simple"     - All old vertex loops disappear, all new vertex loops appear (simplest)
+vertex_loop_mapper = "clustering"
+
+# Vertex alignment distance norms
+# Controls how vertices are matched during morphing for optimal alignment
+# Options:
+#   "l1"   - Sum of distances (default, economical, minimizes total travel)
+#   "l2"   - Root mean square distance (balanced, statistically optimal, penalizes outliers)
+#   "linf" - Maximum distance (minimax, ensures fairness, no vertex travels too far)
+#
+#  | Norm         | Formula         | Best For                            |
+#  |--------------|-----------------|-------------------------------------|
+#  | L1 (default) | Σ distances     | Economical, minimizes total travel  |
+#  | L2           | √(Σ distances²) | Balanced, statistically optimal     |
+#  | L∞ (linf)    | max(distances)  | Fairness, no vertex travels too far |
+
+# Global default for all alignment (can be overridden per-aligner below)
+vertex_alignment_norm = "l2"
+
+# Aligner-specific norm overrides (optional)
+# angular_alignment_norm = "l1"    # For closed ↔ closed shape morphing
+# euclidean_alignment_norm = "l1"  # For open ↔ closed shape morphing
+
+[morphing.clustering]
+# Clustering-specific settings (only used when vertex_loop_mapper = "clustering")
+balance_clusters = true      # Balance cluster sizes to avoid extreme imbalances (e.g., 4-1 splits)
+max_iterations = 50          # Maximum k-means iterations
+random_seed = 42             # Random seed for reproducible clustering
+
+[export]
+# Export defaults
+default_framerate = 30
+default_converter = "playwright"
+png_width_px = 1920
+
+[playwright_server]
+# Playwright HTTP render server settings
+# Used by PlaywrightHttpSvgConverter for SVG to PNG/PDF conversion
+
+host = "localhost"       # Server host
+port = 4000             # Server port
+auto_start = false      # Automatically start server if not running (default: false)
+log_level = "INFO"      # Server log level: "DEBUG", "INFO", "WARNING", "ERROR"
+
+[logging]
+# Default logging level: "DEBUG", "INFO", "WARNING", "ERROR"
+level = "INFO"
+
+[preview]
+# Preview animation UI settings (used by Jupyter notebooks and dev server)
+
+# Color scheme preset
+# Options:
+#   "light"      - Clean white background with blue accents (default)
+#   "dark"       - Dark gray background with blue accents
+#   "slate"      - Subtle slate gray, professional
+#   "neutral"    - Neutral grays, minimal
+#   "ocean"      - Light blue background with ocean accents
+#   "forest"     - Light green background with forest accents
+#   "purple"     - Light purple background with purple accents
+#   "rose"       - Light rose background with rose accents
+#   "amber"      - Light amber background with warm accents
+#   "monokai"    - Dark monokai editor theme
+color_scheme = "light"
+
+# Individual color overrides (optional - overrides the color_scheme preset)
+# Uncomment and customize any of these to fine-tune the UI colors:
+# background = "#ffffff"       # Container background
+# control_bg = "#f5f5f5"       # Button/control backgrounds
+# control_hover = "#e0e0e0"    # Button hover state
+# accent = "#2563eb"           # Play button, slider thumb
+# accent_hover = "#1d4ed8"     # Accent hover state
+# text = "#111827"             # Main text color
+# text_muted = "#6b7280"       # Secondary text color
+
+[devserver]
+# Development server settings
+
+# Default server port
+port = 8000
+
+# Default number of preview frames
+default_frames = 20
+
+# Default playback framerate (frames per second)
+default_fps = 10
+
+# Automatically open browser when server starts
+auto_open_browser = true

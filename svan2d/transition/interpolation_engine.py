@@ -1,8 +1,11 @@
 """State and value interpolation engine"""
 
-from typing import Any, Callable, Dict, Optional, Tuple, List
+from typing import Any, Callable, Dict, Optional, Tuple, List, Union
 from dataclasses import fields, replace
 import logging
+
+# Type alias for easing result - can be scalar (normal) or tuple (2D easing)
+EasedT = Union[float, Tuple[float, float]]
 
 from svan2d.component import State
 from svan2d.component.effect.gradient.base import Gradient
@@ -11,7 +14,7 @@ from svan2d.component.effect.filter.base import Filter
 from svan2d.component.state.path import MorphMethod
 from svan2d.component.vertex.vertex_contours import VertexContours
 from svan2d.component.vertex.vertex_loop import VertexLoop
-from svan2d.core.point2d import Point2D
+from svan2d.core.point2d import Point2D, Points2D
 from svan2d.path import SVGPath
 from svan2d.transition import lerp, step, angle, inbetween, circular_midpoint
 from svan2d.transition.morpher import NativeMorpher, FlubberMorpher
@@ -27,14 +30,16 @@ logger = logging.getLogger(__name__)
 class InterpolationEngine:
     """Handles interpolation of states and individual values"""
 
-    def __init__(self, easing_resolver):
+    def __init__(self, easing_resolver, path_resolver=None):
         """
         Initialize the interpolation engine.
 
         Args:
             easing_resolver: EasingResolver instance for determining easing functions
+            path_resolver: PathResolver instance for determining path functions (optional)
         """
         self.easing_resolver = easing_resolver
+        self.path_resolver = path_resolver
         self._shape_list_interpolator = ShapeListInterpolator(self)
 
     def create_eased_state(
@@ -45,6 +50,7 @@ class InterpolationEngine:
         segment_easing_overrides: Optional[Dict[str, Callable[[float], float]]],
         attribute_keystates_fields: set,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
+        segment_path_config: Optional[Dict[str, Callable]] = None,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -56,6 +62,7 @@ class InterpolationEngine:
             segment_easing_overrides: Per-segment easing overrides
             attribute_keystates_fields: Attributes managed by field keystates
             vertex_buffer: Optional reusable buffer for vertex interpolation
+            segment_path_config: Optional per-field path config dict {field_name: path_func}
         """
         interpolated_values = {}
 
@@ -108,6 +115,7 @@ class InterpolationEngine:
                 end_value,
                 eased_t,
                 vertex_buffer,
+                segment_path_config,
             )
 
         # return replace(start_state, **interpolated_values)
@@ -126,18 +134,21 @@ class InterpolationEngine:
         end_value: Any,
         eased_t: float,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
+        segment_path_config: Optional[Dict[str, Callable]] = None,
     ) -> Any:
         """
         Interpolate a single value based on its type and context.
 
         Args:
-            state: State object for context (e.g., morph method for paths)
+            start_state: Start state object for context (e.g., morph method for paths)
+            end_state: End state object
             field_name: Name of the field being interpolated
             start_value: Starting value
             end_value: Ending value
             eased_t: Eased interpolation parameter (0.0 to 1.0)
             vertex_buffer: Optional reusable buffer for vertex interpolation
                           (outer_buffer, hole_buffers) to avoid allocations
+            segment_path_config: Optional per-field path config dict {field_name: path_func}
 
         Returns:
             Interpolated value
@@ -185,6 +196,8 @@ class InterpolationEngine:
             end_closed = getattr(end_state, "closed", True)
 
             # Interpolate outer vertices
+            # NOTE: Path functions are NOT applied to vertices during morphing
+            # They only apply to top-level Point2D fields like "pos"
             outer_buffer = vertex_buffer[0] if vertex_buffer else None
             interpolated_vertices = self._interpolate_vertex_list(
                 start_value.outer.vertices,
@@ -192,6 +205,7 @@ class InterpolationEngine:
                 eased_t,
                 buffer=outer_buffer,
                 ensure_closure=(start_closed and end_closed),
+                path_func=None,
             )
 
             # Interpolate  vertex_loops
@@ -239,6 +253,7 @@ class InterpolationEngine:
                             eased_t,
                             buffer=hole_buffer,
                             ensure_closure=True,  # Holes always closed
+                            path_func=None,  # Path functions don't apply to vertices
                         )
 
                         interpolated_vertex_loops.append(
@@ -282,6 +297,7 @@ class InterpolationEngine:
                 segment_easing_overrides=None,
                 attribute_keystates_fields=set(),
                 vertex_buffer=None,  # Don't use vertex buffer for clips
+                segment_path=None,  # Don't pass path to clips
             )
 
         # Handle State ↔ None transitions
@@ -299,9 +315,32 @@ class InterpolationEngine:
             # Fade in: opacity from 0
             return replace(end_value, opacity=lerp(0.0, end_value.opacity, eased_t))
 
-        # 2. Point2D interpolation
+        # 2. Point2D interpolation (with path function support and 2D easing)
         if isinstance(start_value, Point2D):
-            return start_value.lerp(end_value, eased_t)
+            # Check for path function for this specific field
+            if self.path_resolver and segment_path_config is not None:
+                path_func = self.path_resolver.get_path_for_field(
+                    field_name, segment_path_config
+                )
+                # Only use path if one was configured for this field
+                if segment_path_config.get(field_name) is not None:
+                    # Convert 2D easing to scalar by averaging if needed
+                    scalar_t = (
+                        eased_t
+                        if isinstance(eased_t, (int, float))
+                        else (eased_t[0] + eased_t[1]) / 2
+                    )
+                    return path_func(start_value, end_value, scalar_t)
+            # 2D easing (when no explicit path set for this field)
+            if isinstance(eased_t, tuple):
+                tx, ty = eased_t
+                return Point2D(
+                    lerp(start_value.x, end_value.x, tx),
+                    lerp(start_value.y, end_value.y, ty),
+                )
+            else:
+                # Standard linear interpolation
+                return start_value.lerp(end_value, eased_t)
 
         # 3. SVG Path interpolation
         if isinstance(start_value, SVGPath):
@@ -313,14 +352,32 @@ class InterpolationEngine:
 
         # 5. Angle interpolation (handles wraparound)
         if self._is_angle_field(start_state, field_name):
-            return angle(start_value, end_value, eased_t)
+            # Extract scalar if 2D easing used on angle field
+            scalar_t = (
+                eased_t
+                if isinstance(eased_t, (int, float))
+                else (eased_t[0] + eased_t[1]) / 2
+            )
+            return angle(start_value, end_value, scalar_t)
 
         # 6. Numeric interpolation
         if isinstance(start_value, (int, float)):
-            return lerp(start_value, end_value, eased_t)
+            # Extract scalar if 2D easing used on numeric field
+            scalar_t = (
+                eased_t
+                if isinstance(eased_t, (int, float))
+                else (eased_t[0] + eased_t[1]) / 2
+            )
+            return lerp(start_value, end_value, scalar_t)
 
         # 7. Non-numeric values: step function at t=0.5
-        return step(start_value, end_value, eased_t)
+        # Extract scalar if 2D easing used on non-numeric field
+        scalar_t = (
+            eased_t
+            if isinstance(eased_t, (int, float))
+            else (eased_t[0] + eased_t[1]) / 2
+        )
+        return step(start_value, end_value, scalar_t)
 
     def _interpolate_path(
         self,
@@ -419,12 +476,13 @@ class InterpolationEngine:
 
     def _interpolate_vertex_list(
         self,
-        vertices1: List,
-        vertices2: List,
+        vertices1: Points2D,
+        vertices2: Points2D,
         eased_t: float,
-        buffer: Optional[List] = None,
+        buffer: Optional[Points2D] = None,
         ensure_closure: bool = False,
-    ) -> List:
+        path_func=None,
+    ) -> Points2D:
         """Interpolate between two vertex lists with optional buffer optimization
 
         Args:
@@ -433,9 +491,10 @@ class InterpolationEngine:
             eased_t: Interpolation parameter
             buffer: Optional pre-allocated buffer for in-place operations
             ensure_closure: If True, force last vertex to equal first
+            path_func: Optional path function for Point2D interpolation
 
         Returns:
-            List of interpolated vertices (tuples or Point2D objects)
+           Points2D
         """
         if len(vertices1) != len(vertices2):
             raise ValueError(
@@ -452,17 +511,24 @@ class InterpolationEngine:
 
                 buffer.extend(Point2D(0.0, 0.0) for _ in range(num_verts - len(buffer)))
 
-            # interpolation
+            # Interpolation with path function support
             for i, (v1, v2) in enumerate(zip(vertices1, vertices2)):
-                buffer[i] = v1.lerp(v2, eased_t)  # TODO check
+                if path_func:
+                    buffer[i] = path_func(v1, v2, eased_t)
+                else:
+                    buffer[i] = v1.lerp(v2, eased_t)
 
             interpolated_vertices = buffer[:num_verts]
         else:
-            # Fallback: Original behavior (for backward compatibility)
-            interpolated_vertices = [
-                (lerp(v1.x, v2.x, eased_t), lerp(v1.y, v2.y, eased_t))
-                for v1, v2 in zip(vertices1, vertices2)
-            ]
+            # Fallback: Original behavior with path function support
+            if path_func:
+                interpolated_vertices = [
+                    path_func(v1, v2, eased_t) for v1, v2 in zip(vertices1, vertices2)
+                ]
+            else:
+                interpolated_vertices = [
+                    v1.lerp(v2, eased_t) for v1, v2 in zip(vertices1, vertices2)
+                ]
 
         # Ensure closure if requested
         if ensure_closure and len(interpolated_vertices) > 1:

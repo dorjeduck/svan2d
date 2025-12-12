@@ -1,7 +1,7 @@
 """Configuration key enum for type-safe config access
 
 This module defines the ConfigKey enum which provides type-safe access to all
-configuration values in svan2D. Using enums instead of strings prevents typos
+configuration values in svan2d. Using enums instead of strings prevents typos
 and enables better IDE autocomplete support.
 """
 
@@ -9,7 +9,7 @@ from enum import Enum
 
 
 class ConfigKey(str, Enum):
-    """Enum of all valid configuration keys in svan2D
+    """Enum of all valid configuration keys in svan2d
 
     Each enum value is the dot-separated path to the config value.
     Inherits from str to maintain compatibility with string operations.

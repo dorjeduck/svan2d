@@ -24,7 +24,7 @@ class PolyRingState(VertexState):
     independently using inner_rotation. Use the base rotation parameter
     to rotate the entire shape.
 
-    Rotation follows svan2D convention: 0° = North (up), 90° = East (right)
+    Rotation follows svan2d convention: 0° = North (up), 90° = East (right)
     """
 
     inner_size: float = 50

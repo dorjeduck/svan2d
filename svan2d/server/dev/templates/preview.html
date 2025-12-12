@@ -429,7 +429,7 @@
     </div>
 
     <div class="footer">
-        Powered by <a href="https://github.com/dorjeduck/svan2D" target="_blank">Svan2D</a>
+        Powered by <a href="https://github.com/dorjeduck/svan2d" target="_blank">Svan2D</a>
     </div>
 
     <script>
@@ -577,9 +577,9 @@
 
         // Load saved export settings from localStorage
         function loadExportSettings() {
-            const savedFrames = localStorage.getItem('svan2D_export_frames');
-            const savedFps = localStorage.getItem('svan2D_export_fps');
-            const savedWidth = localStorage.getItem('svan2D_export_width');
+            const savedFrames = localStorage.getItem('svan2d_export_frames');
+            const savedFps = localStorage.getItem('svan2d_export_fps');
+            const savedWidth = localStorage.getItem('svan2d_export_width');
 
             if (savedFrames) framesInput.value = savedFrames;
             if (savedFps) fpsInput.value = savedFps;
@@ -588,9 +588,9 @@
 
         // Save export settings to localStorage
         function saveExportSettings() {
-            localStorage.setItem('svan2D_export_frames', framesInput.value);
-            localStorage.setItem('svan2D_export_fps', fpsInput.value);
-            localStorage.setItem('svan2D_export_width', widthInput.value);
+            localStorage.setItem('svan2d_export_frames', framesInput.value);
+            localStorage.setItem('svan2d_export_fps', fpsInput.value);
+            localStorage.setItem('svan2d_export_width', widthInput.value);
         }
 
         // Load settings on page load

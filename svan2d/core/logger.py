@@ -1,11 +1,11 @@
-"""Centralized logging configuration for svan2D package."""
+"""Centralized logging configuration for svan2d package."""
 
 import logging
 from pathlib import Path
 from typing import Optional
 
 # Single logger instance for the entire package
-_logger = logging.getLogger("svan2D")
+_logger = logging.getLogger("svan2d")
 _logger.setLevel(logging.DEBUG)  # Capture everything, filter at handler level
 _logger.propagate = False
 
@@ -16,7 +16,7 @@ def configure_logging(
     console: bool = True,
     silent: bool = False,
 ):
-    """Configure logging for the svan2D package.
+    """Configure logging for the svan2d package.
 
     Args:
         level: Log level - "DEBUG", "INFO", "WARNING", or "ERROR" (default: from config)
@@ -32,10 +32,10 @@ def configure_logging(
         configure_logging(level="DEBUG")
 
         # File only, DEBUG level
-        configure_logging(level="DEBUG", log_file="svan2D.log", console=False)
+        configure_logging(level="DEBUG", log_file="svan2d.log", console=False)
 
         # Silent mode with file logging
-        configure_logging(silent=True, log_file="svan2D.log")
+        configure_logging(silent=True, log_file="svan2d.log")
 
         # Completely silent
         configure_logging(silent=True)
@@ -82,10 +82,10 @@ def configure_logging(
 
 
 def get_logger() -> logging.Logger:
-    """Get the svan2D logger instance.
+    """Get the svan2d logger instance.
 
     Returns:
-        The configured logger for the svan2D package
+        The configured logger for the svan2d package
     """
     # Ensure logger has at least a NullHandler if never configured
     if not _logger.handlers:

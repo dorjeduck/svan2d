@@ -243,7 +243,7 @@ class TestVElementPerformance:
             CircleState(Point2D(), radius=50),
             CircleState(Point2D(100, 100), radius=100),
         ]
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         result = benchmark(element.get_frame, 0.5)
         assert result is not None
@@ -253,7 +253,7 @@ class TestVElementPerformance:
         states = [
             CircleState(pos=Point2D(i * 10, i * 10), radius=50 + i) for i in range(20)
         ]
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         result = benchmark(element.get_frame, 0.5)
         assert result is not None
@@ -272,7 +272,7 @@ class TestVElementPerformance:
             ]
         }
 
-        element = VElement(keystates=states, attribute_keystates=attribute_keystates)
+        element = VElement().keystates(states).attributes(keystates=attribute_keystates)
 
         result = benchmark(element.get_frame, 0.5)
         assert result is not None
@@ -332,7 +332,7 @@ class TestFrameGenerationPerformance:
             CircleState(Point2D(), radius=50, fill_color=Color("#FF0000")),
             CircleState(Point2D(100, 100), radius=100, fill_color=Color("#0000FF")),
         ]
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         def generate_frames():
             frames = []
@@ -350,7 +350,7 @@ class TestFrameGenerationPerformance:
             CircleState(Point2D(), radius=50),
             CircleState(Point2D(100, 100), radius=100),
         ]
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         def generate_frames():
             frames = []

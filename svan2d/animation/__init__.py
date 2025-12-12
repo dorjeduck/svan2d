@@ -1,4 +1,5 @@
-from . import atomic
-from . import compound
+"""Animation functions that return VElement lists"""
 
-__all__ = ["atomic", "compound"]
+from .fade import fade
+
+__all__ = ["fade"]

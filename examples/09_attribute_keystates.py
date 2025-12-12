@@ -68,7 +68,7 @@ def main():
 
     # Export to MP4 file
     exporter.to_mp4(
-        filename="09_global_transitions",
+        filename="09_attribute_keystates",
         total_frames=90,
         framerate=30,
         png_width_px=1024,

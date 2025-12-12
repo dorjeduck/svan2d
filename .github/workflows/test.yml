@@ -32,11 +32,11 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pytest tests/unit -v --cov=svan2D --cov-report=xml --cov-report=term-missing -m "not slow"
+        pytest tests/unit -v --cov=svan2d --cov-report=xml --cov-report=term-missing -m "not slow"
 
     - name: Run integration tests
       run: |
-        pytest tests/integration -v --cov=svan2D --cov-append --cov-report=xml --cov-report=term-missing -m "not slow"
+        pytest tests/integration -v --cov=svan2d --cov-append --cov-report=xml --cov-report=term-missing -m "not slow"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -68,7 +68,7 @@ jobs:
 
     - name: Run slow/converter tests
       run: |
-        pytest tests -v -m "slow" --cov=svan2D --cov-report=term-missing || true
+        pytest tests -v -m "slow" --cov=svan2d --cov-report=term-missing || true
 
   lint:
     name: Linting and type checks
@@ -92,11 +92,11 @@ jobs:
 
     - name: Run ruff (linter)
       run: |
-        ruff check svan2D/ || true
+        ruff check svan2d/ || true
 
     - name: Run mypy (type checker)
       run: |
-        mypy svan2D/ --ignore-missing-imports || true
+        mypy svan2d/ --ignore-missing-imports || true
 
   benchmark:
     name: Performance benchmarks

@@ -1,1 +1,1 @@
-"""Integration tests for svan2D animations"""
+"""Integration tests for svan2d animations"""

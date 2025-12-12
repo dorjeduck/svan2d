@@ -114,7 +114,7 @@ def main():
     elif args.coverage:
         # Detailed coverage
         coverage_args = [
-            "--cov=svan2D",
+            "--cov=svan2d",
             "--cov-report=term-missing",
             "--cov-report=html",
             "--cov-report=xml",
@@ -122,7 +122,7 @@ def main():
     else:
         # Standard coverage
         coverage_args = [
-            "--cov=svan2D",
+            "--cov=svan2d",
             "--cov-report=term-missing:skip-covered",
         ]
 

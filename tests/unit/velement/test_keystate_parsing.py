@@ -10,6 +10,7 @@ from svan2d.velement.keystate import KeyState
 from svan2d.component.state.circle import CircleState
 from svan2d.transition.easing import linear, in_out
 from svan2d.core.color import Color
+from svan2d.velement.transition import TransitionConfig
 
 
 @pytest.fixture
@@ -210,12 +211,16 @@ class TestElementKeystatesParsingKeyStateObjects:
         """Test parsing KeyState objects with easing"""
         keystates = [
             KeyState(state=state1, time=0.0),
-            KeyState(state=state2, time=1.0, easing={"pos": in_out}),
+            KeyState(
+                state=state2,
+                time=1.0,
+                transition_config=TransitionConfig(easing={"pos": in_out}),
+            ),
         ]
         result = parse_element_keystates(keystates)
 
         assert len(result) == 2
-        assert result[1].easing == {"pos": in_out}
+        assert result[1].transition_config.easing == {"pos": in_out}
 
     def test_parse_mixed_keystate_and_tuples(self, state1, state2, state3):
         """Test parsing mix of KeyState objects and tuples"""

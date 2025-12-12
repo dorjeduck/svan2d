@@ -48,7 +48,7 @@ pytest -m "not slow"
 ### Run with coverage
 
 ```bash
-pytest --cov=svan2D --cov-report=html
+pytest --cov=svan2d --cov-report=html
 # View HTML report: open htmlcov/index.html
 ```
 
@@ -73,7 +73,7 @@ Unit tests should focus on testing individual functions and classes in isolation
 
 ```python
 import pytest
-from svan2D.transition.interpolation import lerp
+from svan2d.transition.interpolation import lerp
 
 @pytest.mark.unit
 def test_lerp_midpoint():
@@ -86,8 +86,8 @@ Integration tests should verify complete workflows:
 
 ```python
 import pytest
-from svan2D.velement import VElement
-from svan2D.vscene import VScene
+from svan2d.velement import VElement
+from svan2d.vscene import VScene
 
 @pytest.mark.integration
 def test_animation_export():

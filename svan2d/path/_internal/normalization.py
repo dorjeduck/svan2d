@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/paths/normalization.py
+# svan2d/paths/normalization.py
 # ============================================================================
 """
 Complete path normalization system for morphing
@@ -28,7 +28,7 @@ def equalize_curve_counts(path1: SVGPath, path2: SVGPath) -> Tuple[SVGPath, SVGP
         Tuple of (equalized_path1, equalized_path2) with same curve counts
 
     Example:
-        >>> from svan2D.paths import line, circle_as_beziers
+        >>> from svan2d.paths import line, circle_as_beziers
         >>>
         >>> path1 = line(0, 0, 100, 0)           # 1 curve
         >>> path2 = circle_as_beziers(50, 50, 30)  # 4 curves
@@ -133,7 +133,7 @@ def smart_normalize(
         ValueError: If normalization fails
 
     Example:
-        >>> from svan2D.paths import line, quadratic_curve, circle_as_beziers
+        >>> from svan2d.paths import line, quadratic_curve, circle_as_beziers
         >>>
         >>> # Completely different paths!
         >>> path1 = line(0, 0, 200, 0)              # 1 straight line

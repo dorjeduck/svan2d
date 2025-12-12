@@ -1,7 +1,7 @@
-"""Configuration management for svan2D
+"""Configuration management for svan2d
 
 This module provides a TOML-based configuration system for customizing
-default values throughout svan2D.
+default values throughout svan2d.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from .config_key import ConfigKey
 
 
 class Svan2DConfig:
-    """Configuration manager for svan2D
+    """Configuration manager for svan2d
 
     Loads configuration from TOML files and provides access to config values
     with proper type conversion and color normalization.
@@ -75,9 +75,9 @@ class Svan2DConfig:
         """Load defaults and override with user config if provided
 
         If user_config_path is None, searches for config files in standard locations:
-        1. ./svan2D.toml (project directory)
-        2. ~/.config/svan2D/config.toml (user config)
-        3. ~/.svan2D.toml (user home)
+        1. ./svan2d.toml (project directory)
+        2. ~/.config/svan2d/config.toml (user config)
+        3. ~/.svan2d.toml (user home)
 
         Args:
             user_config_path: Optional path to user config file
@@ -111,9 +111,9 @@ class Svan2DConfig:
             Path to first found config file, or None
         """
         search_paths = [
-            Path.cwd() / "svan2D.toml",
-            Path.home() / ".config" / "svan2D" / "config.toml",
-            Path.home() / ".svan2D.toml",
+            Path.cwd() / "svan2d.toml",
+            Path.home() / ".config" / "svan2d" / "config.toml",
+            Path.home() / ".svan2d.toml",
         ]
 
         for path in search_paths:

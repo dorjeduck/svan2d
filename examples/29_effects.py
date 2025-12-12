@@ -66,7 +66,7 @@ end_states = [
     CircleState(radius=20, pos=Point2D(70,70), fill_color=END_COLOR_1, filter=shadow_filter_2),
 ]
 
-elements = [VElement(keystates=[s1, s2]) for s1, s2 in zip(start_states, end_states)]
+elements = [VElement().keystates([s1, s2]) for s1, s2 in zip(start_states, end_states)]
 
 # Add all elements to the scene
 scene.add_elements(elements)

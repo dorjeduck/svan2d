@@ -1,5 +1,3 @@
-from dataclasses import replace
-
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
@@ -9,6 +7,7 @@ from svan2d.velement import VElement
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
 configure_logging(level="INFO")
 
@@ -34,7 +33,8 @@ def main():
     x_shifts = [-100, 100]
 
     all_states = [
-        layout.line(states, cx=x_shift, spacing=20, rotation=90) for x_shift in x_shifts
+        layout.line(states, center=Point2D(x_shift, 0), spacing=20, rotation=90)
+        for x_shift in x_shifts
     ]
 
     # Create a text renderer for all numbers
@@ -42,16 +42,13 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[
-                (0.3 if i % 2 else 0, state_a),
-                (0.7 if i % 2 else 1, state_b),
-            ],
-            attribute_easing={"pos": easing.linear},
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
+        VElement(renderer=renderer)
+        .attributes(
+            easing={"pos": easing.linear},
+            keystates={"fill_color": [START_COLOR, END_COLOR]},
         )
-        for i, (state_a, state_b) in enumerate(zip(*all_states))
+        .keystates(states, at=[0.3 if i % 2 else 0, 0.7 if i % 2 else 1])
+        for i, states in enumerate(zip(*all_states))
     ]
 
     # Add all elements to the scene

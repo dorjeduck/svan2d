@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/paths/semantic_morphing.py
+# svan2d/paths/semantic_morphing.py
 # ============================================================================
 """
 Semantic-aware path morphing that considers shape structure and meaning.

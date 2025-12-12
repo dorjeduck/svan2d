@@ -163,7 +163,7 @@ class DevServer:
             """Health check endpoint."""
             return {
                 "status": "ok",
-                "service": "svan2D-devserver",
+                "service": "svan2d-devserver",
                 "file": str(self.file_path),
             }
 
@@ -503,7 +503,7 @@ class DevServer:
             if needs_frames:
                 # Create shared temporary directory for frames
                 temp_context = tempfile.TemporaryDirectory(
-                    prefix="svan2D_batch_frames_"
+                    prefix="svan2d_batch_frames_"
                 )
                 frames_dir = Path(temp_context.name)
 

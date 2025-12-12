@@ -28,10 +28,12 @@ class TestBasicMorphing:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = RectangleState(width=100, height=60, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         # Should create valid morphing animation
         assert element is not None
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 2
 
     def test_triangle_to_hexagon_morph(self):
@@ -39,7 +41,7 @@ class TestBasicMorphing:
         state1 = TriangleState(size=80, _num_vertices=60)
         state2 = PolygonState(size=50, num_sides=6, _num_vertices=60)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -50,7 +52,7 @@ class TestBasicMorphing:
         )
         state2 = CircleState(radius=60, _num_vertices=100)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -61,8 +63,10 @@ class TestBasicMorphing:
         state3 = RectangleState(width=90, height=90, _num_vertices=64)
         state4 = CircleState(radius=60, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2, state3, state4])
+        element = VElement().keystates([state1, state2, state3, state4])
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 4
 
 
@@ -75,9 +79,11 @@ class TestHoleMorphing:
         state1 = CircleState(radius=80, _num_vertices=64)
         state2 = RingState(outer_radius=80, inner_radius=40, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 2
 
     def test_ring_to_circle_morph(self):
@@ -85,7 +91,7 @@ class TestHoleMorphing:
         state1 = RingState(outer_radius=80, inner_radius=40, _num_vertices=64)
         state2 = CircleState(radius=80, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -94,7 +100,7 @@ class TestHoleMorphing:
         state1 = RingState(outer_radius=100, inner_radius=50, _num_vertices=64)
         state2 = RingState(outer_radius=80, inner_radius=60, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -107,7 +113,7 @@ class TestHoleMorphing:
             outer_size=100, inner_size=50, num_edges=8, _num_vertices=72
         )
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -121,7 +127,7 @@ class TestColorTransitions:
         state1 = CircleState(radius=50, fill_color=Color("#FF0000"), _num_vertices=64)
         state2 = CircleState(radius=50, fill_color=Color("#0000FF"), _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -133,8 +139,10 @@ class TestColorTransitions:
             for c in colors
         ]
 
-        element = VElement(keystates=keystates)
+        element = VElement().keystates(keystates)
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 4
 
     def test_opacity_transition(self):
@@ -142,7 +150,7 @@ class TestColorTransitions:
         state1 = CircleState(radius=50, fill_opacity=1.0, _num_vertices=64)
         state2 = CircleState(radius=50, fill_opacity=0.0, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -158,7 +166,7 @@ class TestTransformAnimations:
             Point2D(100, 100), width=80, height=60, _num_vertices=64
         )
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -167,7 +175,7 @@ class TestTransformAnimations:
         state1 = RectangleState(width=100, height=60, rotation=0, _num_vertices=64)
         state2 = RectangleState(width=100, height=60, rotation=180, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -182,7 +190,7 @@ class TestTransformAnimations:
             _num_vertices=64,
         )
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         assert element is not None
 
@@ -223,8 +231,10 @@ class TestTransformAnimations:
             ),
         ]
 
-        element = VElement(keystates=keystates)
+        element = VElement().keystates(keystates)
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 4
 
 
@@ -237,9 +247,10 @@ class TestEasingIntegration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = RectangleState(width=80, height=60, _num_vertices=64)
 
-        element = VElement(
-            keystates=[state1, state2],
-            attribute_easing={"radius": linear, "width": linear, "height": linear},
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(easing={"radius": linear, "width": linear, "height": linear})
         )
 
         assert element is not None
@@ -249,8 +260,10 @@ class TestEasingIntegration:
         state1 = TriangleState(size=80, _num_vertices=60)
         state2 = PolygonState(size=50, num_sides=6, _num_vertices=60)
 
-        element = VElement(
-            keystates=[state1, state2], attribute_easing={"size": in_out}
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(easing={"size": in_out})
         )
 
         assert element is not None
@@ -260,7 +273,7 @@ class TestEasingIntegration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = CircleState(pos=Point2D(200, 0), radius=50, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2], attribute_easing={"pos": in_out})
+        element = VElement().keystates([state1, state2]).attributes(easing={"pos": in_out})
 
         assert element is not None
 
@@ -269,9 +282,10 @@ class TestEasingIntegration:
         state1 = CircleState(Point2D(), radius=50, _num_vertices=64)
         state2 = CircleState(pos=Point2D(200, 200), radius=100, _num_vertices=64)
 
-        element = VElement(
-            keystates=[state1, state2],
-            attribute_easing={"pos": linear, "y": in_out, "radius": in_out},
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(easing={"pos": linear, "y": in_out, "radius": in_out})
         )
 
         assert element is not None
@@ -286,7 +300,7 @@ class TestSceneIntegration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = RectangleState(width=100, height=60, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
         scene = VScene(width=800, height=600)
         scene.add_element(element)
 
@@ -296,23 +310,19 @@ class TestSceneIntegration:
 
     def test_multiple_elements_in_scene(self):
         """Test rendering multiple morphing elements"""
-        element1 = VElement(
-            keystates=[
-                CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
-                CircleState(pos=Point2D(100, 0), radius=75, _num_vertices=64),
-            ]
-        )
+        element1 = VElement().keystates([
+            CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
+            CircleState(pos=Point2D(100, 0), radius=75, _num_vertices=64),
+        ])
 
-        element2 = VElement(
-            keystates=[
-                RectangleState(
-                    pos=Point2D(100, 0), width=60, height=60, _num_vertices=64
-                ),
-                RectangleState(
-                    pos=Point2D(100, 0), width=90, height=90, _num_vertices=64
-                ),
-            ]
-        )
+        element2 = VElement().keystates([
+            RectangleState(
+                pos=Point2D(100, 0), width=60, height=60, _num_vertices=64
+            ),
+            RectangleState(
+                pos=Point2D(100, 0), width=90, height=90, _num_vertices=64
+            ),
+        ])
 
         scene = VScene(width=800, height=600)
         scene.add_element(element1)
@@ -323,48 +333,42 @@ class TestSceneIntegration:
     def test_scene_with_varied_animations(self):
         """Test scene with multiple different animations"""
         # Morphing element
-        morph_element = VElement(
-            keystates=[
-                CircleState(pos=Point2D(-200, 0), radius=50, _num_vertices=64),
-                StarState(
-                    pos=Point2D(-200, 0),
-                    outer_radius=60,
-                    inner_radius=30,
-                    num_points_star=5,
-                    _num_vertices=64,
-                ),
-            ]
-        )
+        morph_element = VElement().keystates([
+            CircleState(pos=Point2D(-200, 0), radius=50, _num_vertices=64),
+            StarState(
+                pos=Point2D(-200, 0),
+                outer_radius=60,
+                inner_radius=30,
+                num_points_star=5,
+                _num_vertices=64,
+            ),
+        ])
 
         # Color transition element
-        color_element = VElement(
-            keystates=[
-                CircleState(
-                    pos=Point2D(),
-                    radius=40,
-                    fill_color=Color("#FF0000"),
-                    _num_vertices=64,
-                ),
-                CircleState(
-                    pos=Point2D(),
-                    radius=40,
-                    fill_color=Color("#0000FF"),
-                    _num_vertices=64,
-                ),
-            ]
-        )
+        color_element = VElement().keystates([
+            CircleState(
+                pos=Point2D(),
+                radius=40,
+                fill_color=Color("#FF0000"),
+                _num_vertices=64,
+            ),
+            CircleState(
+                pos=Point2D(),
+                radius=40,
+                fill_color=Color("#0000FF"),
+                _num_vertices=64,
+            ),
+        ])
 
         # Position animation element
-        move_element = VElement(
-            keystates=[
-                RectangleState(
-                    pos=Point2D(200, -100), width=50, height=50, _num_vertices=64
-                ),
-                RectangleState(
-                    pos=Point2D(200, 100), width=50, height=50, _num_vertices=64
-                ),
-            ]
-        )
+        move_element = VElement().keystates([
+            RectangleState(
+                pos=Point2D(200, -100), width=50, height=50, _num_vertices=64
+            ),
+            RectangleState(
+                pos=Point2D(200, 100), width=50, height=50, _num_vertices=64
+            ),
+        ])
 
         scene = VScene(width=800, height=600)
         scene.add_element(morph_element)
@@ -378,7 +382,7 @@ class TestSceneIntegration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = RectangleState(width=80, height=60, _num_vertices=64)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
         scene = VScene(width=400, height=300)
         scene.add_element(element)
 
@@ -402,11 +406,12 @@ class TestFieldKeystates:
         state2 = CircleState(Point2D(100, 100), radius=100, _num_vertices=64)
 
         # Override x field with custom keystate
-        element = VElement(
-            keystates=[state1, state2],
-            attribute_keystates={
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(keystates={
                 "pos": [(Point2D(), 0.0), (Point2D(50, 0), 0.5), (Point2D(100, 0), 1.0)]
-            },
+            })
         )
 
         assert element is not None
@@ -423,12 +428,13 @@ class TestFieldKeystates:
             _num_vertices=64,
         )
 
-        element = VElement(
-            keystates=[state1, state2],
-            attribute_keystates={
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(keystates={
                 "x": [(0, 0.0), (100, 0.5), (200, 1.0)],
                 "radius": [(50, 0.0), (150, 0.3), (100, 1.0)],
-            },
+            })
         )
 
         assert element is not None
@@ -445,8 +451,10 @@ class TestComplexMorphingScenarios:
             for angle in range(0, 361, 45)
         ]
 
-        element = VElement(keystates=keystates)
+        element = VElement().keystates(keystates)
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 9
 
     def test_breathing_effect(self):
@@ -457,8 +465,10 @@ class TestComplexMorphingScenarios:
             CircleState(radius=50, fill_opacity=1.0, scale=1.0, _num_vertices=64),
         ]
 
-        element = VElement(keystates=keystates)
+        element = VElement().keystates(keystates)
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 3
 
     def test_shape_cycle_animation(self):
@@ -471,8 +481,10 @@ class TestComplexMorphingScenarios:
             CircleState(radius=50, _num_vertices=64),  # Back to start
         ]
 
-        element = VElement(keystates=keystates)
+        element = VElement().keystates(keystates)
 
+        # Trigger build to access keystates
+        element.get_frame(0.0)
         assert len(element.keystates) == 5
 
     def test_tunnel_effect_with_rings(self):
@@ -488,6 +500,6 @@ class TestComplexMorphingScenarios:
         ]
 
         # Create multiple ring elements at different z-depths (scales)
-        elements = [VElement(keystates=[state]) for state in keystates]
+        elements = [VElement().keystates([state]) for state in keystates]
 
         assert len(elements) == 5

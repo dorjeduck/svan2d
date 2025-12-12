@@ -90,7 +90,7 @@ def status():
         click.echo(f"  Port: {manager.port}")
     else:
         click.echo("✗ Playwright server is not running")
-        click.echo(f"  Use 'svan2D playwright-server start' to start it")
+        click.echo(f"  Use 'svan2d playwright-server start' to start it")
 
 
 @playwright_server.command()

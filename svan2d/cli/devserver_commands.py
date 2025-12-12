@@ -47,8 +47,8 @@ def serve(file: Path, port: int, frames: int, fps: int, no_browser: bool):
     automatic hot-reload on file changes.
 
     Example:
-        svan2D serve examples/my_animation.py
-        svan2D serve animation.py --port 8080 --frames 30 --fps 30
+        svan2d serve examples/my_animation.py
+        svan2d serve animation.py --port 8080 --frames 30 --fps 30
     """
     # Load config
     config = get_config()
@@ -71,7 +71,7 @@ def serve(file: Path, port: int, frames: int, fps: int, no_browser: bool):
         import watchdog  # noqa: F401
     except ImportError as e:
         click.echo("✗ Dev server dependencies not installed. Install with:", err=True)
-        click.echo("  pip install svan2D[devserver]", err=True)
+        click.echo("  pip install svan2d[devserver]", err=True)
         click.echo(f"\nMissing: {e.name}", err=True)
         raise click.Abort()
 

@@ -37,7 +37,7 @@ def _get_vertex_loop_mapper_from_config() -> VertexLoopMapper:
     """Get hole matcher instance based on config settings
 
     Returns:
-        HoleMapper instance configured from svan2D.toml settings
+        HoleMapper instance configured from svan2d.toml settings
     """
     config = get_config()
     strategy = config.get(ConfigKey.MORPHING_VERTEX_LOOP_MAPPER, "clustering")

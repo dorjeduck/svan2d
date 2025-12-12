@@ -46,14 +46,10 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[(0, start_state), (0.1 * (i + 1), middle_state), (1, end_state)],
-            attribute_easing={"pos": easing.linear},
-        )
-        for i, (start_state, middle_state, end_state) in enumerate(
-            zip(start_states, middle_states, end_states)
-        )
+        VElement(renderer=renderer)
+        .attributes(easing={"pos": easing.linear})
+        .keystates(states, at=[0, 0.1 * (i + 1), 1])
+        for i, states in enumerate(zip(start_states, middle_states, end_states))
     ]
 
     # Add all elements to the scene

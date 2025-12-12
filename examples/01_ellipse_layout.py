@@ -37,7 +37,7 @@ def main():
     renderer = TextRenderer()
 
     # Create visual elements from states
-    # VElements in Svan2D are the combination of one renderer and one or more states
+    # static VElements in Svan2D are the combination of one renderer and one or more states
     elements = [
         VElement(
             renderer=renderer,

@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for svan2D tests"""
+"""Shared pytest fixtures for svan2d tests"""
 
 import pytest
 from pathlib import Path

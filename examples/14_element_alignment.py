@@ -65,10 +65,11 @@ def main():
     # Create visual elements
 
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[(i / 7, [a, b, c, d][i // 2]) for i in range(8)],
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
+        VElement(renderer=renderer)
+        .attributes(keystates={"fill_color": [START_COLOR, END_COLOR]})
+        .keystates(
+            [[a, b, c, d][i // 2] for i in range(8)],
+            at=[i / 7 for i in range(8)],
         )
         for a, b, c, d in zip(*all_states)
     ]

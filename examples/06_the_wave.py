@@ -49,11 +49,7 @@ def main():
     renderer = TextRenderer()
 
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=states,
-        )
-        for states in zip(*checkpoints)
+        VElement(renderer=renderer).keystates(states) for states in zip(*checkpoints)
     ]
 
     # Add all elements to the scene

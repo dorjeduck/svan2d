@@ -1,10 +1,12 @@
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
+from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
 from svan2d.core.logger import configure_logging
 from svan2d.velement import VElement
 from svan2d.velement.keystate import KeyState
+from svan2d.velement.transition import TransitionConfig
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from svan2d.core.color import Color
@@ -33,7 +35,8 @@ def main():
     x_shifts = [-100, -50, 50, 100]
 
     all_states = [
-        layout.line(states, cx=x_shift, spacing=20, rotation=90) for x_shift in x_shifts
+        layout.line(states, center=Point2D(x_shift, 0), spacing=20, rotation=90)
+        for x_shift in x_shifts
     ]
 
     # Create a text renderer for all numbers
@@ -41,22 +44,22 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[
-                (0, state_a),
-                KeyState(
-                    state=state_b,
-                    time=0.25,
-                    easing={"pos": easing.in_out_sine if i % 2 == 1 else easing.linear},
-                ),
-                (0.75, state_c),
-                (1, state_d),
-            ],
-            attribute_easing={"pos": easing.linear},
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
+        VElement(renderer=renderer)
+        .attributes(
+            easing={"pos": easing.linear},
+            keystates={"fill_color": [START_COLOR, END_COLOR]},
         )
-        for i, (state_a, state_b, state_c, state_d) in enumerate(zip(*all_states))
+        .keystate(state_a, at=0)
+        .keystate(state_b, at=0.25)
+        .transition(easing={"pos": easing.in_out_sine if i % 2 == 1 else easing.linear})
+        .keystate(state_c, at=0.75)
+        .keystate(state_d, at=1)
+        for i, (
+            state_a,
+            state_b,
+            state_c,
+            state_d,
+        ) in enumerate(zip(*all_states))
     ]
 
     # Add all elements to the scene

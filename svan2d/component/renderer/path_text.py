@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/components/path_text.py
+# svan2d/components/path_text.py
 # ============================================================================
 """PathText component - Text that follows any SVG path with morphing support"""
 
@@ -24,8 +24,8 @@ class PathTextRenderer(Renderer):
     - Custom positioning via offset/offsets
 
     Examples:
-        >>> from svan2D.paths import line, quadratic_curve
-        >>> from svan2D.components.path_text import PathTextState, PathTextRenderer
+        >>> from svan2d.paths import line, quadratic_curve
+        >>> from svan2d.components.path_text import PathTextState, PathTextRenderer
         >>>
         >>> # Static text on curved path
         >>> state = PathTextState(

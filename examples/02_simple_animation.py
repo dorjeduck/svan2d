@@ -21,8 +21,7 @@ def main():
     # These states will be the starting point of the animation
     start_states = [
         TextState(
-            pos=Point2D(0,0),  # centered (default but explicit for clarity)
-           
+            pos=Point2D(0, 0),  # centered (default but explicit for clarity)
             text=str(num),
             font_family="Courier New",
             font_size=20,
@@ -44,10 +43,7 @@ def main():
     # Create visual elements from states by
     # pairing each start state with its corresponding end state
     elements = [
-        VElement(
-            #renderer=renderer,
-            keystates=states,
-        )
+        VElement().renderer(renderer).keystates(states)
         for states in zip(start_states, end_states)
     ]
 
@@ -63,7 +59,7 @@ def main():
 
     # Export to mp4
     exporter.to_mp4(
-        filename="02_simple_animation",
+        filename="02c_simple_animation",
         total_frames=60,
         framerate=30,
         png_width_px=1024,

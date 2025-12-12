@@ -1,1 +1,1 @@
-"""Performance benchmarks for svan2D"""
+"""Performance benchmarks for svan2d"""

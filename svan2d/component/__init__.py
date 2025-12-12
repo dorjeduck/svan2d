@@ -1,4 +1,4 @@
-"""Component system for svan2D - renderers and states for various shapes and elements"""
+"""Component system for svan2d - renderers and states for various shapes and elements"""
 
 # Import submodules
 from . import effect

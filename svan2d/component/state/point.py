@@ -8,7 +8,7 @@ from svan2d.core.point2d import Point2D
 from .base_vertex import VertexState
 
 
-@renderer("svan2D.component.renderer.point.PointRenderer")
+@renderer("svan2d.component.renderer.point.PointRenderer")
 @dataclass(frozen=True)
 class PointState(VertexState):
     """A degenerate state representing a single point

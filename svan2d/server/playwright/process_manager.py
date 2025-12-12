@@ -34,16 +34,16 @@ class ProcessManager:
         """Initialize process manager
 
         Args:
-            pid_file: Path to PID file (default: ~/.svan2D/playwright-server.pid)
-            log_file: Path to log file (default: ~/.svan2D/playwright-server.log)
+            pid_file: Path to PID file (default: ~/.svan2d/playwright-server.pid)
+            log_file: Path to log file (default: ~/.svan2d/playwright-server.log)
             host: Server host (default: localhost)
             port: Server port (default: 4000)
         """
-        svan2D_dir = Path.home() / ".svan2D"
-        svan2D_dir.mkdir(exist_ok=True)
+        svan2d_dir = Path.home() / ".svan2d"
+        svan2d_dir.mkdir(exist_ok=True)
 
-        self.pid_file = pid_file or svan2D_dir / "playwright-server.pid"
-        self.log_file = log_file or svan2D_dir / "playwright-server.log"
+        self.pid_file = pid_file or svan2d_dir / "playwright-server.pid"
+        self.log_file = log_file or svan2d_dir / "playwright-server.log"
         self.host = host
         self.port = port
 
@@ -91,7 +91,7 @@ class ProcessManager:
                 python_exe,
                 "-m",
                 "uvicorn",
-                "svan2D.playwright_server.render_server:app",
+                "svan2d.playwright_server.render_server:app",
                 "--host",
                 self.host,
                 "--port",

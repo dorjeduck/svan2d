@@ -20,7 +20,7 @@ class SquareRingState(VertexState):
     """State class for square ring elements (square with square hole)
 
     The inner square can be rotated independently using inner_rotation.
-    Rotation follows svan2D convention: 0° = North (up), 90° = East (right)
+    Rotation follows svan2d convention: 0° = North (up), 90° = East (right)
     """
 
     inner_size: float = 50

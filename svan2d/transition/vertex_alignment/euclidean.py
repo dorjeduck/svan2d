@@ -18,6 +18,7 @@ from svan2d.core.point2d import Points2D, Point2D
 
 logger = logging.getLogger(__name__)
 
+
 class EuclideanAligner(VertexAligner):
     """Euclidean distance alignment for open ↔ closed shapes
 
@@ -67,7 +68,9 @@ class EuclideanAligner(VertexAligner):
                 f"got {type(norm).__name__}"
             )
 
-    def _resolve_distance_function(self, norm: Union[str, AlignmentNorm]) -> EuclideanDistanceFn:
+    def _resolve_distance_function(
+        self, norm: Union[str, AlignmentNorm]
+    ) -> EuclideanDistanceFn:
         """Convert norm spec to actual distance function"""
         # Normalize string to enum
         if isinstance(norm, str):
@@ -91,33 +94,23 @@ class EuclideanAligner(VertexAligner):
     def _l1_distance(self, verts1: Points2D, verts2: Points2D, offset: int) -> float:
         """Sum of Euclidean distances (L1 norm of L2 distances)"""
         n = len(verts1)
-        return sum(
-            math.sqrt(
-                (verts1[i].x - verts2[(i + offset) % n].x) ** 2
-                + (verts1[i].y - verts2[(i + offset) % n].y) ** 2
-            )
-            for i in range(n)
-        )
+        return sum(verts1[i].distance_to(verts2[(i + offset) % n]) for i in range(n))
 
     def _l2_distance(self, verts1: Points2D, verts2: Points2D, offset: int) -> float:
-        """Root mean square Euclidean distance (L2 norm of L2 distances)"""
+        """Euclidean norm (L2 norm) of per-vertex Euclidean distances"""
         n = len(verts1)
-        return math.sqrt(sum(
-            (verts1[i].x - verts2[(i + offset) % n].x) ** 2
-            + (verts1[i].y - verts2[(i + offset) % n].y) ** 2
-            for i in range(n)
-        ))
+        return math.sqrt(
+            sum(
+                (verts1[i].x - verts2[(i + offset) % n].x) ** 2
+                + (verts1[i].y - verts2[(i + offset) % n].y) ** 2
+                for i in range(n)
+            )
+        )
 
     def _linf_distance(self, verts1: Points2D, verts2: Points2D, offset: int) -> float:
         """Maximum Euclidean distance (L∞ norm of L2 distances, minimax)"""
         n = len(verts1)
-        return max(
-            math.sqrt(
-                (verts1[i].x - verts2[(i + offset) % n].x) ** 2
-                + (verts1[i].y - verts2[(i + offset) % n].y) ** 2
-            )
-            for i in range(n)
-        )
+        return max(verts1[i].distance_to(verts2[(i + offset) % n]) for i in range(n))
 
     def align(
         self,

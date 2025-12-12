@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/paths/svg_path.py
+# svan2d/paths/svg_path.py
 # ============================================================================
 """SVG Path Class with Morphing Support"""
 
@@ -478,7 +478,7 @@ class SVGPath:
 
         """
         if auto_normalize:
-            # NOTE: We are removing the external dependency on 'svan2D.paths.normalization'
+            # NOTE: We are removing the external dependency on 'svan2d.paths.normalization'
             # and using the local normalize_for_morphing() method.
             try:
                 norm_path1, norm_path2 = path1.normalize_for_morphing(path2)

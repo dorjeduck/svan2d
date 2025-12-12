@@ -4,15 +4,13 @@ import pytest
 from pathlib import Path
 from svan2d.core.point2d import Point2D
 from svan2d.velement import VElement
+from svan2d.velement.transition import TransitionConfig
 from svan2d.vscene import VScene
 from svan2d.component.state.circle import CircleState
 from svan2d.component.state.rectangle import RectangleState
 from svan2d.component.state.text import TextState
 from svan2d.transition.easing import linear, in_out
 from svan2d.core.color import Color
-from svan2d.animation.atomic.fade import fade
-from svan2d.animation.atomic.slide import slide
-from svan2d.animation.atomic.scale import scale
 
 
 @pytest.mark.integration
@@ -24,7 +22,7 @@ class TestBasicAnimations:
         state1 = CircleState(Point2D(), radius=50)
         state2 = CircleState(Point2D(100, 100), radius=50)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
 
         # Get frame at t=0.5
         frame_state = element.get_frame(0.5)
@@ -39,7 +37,7 @@ class TestBasicAnimations:
         state1 = CircleState(Point2D(), radius=50, fill_color=Color("#FF0000"))
         state2 = CircleState(Point2D(), radius=50, fill_color=Color("#0000FF"))
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
         frame_state = element.get_frame(0.5)
 
         # Color should be interpolated (purplish)
@@ -54,7 +52,7 @@ class TestBasicAnimations:
             CircleState(Point2D(100, 100), radius=100),
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         # Test various points
         frame_0 = element.get_frame(0.0)
@@ -72,7 +70,7 @@ class TestBasicAnimations:
         state1 = CircleState(Point2D(), radius=50, opacity=0.0)
         state2 = CircleState(Point2D(), radius=50, opacity=1.0)
 
-        element = VElement(keystates=[state1, state2])
+        element = VElement().keystates([state1, state2])
         frame_state = element.get_frame(0.5)
 
         assert frame_state.opacity == 0.5
@@ -117,8 +115,8 @@ class TestSceneComposition:
             RectangleState(pos=Point2D(-100, 0), width=50, height=50),
         ]
 
-        element1 = VElement(keystates=states1)
-        element2 = VElement(keystates=states2)
+        element1 = VElement().keystates(states1)
+        element2 = VElement().keystates(states2)
 
         scene = VScene(width=800, height=600)
         scene.add_element(element1)
@@ -158,7 +156,7 @@ class TestFieldKeystates:
             ]
         }
 
-        element = VElement(keystates=states, attribute_keystates=attribute_keystates)
+        element = VElement().keystates(states).attributes(keystates=attribute_keystates)
 
         # Color should interpolate according to field keystates
         frame_50 = element.get_frame(0.5)
@@ -181,7 +179,7 @@ class TestComplexAnimations:
             CircleState(Point2D(), radius=50),
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         # Should smoothly interpolate radius
         frame_25 = element.get_frame(0.25)
@@ -199,7 +197,7 @@ class TestComplexAnimations:
             RectangleState(Point2D(), width=100, height=50, rotation=10),
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         # Should take shortest path through 0/360
         frame_50 = element.get_frame(0.5)
@@ -215,7 +213,7 @@ class TestComplexAnimations:
             ),
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
         frame_50 = element.get_frame(0.5)
 
         # All attributes should interpolate
@@ -233,17 +231,15 @@ class TestSceneExport:
 
     def test_easing_override(self):
         """Test per-field easing override"""
-        from svan2d.velement.keystate import KeyState
-
         state1 = CircleState(Point2D(), radius=50)
         state2 = CircleState(pos=Point2D(100, 0), radius=50)
 
-        keystates = [
-            KeyState(state=state1, time=0.0),
-            KeyState(state=state2, time=1.0, easing={"pos": in_out}),
-        ]
-
-        element = VElement(keystates=keystates)
+        element = (
+            VElement()
+            .keystate(state1, at=0.0)
+            .transition(easing={"pos": in_out})
+            .keystate(state2, at=1.0)
+        )
 
         # With in_out easing, movement should be slower at start/end
         frame_25 = element.get_frame(0.25)
@@ -262,11 +258,11 @@ class TestEdgeCases:
     def test_very_short_animation_segment(self):
         """Test animation with very short time segment"""
         states = [
-            (0.499, CircleState(Point2D(), radius=50)),
-            (0.501, CircleState(Point2D(100, 100), radius=50)),
+            CircleState(Point2D(), radius=50),
+            CircleState(Point2D(100, 100), radius=50),
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states, at=[0.499, 0.501])
 
         # Should handle very short segment
         frame = element.get_frame(0.5)
@@ -278,7 +274,7 @@ class TestEdgeCases:
             CircleState(pos=Point2D(i * 10, i * 10), radius=50) for i in range(20)
         ]
 
-        element = VElement(keystates=states)
+        element = VElement().keystates(states)
 
         # Should handle many keystates
         frame_50 = element.get_frame(0.5)

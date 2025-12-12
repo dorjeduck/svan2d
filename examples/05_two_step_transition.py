@@ -38,10 +38,7 @@ def main():
     # Create visual elements from states
     # VElements in Svan2D are the combination of one renderer and one or more states
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=states,
-        )
+        VElement(renderer=renderer).keystates(states)
         for states in zip(start_states, middle_states, end_states)
     ]
 
@@ -57,7 +54,7 @@ def main():
 
     # Export to MP4 file
     exporter.to_mp4(
-        filename="05_two_step_transition.mp4",
+        filename="05b_two_step_transition.mp4",
         total_frames=90,
         framerate=30,
         png_width_px=1024,

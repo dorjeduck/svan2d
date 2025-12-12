@@ -45,12 +45,12 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=states,
-            attribute_easing={"pos": easing.linear},
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
+        VElement(renderer=renderer)
+        .attributes(
+            easing={"pos": easing.linear},
+            keystates={"fill_color": [START_COLOR, END_COLOR]},
         )
+        .keystates(states)
         for states in zip(*all_states)
     ]
 

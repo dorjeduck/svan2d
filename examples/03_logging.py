@@ -17,13 +17,13 @@ if __name__ == "__main__":
     print("(nothing logged above)")
 
     print("\n=== Test 3: File logging only ===")
-    configure_logging(level="DEBUG", log_file="test_svan2D.log", console=False)
+    configure_logging(level="DEBUG", log_file="test_svan2d.log", console=False)
     logger.debug("This goes to file only")
     logger.info("This also goes to file only")
-    print("(check test_svan2D.log)")
+    print("(check test_svan2d.log)")
 
     print("\n=== Test 4: Both console and file ===")
-    configure_logging(level="INFO", log_file="test_svan2D2.log", console=True)
+    configure_logging(level="INFO", log_file="test_svan2d2.log", console=True)
     logger.info("This goes to both console and file")
     logger.debug("This goes to file only (DEBUG level)")
 

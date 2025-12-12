@@ -319,7 +319,7 @@ def main():
     args = parser.parse_args()
 
     # Create temporary directory for outputs
-    temp_dir = Path(tempfile.mkdtemp(prefix="svan2D_benchmark_"))
+    temp_dir = Path(tempfile.mkdtemp(prefix="svan2d_benchmark_"))
     print(f"Output directory: {temp_dir}")
 
     # List of all converters to test

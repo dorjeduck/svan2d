@@ -47,13 +47,8 @@ def main():
     # keystate fine tuning, 4 times faster between start and middle than middle to end
 
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[(0, start_state), (0.2, middle_state), (1, end_state)],
-        )
-        for start_state, middle_state, end_state in zip(
-            start_states, middle_states, end_states
-        )
+        VElement().keystates(states=states, at=[0.0, 0.2, 1])
+        for states in zip(start_states, middle_states, end_states)
     ]
 
     # Add all elements to the scene

@@ -1,1 +1,1 @@
-"""Unit tests for svan2D components"""
+"""Unit tests for svan2d components"""

@@ -108,11 +108,11 @@ Icon?
 
 # ---- Custom local paths ----
 # Add any of your private development paths below if needed
-# /Users/dorjeduck/dev/sites/lunardelight.com/var/pylibs/svan2D/tmp/
+# /Users/dorjeduck/dev/sites/lunardelight.com/var/pylibs/svan2d/tmp/
 
 lab/
 output/
-svan2D/paths/_internal
+svan2d/paths/_internal
 benchmarks/
 park/
 .claude
@@ -122,3 +122,5 @@ CLAUDE.md
 ARCHITECTURAL_ANALYSIS.md
 svan2d.toml
 docs/*
+examples/dd/*
+reference/*

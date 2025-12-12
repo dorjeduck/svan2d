@@ -37,11 +37,8 @@ def main():
     # Create visual elements from states
     # VElements in Svan2D are the combination of one renderer and one or more states
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=states,
-        )
-        for states in zip(start_states, end_states)
+        VElement(renderer=renderer).keystate(s1, at=0.0).keystate(s2, at=1.0)
+        for s1, s2 in zip(start_states, end_states)
     ]
 
     # Add all elements to the scene

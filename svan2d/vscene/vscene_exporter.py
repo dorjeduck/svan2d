@@ -419,7 +419,7 @@ class VSceneExporter:
         # Setup frame directory
         if cleanup_intermediate_files:
             # Use temporary directory
-            temp_context = tempfile.TemporaryDirectory(prefix="svan2D_gif_frames_")
+            temp_context = tempfile.TemporaryDirectory(prefix="svan2d_gif_frames_")
             frames_dir = Path(temp_context.name)
         else:
             # Use persistent directory
@@ -822,7 +822,7 @@ class VSceneExporter:
         # Setup frame directory
         if cleanup_intermediate_files:
             # Use temporary directory
-            temp_context = tempfile.TemporaryDirectory(prefix="svan2D_frames_")
+            temp_context = tempfile.TemporaryDirectory(prefix="svan2d_frames_")
             frames_dir = Path(temp_context.name)
         else:
             # Use persistent directory

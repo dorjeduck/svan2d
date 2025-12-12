@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/core/color.py
+# svan2d/core/color.py
 # ============================================================================
 """Immutable Color class with RGBA support, format conversions and interpolation"""
 

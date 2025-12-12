@@ -59,7 +59,7 @@ class HungarianMapper(VertexLoopMapper):
             raise ImportError(
                 "Hungarian mapper requires scipy. Install it with:\n"
                 "  pip install scipy\n\n"
-                "Or use a different mapper in svan2D.toml:\n"
+                "Or use a different mapper in svan2d.toml:\n"
                 "  [morphing]\n"
                 '  vertex_loop_mapper = "clustering"  # or "greedy"'
             )

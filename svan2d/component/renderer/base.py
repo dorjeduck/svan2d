@@ -1,4 +1,4 @@
-"""Abstract base classes for renderers and states in the svan2D framework"""
+"""Abstract base classes for renderers and states in the svan2d framework"""
 
 from __future__ import annotations
 from abc import ABC, abstractmethod

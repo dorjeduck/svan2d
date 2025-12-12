@@ -78,7 +78,7 @@ Generates console output + `BENCHMARK_RESULTS.md` with detailed metrics.
 | **CairoSVG** | Fastest | Good (font limits) | Moderate | `pip install cairosvg` |
 | **Inkscape** | Moderate | Good | Low | Download from inkscape.org |
 | **Playwright** | Slow | Best | High | `pip install playwright` |
-| **Playwright HTTP** | Slow | Best | Very Low | `pip install svan2D[playwright-server]` |
+| **Playwright HTTP** | Slow | Best | Very Low | `pip install svan2d[playwright-server]` |
 
 **Key insight:** Playwright HTTP has same wall-clock time as local Playwright, but offloads CPU/memory to server process (85-95% reduction in your process).
 
@@ -94,4 +94,4 @@ Generates console output + `BENCHMARK_RESULTS.md` with detailed metrics.
 
 - Benchmark auto-skips converters that aren't installed
 - Edit `create_test_scene()` in `run_benchmark.py` to test with custom graphics
-- Playwright HTTP requires server running: `svan2D playwright-server start`
+- Playwright HTTP requires server running: `svan2d playwright-server start`

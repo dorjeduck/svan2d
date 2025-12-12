@@ -23,7 +23,7 @@ class FloodFilter(Filter):
         flood_opacity: Opacity of flood (0-1)
 
     Example:
-        >>> from svan2D.core import Color
+        >>> from svan2d.core import Color
         >>> flood = FloodFilter(flood_color=Color("#ff0000"), flood_opacity=0.5)
     """
 

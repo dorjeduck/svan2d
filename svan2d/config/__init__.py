@@ -1,20 +1,20 @@
 """Svan2D configuration system
 
-This module provides a global configuration system for svan2D, allowing users
+This module provides a global configuration system for svan2d, allowing users
 to customize default values via TOML configuration files.
 
 Usage:
     # Get current configuration
-    from svan2D.config import get_config, ConfigKey
+    from svan2d.config import get_config, ConfigKey
     config = get_config()
     width = config.get(ConfigKey.SCENE_WIDTH)
 
     # Load custom configuration
-    from svan2D.config import load_config
+    from svan2d.config import load_config
     load_config('my_config.toml')
 
     # Reset to system defaults
-    from svan2D.config import reset_config
+    from svan2d.config import reset_config
     reset_config()
 """
 
@@ -36,7 +36,7 @@ def get_config() -> Svan2DConfig:
         Global Svan2DConfig instance
 
     Example:
-        >>> from svan2D.config import get_config, ConfigKey
+        >>> from svan2d.config import get_config, ConfigKey
         >>> config = get_config()
         >>> width = config.get(ConfigKey.SCENE_WIDTH)
         >>> width
@@ -55,15 +55,15 @@ def load_config(path: Optional[Path | str] = None):
     """Load configuration from file
 
     If path is None, searches for config in standard locations:
-    - ./svan2D.toml
-    - ~/.config/svan2D/config.toml
-    - ~/.svan2D.toml
+    - ./svan2d.toml
+    - ~/.config/svan2d/config.toml
+    - ~/.svan2d.toml
 
     Args:
         path: Optional path to configuration file
 
     Example:
-        >>> from svan2D.config import load_config
+        >>> from svan2d.config import load_config
         >>> load_config('my_project_config.toml')
     """
     global _global_config
@@ -74,23 +74,23 @@ def reset_config():
     """Reset configuration to system defaults
 
     Example:
-        >>> from svan2D.config import reset_config
+        >>> from svan2d.config import reset_config
         >>> reset_config()
     """
     global _global_config
     _global_config = Svan2DConfig.load_defaults()
 
 
-def create_config_template(path: Path | str = "svan2D.toml"):
+def create_config_template(path: Path | str = "svan2d.toml"):
     """Create a template configuration file
 
     Copies the system defaults to a new file that users can customize.
 
     Args:
-        path: Path where to create the template (default: "svan2D.toml")
+        path: Path where to create the template (default: "svan2d.toml")
 
     Example:
-        >>> from svan2D.config import create_config_template
+        >>> from svan2d.config import create_config_template
         >>> create_config_template("my_config.toml")
     """
     import shutil

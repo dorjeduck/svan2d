@@ -9,7 +9,7 @@ from svan2d.cli.devserver_commands import serve
 
 
 @click.group()
-@click.version_option(package_name="svan2D")
+@click.version_option(package_name="svan2d")
 def cli():
     """Svan2D - Programmatic SVG graphics and animation library"""
     pass

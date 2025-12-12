@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/paths/morphing.py
+# svan2d/paths/morphing.py
 # ============================================================================
 """
 Polymorph-style path morphing implementation

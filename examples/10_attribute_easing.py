@@ -54,14 +54,10 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[start_state, end_state],
-            attribute_easing={"pos": easing},
-        )
-        for start_state, end_state, easing in zip(
-            start_states, end_states, easing_overrides
-        )
+        VElement(renderer=renderer)
+        .attributes(easing={"pos": easing})
+        .keystates([s1, s2])
+        for s1, s2, easing in zip(start_states, end_states, easing_overrides)
     ]
 
     # Add all elements to the scene
@@ -76,7 +72,7 @@ def main():
 
     # Export to MP4 file
     exporter.to_mp4(
-        filename="10_instance_easing",
+        filename="10_attribute_easing_easing",
         total_frames=90,
         framerate=30,
         png_width_px=1024,

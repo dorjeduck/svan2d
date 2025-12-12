@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="128" height="128" viewBox="-64 -64 128 128">
+
+  <!-- Define circular clip path -->
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="0" cy="0" r="64"/>
+    </clipPath>
+  </defs>
+
+<g clip-path="url(#circleClip)">
+    <!-- Optional: circular background (transparent outside) -->
+    <circle cx="0" cy="0" r="64" fill="#000017"/>
+    
+    <text x="0" y="0" font-size="40" font-family="Comfortaa" font-weight="normal" text-anchor="middle" letter-spacing="0" dominant-baseline="central" fill="rgb(253,190,2)" fill-opacity="1" transform="translate(-27.0,0)" opacity="1.0">S</text>
+    <text x="0" y="0" font-size="40" font-family="Comfortaa" font-weight="normal" text-anchor="middle" letter-spacing="0" dominant-baseline="central" fill="rgb(253,190,2)" fill-opacity="1" transform="translate(0,-20.0)" opacity="1.0">V</text>
+    <text x="0" y="0" font-size="40" font-family="Comfortaa" font-weight="normal" text-anchor="middle" letter-spacing="0" dominant-baseline="central" fill="rgb(253,190,2)" fill-opacity="1" transform="translate(0,20.0)" opacity="1.0">A</text>
+    <text x="0" y="0" font-size="40" font-family="Comfortaa" font-weight="normal" text-anchor="middle" letter-spacing="0" dominant-baseline="central" fill="rgb(253,190,2)" fill-opacity="1" transform="translate(29.0,0)" opacity="1.0">N</text>
+
+  </g>
+</svg>

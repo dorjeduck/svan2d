@@ -18,8 +18,8 @@ The project is currently in alpha and undergoes frequent breaking changes. You�
 Clone the repository and install in editable mode:
 
 ```bash
-git clone https://github.com/yourusername/svan2D.git
-cd svan2D
+git clone https://github.com/yourusername/svan2d.git
+cd svan2d
 pip install -e .
 ```
 
@@ -46,9 +46,9 @@ Svan2D offers multiple ways to convert SVG graphics to PNG and PDF formats. Each
   - Most accurate rendering but slowest performance and largest installation size.
 
 * **ConverterType.PLAYWRIGHT_HTTP** (Recommended for high-quality batch rendering)
-  - Install: `pip install svan2D[playwright-server]` then `playwright install chromium`
+  - Install: `pip install svan2d[playwright-server]` then `playwright install chromium`
   - Highest quality (same as PLAYWRIGHT), runs as background service
-  - Start server: `svan2D playwright-server start`
+  - Start server: `svan2d playwright-server start`
   - Best for: batch rendering, long-running processes, production workflows
   - See **[PLAYWRIGHT_SERVER.md](docs/PLAYWRIGHT_SERVER.md)** for complete setup guide and features
 
@@ -127,16 +127,7 @@ Why the complexity? While this process may seem overly complicated for rendering
 
 ### 🖌️ Custom renderer
 
-Every `State` in Svan2D is associated with a default renderer and in regular use cases, you can omit specifying the renderer when creating `VElements`. In the previous example, the following implementation would have been sufficient, as `TextRenderer` is the default renderer for `TextState`:
-
-```python
-elements = [
-    VElement(state=state)
-    for state in states_layout
-]
-``` 
-
-Nevertheless custom renderer for states open a wide range of possibilites. See the following code snippet for a basic custom renderer implementation which draws two circles for one circle state. 
+Every `State` in Svan2D is associated with a default renderer and in regular use cases, you can omit specifying the renderer when creating `VElements`. Nevertheless custom renderer for states open a wide range of possibilites. See the following code snippet for a basic custom renderer implementation which draws two circles for one circle state. 
 
 ```python
 class CustomCircleRenderer(CircleRenderer):
@@ -146,11 +137,20 @@ class CustomCircleRenderer(CircleRenderer):
         self, state: "CircleState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Group:
 
-        s1 = replace(state, x=state.x - state.radius)
+        s1 = replace(
+            state,
+            pos=Point2D(
+                state.pos.x - state.radius,
+                state.pos.y
+            )
+        )
 
         s2 = replace(
             state,
-            x=state.x + state.radius,
+            pos=Point2D(
+                state.pos.x + state.radius, 
+                state.pos.y
+            ),
             opacity=state.opacity / 2,
         )
 
@@ -194,7 +194,7 @@ scene = VScene(width=256, height=192, background=Color("#000017"))
 # These states will be the starting point of the animation
 start_states = [
     TextState(
-        center = Point2D(),
+        pos=Point2D(0,0),  # (default but explicit for clarity)
         text=str(num),
         font_family="Courier New",
         font_size=20,
@@ -216,9 +216,8 @@ renderer = TextRenderer()
 # Create visual elements from states by
 # pairing each start state with its corresponding end state
 elements = [
-    VElement(
-        renderer=renderer,
-        keystates=states,
+    VElement(renderer=renderer)
+        .keystates(states)
     )
     for states in zip(start_states, end_states)
 ]
@@ -250,13 +249,13 @@ exporter.to_mp4(
 
 While this example uses a simple two-state interpolation, Svan2D's animation engine supports fine grained timing control:
 
-* **Multi-keystate sequencing** — Control timing with explicit frame time values for detailed animation sequences. See [SVG Circus - timed keystates](https://svan2D.wectar.com/circus/timed-keystates/)
+* **Multi-keystate sequencing** — Control timing with explicit frame time values for detailed animation sequences. See [SVG Circus - timed keystates](https://svan2d.org/circus/timed-keystates/)
 
-* **Per-attribute easing** — Apply different easing functions (ease-in, ease-out, bezier curves etc) to individual attributes for nuanced motion control. See [SVG Circus - Easing Variety](https://svan2D.wectar.com/circus/easing-variety/)
+* **Per-attribute easing** — Apply different easing functions (ease-in, ease-out, bezier curves etc) to individual attributes for nuanced motion control. See [SVG Circus - Easing Variety](https://svan2d.org/circus/easing-variety/)
 
-* **Segment Easing** - Customize easing between keystates. See [SVG Circus - Segment Easing](https://svan2D.wectar.com/circus/segment-easing/)
+* **Segment Easing** - Customize easing between keystates. See [SVG Circus - Segment Easing](https://svan2d.org/circus/segment-easing/)
 
-* **Attribute Keystates** - Apply attribute transitions beyond the main keystates - See [SVG Circus - Attribute Keystates](https://svan2D.wectar.com/circus/attribute-keystates/)
+* **Attribute Keystates** - Apply attribute transitions beyond the main keystates - See [SVG Circus - Attribute Keystates](https://svan2d.org/circus/attribute-keystates/)
 
 ## 📓 Jupyter Notebook Support
 
@@ -270,13 +269,13 @@ For rapid animation development outside Jupyter, Svan2D includes a development s
 
 ```bash
 # Install dev server dependencies
-pip install svan2D[devserver]
+pip install svan2d[devserver]
 
 # Start server (defaults: 20 frames @ 10 FPS)
-svan2D serve my_animation.py
+svan2d serve my_animation.py
 
 # Smooth animation (60 frames @ 30 FPS)
-svan2D serve my_animation.py --frames 60 --fps 30
+svan2d serve my_animation.py --frames 60 --fps 30
 ```
 
 The server watches your animation file for changes and automatically reloads the preview in your browser. Syntax and runtime errors are displayed gracefully without crashing the server.
@@ -292,14 +291,14 @@ See **[DEVSERVER.md](docs/DEVSERVER.md)** for complete documentation, CLI option
 
 ## ⚙️ Configuration
 
-Svan2D supports TOML-based configuration for customizing default values. Create a `svan2D.toml` file in your project directory to set scene dimensions, colors, logging levels, and more. For a complete documentation, see **[CONFIG.md](docs/CONFIG.md)**.
+Svan2D supports TOML-based configuration for customizing default values. Create a `svan2d.toml` file in your project directory to set scene dimensions, colors, logging levels, and more. For a complete documentation, see **[CONFIG.md](docs/CONFIG.md)**.
 
 ## SVG Circus
 
 Rather than writing full-fledged documentation for Svan2D at this early stage of development, we’re focusing on building an evolving collection of examples. SVG Circus is meant to highlight Svan2D’s capabilities and to give users a hands-on way to explore what it can do — complete with the Python source code used to generate and animate each SVG.
-See [https://svan2D.wectar.com/](https://svan2D.wectar.com/).
+See [https://svan2d.org/](https://svan2d.org/).
 
-<a href="https://svan2D.wectar.com/">
+<a href="https://svan2d.org/">
 <img src="docs/images/svg_circus.png"
      alt="SVG Circus"
      style="width: 50%; margin: 10px auto;" />

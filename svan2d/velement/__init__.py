@@ -3,7 +3,9 @@
 from .base_velement import BaseVElement
 from .velement import VElement
 from .velement_group import VElementGroup, VElementGroupState
-from .keystate import KeyState, Morphing
+from .keystate import KeyState
+from .morphing import Morphing
+from .transition import TransitionConfig
 
 
 __all__ = [
@@ -13,4 +15,5 @@ __all__ = [
     "VElementGroupState",
     "KeyState",
     "Morphing",
+    "TransitionConfig",
 ]

@@ -133,7 +133,7 @@ def file_path_to_module_name(file_path: Path) -> str:
     # Use absolute path to ensure uniqueness
     abs_path = file_path.resolve()
     # Replace path separators with dots, remove .py extension
-    module_name = f"svan2D_devserver_{abs_path.stem}_{abs(hash(str(abs_path)))}"
+    module_name = f"svan2d_devserver_{abs_path.stem}_{abs(hash(str(abs_path)))}"
     return module_name
 
 
@@ -199,7 +199,7 @@ def safe_reload_module(file_path: Path) -> Tuple[Optional[VScene], Optional[str]
                 "  def create_scene():\n"
                 "      return VScene(...)\n\n"
                 "  # Decorator (for multiple scenes):\n"
-                "  from svan2D.server.dev import animation\n"
+                "  from svan2d.server.dev import animation\n"
                 "  @animation\n"
                 "  def my_scene():\n"
                 "      return VScene(...)"

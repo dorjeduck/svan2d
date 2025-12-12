@@ -131,7 +131,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         if not self.auto_start:
             raise RuntimeError(
                 f"Playwright render server is not running at {self.host}:{self.port}. "
-                f"Start it with 'svan2D playwright-server start' or enable auto_start in config."
+                f"Start it with 'svan2d playwright-server start' or enable auto_start in config."
             )
 
         # Attempt auto-start
@@ -199,7 +199,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Cannot connect to Playwright server at {self.base_url}: {e}")
             logger.error(
-                "Ensure the server is running with 'svan2D playwright-server start'"
+                "Ensure the server is running with 'svan2d playwright-server start'"
             )
             return False
         except Exception as e:

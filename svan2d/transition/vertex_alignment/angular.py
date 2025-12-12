@@ -20,6 +20,7 @@ from .base import VertexAligner, AlignmentContext
 from .norm import AlignmentNorm, AngularDistanceFn, NormSpec
 from svan2d.core.point2d import Points2D, Point2D
 
+
 class AngularAligner(VertexAligner):
     """Angular alignment based on centroid positions
 
@@ -68,7 +69,9 @@ class AngularAligner(VertexAligner):
                 f"got {type(norm).__name__}"
             )
 
-    def _resolve_distance_function(self, norm: Union[str, AlignmentNorm]) -> AngularDistanceFn:
+    def _resolve_distance_function(
+        self, norm: Union[str, AlignmentNorm]
+    ) -> AngularDistanceFn:
         """Convert norm spec to actual distance function"""
         # Normalize string to enum
         if isinstance(norm, str):
@@ -89,28 +92,34 @@ class AngularAligner(VertexAligner):
         else:
             raise ValueError(f"Unknown norm: {norm}")
 
-    def _l1_distance(self, angles1: List[float], angles2: List[float], offset: int) -> float:
+    def _l1_distance(
+        self, angles1: List[float], angles2: List[float], offset: int
+    ) -> float:
         """Sum of absolute angular differences (L1 norm)"""
         n = len(angles1)
         return sum(
-            angle_distance(angles1[i], angles2[(i + offset) % n])
-            for i in range(n)
+            angle_distance(angles1[i], angles2[(i + offset) % n]) for i in range(n)
         )
 
-    def _l2_distance(self, angles1: List[float], angles2: List[float], offset: int) -> float:
+    def _l2_distance(
+        self, angles1: List[float], angles2: List[float], offset: int
+    ) -> float:
         """Root mean square angular distance (L2 norm)"""
         n = len(angles1)
-        return math.sqrt(sum(
-            angle_distance(angles1[i], angles2[(i + offset) % n]) ** 2
-            for i in range(n)
-        ))
+        return math.sqrt(
+            sum(
+                angle_distance(angles1[i], angles2[(i + offset) % n]) ** 2
+                for i in range(n)
+            )
+        )
 
-    def _linf_distance(self, angles1: List[float], angles2: List[float], offset: int) -> float:
+    def _linf_distance(
+        self, angles1: List[float], angles2: List[float], offset: int
+    ) -> float:
         """Maximum angular difference (L∞ norm, minimax)"""
         n = len(angles1)
         return max(
-            angle_distance(angles1[i], angles2[(i + offset) % n])
-            for i in range(n)
+            angle_distance(angles1[i], angles2[(i + offset) % n]) for i in range(n)
         )
 
     def align(
@@ -135,25 +144,19 @@ class AngularAligner(VertexAligner):
         # Create working copies for rotation (only if needed)
         if rot1 != 0 or rot2 != 0:
             # Make copies and apply rotations in-place
-            verts1_work = [Point2D(v.x, v.y) for v in verts1]
-            verts2_work = [Point2D(v.x, v.y) for v in verts2]
 
             if rot1 != 0:
-                verts1_work = rotate_vertices(verts1_work, rot1)
+                verts1 = rotate_vertices(verts1, rot1)
             if rot2 != 0:
-                verts2_work = rotate_vertices(verts2_work, rot2)
-        else:
-            # No rotation needed, use original lists
-            verts1_work = verts1
-            verts2_work = verts2
+                verts2 = rotate_vertices(verts2, rot2)
 
         # Calculate centroids
-        c1 = centroid(verts1_work)
-        c2 = centroid(verts2_work)
+        c1 = centroid(verts1)
+        c2 = centroid(verts2)
 
         # Get angular positions from centroids
-        angles1 = [angle_from_centroid(v, c1) for v in verts1_work]
-        angles2 = [angle_from_centroid(v, c2) for v in verts2_work]
+        angles1 = [angle_from_centroid(v, c1) for v in verts1]
+        angles2 = [angle_from_centroid(v, c2) for v in verts2]
 
         # Find rotation offset that minimizes total angular distance (using specified norm)
         n = len(verts2)
@@ -172,7 +175,6 @@ class AngularAligner(VertexAligner):
         if best_offset == 0:
             verts2_aligned = verts2
         else:
-            verts2_aligned = list(verts2)  # Shallow copy
-            verts2_aligned = rotate_list(verts2_aligned, best_offset)
+            verts2_aligned = rotate_list(verts2, best_offset)
 
         return verts1, verts2_aligned

@@ -24,6 +24,7 @@ from svan2d.velement.keystate_parser import (
 )
 from svan2d.velement.keystate import KeyState, KeyStates
 from svan2d.transition.easing_resolver import EasingResolver
+from svan2d.transition.path_resolver import PathResolver
 from svan2d.transition.interpolation_engine import InterpolationEngine
 
 
@@ -50,6 +51,7 @@ class BaseVElement(ABC):
         keystates: Optional[Iterable[FlexibleKeystateInput]] = None,
         attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None,
         attribute_keystates: Optional[Dict[str, List[AttributeKeyframeTuple]]] = None,
+        _defer_init: bool = False,
     ) -> None:
         """
         Initialize keystate animation system.
@@ -59,7 +61,12 @@ class BaseVElement(ABC):
             keystates: List of states with optional timing/easing
             attribute_easing: Instance-level easing overrides for attributes
             attribute_keystates: Custom timelines for individual attributes
+            _defer_init: Internal flag for deferred initialization (used by VElement builder)
         """
+        # Allow deferred initialization for builder pattern
+        if _defer_init:
+            return
+
         # Input validation for mutual exclusivity
         provided_inputs = [arg for arg in [state, keystates] if arg is not None]
         count = len(provided_inputs)
@@ -76,7 +83,10 @@ class BaseVElement(ABC):
 
         # Initialize helper systems
         self.easing_resolver = EasingResolver(attribute_easing)
-        self.interpolation_engine = InterpolationEngine(self.easing_resolver)
+        self.path_resolver = PathResolver()
+        self.interpolation_engine = InterpolationEngine(
+            self.easing_resolver, self.path_resolver
+        )
 
         # Store field keystates (will be parsed on first use)
         self.attribute_keystates_raw = attribute_keystates or {}
@@ -163,7 +173,11 @@ class BaseVElement(ABC):
         # Extract morphing config (prefer ks2's config)
         from svan2d.velement.keystate import Morphing
 
-        morphing_config = ks2.morphing or ks1.morphing
+        morphing_config = (
+            ks2.transition_config.morphing
+            if ks2.transition_config
+            else ks1.transition_config.morphing if ks1.transition_config else None
+        )
 
         if isinstance(morphing_config, Morphing):
             morphing_dict = morphing_config.to_dict()
@@ -221,10 +235,14 @@ class BaseVElement(ABC):
 
         # Update keystates with aligned states (cached for all frames)
         self.keystates[i] = KeyState(
-            state=state1, time=t1, easing=ks1.easing, morphing=ks1.morphing
+            state=state1,
+            time=t1,
+            transition_config=ks1.transition_config,
         )
         self.keystates[i + 1] = KeyState(
-            state=state2, time=t2, easing=ks2.easing, morphing=ks2.morphing
+            state=state2,
+            time=t2,
+            transition_config=ks2.transition_config,
         )
 
     def _get_dynamically_aligned_states(
@@ -360,9 +378,14 @@ class BaseVElement(ABC):
                     state1,
                     state2,
                     segment_t,
-                    segment_easing_overrides=ks1.easing,
+                    segment_easing_overrides=(
+                        ks1.transition_config.easing if ks1.transition_config else None
+                    ),
                     attribute_keystates_fields=set(self.attribute_keystates.keys()),
                     vertex_buffer=vertex_buffer,
+                    segment_path_config=(
+                        ks1.transition_config.path if ks1.transition_config else None
+                    ),
                 )
 
                 return (

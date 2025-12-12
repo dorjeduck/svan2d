@@ -26,7 +26,7 @@ class VScene:
 
     Configuration:
         Default values for width, height, and background can be customized via
-        svan2D.toml configuration file. See svan2D.config documentation.
+        svan2d.toml configuration file. See svan2d.config documentation.
     """
 
     def __init__(

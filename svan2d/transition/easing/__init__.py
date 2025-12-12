@@ -1,3 +1,6 @@
+# Type imports for easing2D
+from typing import Callable, Tuple
+
 # Individual easing functions
 from .none import none
 from .step import step
@@ -34,6 +37,38 @@ from .in_bounce import in_bounce
 from .out_bounce import out_bounce
 from .in_out_bounce import in_out_bounce
 
+def easing2D(
+    easing_x: Callable[[float], float],
+    easing_y: Callable[[float], float],
+) -> Callable[[float], Tuple[float, float]]:
+    """Create a 2D easing function with independent easing per dimension.
+
+    Returns an easing function that applies different easing functions to x and y,
+    enabling independent control over horizontal and vertical motion timing.
+
+    Args:
+        easing_x: Easing function for x dimension
+        easing_y: Easing function for y dimension
+
+    Returns:
+        Callable that takes t (0.0-1.0) and returns (eased_tx, eased_ty)
+
+    Example:
+        >>> from svan2d.transition.easing import in_quad, out_bounce, easing2D
+        >>> # Fast horizontal, bouncy vertical
+        >>> pos_easing = easing2D(in_quad, out_bounce)
+        >>> element = VElement(
+        ...     keystates=[...],
+        ...     attribute_easing={"pos": pos_easing}
+        ... )
+    """
+
+    def combined(t: float) -> Tuple[float, float]:
+        return (easing_x(t), easing_y(t))
+
+    return combined
+
+
 __all__ = [
     "none",
     "step",
@@ -69,4 +104,5 @@ __all__ = [
     "in_bounce",
     "out_bounce",
     "in_out_bounce",
+    "easing2D",
 ]

@@ -9,6 +9,7 @@ from svan2d.velement import VElement
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
 configure_logging(level="INFO")
 
@@ -34,7 +35,8 @@ def main():
     x_shifts = [-100, -40, 40, 100]
 
     all_states = [
-        layout.line(states, cx=x_shift, spacing=20, rotation=90) for x_shift in x_shifts
+        layout.line(states, center=Point2D(x_shift, 0), spacing=20, rotation=90)
+        for x_shift in x_shifts
     ]
 
     # Create a text renderer for all numbers
@@ -42,18 +44,13 @@ def main():
 
     # overriding the default easing for the x field for each element
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[
-                (0, state_a),
-                (0.25, state_b),
-                (0.5, state_c if i % 2 else state_b),
-                (0.75, state_c),
-                (1, state_d),
-            ],
-            attribute_easing={"pos": easing.linear},
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
-        )
+        VElement(renderer=renderer)
+        .attributes(keystates={"fill_color": [START_COLOR, END_COLOR]})
+        .keystate(state_a, at=0)
+        .keystate(state_b, at=0.25)
+        .keystate(state_c if i % 2 else state_b, at=0.5)
+        .keystate(state_c, at=0.75)
+        .keystate(state_d, at=1)
         for i, (state_a, state_b, state_c, state_d) in enumerate(zip(*all_states))
     ]
 

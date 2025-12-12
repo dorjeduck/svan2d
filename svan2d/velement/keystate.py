@@ -9,53 +9,8 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Callable, Any, Union
 
 from svan2d.component import State
-
-
-@dataclass
-class Morphing:
-    """Morphing strategy configuration for vertex-based shape transitions
-
-    Specifies strategies for mapping and aligning vertices during shape morphing.
-    Used in KeyState to override default morphing behavior for specific transitions.
-
-    Args:
-        vertex_loop_mapper: Strategy for mapping vertex loops between states (SimpleMapper,
-                    GreedyNearestMapper, DiscreteMapper, ClusteringMapper, etc.)
-        vertex_aligner: Strategy for aligning vertices within matched shapes
-                       (AngularAligner, EuclideanAligner, SequentialAligner, etc.)
-
-    Examples:
-        Hole mapping only:
-        >>> Morphing(vertex_loop_mapper=SimpleMapper())
-
-        Both hole mapping and vertex alignment:
-        >>> Morphing(
-        ...     vertex_loop_mapper=DiscreteMapper(),
-        ...     vertex_aligner=EuclideanAligner()
-        ... )
-
-        Usage in KeyState:
-        >>> KeyState(
-        ...     state=perforated_state,
-        ...     time=0.5,
-        ...     morphing=Morphing(vertex_loop_mapper=ClusteringMapper())
-        ... )
-    """
-
-    vertex_loop_mapper: Optional[Any] = None  # HoleMapper type (avoid circular import)
-    vertex_aligner: Optional[Any] = None  # VertexAligner type (avoid circular import)
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dict format for internal processing
-
-        Returns dict with 'vertex_loop_mapper' and 'vertex_aligner' keys for backward compatibility.
-        """
-        result = {}
-        if self.vertex_loop_mapper is not None:
-            result["vertex_loop_mapper"] = self.vertex_loop_mapper
-        if self.vertex_aligner is not None:
-            result["vertex_aligner"] = self.vertex_aligner
-        return result
+from svan2d.velement.morphing import Morphing
+from svan2d.velement.transition import TransitionConfig
 
 
 @dataclass
@@ -111,8 +66,7 @@ class KeyState:
 
     state: State
     time: Optional[float] = None
-    easing: Optional[Dict[str, Callable[[float], float]]] = None
-    morphing: Optional[Union[Morphing, Dict[str, Any]]] = None
+    transition_config: Optional[TransitionConfig] = None
 
     def __post_init__(self):
         """Validate time range and morphing configuration"""
@@ -132,28 +86,37 @@ class KeyState:
             )
 
         # Validate easing dict if provided
-        if self.easing is not None and not isinstance(self.easing, dict):
-            raise TypeError(f"easing must be a dict, got {type(self.easing).__name__}")
 
-        # Validate morphing configuration if provided
-        if self.morphing is not None:
-            if isinstance(self.morphing, Morphing):
-                # Morphing class - all good
-                pass
-            elif isinstance(self.morphing, dict):
-                # Dict format (deprecated but supported) - validate keys
-                valid_keys = {"vertex_loop_mapper", "vertex_aligner"}
-                invalid_keys = set(self.morphing.keys()) - valid_keys
-                if invalid_keys:
-                    raise ValueError(
-                        f"Invalid morphing keys: {invalid_keys}. "
-                        f"Valid keys are: {valid_keys}"
-                    )
-            else:
+        if self.transition_config is not None:
+
+            if self.transition_config.easing is not None and not isinstance(
+                self.transition_config.easing, dict
+            ):
                 raise TypeError(
-                    f"morphing must be a Morphing instance or dict, "
-                    f"got {type(self.morphing).__name__}"
+                    f"easing must be a dict, got {type(self.transition_config.easing).__name__}"
                 )
+
+            # Validate morphing configuration if provided
+            if self.transition_config.morphing is not None:
+                if isinstance(self.transition_config.morphing, Morphing):
+                    # Morphing class - all good
+                    pass
+                elif isinstance(self.transition_config.morphing, dict):
+                    # Dict format (deprecated but supported) - validate keys
+                    valid_keys = {"vertex_loop_mapper", "vertex_aligner"}
+                    invalid_keys = (
+                        set(self.transition_config.morphing.keys()) - valid_keys
+                    )
+                    if invalid_keys:
+                        raise ValueError(
+                            f"Invalid morphing keys: {invalid_keys}. "
+                            f"Valid keys are: {valid_keys}"
+                        )
+                else:
+                    raise TypeError(
+                        f"morphing must be a Morphing instance or dict, "
+                        f"got {type(self.transition_config.morphing).__name__}"
+                    )
 
     def with_time(self, time: float) -> KeyState:
         """Create a new KeyState with updated time (immutable update)
@@ -168,7 +131,9 @@ class KeyState:
             New KeyState instance with updated time
         """
         return KeyState(
-            state=self.state, time=time, easing=self.easing, morphing=self.morphing
+            state=self.state,
+            time=time,
+            transition_config=self.transition_config,
         )
 
     def __repr__(self) -> str:
@@ -176,22 +141,26 @@ class KeyState:
         parts = [f"state={self.state.__class__.__name__}(...)"]
         if self.time is not None:
             parts.append(f"time={self.time}")
-        if self.easing is not None:
-            parts.append(f"easing={{{', '.join(self.easing.keys())}}}")
-        if self.morphing is not None:
-            if isinstance(self.morphing, Morphing):
+        if self.transition_config.easing is not None:
+            parts.append(
+                f"easing={{{', '.join(self.transition_config.easing.keys())}}}"
+            )
+        if self.transition_config.morphing is not None:
+            if isinstance(self.transition_config.morphing, Morphing):
                 morph_parts = []
-                if self.morphing.vertex_loop_mapper is not None:
+                if self.transition_config.morphing.vertex_loop_mapper is not None:
                     morph_parts.append(
-                        f"vertex_loop_mapper={type(self.morphing.vertex_loop_mapper).__name__}"
+                        f"vertex_loop_mapper={type(self.transition_config.morphing.vertex_loop_mapper).__name__}"
                     )
-                if self.morphing.vertex_aligner is not None:
+                if self.transition_config.morphing.vertex_aligner is not None:
                     morph_parts.append(
-                        f"vertex_aligner={type(self.morphing.vertex_aligner).__name__}"
+                        f"vertex_aligner={type(self.transition_config.morphing.vertex_aligner).__name__}"
                     )
                 parts.append(f"morphing=Morphing({', '.join(morph_parts)})")
             else:
-                parts.append(f"morphing={{{', '.join(self.morphing.keys())}}}")
+                parts.append(
+                    f"morphing={{{', '.join(self.transition_config.morphing.keys())}}}"
+                )
         return f"KeyState({', '.join(parts)})"
 
 

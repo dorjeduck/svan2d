@@ -21,7 +21,7 @@ class ColorScheme:
 
 # Define all available color schemes
 COLOR_SCHEMES: Dict[str, ColorScheme] = {
-    "svan2D": ColorScheme(
+    "svan2d": ColorScheme(
         name="Svan2D",
         background="#000017",  # Container background
         control_bg="#273141",  # Button/control backgrounds

@@ -1,5 +1,5 @@
 # ============================================================================
-# svan2D/components/path_text.py
+# svan2d/components/path_text.py
 # ============================================================================
 """PathText component - Text that follows any SVG path with morphing support"""
 

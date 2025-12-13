@@ -37,21 +37,25 @@ def crossfade(
     transition = TransitionConfig(easing=easing) if easing else None
 
     # Outgoing element: visible -> invisible
-    s_out_visible = replace(s_out, opacity=s_out.opacity if hasattr(s_out, 'opacity') else 1.0)
+    s_out_visible = replace(
+        s_out, opacity=s_out.opacity if hasattr(s_out, "opacity") else 1.0
+    )
     s_out_gone = replace(s_out, opacity=0.0)
 
     out_keystates = [
-        KeyState(state=s_out_visible, time=at, transition_config=transition),
-        KeyState(state=s_out_gone, time=min(1, at + dur)),
+        KeyState(state=s_out_visible, time=at - dur / 2, transition_config=transition),
+        KeyState(state=s_out_gone, time=min(1, at + dur / 2)),
     ]
 
     # Incoming element: invisible -> visible
     s_in_gone = replace(s_in, opacity=0.0)
-    s_in_visible = replace(s_in, opacity=s_in.opacity if hasattr(s_in, 'opacity') else 1.0)
+    s_in_visible = replace(
+        s_in, opacity=s_in.opacity if hasattr(s_in, "opacity") else 1.0
+    )
 
     in_keystates = [
-        KeyState(state=s_in_gone, time=at, transition_config=transition),
-        KeyState(state=s_in_visible, time=min(1, at + dur)),
+        KeyState(state=s_in_gone, time=at - dur / 2, transition_config=transition),
+        KeyState(state=s_in_visible, time=min(1, at + dur / 2)),
     ]
 
     return out_keystates, in_keystates

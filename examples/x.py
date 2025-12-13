@@ -1,91 +1,94 @@
-from dataclasses import replace
+from svan2d.component.renderer.base_vertex import VertexRenderer
+from svan2d.component.state import (
+    PerforatedCircleState,
+    PerforatedStarState,
+    Astroid,
+    Star,
+    Ellipse,
+    Polygon,
+    Circle,
+)
+from svan2d.component.state.ring import RingState
 
-
-from svan2d.component.effect.filter.drop_shadow import DropShadowFilter
-from svan2d.component.effect.gradient.gradient_stop import GradientStop
-from svan2d.component.effect.gradient.linear import LinearGradient
-from svan2d.component.effect.pattern.checkerboard import CheckerboardPattern
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.square import SquareState
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import configure_logging
 from svan2d.core.point2d import Point2D
 from svan2d.velement import VElement
+from svan2d.velement.segments import hold
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.component import PathState, PathRenderer
 from svan2d.core.color import Color
 
 configure_logging(level="INFO")
 
-START_COLOR_1 = Color("#FDBE02")
-END_COLOR_1 = Color("#AA0000")
-
-START_COLOR_2 = Color("#00AAAA")
-END_COLOR_2 = Color("#0000FF")
-
-# Create the scene
-scene = VScene(width=256, height=256, background=Color("#000017"))
-
-linear_grad_1 = LinearGradient(
-    Point2D(0, -50),
-    Point2D(0, 50),
-    stops=(
-        GradientStop(0.0, START_COLOR_1),
-        GradientStop(1.0, END_COLOR_1),
-    ),
-)
-
-linear_grad_2 = replace(
-    linear_grad_1,
-    stops=(
-        GradientStop(0.0, START_COLOR_2),
-        GradientStop(1.0, END_COLOR_2),
-    ),
-)
-
-shadow_filter_1 = DropShadowFilter(dx=3, dy=3, std_deviation=3, color=START_COLOR_1)
-shadow_filter_2 = replace(shadow_filter_1, color=END_COLOR_1)
-
-checker_pattern_1 = CheckerboardPattern(
-    square_size=5, color1=Color("#34495e"), color2=Color("#ffffff")
-)
-
-checker_pattern_2 = replace(checker_pattern_1, square_size=25, color1=Color("#ff0000"))
-
-start_states = [
-    SquareState(size=40, pos=Point2D(-70, -70), fill_gradient=linear_grad_1),
-    SquareState(size=40, pos=Point2D(-70, 0), fill_pattern=checker_pattern_1),
-    SquareState(
-        size=40, pos=Point2D(-70, 70), fill_color=START_COLOR_1, filter=shadow_filter_1
-    ),
-]
+FILL_COLOR = Color("#FDBE02")
+STROKE_COLOR = Color("#AA0000")
 
 
-end_states = [
-    CircleState(radius=20, pos=Point2D(70, -70), fill_gradient=linear_grad_2),
-    CircleState(radius=20, pos=Point2D(70, 0), fill_pattern=checker_pattern_2),
-    CircleState(
-        radius=20, pos=Point2D(70, 70), fill_color=END_COLOR_1, filter=shadow_filter_2
-    ),
-]
+def main():
 
-elements = [VElement().keystates([s1, s2]) for s1, s2 in zip(start_states, end_states)]
+    # Create the scene
+    scene = VScene(width=1024, height=1024, background=Color("#000017"))
 
-# Add all elements to the scene
-scene.add_elements(elements)
+    # equivalent to a Ring but the stroke around the hole which is present here
+    # can smoothly morph into vertex loops without surrounding strokes
+    s1 = PerforatedCircleState(
+        radius=200,
+        holes=[Circle(radius=100)],
+        fill_color=FILL_COLOR,
+        stroke_color=STROKE_COLOR,
+        stroke_width=6,
+    )
 
-# Create the exporter
-exporter = VSceneExporter(
-    scene=scene,
-    converter=ConverterType.PLAYWRIGHT,
-    output_dir="output/",
-)
+    s2 = PerforatedCircleState(
+        radius=270,
+        holes=[
+            Circle(radius=50, pos=Point2D(0, -100)),
+            Star(num_points=5, inner_radius=40, outer_radius=70, pos=Point2D(-120, 60)),
+            Astroid(radius=100, num_cusps=4, curvature=0.3, pos=Point2D(100, 60)),
+        ],
+        fill_color=FILL_COLOR,
+        stroke_color=STROKE_COLOR,
+        stroke_width=6,
+        holes_stroke_width=0,
+    )
 
-# Export to mp4
-exporter.to_mp4(
-    filename="effects",
-    total_frames=60,
-    framerate=30,
-    png_width_px=1024,
-)
+    s3 = PerforatedStarState(
+        num_points=5,
+        outer_radius=400,
+        inner_radius=200,
+        holes=[
+            Ellipse(rx=50, ry=40, pos=Point2D(-70, -80)),
+            Polygon(num_sides=3, radius=80, pos=Point2D(40, 40)),
+        ],
+        fill_color=FILL_COLOR,
+        stroke_color=STROKE_COLOR,
+        stroke_width=6,
+        holes_stroke_width=0,
+    )
+    states = [s1, s2, s3, s2, s1]
+
+    element = VElement(renderer=VertexRenderer()).segment(
+        hold(states=states, duration=1.0 / (3 * len(states)))
+    )
+
+    scene.add_element(element)
+
+    # Create the exporter
+    exporter = VSceneExporter(
+        scene=scene,
+        converter=ConverterType.PLAYWRIGHT,
+        output_dir="output/",
+    )
+
+    # Export to PNG file
+    exporter.to_mp4(
+        filename="complex_morph.mp4",
+        total_frames=240,
+        framerate=30,
+        png_width_px=1024,
+    )
+
+
+if __name__ == "__main__":
+    main()

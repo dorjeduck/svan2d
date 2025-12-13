@@ -372,6 +372,37 @@ class VElement(BaseVElement):
 
         return self
 
+    def segment(self, segment_result: List[KeyState]) -> "VElement":
+        """Add keystates from a segment function result.
+
+        Segment functions return List[KeyState] with absolute times and
+        optional transition configs. All keystates are appended to the
+        builder state.
+
+        Args:
+            segment_result: List of KeyState objects from a segment function
+
+        Returns:
+            self for chaining
+
+        Example:
+            from svan2d.velement.segments import hold
+
+            element = (
+                VElement()
+                .keystate(s1, at=0.0)
+                .segment(hold(s2, at=0.3, dur=0.1))
+                .keystate(s3, at=1.0)
+            )
+        """
+        if self._builder is None:
+            raise RuntimeError("Cannot modify VElement after rendering has begun.")
+
+        for ks in segment_result:
+            self._builder.keystates.append((ks.state, ks.time, ks.transition_config))
+
+        return self
+
     def keystate(self, state: State, at: Optional[float] = None) -> "VElement":
         """Add a keystate at the specified time.
 

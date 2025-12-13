@@ -44,8 +44,6 @@ class TriangleRenderer(Renderer):
             (width_offset, height_offset / 2),  # Bottom right
         ]
 
-        # Remove manual rotation, let base class handle it
-
         # Flatten coordinates
         coords = [coord for px, py in points for coord in (px, py)]
 

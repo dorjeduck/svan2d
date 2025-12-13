@@ -1,8 +1,9 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass
-from typing import List, Tuple
 
+from svan2d.component.registry import renderer
+from svan2d.component.renderer.base_vertex import VertexRenderer
 from svan2d.transition import easing
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours
@@ -10,6 +11,7 @@ from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
 
 
+@renderer(VertexRenderer)
 @dataclass(frozen=True)
 class FlowerState(VertexState):
     """Flower with n petals using rose curve"""

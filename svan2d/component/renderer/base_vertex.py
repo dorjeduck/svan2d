@@ -4,7 +4,10 @@ from __future__ import annotations
 from typing import Optional
 import drawsvg as dw
 
-from svan2d.component.state.base_vertex import VertexState
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.renderer.base import Renderer
 from svan2d.component.vertex import VertexContours
 
@@ -39,6 +42,7 @@ class VertexRenderer(Renderer):
         Returns:
             drawsvg Group containing the rendered shape
         """
+
         contours = state.get_contours()
 
         if not contours.outer.vertices:

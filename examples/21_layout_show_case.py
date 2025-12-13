@@ -8,7 +8,7 @@ from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
 from svan2d.core.logger import configure_logging
 from svan2d.velement import VElement
-from svan2d.velement.segments import fade_inout, hold, linspace
+from svan2d.velement import segments
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from dataclasses import replace
@@ -185,7 +185,7 @@ def main():
 
     elements = [
         VElement(renderer=renderer).segment(
-            hold(states, linspace(len(states)), hold_duration)
+            segments.hold(states, segments.linspace(len(states)), hold_duration)
         )
         for states in zip(*layout_states)
     ]
@@ -194,8 +194,11 @@ def main():
     scene.add_elements(elements)
 
     texts = VElement(renderer=renderer).segment(
-        fade_inout(
-            layout_name_states, linspace(num_states), hold_duration, fade_duration
+        segments.fade_inout(
+            layout_name_states,
+            segments.linspace(num_states),
+            hold_duration,
+            fade_duration,
         )
     )
 

@@ -156,7 +156,9 @@ class TestFieldKeystates:
             ]
         }
 
-        element = VElement().keystates(states).attributes(keystates=attribute_keystates)
+        element = (
+            VElement().keystates(states).attributes(keystates_dict=attribute_keystates)
+        )
 
         # Color should interpolate according to field keystates
         frame_50 = element.get_frame(0.5)
@@ -237,7 +239,7 @@ class TestSceneExport:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(easing={"pos": in_out})
+            .transition(easing_dict={"pos": in_out})
             .keystate(state2, at=1.0)
         )
 

@@ -296,8 +296,8 @@ class InterpolationEngine:
                 eased_t,
                 segment_easing_overrides=None,
                 attribute_keystates_fields=set(),
-                vertex_buffer=None,  # Don't use vertex buffer for clips
-                segment_path=None,  # Don't pass path to clips
+                vertex_buffer=None,
+                segment_path_config=None,
             )
 
         # Handle State ↔ None transitions

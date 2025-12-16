@@ -28,7 +28,7 @@ class TestInterpolationPerformance:
 
     def test_state_interpolation_simple(self, benchmark):
         """Benchmark simple state interpolation"""
-        easing_resolver = EasingResolver(attribute_easing={})
+        easing_resolver = EasingResolver(attribute_easing_dict={})
         engine = InterpolationEngine(easing_resolver)
 
         state1 = CircleState(Point2D(), radius=50)
@@ -46,7 +46,7 @@ class TestInterpolationPerformance:
 
     def test_state_interpolation_with_colors(self, benchmark):
         """Benchmark state interpolation with color values"""
-        easing_resolver = EasingResolver(attribute_easing={})
+        easing_resolver = EasingResolver(attribute_easing_dict={})
         engine = InterpolationEngine(easing_resolver)
 
         state1 = CircleState(
@@ -74,7 +74,7 @@ class TestInterpolationPerformance:
 
     def test_vertex_interpolation_no_buffer(self, benchmark):
         """Benchmark vertex interpolation without buffer optimization"""
-        easing_resolver = EasingResolver(attribute_easing={})
+        easing_resolver = EasingResolver(attribute_easing_dict={})
         engine = InterpolationEngine(easing_resolver)
 
         # Create vertex contours with 128 vertices
@@ -101,7 +101,7 @@ class TestInterpolationPerformance:
 
     def test_vertex_interpolation_with_buffer(self, benchmark):
         """Benchmark vertex interpolation with buffer optimization"""
-        easing_resolver = EasingResolver(attribute_easing={})
+        easing_resolver = EasingResolver(attribute_easing_dict={})
         engine = InterpolationEngine(easing_resolver)
 
         # Create vertex contours with 128 vertices
@@ -272,7 +272,9 @@ class TestVElementPerformance:
             ]
         }
 
-        element = VElement().keystates(states).attributes(keystates=attribute_keystates)
+        element = (
+            VElement().keystates(states).attributes(keystates_dict=attribute_keystates)
+        )
 
         result = benchmark(element.get_frame, 0.5)
         assert result is not None

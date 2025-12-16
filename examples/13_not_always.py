@@ -44,8 +44,8 @@ def main():
     elements = [
         VElement(renderer=renderer)
         .attributes(
-            easing={"pos": easing.linear},
-            keystates={"fill_color": [START_COLOR, END_COLOR]},
+            easing_dict={"pos": easing.linear},
+            keystates_dict={"fill_color": [START_COLOR, END_COLOR]},
         )
         .keystates(states, at=[0.3 if i % 2 else 0, 0.7 if i % 2 else 1])
         for i, states in enumerate(zip(*all_states))

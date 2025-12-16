@@ -8,7 +8,7 @@ from svan2d.component.renderer.circle import CircleRenderer
 from svan2d.core.point2d import Point2D
 from svan2d.core.color import Color
 from svan2d.transition import easing
-from svan2d.transition.path import linear, bezier
+from svan2d.transition.curve import linear, bezier
 
 
 class TestVElementBuilderBasic:
@@ -70,7 +70,7 @@ class TestVElementBuilderTransition:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(easing={"radius": easing.in_out})
+            .transition(easing_dict={"radius": easing.in_out})
             .keystate(state2, at=1.0)
         )
 
@@ -79,12 +79,12 @@ class TestVElementBuilderTransition:
 
         # Transition should be attached to first keystate
         assert element.keystates[0].transition_config is not None
-        assert "radius" in element.keystates[0].transition_config.easing
+        assert "radius" in element.keystates[0].transition_config.easing_dict
 
     def test_transition_before_first_keystate_error(self):
         """Transition before first keystate should error"""
         with pytest.raises(ValueError, match="before the first keystate"):
-            VElement().transition(easing={"pos": easing.linear})
+            VElement().transition(easing_dict={"pos": easing.linear})
 
     def test_transition_after_last_keystate_error(self):
         """Transition after last keystate should error at render"""
@@ -95,7 +95,7 @@ class TestVElementBuilderTransition:
             VElement()
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
-            .transition(easing={"pos": easing.linear})
+            .transition(easing_dict={"pos": easing.linear})
         )
 
         with pytest.raises(ValueError, match="after the last keystate"):
@@ -109,8 +109,8 @@ class TestVElementBuilderTransition:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(easing={"radius": easing.in_out})
-            .transition(easing={"opacity": easing.linear})
+            .transition(easing_dict={"radius": easing.in_out})
+            .transition(easing_dict={"opacity": easing.linear})
             .keystate(state2, at=1.0)
         )
 
@@ -119,8 +119,8 @@ class TestVElementBuilderTransition:
 
         transition = element.keystates[0].transition_config
         assert transition is not None
-        assert "radius" in transition.easing
-        assert "opacity" in transition.easing
+        assert "radius" in transition.easing_dict
+        assert "opacity" in transition.easing_dict
 
 
 class TestVElementBuilderPath:
@@ -134,7 +134,7 @@ class TestVElementBuilderPath:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(path={"pos": bezier([Point2D(0, 100)])})
+            .transition(curve_dict={"pos": bezier([Point2D(0, 100)])})
             .keystate(state2, at=1.0)
         )
 
@@ -143,7 +143,7 @@ class TestVElementBuilderPath:
 
         transition = element.keystates[0].transition_config
         assert transition is not None
-        assert "pos" in transition.path
+        assert "pos" in transition.curve_dict
 
     def test_path_merging_in_transitions(self):
         """Consecutive transitions should merge paths"""
@@ -153,8 +153,10 @@ class TestVElementBuilderPath:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(easing={"pos": easing.in_out})
-            .transition(path={"pos": bezier([Point2D(0, 100)])})
+            .transition(
+                easing_dict={"pos": easing.in_out},
+                curve_dict={"pos": bezier([Point2D(0, 100)])},
+            )
             .keystate(state2, at=1.0)
         )
 
@@ -163,8 +165,8 @@ class TestVElementBuilderPath:
 
         transition = element.keystates[0].transition_config
         assert transition is not None
-        assert "pos" in transition.easing
-        assert "pos" in transition.path
+        assert "pos" in transition.easing_dict
+        assert "pos" in transition.curve_dict
 
 
 class TestVElementBuilderMorphing:
@@ -230,7 +232,7 @@ class TestVElementBuilderAttributes:
 
         element = (
             VElement()
-            .attributes(easing={"pos": easing.in_out})
+            .attributes(easing_dict={"pos": easing.in_out})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -249,7 +251,7 @@ class TestVElementBuilderAttributes:
 
         element = (
             VElement()
-            .attributes(path={"pos": bezier([Point2D(50, 50)])})
+            .attributes(curve_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -259,7 +261,7 @@ class TestVElementBuilderAttributes:
 
         # Element-level path should be merged into each keystate's transition
         assert element.keystates[0].transition_config is not None
-        assert "pos" in element.keystates[0].transition_config.path
+        assert "pos" in element.keystates[0].transition_config.curve_dict
 
     def test_attributes_keystates(self):
         """Attributes should set attribute keystates"""
@@ -270,7 +272,7 @@ class TestVElementBuilderAttributes:
 
         element = (
             VElement()
-            .attributes(keystates={"fill_color": [color1, color2]})
+            .attributes(keystates_dict={"fill_color": [color1, color2]})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -415,7 +417,7 @@ class TestVElementBuilderInterpolation:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(easing={"radius": easing.in_out})
+            .transition(easing_dict={"radius": easing.in_out})
             .keystate(state2, at=1.0)
         )
 
@@ -437,7 +439,7 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(easing={"radius": easing.in_out})
+            .default_transition(easing_dict={"radius": easing.in_out})
             .keystate(state1, at=0.0)
             .keystate(state2, at=0.5)
             .keystate(state3, at=1.0)
@@ -448,9 +450,9 @@ class TestVElementBuilderDefaultTransition:
 
         # Both segments should have the easing
         assert element.keystates[0].transition_config is not None
-        assert "radius" in element.keystates[0].transition_config.easing
+        assert "radius" in element.keystates[0].transition_config.easing_dict
         assert element.keystates[1].transition_config is not None
-        assert "radius" in element.keystates[1].transition_config.easing
+        assert "radius" in element.keystates[1].transition_config.easing_dict
 
     def test_default_transition_can_be_changed(self):
         """Default transition can be changed mid-chain"""
@@ -461,10 +463,10 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(easing={"radius": easing.in_out})
+            .default_transition(easing_dict={"radius": easing.in_out})
             .keystate(state1, at=0.0)
             .keystate(state2, at=0.33)
-            .default_transition(easing={"radius": easing.linear})
+            .default_transition(easing_dict={"radius": easing.linear})
             .keystate(state3, at=0.66)
             .keystate(state4, at=1.0)
         )
@@ -473,11 +475,20 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # First segment: in_out
-        assert element.keystates[0].transition_config.easing["radius"] == easing.in_out
+        assert (
+            element.keystates[0].transition_config.easing_dict["radius"]
+            == easing.in_out
+        )
         # Second segment: linear (changed default)
-        assert element.keystates[1].transition_config.easing["radius"] == easing.linear
+        assert (
+            element.keystates[1].transition_config.easing_dict["radius"]
+            == easing.linear
+        )
         # Third segment: linear (still using changed default)
-        assert element.keystates[2].transition_config.easing["radius"] == easing.linear
+        assert (
+            element.keystates[2].transition_config.easing_dict["radius"]
+            == easing.linear
+        )
 
     def test_explicit_transition_overrides_default(self):
         """Explicit transition() should override default_transition"""
@@ -487,9 +498,9 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(easing={"radius": easing.in_out})
+            .default_transition(easing_dict={"radius": easing.in_out})
             .keystate(state1, at=0.0)
-            .transition(easing={"radius": easing.linear})  # explicit override
+            .transition(easing_dict={"radius": easing.linear})  # explicit override
             .keystate(state2, at=0.5)
             .keystate(state3, at=1.0)  # back to default
         )
@@ -498,9 +509,15 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # First segment: explicit linear
-        assert element.keystates[0].transition_config.easing["radius"] == easing.linear
+        assert (
+            element.keystates[0].transition_config.easing_dict["radius"]
+            == easing.linear
+        )
         # Second segment: back to default in_out
-        assert element.keystates[1].transition_config.easing["radius"] == easing.in_out
+        assert (
+            element.keystates[1].transition_config.easing_dict["radius"]
+            == easing.in_out
+        )
 
     def test_default_transition_merges_settings(self):
         """Multiple default_transition calls should merge settings"""
@@ -509,8 +526,8 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(easing={"radius": easing.in_out})
-            .default_transition(easing={"pos": easing.linear})
+            .default_transition(easing_dict={"radius": easing.in_out})
+            .default_transition(easing_dict={"pos": easing.linear})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -520,10 +537,10 @@ class TestVElementBuilderDefaultTransition:
 
         # Both easings should be present
         transition = element.keystates[0].transition_config
-        assert "radius" in transition.easing
-        assert "pos" in transition.easing
-        assert transition.easing["radius"] == easing.in_out
-        assert transition.easing["pos"] == easing.linear
+        assert "radius" in transition.easing_dict
+        assert "pos" in transition.easing_dict
+        assert transition.easing_dict["radius"] == easing.in_out
+        assert transition.easing_dict["pos"] == easing.linear
 
     def test_default_transition_with_path(self):
         """Default transition should work with path config"""
@@ -533,7 +550,7 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(path={"pos": bezier([Point2D(50, 50)])})
+            .default_transition(curve_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=0.5)
             .keystate(state3, at=1.0)
@@ -542,11 +559,11 @@ class TestVElementBuilderDefaultTransition:
         # Trigger build
         element.get_frame(0.0)
 
-        # Both segments should have the path
+        # Both segments should have the curve_dict
         assert element.keystates[0].transition_config is not None
-        assert "pos" in element.keystates[0].transition_config.path
+        assert "pos" in element.keystates[0].transition_config.curve_dict
         assert element.keystates[1].transition_config is not None
-        assert "pos" in element.keystates[1].transition_config.path
+        assert "pos" in element.keystates[1].transition_config.curve_dict
 
     def test_default_transition_before_first_keystate(self):
         """default_transition can be called before first keystate"""
@@ -556,7 +573,7 @@ class TestVElementBuilderDefaultTransition:
         # Should not raise
         element = (
             VElement()
-            .default_transition(easing={"radius": easing.in_out})
+            .default_transition(easing_dict={"radius": easing.in_out})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )

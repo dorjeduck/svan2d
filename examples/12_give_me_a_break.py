@@ -45,7 +45,7 @@ def main():
     # overriding the default easing for the x field for each element
     elements = [
         VElement(renderer=renderer)
-        .attributes(keystates={"fill_color": [START_COLOR, END_COLOR]})
+        .attributes(keystates_dict={"fill_color": [START_COLOR, END_COLOR]})
         .keystate(state_a, at=0)
         .keystate(state_b, at=0.25)
         .keystate(state_c if i % 2 else state_b, at=0.5)

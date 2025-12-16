@@ -5,63 +5,6 @@ from typing import Optional, Callable
 from svan2d.core.point2d import Point2D
 
 
-def _calculate_arc_center(
-    p1: Point2D, p2: Point2D, radius: float, clockwise: bool
-) -> tuple[Point2D, float, float]:
-    """Calculate center and angles for circular arc
-
-    Args:
-        p1: Start point
-        p2: End point
-        radius: Arc radius
-        clockwise: Direction of arc
-
-    Returns:
-        Tuple of (center, start_angle, end_angle)
-    """
-    # Distance between points
-    dx = p2.x - p1.x
-    dy = p2.y - p1.y
-    distance = math.sqrt(dx * dx + dy * dy)
-
-    # Handle edge cases
-    if distance == 0:
-        # Points are the same
-        return p1, 0.0, 0.0
-
-    if distance > 2 * radius:
-        # Radius too small - fall back to straight line
-        # (caller should handle this)
-        return Point2D((p1.x + p2.x) / 2, (p1.y + p2.y) / 2), 0.0, 0.0
-
-    # Midpoint between p1 and p2
-    mid_x = (p1.x + p2.x) / 2
-    mid_y = (p1.y + p2.y) / 2
-
-    # Perpendicular distance from midpoint to center
-    h = math.sqrt(radius * radius - (distance / 2) ** 2)
-
-    # Perpendicular direction (normalized)
-    perp_x = -dy / distance
-    perp_y = dx / distance
-
-    # Flip direction for clockwise
-    if clockwise:
-        perp_x = -perp_x
-        perp_y = -perp_y
-
-    # Center of arc
-    center_x = mid_x + h * perp_x
-    center_y = mid_y + h * perp_y
-    center = Point2D(center_x, center_y)
-
-    # Calculate start and end angles
-    start_angle = math.atan2(p1.y - center_y, p1.x - center_x)
-    end_angle = math.atan2(p2.y - center_y, p2.x - center_x)
-
-    return center, start_angle, end_angle
-
-
 def arc(radius: Optional[float] = None) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a circular arc path function (counterclockwise by default)
 
@@ -97,10 +40,8 @@ def arc_counterclockwise(
     """
 
     def arc_ccw_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:
-        # Calculate distance
-        dx = p2.x - p1.x
-        dy = p2.y - p1.y
-        distance = math.sqrt(dx * dx + dy * dy)
+
+        distance = p1.distance_to(p2)
 
         if distance == 0:
             return p1
@@ -119,9 +60,7 @@ def arc_counterclockwise(
 
         # Normalize angle difference to take shorter arc
         angle_diff = end_angle - start_angle
-        if angle_diff > math.pi:
-            angle_diff -= 2 * math.pi
-        elif angle_diff < -math.pi:
+        if angle_diff < 0:
             angle_diff += 2 * math.pi
 
         # Interpolate angle
@@ -177,9 +116,7 @@ def arc_clockwise(
 
         # Normalize angle difference to take shorter arc
         angle_diff = end_angle - start_angle
-        if angle_diff > math.pi:
-            angle_diff -= 2 * math.pi
-        elif angle_diff < -math.pi:
+        if angle_diff < 0:
             angle_diff += 2 * math.pi
 
         # Interpolate angle
@@ -192,3 +129,60 @@ def arc_clockwise(
         return Point2D(x, y)
 
     return arc_cw_path
+
+
+def _calculate_arc_center(
+    p1: Point2D, p2: Point2D, radius: float, clockwise: bool
+) -> tuple[Point2D, float, float]:
+    """Calculate center and angles for circular arc
+
+    Args:
+        p1: Start point
+        p2: End point
+        radius: Arc radius
+        clockwise: Direction of arc
+
+    Returns:
+        Tuple of (center, start_angle, end_angle)
+    """
+    # Distance between points
+    dx = p2.x - p1.x
+    dy = p2.y - p1.y
+    distance = math.sqrt(dx * dx + dy * dy)
+
+    # Handle edge cases
+    if distance == 0:
+        # Points are the same
+        return p1, 0.0, 0.0
+
+    if distance > 2 * radius:
+        # Radius too small - fall back to straight line
+        # (caller should handle this)
+        return Point2D((p1.x + p2.x) / 2, (p1.y + p2.y) / 2), 0.0, 0.0
+
+    # Midpoint between p1 and p2
+    mid_x = (p1.x + p2.x) / 2
+    mid_y = (p1.y + p2.y) / 2
+
+    # Perpendicular distance from midpoint to center
+    h = math.sqrt(radius * radius - (distance / 2) ** 2)
+
+    # Perpendicular direction (normalized)
+    perp_x = -dy / distance
+    perp_y = dx / distance
+
+    # Flip direction for clockwise
+    if clockwise:
+        perp_x = -perp_x
+        perp_y = -perp_y
+
+    # Center of arc
+    center_x = mid_x + h * perp_x
+    center_y = mid_y + h * perp_y
+    center = Point2D(center_x, center_y)
+
+    # Calculate start and end angles
+    start_angle = math.atan2(p1.y - center_y, p1.x - center_x)
+    end_angle = math.atan2(p2.y - center_y, p2.x - center_x)
+
+    return center, start_angle, end_angle

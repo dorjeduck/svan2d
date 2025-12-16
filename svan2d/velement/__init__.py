@@ -6,6 +6,7 @@ from .velement_group import VElementGroup, VElementGroupState
 from .keystate import KeyState
 from .morphing import Morphing
 from .transition import TransitionConfig
+from .segments import fade_inout, hold, linspace, crossfade
 
 
 __all__ = [
@@ -16,4 +17,8 @@ __all__ = [
     "KeyState",
     "Morphing",
     "TransitionConfig",
+    "fade_inout",
+    "hold",
+    "linspace",
+    "crossfade",
 ]

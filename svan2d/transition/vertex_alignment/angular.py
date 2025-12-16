@@ -141,22 +141,16 @@ class AngularAligner(VertexAligner):
         rot1 = context.rotation1
         rot2 = rotation_target if rotation_target is not None else context.rotation2
 
-        # Create working copies for rotation (only if needed)
-        if rot1 != 0 or rot2 != 0:
-            # Make copies and apply rotations in-place
-
-            if rot1 != 0:
-                verts1 = rotate_vertices(verts1, rot1)
-            if rot2 != 0:
-                verts2 = rotate_vertices(verts2, rot2)
+        verts1_work = rotate_vertices(verts1, rot1) if rot1 != 0 else verts1
+        verts2_work = rotate_vertices(verts2, rot2) if rot2 != 0 else verts2
 
         # Calculate centroids
-        c1 = centroid(verts1)
-        c2 = centroid(verts2)
+        c1 = centroid(verts1_work)
+        c2 = centroid(verts2_work)
 
         # Get angular positions from centroids
-        angles1 = [angle_from_centroid(v, c1) for v in verts1]
-        angles2 = [angle_from_centroid(v, c2) for v in verts2]
+        angles1 = [angle_from_centroid(v, c1) for v in verts1_work]
+        angles2 = [angle_from_centroid(v, c2) for v in verts2_work]
 
         # Find rotation offset that minimizes total angular distance (using specified norm)
         n = len(verts2)

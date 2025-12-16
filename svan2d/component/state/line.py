@@ -56,7 +56,7 @@ class LineState(VertexState):
             x1, y1, x2, y2
         )
         return LineState(
-            pos=Point2D(),
+            pos=Point2D(cx, cy),
             rotation=rotation + add_rotation,
             length=length,
             stroke_color=stroke_color,

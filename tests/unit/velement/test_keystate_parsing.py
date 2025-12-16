@@ -214,13 +214,13 @@ class TestElementKeystatesParsingKeyStateObjects:
             KeyState(
                 state=state2,
                 time=1.0,
-                transition_config=TransitionConfig(easing={"pos": in_out}),
+                transition_config=TransitionConfig(easing_dict={"pos": in_out}),
             ),
         ]
         result = parse_element_keystates(keystates)
 
         assert len(result) == 2
-        assert result[1].transition_config.easing == {"pos": in_out}
+        assert result[1].transition_config.easing_dict == {"pos": in_out}
 
     def test_parse_mixed_keystate_and_tuples(self, state1, state2, state3):
         """Test parsing mix of KeyState objects and tuples"""

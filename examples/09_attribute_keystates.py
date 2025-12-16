@@ -1,14 +1,13 @@
 from dataclasses import replace
 
+
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
-from svan2d import layout
 from svan2d.core.logger import configure_logging
 from svan2d.core.point2d import Point2D
+from svan2d import layout
 from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core import Color
+from svan2d.vscene import VScene, VSceneExporter
 from svan2d.core.color import Color
 
 configure_logging(level="INFO")
@@ -46,11 +45,11 @@ def main():
     renderer = TextRenderer()
 
     elements = [
-        VElement(
-            renderer=renderer,
-            keystates=[(0, start_state), (0.1 * (i + 1), middle_state), (1, end_state)],
-            attribute_keystates={"fill_color": [START_COLOR, END_COLOR]},
-        )
+        VElement(renderer=renderer)
+        .attributes(keystates_dict={"fill_color": [START_COLOR, END_COLOR]})
+        .keystate(start_state, at=0)
+        .keystate(middle_state, at=0.1 * (i + 1))
+        .keystate(end_state, at=1)
         for i, (start_state, middle_state, end_state) in enumerate(
             zip(start_states, middle_states, end_states)
         )

@@ -73,9 +73,10 @@ def rotate_vertices(vertices: Points2D, rotation_degrees: float) -> Points2D:
     Returns:
         Rotated vertices
     """
+    
     if rotation_degrees == 0:
         return vertices
-
+    
     # Convert to radians
     angle_rad = math.radians(rotation_degrees)
     cos_a = math.cos(angle_rad)

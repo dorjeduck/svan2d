@@ -17,7 +17,7 @@ from .keystate import KeyState
 
 # Type definitions
 AttributeKeyframeTuple = Tuple[float, Any, Optional[Callable[[float], float]]]
-AttributeKeyStatesConfig = Dict[str, List[AttributeKeyframeTuple]]
+AttributeKeyStatesDict = Dict[str, List[AttributeKeyframeTuple]]
 
 # Flexible input accepts three formats
 FlexibleKeystateInput = Union[

@@ -15,54 +15,6 @@ from svan2d.velement.transition import TransitionConfig
 
 @dataclass
 class KeyState:
-    """Explicit keystate specification with time, state, and override configs
-
-    Provides a clear, IDE-friendly way to specify keystates as an alternative
-    to the flexible tuple format. After parsing, all keystates (both tuples
-    and KeyState instances) are converted to KeyState objects internally.
-
-    Args:
-        state: The State object for this keystate
-        time: Normalized time (0.0-1.0), or None for auto-timing
-        easing: Per-segment easing overrides {field_name: easing_function}
-        morphing: Morphing strategy configuration (Morphing instance or dict)
-
-    Examples:
-        Basic usage:
-        >>> KeyState(state=circle_state, time=0.5)
-
-        With easing:
-        >>> KeyState(
-        ...     state=circle_state,
-        ...     time=0.5,
-        ...     easing={"pos": easing.in_out_sine}
-        ... )
-
-        With morphing override (using Morphing class):
-        >>> KeyState(
-        ...     state=perforated_state,
-        ...     time=0.75,
-        ...     morphing=Morphing(vertex_loop_mapper=SimpleMapper())
-        ... )
-
-        With morphing override (using dict - deprecated):
-        >>> KeyState(
-        ...     state=perforated_state,
-        ...     time=0.75,
-        ...     morphing={"vertex_loop_mapper": SimpleMapper()}
-        ... )
-
-        Full specification:
-        >>> KeyState(
-        ...     state=perforated_state,
-        ...     time=0.5,
-        ...     easing={"opacity": easing.bounce},
-        ...     morphing=Morphing(vertex_loop_mapper=DiscreteMapper())
-        ... )
-
-        Auto-timing (time=None):
-        >>> KeyState(state=circle_state)  # Will be auto-timed during parsing
-    """
 
     state: State
     time: Optional[float] = None
@@ -89,11 +41,11 @@ class KeyState:
 
         if self.transition_config is not None:
 
-            if self.transition_config.easing is not None and not isinstance(
-                self.transition_config.easing, dict
+            if self.transition_config.easing_dict is not None and not isinstance(
+                self.transition_config.easing_dict, dict
             ):
                 raise TypeError(
-                    f"easing must be a dict, got {type(self.transition_config.easing).__name__}"
+                    f"easing must be a dict, got {type(self.transition_config.easing_dict).__name__}"
                 )
 
             # Validate morphing configuration if provided
@@ -141,9 +93,9 @@ class KeyState:
         parts = [f"state={self.state.__class__.__name__}(...)"]
         if self.time is not None:
             parts.append(f"time={self.time}")
-        if self.transition_config.easing is not None:
+        if self.transition_config.easing_dict is not None:
             parts.append(
-                f"easing={{{', '.join(self.transition_config.easing.keys())}}}"
+                f"easing={{{', '.join(self.transition_config.easing_dict.keys())}}}"
             )
         if self.transition_config.morphing is not None:
             if isinstance(self.transition_config.morphing, Morphing):

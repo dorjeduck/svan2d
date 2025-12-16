@@ -55,7 +55,7 @@ def main():
     # overriding the default easing for the x field for each element
     elements = [
         VElement(renderer=renderer)
-        .attributes(easing={"pos": easing})
+        .attributes(easing_dict={"pos": easing})
         .keystates([s1, s2])
         for s1, s2, easing in zip(start_states, end_states, easing_overrides)
     ]

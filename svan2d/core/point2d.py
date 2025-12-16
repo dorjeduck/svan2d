@@ -50,6 +50,10 @@ class Point2D:
         """Multiply point by scalar"""
         return Point2D(self.x * scalar, self.y * scalar)
 
+    def __neg__(self) -> "Point2D":
+        """Return a new Point2D with both coordinates negated."""
+        return Point2D(-self.x, -self.y)
+
     def __truediv__(self, scalar: float) -> Point2D:
         """Divide point by scalar"""
         if scalar == 0.0:

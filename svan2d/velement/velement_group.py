@@ -1,21 +1,17 @@
+"""VElementGroup class - element transform groups with animation support."""
+
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import List, Optional, Tuple, Callable, Dict, Any
+from dataclasses import dataclass, replace
+from typing import List, Optional, Dict, Callable, TYPE_CHECKING
 
 import drawsvg as dw
 
 from svan2d.component import State
-
-# Import the updated BaseVElement and its new types
 from svan2d.velement.base_velement import BaseVElement
-from svan2d.velement.keystate_parser import (
-    FlexibleKeystateInput,
-    AttributeKeyStatesConfig,
-)
+from svan2d.velement.builder import KeystateBuilder, BuilderState
+from svan2d.velement.state_interpolator import StateInterpolator
+from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.transition import easing
-
-# Forward reference to avoid circular imports
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .velement import VElement
@@ -23,7 +19,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class VElementGroupState(State):
-    """State class for element transform groups with complete SVG transform capabilities"""
+    """State class for element transform groups with complete SVG transform capabilities."""
 
     transform_origin_x: float = 0
     transform_origin_y: float = 0
@@ -43,45 +39,152 @@ class VElementGroupState(State):
     }
 
 
-class VElementGroup(BaseVElement):
-    """Element transform group with complete SVG transform capabilities"""
+class VElementGroup(BaseVElement, KeystateBuilder):
+    """Element transform group with complete SVG transform capabilities.
 
-    def __init__(
-        self,
-        *,
-        elements: Optional[List[VElement]] = None,
-        state: Optional[VElementGroupState] = None,
-        # Flexible keystates: accepts tuples, bare states, or KeyState objects
-        keystates: Optional[List[FlexibleKeystateInput]] = None,
-        attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None,
-        attribute_keystates: Optional[AttributeKeyStatesConfig] = None,
-    ) -> None:
-        """Initialize an element group with full animation capabilities"""
+    Uses chainable builder pattern for animation construction.
 
-        # Initialize the base animation system with the new parameters
-        super().__init__(
-            state=state,
-            keystates=keystates,
-            attribute_easing=attribute_easing,
-            attribute_keystates=attribute_keystates,
-            # Removed from super() call: global_transitions, easing, segment_easing
+    Examples:
+        # Static group
+        group = VElementGroup(elements=[e1, e2]).keystate(VElementGroupState())
+
+        # Animated group
+        group = (
+            VElementGroup(elements=[e1, e2])
+            .keystate(VElementGroupState(rotation=0), at=0.0)
+            .transition(easing_dict={"rotation": easing.in_out})
+            .keystate(VElementGroupState(rotation=90), at=1.0)
         )
 
-        self.elements = elements if elements else []
+        # Multiple keystates with automatic timing
+        group = (
+            VElementGroup()
+            .add_elements([e1, e2])
+            .keystates([s1, s2, s3])
+        )
+    """
+
+    def __init__(self, elements: Optional[List[VElement]] = None) -> None:
+        """Initialize an element group with builder pattern.
+
+        Args:
+            elements: Optional initial list of child elements
+        """
+        self.elements: List[VElement] = elements if elements else []
+
+        # Clip/mask elements
+        self.clip_elements: List[VElement] = []
+        self.mask_element: Optional[VElement] = None
+
+        # Builder state (from KeystateBuilder mixin)
+        self._builder: Optional[BuilderState] = BuilderState()
+        self._attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None
+        self._attribute_keystates: Optional[AttributeKeyStatesDict] = None
+
+        # Interpolator (created on first render)
+        self._interpolator: Optional[StateInterpolator] = None
+
+    def _ensure_built(self) -> None:
+        """Convert builder state to final keystates if not already done."""
+        if self._builder is None:
+            return
+
+        # Use builder mixin to finalize
+        keystates, attribute_keystates = self._finalize_build()
+
+        # Initialize interpolation systems
+        from svan2d.transition.easing_resolver import EasingResolver
+        from svan2d.transition.path_resolver import PathResolver
+        from svan2d.transition.interpolation_engine import InterpolationEngine
+
+        easing_resolver = EasingResolver(self._attribute_easing)
+        path_resolver = PathResolver()
+        interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
+
+        # Store keystates and create interpolator (no vertex aligner for groups)
+        self.keystates = keystates
+        self.attribute_keystates = attribute_keystates
+
+        self._interpolator = StateInterpolator(
+            keystates=keystates,
+            attribute_keystates=attribute_keystates,
+            easing_resolver=easing_resolver,
+            interpolation_engine=interpolation_engine,
+            # No vertex_aligner - groups don't morph shapes
+            # No get_vertex_buffer - groups don't have vertices
+        )
+
+    # =========================================================================
+    # VElementGroup-specific builder methods
+    # =========================================================================
+
+    def clip(self, velement: "VElement") -> "VElementGroup":
+        """Add a clip element. Can be called multiple times."""
+        self.clip_elements.append(velement)
+        return self
+
+    def mask(self, velement: "VElement") -> "VElementGroup":
+        """Set the mask element."""
+        self.mask_element = velement
+        return self
+
+    # =========================================================================
+    # Element Management Methods (chainable)
+    # =========================================================================
+
+    def add_element(self, child: "VElement") -> "VElementGroup":
+        """Add a child element to the group."""
+        self.elements.append(child)
+        return self
+
+    def add_elements(self, elements: List["VElement"]) -> "VElementGroup":
+        """Add multiple child elements to the group."""
+        self.elements.extend(elements)
+        return self
+
+    def remove_element(self, child: "VElement") -> "VElementGroup":
+        """Remove a child element from the group."""
+        if child in self.elements:
+            self.elements.remove(child)
+        else:
+            raise ValueError("Element not found in group")
+        return self
+
+    def clear_elements(self) -> "VElementGroup":
+        """Remove all child elements from the group."""
+        self.elements.clear()
+        return self
+
+    def get_elements(self) -> List["VElement"]:
+        """Get the list of child elements."""
+        return self.elements.copy()
+
+    def is_empty(self) -> bool:
+        """Check if the group has no child elements."""
+        return len(self.elements) == 0
+
+    # =========================================================================
+    # Rendering
+    # =========================================================================
 
     def render(self) -> Optional[dw.Group]:
-        """Render the element group in its initial state (static rendering)"""
+        """Render the element group in its initial state."""
         return self.render_at_frame_time(0.0)
 
     def render_at_frame_time(
         self, t: float, drawing: Optional[dw.Drawing] = None
     ) -> Optional[dw.Group]:
-        """Render the element transform group at a specific animation time"""
+        """Render the element transform group at a specific animation time."""
+        self._ensure_built()
 
-        group_state, _ = self._get_state_at_time(t)
+        group_state, _ = self._interpolator.get_state_at_time(t)
 
         if group_state is None:
             return None
+
+        # Apply clip/mask if present
+        if self.clip_elements or self.mask_element:
+            group_state = self._apply_velement_clips(group_state, t)
 
         transform_string = self._build_transform_string(group_state)
 
@@ -105,8 +208,43 @@ class VElementGroup(BaseVElement):
 
         return group
 
+    def get_frame(self, t: float) -> Optional[VElementGroupState]:
+        """Get the interpolated state at a specific time."""
+        self._ensure_built()
+        state, _ = self._interpolator.get_state_at_time(t)
+        return state
+
+    def is_animatable(self) -> bool:
+        """Check if this group can be animated."""
+        self._ensure_built()
+        return len(self.keystates) > 1 or bool(self.attribute_keystates)
+
+    # =========================================================================
+    # Internal helpers
+    # =========================================================================
+
+    def _apply_velement_clips(
+        self, state: VElementGroupState, t: float
+    ) -> VElementGroupState:
+        """Inject VElement-based clips into state."""
+        mask_state_at_t = self.mask_element.get_frame(t) if self.mask_element else None
+        clip_states_at_t = None
+
+        if self.clip_elements:
+            clip_states_at_t = [
+                elem.get_frame(t)
+                for elem in self.clip_elements
+                if elem.get_frame(t) is not None
+            ]
+
+        return replace(
+            state,
+            mask_state=mask_state_at_t or state.mask_state,
+            clip_states=clip_states_at_t or state.clip_states,
+        )
+
     def _build_transform_string(self, state: VElementGroupState) -> str:
-        """Build SVG transform string from state with advanced transform support"""
+        """Build SVG transform string from state with advanced transform support."""
         transform_parts = []
 
         has_transform_origin = (
@@ -150,30 +288,3 @@ class VElementGroup(BaseVElement):
             )
 
         return " ".join(transform_parts)
-
-    def get_elements(self) -> List[VElement]:
-        """Get the list of child elements"""
-        return self.elements.copy()
-
-    def add_element(self, child: VElement) -> None:
-        """Add a child element to the group"""
-        self.elements.append(child)
-
-    def add_elements(self, elements: List[VElement]) -> None:
-        """Add multiple child elements to the group"""
-        self.elements.extend(elements)
-
-    def remove_element(self, child: VElement) -> None:
-        """Remove a child element from the group"""
-        if child in self.elements:
-            self.elements.remove(child)
-        else:
-            raise ValueError("Element not found in group")
-
-    def clear_elements(self) -> None:
-        """Remove all child elements from the group"""
-        self.elements.clear()
-
-    def is_empty(self) -> bool:
-        """Check if the group has no child elements"""
-        return len(self.elements) == 0

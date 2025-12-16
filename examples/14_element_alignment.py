@@ -66,7 +66,7 @@ def main():
 
     elements = [
         VElement(renderer=renderer)
-        .attributes(keystates={"fill_color": [START_COLOR, END_COLOR]})
+        .attributes(keystates_dict={"fill_color": [START_COLOR, END_COLOR]})
         .keystates(
             [[a, b, c, d][i // 2] for i in range(8)],
             at=[i / 7 for i in range(8)],

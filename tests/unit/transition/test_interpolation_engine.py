@@ -15,7 +15,7 @@ from svan2d.core.point2d import Point2D
 @pytest.fixture
 def interpolation_engine():
     """Create an interpolation engine with linear easing"""
-    easing_resolver = EasingResolver(attribute_easing={})
+    easing_resolver = EasingResolver(attribute_easing_dict={})
     return InterpolationEngine(easing_resolver)
 
 

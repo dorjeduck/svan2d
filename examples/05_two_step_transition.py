@@ -54,7 +54,7 @@ def main():
 
     # Export to MP4 file
     exporter.to_mp4(
-        filename="05b_two_step_transition.mp4",
+        filename="05_two_step_transition.mp4",
         total_frames=90,
         framerate=30,
         png_width_px=1024,

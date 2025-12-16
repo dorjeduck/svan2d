@@ -250,7 +250,9 @@ class TestEasingIntegration:
         element = (
             VElement()
             .keystates([state1, state2])
-            .attributes(easing={"radius": linear, "width": linear, "height": linear})
+            .attributes(
+                easing_dict={"radius": linear, "width": linear, "height": linear}
+            )
         )
 
         assert element is not None
@@ -263,7 +265,7 @@ class TestEasingIntegration:
         element = (
             VElement()
             .keystates([state1, state2])
-            .attributes(easing={"size": in_out})
+            .attributes(easing_dict={"size": in_out})
         )
 
         assert element is not None
@@ -273,7 +275,11 @@ class TestEasingIntegration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = CircleState(pos=Point2D(200, 0), radius=50, _num_vertices=64)
 
-        element = VElement().keystates([state1, state2]).attributes(easing={"pos": in_out})
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(easing_dict={"pos": in_out})
+        )
 
         assert element is not None
 
@@ -285,7 +291,7 @@ class TestEasingIntegration:
         element = (
             VElement()
             .keystates([state1, state2])
-            .attributes(easing={"pos": linear, "y": in_out, "radius": in_out})
+            .attributes(easing_dict={"pos": linear, "y": in_out, "radius": in_out})
         )
 
         assert element is not None
@@ -310,19 +316,23 @@ class TestSceneIntegration:
 
     def test_multiple_elements_in_scene(self):
         """Test rendering multiple morphing elements"""
-        element1 = VElement().keystates([
-            CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
-            CircleState(pos=Point2D(100, 0), radius=75, _num_vertices=64),
-        ])
+        element1 = VElement().keystates(
+            [
+                CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
+                CircleState(pos=Point2D(100, 0), radius=75, _num_vertices=64),
+            ]
+        )
 
-        element2 = VElement().keystates([
-            RectangleState(
-                pos=Point2D(100, 0), width=60, height=60, _num_vertices=64
-            ),
-            RectangleState(
-                pos=Point2D(100, 0), width=90, height=90, _num_vertices=64
-            ),
-        ])
+        element2 = VElement().keystates(
+            [
+                RectangleState(
+                    pos=Point2D(100, 0), width=60, height=60, _num_vertices=64
+                ),
+                RectangleState(
+                    pos=Point2D(100, 0), width=90, height=90, _num_vertices=64
+                ),
+            ]
+        )
 
         scene = VScene(width=800, height=600)
         scene.add_element(element1)
@@ -333,42 +343,48 @@ class TestSceneIntegration:
     def test_scene_with_varied_animations(self):
         """Test scene with multiple different animations"""
         # Morphing element
-        morph_element = VElement().keystates([
-            CircleState(pos=Point2D(-200, 0), radius=50, _num_vertices=64),
-            StarState(
-                pos=Point2D(-200, 0),
-                outer_radius=60,
-                inner_radius=30,
-                num_points_star=5,
-                _num_vertices=64,
-            ),
-        ])
+        morph_element = VElement().keystates(
+            [
+                CircleState(pos=Point2D(-200, 0), radius=50, _num_vertices=64),
+                StarState(
+                    pos=Point2D(-200, 0),
+                    outer_radius=60,
+                    inner_radius=30,
+                    num_points_star=5,
+                    _num_vertices=64,
+                ),
+            ]
+        )
 
         # Color transition element
-        color_element = VElement().keystates([
-            CircleState(
-                pos=Point2D(),
-                radius=40,
-                fill_color=Color("#FF0000"),
-                _num_vertices=64,
-            ),
-            CircleState(
-                pos=Point2D(),
-                radius=40,
-                fill_color=Color("#0000FF"),
-                _num_vertices=64,
-            ),
-        ])
+        color_element = VElement().keystates(
+            [
+                CircleState(
+                    pos=Point2D(),
+                    radius=40,
+                    fill_color=Color("#FF0000"),
+                    _num_vertices=64,
+                ),
+                CircleState(
+                    pos=Point2D(),
+                    radius=40,
+                    fill_color=Color("#0000FF"),
+                    _num_vertices=64,
+                ),
+            ]
+        )
 
         # Position animation element
-        move_element = VElement().keystates([
-            RectangleState(
-                pos=Point2D(200, -100), width=50, height=50, _num_vertices=64
-            ),
-            RectangleState(
-                pos=Point2D(200, 100), width=50, height=50, _num_vertices=64
-            ),
-        ])
+        move_element = VElement().keystates(
+            [
+                RectangleState(
+                    pos=Point2D(200, -100), width=50, height=50, _num_vertices=64
+                ),
+                RectangleState(
+                    pos=Point2D(200, 100), width=50, height=50, _num_vertices=64
+                ),
+            ]
+        )
 
         scene = VScene(width=800, height=600)
         scene.add_element(morph_element)
@@ -409,9 +425,15 @@ class TestFieldKeystates:
         element = (
             VElement()
             .keystates([state1, state2])
-            .attributes(keystates={
-                "pos": [(Point2D(), 0.0), (Point2D(50, 0), 0.5), (Point2D(100, 0), 1.0)]
-            })
+            .attributes(
+                keystates_dict={
+                    "pos": [
+                        (Point2D(), 0.0),
+                        (Point2D(50, 0), 0.5),
+                        (Point2D(100, 0), 1.0),
+                    ]
+                }
+            )
         )
 
         assert element is not None
@@ -431,10 +453,12 @@ class TestFieldKeystates:
         element = (
             VElement()
             .keystates([state1, state2])
-            .attributes(keystates={
-                "x": [(0, 0.0), (100, 0.5), (200, 1.0)],
-                "radius": [(50, 0.0), (150, 0.3), (100, 1.0)],
-            })
+            .attributes(
+                keystates_dict={
+                    "x": [(0, 0.0), (100, 0.5), (200, 1.0)],
+                    "radius": [(50, 0.0), (150, 0.3), (100, 1.0)],
+                }
+            )
         )
 
         assert element is not None

@@ -48,7 +48,7 @@ class PathResolver:
             return segment_path_config[field_name]
 
         # Level 2: Global default (linear)
-        from svan2d.transition.path import linear
+        from svan2d.transition.curve import linear
         return linear
 
     def get_path(
@@ -71,5 +71,5 @@ class PathResolver:
             return segment_path
 
         # Level 2: Global default (linear)
-        from svan2d.transition.path import linear
+        from svan2d.transition.curve import linear
         return linear

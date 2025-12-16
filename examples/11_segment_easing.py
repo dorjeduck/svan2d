@@ -46,12 +46,14 @@ def main():
     elements = [
         VElement(renderer=renderer)
         .attributes(
-            easing={"pos": easing.linear},
-            keystates={"fill_color": [START_COLOR, END_COLOR]},
+            easing_dict={"pos": easing.linear},
+            keystates_dict={"fill_color": [START_COLOR, END_COLOR]},
         )
         .keystate(state_a, at=0)
         .keystate(state_b, at=0.25)
-        .transition(easing={"pos": easing.in_out_sine if i % 2 == 1 else easing.linear})
+        .transition(
+            easing_dict={"pos": easing.in_out_sine if i % 2 == 1 else easing.linear}
+        )
         .keystate(state_c, at=0.75)
         .keystate(state_d, at=1)
         for i, (

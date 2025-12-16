@@ -18,9 +18,7 @@ class VertexContours:
     vertex loops should have clockwise winding (negative area).
     """
 
-    def __init__(
-        self, outer: VertexLoop, holes: Optional[List[VertexLoop]] = None
-    ):
+    def __init__(self, outer: VertexLoop, holes: Optional[List[VertexLoop]] = None):
         """Initialize vertex contours
 
         Args:
@@ -123,7 +121,7 @@ class VertexContours:
 
     @classmethod
     def from_vertices_lists(
-        cls, outer_vertices: Points2D,  holes_vertices: Optional[List[Points2D]] = None
+        cls, outer_vertices: Points2D, holes_vertices: Optional[List[Points2D]] = None
     ) -> VertexContours:
         """Create VertexContours from lists of vertex tuples
 
@@ -134,12 +132,12 @@ class VertexContours:
         outer_loop = VertexLoop(outer_vertices, closed=True)
 
         holes_loops = None
-        if  holes_vertices:
-             holes_loops = [
-                VertexLoop(hole_verts, closed=True) for hole_verts in  holes_vertices
+        if holes_vertices:
+            holes_loops = [
+                VertexLoop(hole_verts, closed=True) for hole_verts in holes_vertices
             ]
 
-        return cls(outer_loop,  holes_loops)
+        return cls(outer_loop, holes_loops)
 
     def __repr__(self) -> str:
         return f"VertexContours(outer={len(self._outer)} vertices, holes={len(self._holes)})"

@@ -6,7 +6,7 @@ from .step import step
 from .inbetween import inbetween
 from .circular_midpoint import circular_midpoint
 from .morpher import FlubberMorpher, NativeMorpher
-from . import path
+from . import curve
 
 __all__ = [
     "lerp",
@@ -16,5 +16,5 @@ __all__ = [
     "circular_midpoint",
     "FlubberMorpher",
     "NativeMorpher",
-    "path",
+    "curve",
 ]

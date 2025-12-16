@@ -127,19 +127,23 @@ class TestAnimationFrameGeneration:
 
     def test_multi_element_frame_generation(self):
         """Test generating frames with multiple animated elements"""
-        element1 = VElement().keystates([
-            CircleState(pos=Point2D(-100, 0), radius=50, _num_vertices=64),
-            CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
-        ])
+        element1 = VElement().keystates(
+            [
+                CircleState(pos=Point2D(-100, 0), radius=50, _num_vertices=64),
+                CircleState(pos=Point2D(100, 0), radius=50, _num_vertices=64),
+            ]
+        )
 
-        element2 = VElement().keystates([
-            RectangleState(
-                pos=Point2D(0, -100), width=60, height=60, _num_vertices=64
-            ),
-            RectangleState(
-                pos=Point2D(0, 0), width=60, height=60, _num_vertices=64
-            ),
-        ])
+        element2 = VElement().keystates(
+            [
+                RectangleState(
+                    pos=Point2D(0, -100), width=60, height=60, _num_vertices=64
+                ),
+                RectangleState(
+                    pos=Point2D(0, 0), width=60, height=60, _num_vertices=64
+                ),
+            ]
+        )
 
         scene = VScene(width=600, height=600)
         scene.add_element(element1)
@@ -157,7 +161,11 @@ class TestAnimationFrameGeneration:
         state1 = CircleState(radius=50, _num_vertices=64)
         state2 = CircleState(pos=Point2D(200, 0), radius=50, _num_vertices=64)
 
-        element = VElement().keystates([state1, state2]).attributes(easing={"pos": in_out})
+        element = (
+            VElement()
+            .keystates([state1, state2])
+            .attributes(easing_dict={"pos": in_out})
+        )
         scene = VScene(width=600, height=400)
         scene.add_element(element)
 

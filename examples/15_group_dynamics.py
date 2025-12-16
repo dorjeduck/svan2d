@@ -1,5 +1,3 @@
-from dataclasses import replace
-
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
@@ -47,33 +45,28 @@ def main():
     elements = [
         VElement(renderer=renderer)
         .attributes(
-            easing={"pos": easing.linear},
-            keystates={"fill_color": [START_COLOR, END_COLOR]},
+            easing_dict={"pos": easing.linear},
+            keystates_dict={"fill_color": [START_COLOR, END_COLOR]},
         )
         .keystates(states)
         for states in zip(*all_states)
     ]
 
     g_start_state = VElementGroupState()
-
     g1_end_state = VElementGroupState(rotation=75, transform_origin_x=x_shifts[1] / 2)
     g2_end_state = VElementGroupState(rotation=-75, transform_origin_x=x_shifts[1] / 2)
 
-    g1 = VElementGroup(
-        elements=elements[:4],
-        keystates=[
-            (0, g_start_state),
-            (0.5, g_start_state),
-            (1, g1_end_state),
-        ],
+    g1 = (
+        VElementGroup(elements=elements[:4])
+        .keystate(g_start_state, at=0)
+        .keystate(g_start_state, at=0.5)
+        .keystate(g1_end_state, at=1)
     )
-    g2 = VElementGroup(
-        elements=elements[5:],
-        keystates=[
-            (0, g_start_state),
-            (0.5, g_start_state),
-            (1, g2_end_state),
-        ],
+    g2 = (
+        VElementGroup(elements=elements[5:])
+        .keystate(g_start_state, at=0)
+        .keystate(g_start_state, at=0.5)
+        .keystate(g2_end_state, at=1)
     )
     scene.add_elements([g1, g2])
 

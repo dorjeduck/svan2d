@@ -19,7 +19,7 @@ class EasingResolver:
 
     def __init__(
         self,
-        attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None,
+        attribute_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
     ):
         """
         Initialize the easing resolver.
@@ -27,7 +27,7 @@ class EasingResolver:
         Args:
             attribute_easing: Instance-level easing overrides for specific attributes
         """
-        self.attribute_easing = attribute_easing or {}
+        self.attribute_easing = attribute_easing_dict or {}
 
     def get_easing_for_field(
         self,

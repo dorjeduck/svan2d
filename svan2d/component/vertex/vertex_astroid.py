@@ -55,7 +55,7 @@ class VertexAstroid(VertexLoop):
 
         # Generate vertices along the astroid curve
         vertices = self._generate_astroid_vertices(
-            cusps, curvature, num_vertices, center.x, center.y
+            cusps, curvature, num_vertices, center
         )
 
         super().__init__(vertices, closed=True)

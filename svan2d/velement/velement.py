@@ -133,7 +133,7 @@ class VElement(BaseVElement, KeystateBuilder):
             raise RuntimeError("Cannot modify VElement after rendering has begun.")
 
         for ks in segment_result:
-            self._builder.keystates.append((ks.state, ks.time, ks.transition_config))
+            self._builder.keystates.append((ks.state, ks.time, ks.transition_config, ks.skip_render_at))
 
         return self
 

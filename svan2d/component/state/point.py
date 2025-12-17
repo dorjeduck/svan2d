@@ -37,10 +37,10 @@ class PointState(VertexState):
             PointState(pos=Point2D(100, 0), y=50, opacity=1.0)
         ])
 
-        # Multiple shapes converge to one point
+        # Multiple states converge to one point
         VElement(keystates=[
-            ShapeCollectionState(shapes=[c1, c2, c3]),
-            ShapeCollectionState(shapes=[PointState(x=0, y=0)])
+            ShapeCollectionState(states=[c1, c2, c3]),
+            ShapeCollectionState(states=[PointState(x=0, y=0)])
         ])
 
     Attributes:

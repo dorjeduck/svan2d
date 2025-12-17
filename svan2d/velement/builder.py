@@ -23,8 +23,9 @@ T = TypeVar("T", bound="KeystateBuilder")
 class BuilderState:
     """Internal state for chainable builder methods."""
 
-    keystates: List[Tuple[State, Optional[float], Optional[TransitionConfig]]] = field(
-        default_factory=list
+    # Tuple: (state, time, transition_config, skip_render_at)
+    keystates: List[Tuple[State, Optional[float], Optional[TransitionConfig], bool]] = (
+        field(default_factory=list)
     )
     pending_transition: Optional[TransitionConfig] = None
     default_transition: Optional[TransitionConfig] = None
@@ -45,12 +46,16 @@ class KeystateBuilder:
     _attribute_easing: Optional[Dict[str, Callable[[float], float]]]
     _attribute_keystates: Optional[AttributeKeyStatesDict]
 
-    def keystate(self: T, state: State, at: Optional[float] = None) -> T:
+    def keystate(
+        self: T, state: State, at: Optional[float] = None, skip_render_at: bool = False
+    ) -> T:
         """Add a keystate at the specified time.
 
         Args:
             state: State for this keystate
             at: Time position (0.0-1.0), or None for auto-timing
+            skip_render_at: If True, skip rendering at exactly this time point.
+                           Useful for boundary handoffs between elements.
 
         Returns:
             self for chaining
@@ -60,7 +65,7 @@ class KeystateBuilder:
 
         # Attach transition to previous keystate (explicit or default)
         if len(self._builder.keystates) > 0:
-            prev_state, prev_time, _ = self._builder.keystates[-1]
+            prev_state, prev_time, _, prev_skip = self._builder.keystates[-1]
 
             transition_to_apply = (
                 self._builder.pending_transition or self._builder.default_transition
@@ -71,12 +76,13 @@ class KeystateBuilder:
                     prev_state,
                     prev_time,
                     transition_to_apply,
+                    prev_skip,
                 )
 
             self._builder.pending_transition = None
 
         # Add new keystate
-        self._builder.keystates.append((state, at, None))
+        self._builder.keystates.append((state, at, None, skip_render_at))
         return self
 
     def keystates(
@@ -291,6 +297,25 @@ class KeystateBuilder:
                 "Element requires at least 1 keystate. Use .keystate() to add states."
             )
 
+        # Validate compatible state types (ShapeCollectionState cannot mix with others)
+        from svan2d.component.state.state_collection import StateCollectionState
+
+        for i in range(len(self._builder.keystates) - 1):
+            state1 = self._builder.keystates[i][0]
+            state2 = self._builder.keystates[i + 1][0]
+            is_collection1 = isinstance(state1, StateCollectionState)
+            is_collection2 = isinstance(state2, StateCollectionState)
+
+            if is_collection1 != is_collection2:
+                type1 = type(state1).__name__
+                type2 = type(state2).__name__
+                raise ValueError(
+                    f"Cannot chain {type1} with {type2}. "
+                    f"ShapeCollectionState must be in a separate VElement. "
+                    f"Use adjacent time ranges (e.g., individual shapes at=0.0-0.4, "
+                    f"collection at=0.4-0.7) in separate VElements."
+                )
+
         # Check for orphan transition after last keystate
         if self._builder.pending_transition is not None:
             raise ValueError(
@@ -300,12 +325,17 @@ class KeystateBuilder:
 
         # Convert internal keystates to KeyState objects
         keystates: List[KeyState] = []
-        for state, time, transition_config in self._builder.keystates:
+        for state, time, transition_config, skip_render_at in self._builder.keystates:
             effective_transition = self._merge_element_path_into_transition(
                 transition_config
             )
             keystates.append(
-                KeyState(state=state, time=time, transition_config=effective_transition)
+                KeyState(
+                    state=state,
+                    time=time,
+                    transition_config=effective_transition,
+                    skip_render_at=skip_render_at,
+                )
             )
 
         # Parse attribute keystates

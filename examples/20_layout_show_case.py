@@ -8,7 +8,7 @@ from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
 from svan2d.core.logger import configure_logging
 from svan2d.velement import VElement
-from svan2d.velement import segments
+from svan2d.transition import segments
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from dataclasses import replace

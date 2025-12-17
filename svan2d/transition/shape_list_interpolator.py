@@ -137,8 +137,30 @@ class ShapeListInterpolator:
     def _adjust_opacity_for_overlap(
         self, matched_states1: List[State], matched_states2: List[State]
     ) -> tuple[List[State], List[State]]:
-        """Adjust opacity when multiple sources converge to same destination"""
+        """Adjust end-state opacity when multiple sources converge to same destination.
+
+        Uses correct alpha compositing formula so N overlapping shapes
+        combine to the target opacity:
+            each_opacity = 1 - (1 - target_opacity)^(1/N)
+
+        Only adjusts matched_states2 (end state) so opacity morphs gradually:
+        - At t=0: Full original opacity
+        - At t=1: Adjusted opacity that combines correctly via alpha compositing
+        """
         from collections import defaultdict
+
+        def alpha_composite_opacity(target_opacity: float, n: int) -> float:
+            """Calculate per-shape opacity so N shapes composite to target_opacity.
+
+            Formula: each = 1 - (1 - target)^(1/N)
+            """
+            if n <= 1:
+                return target_opacity
+            if target_opacity >= 1.0:
+                return 1.0  # Full opacity - no reduction needed
+            if target_opacity <= 0.0:
+                return 0.0
+            return 1.0 - pow(1.0 - target_opacity, 1.0 / n)
 
         # Group by destination position
         dest_groups = defaultdict(list)
@@ -146,38 +168,31 @@ class ShapeListInterpolator:
             dest_key = (round(s2.x, 1), round(s2.y, 1))
             dest_groups[dest_key].append(i)
 
-        # Adjust opacity for groups with multiple sources
+        # Adjust opacity only for end states (matched_states2)
         for dest_key, indices in dest_groups.items():
             if len(indices) > 1:
-                # Multiple sources → same destination
-                # Divide both start and dest opacity by N
-                opacity_factor = 1.0 / len(indices)
+                n = len(indices)
                 for i in indices:
-                    # Build replacement dict for opacity attributes
-                    updates1 = {"opacity": matched_states1[i].opacity * opacity_factor}
-                    updates2 = {"opacity": matched_states2[i].opacity * opacity_factor}
+                    # Use alpha compositing formula instead of simple division
+                    target_opacity = matched_states2[i].opacity
+                    updates2 = {"opacity": alpha_composite_opacity(target_opacity, n)}
 
                     # Also adjust fill_opacity if present
-                    if hasattr(matched_states1[i], "fill_opacity"):
-                        updates1["fill_opacity"] = (
-                            matched_states1[i].fill_opacity * opacity_factor
-                        )
                     if hasattr(matched_states2[i], "fill_opacity"):
-                        updates2["fill_opacity"] = (
-                            matched_states2[i].fill_opacity * opacity_factor
-                        )
+                        target_fill = matched_states2[i].fill_opacity
+                        if target_fill is not None:
+                            updates2["fill_opacity"] = alpha_composite_opacity(
+                                target_fill, n
+                            )
 
                     # Also adjust stroke_opacity if present
-                    if hasattr(matched_states1[i], "stroke_opacity"):
-                        updates1["stroke_opacity"] = (
-                            matched_states1[i].stroke_opacity * opacity_factor
-                        )
                     if hasattr(matched_states2[i], "stroke_opacity"):
-                        updates2["stroke_opacity"] = (
-                            matched_states2[i].stroke_opacity * opacity_factor
-                        )
+                        target_stroke = matched_states2[i].stroke_opacity
+                        if target_stroke is not None:
+                            updates2["stroke_opacity"] = alpha_composite_opacity(
+                                target_stroke, n
+                            )
 
-                    matched_states1[i] = replace(matched_states1[i], **updates1)
                     matched_states2[i] = replace(matched_states2[i], **updates2)
 
         return matched_states1, matched_states2

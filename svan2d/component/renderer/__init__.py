@@ -29,7 +29,7 @@ from .square_ring import SquareRingRenderer
 from .text import TextRenderer
 from .triangle import TriangleRenderer
 from .wave import WaveRenderer
-from .shape_collection import ShapeCollectionRenderer
+from .state_collection import StateCollectionRenderer
 
 __all__ = [
     "Renderer",
@@ -59,5 +59,5 @@ __all__ = [
     "TextRenderer",
     "TriangleRenderer",
     "WaveRenderer",
-    "ShapeCollectionRenderer",
+    "StateCollectionRenderer",
 ]

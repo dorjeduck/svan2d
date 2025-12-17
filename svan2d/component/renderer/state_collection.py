@@ -7,10 +7,10 @@ import drawsvg as dw
 from svan2d.component.renderer.base import Renderer
 
 if TYPE_CHECKING:
-    from ..state.shape_collection import ShapeCollectionState
+    from ..state.state_collection import StateCollectionState
 
 
-class ShapeCollectionRenderer(Renderer):
+class StateCollectionRenderer(Renderer):
     """Renders a collection of shapes as independent visible elements
 
     Each shape in the collection is rendered using its own renderer
@@ -19,7 +19,7 @@ class ShapeCollectionRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "ShapeCollectionState", drawing: dw.Drawing = None
+        self, state: "StateCollectionState", drawing: dw.Drawing = None
     ) -> dw.Group:
         """Render each shape in the collection
 
@@ -32,23 +32,26 @@ class ShapeCollectionRenderer(Renderer):
         """
         group = dw.Group()
 
-        if state.shapes:
+        if state.states:
             # Import here to avoid circular dependency
             from svan2d.component import get_renderer_instance_for_state
             from svan2d.component.renderer.base_vertex import VertexRenderer
 
-            for shape_state in state.shapes:
+            for s in state.states:
                 # Check if this is a morph state (has _aligned_contours from interpolation)
-                if hasattr(shape_state, '_aligned_contours') and shape_state._aligned_contours is not None:
+                if (
+                    hasattr(s, "_aligned_contours")
+                    and s._aligned_contours is not None
+                ):
                     # This is an interpolated state between different shape types
                     # Use VertexRenderer for smooth morphing
                     renderer = VertexRenderer()
                 else:
                     # Normal state - use its registered renderer
-                    renderer = get_renderer_instance_for_state(shape_state)
+                    renderer = get_renderer_instance_for_state(s)
 
                 # Render the shape (applies transforms, opacity, clips, etc.)
-                rendered = renderer.render(shape_state, drawing)
+                rendered = renderer.render(s, drawing)
 
                 # Add to collection group
                 group.append(rendered)

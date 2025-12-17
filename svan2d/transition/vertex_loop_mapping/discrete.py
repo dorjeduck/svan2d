@@ -10,7 +10,7 @@ from typing import List, Tuple
 
 from svan2d.component.vertex import VertexLoop
 from .base import VertexLoopMapper
-from .utils import create_zero_vertex_loop
+from .utils import create_zero_vertex_loop, resolve_distance_fn, NormSpec, DistanceFn
 
 
 class DiscreteMapper(VertexLoopMapper):
@@ -42,14 +42,20 @@ class DiscreteMapper(VertexLoopMapper):
     - Balanced visual complexity
     """
 
-    def __init__(self, selection_method: str = "distance"):
+    def __init__(self, selection_method: str = "distance", norm: NormSpec = "l2"):
         """Initialize discrete mapper
 
         Args:
             selection_method: How to select which vertex loops move vs. appear/disappear
                             Currently only "distance" is supported
+            norm: Distance metric for centroid matching
+                - "l1": Manhattan distance
+                - "l2": Euclidean distance (default)
+                - "linf": Chebyshev distance
+                - Callable: Custom distance function(Point2D, Point2D) -> float
         """
         self.selection_method = selection_method
+        self._distance_fn: DistanceFn = resolve_distance_fn(norm)
 
     def map(
         self, vertex_loops1: List[VertexLoop], vertex_loops2: List[VertexLoop]
@@ -107,7 +113,7 @@ class DiscreteMapper(VertexLoopMapper):
             for j, c1 in enumerate(centroids1):
                 if j in used_indices:
                     continue
-                dist = c1.distance_to(c2)
+                dist = self._distance_fn(c1, c2)
                 if dist < best_dist:
                     best_dist = dist
                     best_idx = j
@@ -211,7 +217,7 @@ class DiscreteMapper(VertexLoopMapper):
 
             for i in available:
                 min_dist = min(
-                    src_centroids[i].distance_to(dst_c) for dst_c in dst_centroids
+                    self._distance_fn(src_centroids[i], dst_c) for dst_c in dst_centroids
                 )
                 if min_dist < best_dist:
                     best_dist = min_dist
@@ -247,7 +253,7 @@ class DiscreteMapper(VertexLoopMapper):
 
             for i in available:
                 min_dist = min(
-                    dst_centroids[i].distance_to(src_c) for src_c in src_centroids
+                    self._distance_fn(dst_centroids[i], src_c) for src_c in src_centroids
                 )
                 if min_dist < best_dist:
                     best_dist = min_dist

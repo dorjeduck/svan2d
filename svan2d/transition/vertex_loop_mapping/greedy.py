@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 from svan2d.component.vertex import VertexLoop
 from .base import VertexLoopMapper
-from .utils import create_zero_vertex_loop
+from .utils import create_zero_vertex_loop, resolve_distance_fn, NormSpec, DistanceFn
 
 
 class GreedyNearestMapper(VertexLoopMapper):
@@ -31,6 +31,18 @@ class GreedyNearestMapper(VertexLoopMapper):
     Note: This may not give globally optimal results. For better matching,
     consider HungarianMapper (when implemented).
     """
+
+    def __init__(self, norm: NormSpec = "l2"):
+        """Initialize greedy mapper with distance norm.
+
+        Args:
+            norm: Distance metric for centroid matching
+                - "l1": Manhattan distance
+                - "l2": Euclidean distance (default)
+                - "linf": Chebyshev distance
+                - Callable: Custom distance function(Point2D, Point2D) -> float
+        """
+        self._distance_fn: DistanceFn = resolve_distance_fn(norm)
 
     def map(
         self, vertex_loops1: List[VertexLoop], vertex_loops2: List[VertexLoop]
@@ -91,7 +103,7 @@ class GreedyNearestMapper(VertexLoopMapper):
             for j, c1 in enumerate(centroids1):
                 if j in used_indices:
                     continue
-                dist = c1.distance_to(c2)
+                dist = self._distance_fn(c1, c2)
                 if dist < best_dist:
                     best_dist = dist
                     best_idx = j
@@ -106,30 +118,49 @@ class GreedyNearestMapper(VertexLoopMapper):
     def _match_fewer_sources(
         self, vertex_loops1: List[VertexLoop], vertex_loops2: List[VertexLoop]
     ) -> Tuple[List[VertexLoop], List[VertexLoop]]:
-        """Match when there are fewer source vertex loops ( vertex_loops  splitting)
+        """Match when there are fewer source vertex loops (splitting)
 
-        Each dest vertex_loop is matched to its nearest source vertex_loop.
-        Source vertex loops may be used multiple times (splitting effect).
+        Ensures all sources are used at least once before any duplication.
+
+        Algorithm:
+        1. Phase 1: Each source finds its nearest destination (1:1, no reuse)
+        2. Phase 2: Remaining destinations find nearest source (allow reuse)
         """
-        centroids1 = [vertex_loop.centroid() for vertex_loop in vertex_loops1]
-        centroids2 = [vertex_loop.centroid() for vertex_loop in vertex_loops2]
+        n1 = len(vertex_loops1)
+        centroids1 = [vl.centroid() for vl in vertex_loops1]
+        centroids2 = [vl.centroid() for vl in vertex_loops2]
 
         matched_vertex_loops1 = []
         matched_vertex_loops2 = []
+        used_dest_indices = set()
 
-        for c2, vertex_loop2 in zip(centroids2, vertex_loops2):
-            # Find nearest source vertex_loop
-            best_idx = 0
+        # Phase 1: Each source finds its nearest destination (1:1, no reuse)
+        for src_idx, c1 in enumerate(centroids1):
+            best_dest_idx = None
             best_dist = float("inf")
 
-            for j, c1 in enumerate(centroids1):
-                dist = c1.distance_to(c2)
+            for dst_idx, c2 in enumerate(centroids2):
+                if dst_idx in used_dest_indices:
+                    continue
+                dist = self._distance_fn(c1, c2)
                 if dist < best_dist:
                     best_dist = dist
-                    best_idx = j
+                    best_dest_idx = dst_idx
 
-            matched_vertex_loops1.append(vertex_loops1[best_idx])
-            matched_vertex_loops2.append(vertex_loop2)
+            if best_dest_idx is not None:
+                used_dest_indices.add(best_dest_idx)
+                matched_vertex_loops1.append(vertex_loops1[src_idx])
+                matched_vertex_loops2.append(vertex_loops2[best_dest_idx])
+
+        # Phase 2: Remaining destinations find nearest source (allow reuse)
+        for dst_idx, c2 in enumerate(centroids2):
+            if dst_idx in used_dest_indices:
+                continue
+            best_src_idx = min(
+                range(n1), key=lambda j: self._distance_fn(centroids1[j], c2)
+            )
+            matched_vertex_loops1.append(vertex_loops1[best_src_idx])
+            matched_vertex_loops2.append(vertex_loops2[dst_idx])
 
         return matched_vertex_loops1, matched_vertex_loops2
 
@@ -153,7 +184,7 @@ class GreedyNearestMapper(VertexLoopMapper):
             best_dist = float("inf")
 
             for j, c2 in enumerate(centroids2):
-                dist = c1.distance_to(c2)
+                dist = self._distance_fn(c1, c2)
                 if dist < best_dist:
                     best_dist = dist
                     best_idx = j

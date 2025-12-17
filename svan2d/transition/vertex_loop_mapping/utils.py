@@ -4,7 +4,79 @@ This module provides helper functions used by vertex_loop mapping strategies.
 """
 
 from __future__ import annotations
+from enum import Enum
+from typing import Union, Callable
+import math
+
 from svan2d.component.vertex import VertexLoop
+from svan2d.core.point2d import Point2D
+
+
+class LoopMapperNorm(Enum):
+    """Distance norms for vertex loop mapping
+
+    Different norms produce different matching behaviors:
+    - L1: Manhattan distance (sum of absolute differences)
+    - L2: Euclidean distance (default, straight-line)
+    - LINF: Chebyshev distance (maximum of absolute differences)
+    """
+    L1 = "l1"
+    L2 = "l2"
+    LINF = "linf"
+
+
+# Type alias for custom distance functions
+DistanceFn = Callable[[Point2D, Point2D], float]
+
+# Union type for norm specification
+NormSpec = Union[str, LoopMapperNorm, DistanceFn]
+
+
+def distance_l1(p1: Point2D, p2: Point2D) -> float:
+    """Manhattan (L1) distance between two points"""
+    return abs(p1.x - p2.x) + abs(p1.y - p2.y)
+
+
+def distance_l2(p1: Point2D, p2: Point2D) -> float:
+    """Euclidean (L2) distance between two points"""
+    return math.hypot(p1.x - p2.x, p1.y - p2.y)
+
+
+def distance_linf(p1: Point2D, p2: Point2D) -> float:
+    """Chebyshev (L-infinity) distance between two points"""
+    return max(abs(p1.x - p2.x), abs(p1.y - p2.y))
+
+
+def resolve_distance_fn(norm: NormSpec) -> DistanceFn:
+    """Resolve norm specification to a distance function
+
+    Args:
+        norm: One of:
+            - "l1", "l2", "linf" (strings)
+            - LoopMapperNorm.L1, L2, LINF (enum)
+            - Custom callable(Point2D, Point2D) -> float
+
+    Returns:
+        Distance function
+    """
+    if callable(norm):
+        return norm
+
+    # Normalize to enum
+    if isinstance(norm, str):
+        try:
+            norm = LoopMapperNorm(norm.lower())
+        except ValueError:
+            raise ValueError(f"Unknown norm: {norm}. Use 'l1', 'l2', or 'linf'")
+
+    if norm == LoopMapperNorm.L1:
+        return distance_l1
+    elif norm == LoopMapperNorm.L2:
+        return distance_l2
+    elif norm == LoopMapperNorm.LINF:
+        return distance_linf
+    else:
+        raise ValueError(f"Unknown norm: {norm}")
 
 
 def create_zero_vertex_loop(reference_vertex_loop: VertexLoop) -> VertexLoop:

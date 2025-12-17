@@ -47,7 +47,7 @@ from .heart import HeartState
 from .infinity import InfinityState
 from .spiral import SpiralState
 from .wave import WaveState
-from .shape_collection import ShapeCollectionState
+from .state_collection import StateCollectionState
 
 
 __all__ = [
@@ -97,5 +97,5 @@ __all__ = [
     "InfinityState",
     "SpiralState",
     "WaveState",
-    "ShapeCollectionState",
+    "StateCollectionState",
 ]

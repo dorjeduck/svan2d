@@ -10,7 +10,7 @@ from typing import List, Tuple
 
 from svan2d.component.vertex import VertexLoop
 from .base import VertexLoopMapper
-from .utils import create_zero_vertex_loop
+from .utils import create_zero_vertex_loop, resolve_distance_fn, NormSpec, DistanceFn
 from svan2d.core.point2d import Point2D, Points2D
 
 
@@ -41,17 +41,24 @@ class ClusteringMapper(VertexLoopMapper):
         max_iterations: int = 50,
         random_seed: int = 42,
         balance_clusters: bool = True,
+        norm: NormSpec = "l2",
     ):
-        """Initialize clustering maper
+        """Initialize clustering mapper
 
         Args:
             max_iterations: Maximum k-means iterations
             random_seed: Random seed for reproducible clustering
             balance_clusters: If True, rebalance clusters after k-means to avoid extreme imbalances
+            norm: Distance metric for centroid matching
+                - "l1": Manhattan distance
+                - "l2": Euclidean distance (default)
+                - "linf": Chebyshev distance
+                - Callable: Custom distance function(Point2D, Point2D) -> float
         """
         self.max_iterations = max_iterations
         self.random_seed = random_seed
         self.balance_clusters = balance_clusters
+        self._distance_fn: DistanceFn = resolve_distance_fn(norm)
 
     def map(
         self, vertex_loops1: List[VertexLoop], vertex_loops2: List[VertexLoop]
@@ -108,7 +115,7 @@ class ClusteringMapper(VertexLoopMapper):
             for j, c1 in enumerate(centroids1):
                 if j in used_indices:
                     continue
-                dist = c1.distance_to(c2)
+                dist = self._distance_fn(c1, c2)
                 if dist < best_dist:
                     best_dist = dist
                     best_idx = j
@@ -191,7 +198,7 @@ class ClusteringMapper(VertexLoopMapper):
                 if j in used_dests:
                     continue
 
-                dist = cluster_centroid.distance_to(dest_c)
+                dist = self._distance_fn(cluster_centroid, dest_c)
                 if dist < best_dist:
                     best_dist = dist
                     best_dest_idx = j
@@ -228,28 +235,47 @@ class ClusteringMapper(VertexLoopMapper):
     def _match_with_simple_splitting(
         self, vertex_loops1: List[VertexLoop], vertex_loops2: List[VertexLoop]
     ) -> Tuple[List[VertexLoop], List[VertexLoop]]:
-        """Simple greedy splitting: each destination gets nearest source
+        """Simple greedy splitting: ensures all sources used before duplication
 
-        This is similar to GreedyNearestMapper but designed for splitting case.
-        Each destination finds its nearest source (sources can be reused).
+        Algorithm:
+        1. Phase 1: Each source finds its nearest destination (1:1, no reuse)
+        2. Phase 2: Remaining destinations find nearest source (allow reuse)
+
+        This guarantees every source participates before any duplication.
         """
+        n1 = len(vertex_loops1)
         src_centroids = [vertex_loop.centroid() for vertex_loop in vertex_loops1]
         dst_centroids = [vertex_loop.centroid() for vertex_loop in vertex_loops2]
 
         matched_vertex_loops1 = []
         matched_vertex_loops2 = []
+        used_dest_indices = set()
 
-        # For each destination, find nearest source
-        for dst_idx, dst_c in enumerate(dst_centroids):
-            best_src_idx = 0
+        # Phase 1: Each source finds its nearest destination (1:1, no reuse)
+        for src_idx, src_c in enumerate(src_centroids):
+            best_dest_idx = None
             best_dist = float("inf")
 
-            for src_idx, src_c in enumerate(src_centroids):
-                dist = src_c.distance_to(dst_c)
+            for dst_idx, dst_c in enumerate(dst_centroids):
+                if dst_idx in used_dest_indices:
+                    continue
+                dist = self._distance_fn(src_c, dst_c)
                 if dist < best_dist:
                     best_dist = dist
-                    best_src_idx = src_idx
+                    best_dest_idx = dst_idx
 
+            if best_dest_idx is not None:
+                used_dest_indices.add(best_dest_idx)
+                matched_vertex_loops1.append(vertex_loops1[src_idx])
+                matched_vertex_loops2.append(vertex_loops2[best_dest_idx])
+
+        # Phase 2: Remaining destinations find nearest source (allow reuse)
+        for dst_idx, dst_c in enumerate(dst_centroids):
+            if dst_idx in used_dest_indices:
+                continue
+            best_src_idx = min(
+                range(n1), key=lambda j: self._distance_fn(src_centroids[j], dst_c)
+            )
             matched_vertex_loops1.append(vertex_loops1[best_src_idx])
             matched_vertex_loops2.append(vertex_loops2[dst_idx])
 
@@ -356,8 +382,8 @@ class ClusteringMapper(VertexLoopMapper):
                 if dst_idx in used_dst:
                     continue
 
-                dist = src_cluster_centroids[src_idx].distance_to(
-                    dst_cluster_centroids[dst_idx]
+                dist = self._distance_fn(
+                    src_cluster_centroids[src_idx], dst_cluster_centroids[dst_idx]
                 )
                 if dist < best_dist:
                     best_dist = dist
@@ -417,7 +443,7 @@ class ClusteringMapper(VertexLoopMapper):
                 best_dst_idx = 0
                 best_dist = float("inf")
                 for j, dst_c in enumerate(dst_centroids):
-                    dist = src_c.distance_to(dst_c)
+                    dist = self._distance_fn(src_c, dst_c)
                     if dist < best_dist:
                         best_dist = dist
                         best_dst_idx = j
@@ -440,7 +466,7 @@ class ClusteringMapper(VertexLoopMapper):
                 best_src_idx = 0
                 best_dist = float("inf")
                 for j, src_c in enumerate(src_centroids):
-                    dist = dst_c.distance_to(src_c)
+                    dist = self._distance_fn(dst_c, src_c)
                     if dist < best_dist:
                         best_dist = dist
                         best_src_idx = j
@@ -524,7 +550,7 @@ class ClusteringMapper(VertexLoopMapper):
             # Choose candidate closest to target cluster
             best_idx = min(
                 candidates,
-                key=lambda x: x[1].distance_to(cluster_centroids[min_cluster]),
+                key=lambda x: self._distance_fn(x[1], cluster_centroids[min_cluster]),
             )[0]
 
             # Reassign point
@@ -558,7 +584,7 @@ class ClusteringMapper(VertexLoopMapper):
                 best_cluster = 0
                 best_dist = float("inf")
                 for i, centroid in enumerate(centroids):
-                    dist = point.distance_to(centroid)
+                    dist = self._distance_fn(point, centroid)
                     if dist < best_dist:
                         best_dist = dist
                         best_cluster = i
@@ -590,7 +616,7 @@ class ClusteringMapper(VertexLoopMapper):
             # Compute distances to nearest existing centroid
             distances = []
             for point in points:
-                min_dist = min(point.distance_to(c) for c in centroids)
+                min_dist = min(self._distance_fn(point, c) for c in centroids)
                 distances.append(min_dist**2)  # Square for probability weighting
 
             # Choose next centroid with probability proportional to distance²

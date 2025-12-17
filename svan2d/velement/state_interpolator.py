@@ -77,6 +77,11 @@ class StateInterpolator:
         if t < first_time or t > last_time:
             return None, False
 
+        # Check skip_render_at flag for keystates at exactly time t
+        for ks in self.keystates:
+            if ks.time == t and ks.skip_render_at:
+                return None, False
+
         # Handle edge case: at first keystate or single keystate
         if t == first_time or len(self.keystates) == 1:
             base_state = self.keystates[0].state

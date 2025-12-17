@@ -11,7 +11,7 @@ from svan2d.core.logger import configure_logging
 from svan2d.core.point2d import Point2D
 from svan2d.core.color import Color
 from svan2d.velement import VElement
-from svan2d.velement import segment
+from svan2d.transition import segment
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 

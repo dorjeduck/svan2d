@@ -20,7 +20,7 @@ from .clustering import ClusteringMapper
 from .hungarian import HungarianMapper
 from .discrete import DiscreteMapper
 from .simple import SimpleMapper
-from .utils import create_zero_vertex_loop
+from .utils import create_zero_vertex_loop, LoopMapperNorm
 
 __all__ = [
     "VertexLoopMapper",
@@ -30,4 +30,5 @@ __all__ = [
     "DiscreteMapper",
     "SimpleMapper",
     "create_zero_vertex_loop",
+    "LoopMapperNorm",
 ]

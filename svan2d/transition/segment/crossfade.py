@@ -14,7 +14,7 @@ def crossfade(
     t_start: float,
     t_end: float,
     delay: Optional[float] = 0,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
+    easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
 ) -> Tuple[List[KeyState], List[KeyState]]:
     """Fades one element out while fading a second element in simultaneously.
 
@@ -29,7 +29,7 @@ def crossfade(
     Returns:
         Tuple of (keystates_for_fading_in, keystates_for_fading_out)
     """
-    transition = TransitionConfig(easing_dict=easing) if easing else None
+    transition = TransitionConfig(easing_dict=easing_dict) if easing_dict else None
 
     # --- Element Fading IN (starts invisible, ends as s_in) ---
     s_in_gone = replace(s_in, opacity=0.0)

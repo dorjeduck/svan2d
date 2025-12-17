@@ -19,6 +19,7 @@ class KeyState:
     state: State
     time: Optional[float] = None
     transition_config: Optional[TransitionConfig] = None
+    skip_render_at: bool = False
 
     def __post_init__(self):
         """Validate time range and morphing configuration"""
@@ -86,6 +87,7 @@ class KeyState:
             state=self.state,
             time=time,
             transition_config=self.transition_config,
+            skip_render_at=self.skip_render_at,
         )
 
     def __repr__(self) -> str:

@@ -11,14 +11,25 @@ from .base import Filter
 
 
 class CompositeOperator(str, Enum):
-    """Composite operators for CompositeFilterPrimitive"""
-    OVER = 'over'
-    IN = 'in'
-    OUT = 'out'
-    ATOP = 'atop'
-    XOR = 'xor'
-    LIGHTER = 'lighter'
-    ARITHMETIC = 'arithmetic'
+    """
+    Composite operators for CompositeFilterPrimitive.
+
+    Members:
+        OVER: Places the source on top of the destination.
+        IN: Keeps the part of the source that overlaps the destination.
+        OUT: Keeps the part of the source that does not overlap the destination.
+        ATOP: Places the source on top but only where it overlaps the destination.
+        XOR: Keeps the parts of the source and destination that do not overlap.
+        LIGHTER: Adds the color values of source and destination.
+        ARITHMETIC: Combines source and destination using an arithmetic formula.
+    """
+    OVER = "over"
+    IN = "in"
+    OUT = "out"
+    ATOP = "atop"
+    XOR = "xor"
+    LIGHTER = "lighter"
+    ARITHMETIC = "arithmetic"
 
 
 @dataclass(frozen=True)
@@ -33,15 +44,15 @@ class CompositeFilterPrimitive(Filter):
                         result = k1*in*in2 + k2*in + k3*in2 + k4
 
     Example:
-        >>> # Porter-Duff composite
-        >>> comp = CompositeFilterPrimitive(operator='in', in_='SourceGraphic', in2='mask')
-        >>> # Arithmetic composite
-        >>> arith = CompositeFilterPrimitive(operator='arithmetic', k1=0, k2=1, k3=1, k4=0)
+        # Porter-Duff composite
+        comp = CompositeFilterPrimitive(operator='in', in_='SourceGraphic', in2='mask')
+        # Arithmetic composite
+        arith = CompositeFilterPrimitive(operator='arithmetic', k1=0, k2=1, k3=1, k4=0)
     """
 
-    operator: str = 'over'
-    in_: str = 'SourceGraphic'
-    in2: str = 'SourceAlpha'
+    operator: str = "over"
+    in_: str = "SourceGraphic"
+    in2: str = "SourceAlpha"
     k1: float = 0.0
     k2: float = 0.0
     k3: float = 0.0
@@ -50,25 +61,18 @@ class CompositeFilterPrimitive(Filter):
     def __post_init__(self):
         valid_operators = {op.value for op in CompositeOperator}
         if self.operator not in valid_operators:
-            raise ValueError(f"operator must be one of {valid_operators}, got {self.operator}")
+            raise ValueError(
+                f"operator must be one of {valid_operators}, got {self.operator}"
+            )
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
-        kwargs = {
-            'operator': self.operator,
-            'in_': self.in_,
-            'in2': self.in2
-        }
+        kwargs = {"operator": self.operator, "in_": self.in_, "in2": self.in2}
 
-        if self.operator == 'arithmetic':
-            kwargs.update({
-                'k1': self.k1,
-                'k2': self.k2,
-                'k3': self.k3,
-                'k4': self.k4
-            })
+        if self.operator == "arithmetic":
+            kwargs.update({"k1": self.k1, "k2": self.k2, "k3": self.k3, "k4": self.k4})
 
-        return dw.FilterItem('feComposite', **kwargs)
+        return dw.FilterItem("feComposite", **kwargs)
 
     def interpolate(self, other: Filter, t: float):
         """Interpolate between two CompositeFilterPrimitive instances"""
@@ -86,8 +90,5 @@ class CompositeFilterPrimitive(Filter):
         k4 = self.k4 + (other.k4 - self.k4) * t
 
         return CompositeFilterPrimitive(
-            operator=operator, in_=in_, in2=in2,
-            k1=k1, k2=k2, k3=k3, k4=k4
+            operator=operator, in_=in_, in2=in2, k1=k1, k2=k2, k3=k3, k4=k4
         )
-
-

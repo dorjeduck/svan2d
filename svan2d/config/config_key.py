@@ -9,16 +9,54 @@ from enum import Enum
 
 
 class ConfigKey(str, Enum):
-    """Enum of all valid configuration keys in svan2d
+    """
+    Enum of all valid configuration keys in svan2d.
 
-    Each enum value is the dot-separated path to the config value.
+    Each enum value is the dot-separated path to a specific config value.
     Inherits from str to maintain compatibility with string operations.
 
     Example:
-        >>> config.get(ConfigKey.SCENE_WIDTH)
-        800
-        >>> config.get(ConfigKey.STATE_VISUAL_FILL_COLOR)
-        Color.NONE
+        config.get(ConfigKey.SCENE_WIDTH)  # returns 800
+        config.get(ConfigKey.STATE_VISUAL_FILL_COLOR)  # returns Color.NONE
+
+    Sections:
+
+    - Scene configuration
+        SCENE_WIDTH, SCENE_HEIGHT, SCENE_BACKGROUND_COLOR, SCENE_BACKGROUND_OPACITY,
+        SCENE_ORIGIN_MODE
+
+    - State base attributes
+        STATE_X, STATE_Y, STATE_SCALE, STATE_OPACITY, STATE_ROTATION,
+        STATE_SKEW_X, STATE_SKEW_Y
+
+    - State visual attributes
+        STATE_VISUAL_FILL_COLOR, STATE_VISUAL_FILL_OPACITY, STATE_VISUAL_STROKE_COLOR,
+        STATE_VISUAL_STROKE_OPACITY, STATE_VISUAL_STROKE_WIDTH, STATE_VISUAL_NUM_VERTICES,
+        STATE_VISUAL_CLOSED
+
+    - Morphing configuration
+        MORPHING_VERTEX_LOOP_MAPPER, MORPHING_CLUSTERING_BALANCE_CLUSTERS,
+        MORPHING_CLUSTERING_MAX_ITERATIONS, MORPHING_CLUSTERING_RANDOM_SEED,
+        MORPHING_VERTEX_ALIGNMENT_NORM, MORPHING_ANGULAR_ALIGNMENT_NORM,
+        MORPHING_EUCLIDEAN_ALIGNMENT_NORM
+
+    - Export configuration
+        EXPORT_DEFAULT_FRAMERATE, EXPORT_DEFAULT_CONVERTER, EXPORT_PNG_WIDTH_PX
+
+    - Playwright server configuration
+        PLAYWRIGHT_SERVER_HOST, PLAYWRIGHT_SERVER_PORT, PLAYWRIGHT_SERVER_AUTO_START,
+        PLAYWRIGHT_SERVER_LOG_LEVEL
+
+    - Logging configuration
+        LOGGING_LEVEL
+
+    - Preview configuration (Jupyter & dev server)
+        PREVIEW_COLOR_SCHEME, PREVIEW_BACKGROUND, PREVIEW_CONTROL_BG, PREVIEW_CONTROL_HOVER,
+        PREVIEW_ACCENT, PREVIEW_ACCENT_HOVER, PREVIEW_TEXT, PREVIEW_TEXT_MUTED
+
+    - Dev server configuration
+        DEVSERVER_PORT, DEVSERVER_DEFAULT_FRAMES, DEVSERVER_DEFAULT_FPS,
+        DEVSERVER_AUTO_OPEN_BROWSER
     """
 
     # Scene configuration

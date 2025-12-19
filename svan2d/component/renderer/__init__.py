@@ -1,6 +1,8 @@
-# fill it with all you find in this folder
+"""Renderer implementations for various shapes and elements.
 
-"""Renderer implementations for various shapes and elements"""
+Renderers convert State objects to drawsvg drawing elements.
+Each renderer handles a specific state type (e.g., CircleRenderer for CircleState).
+"""
 
 from .base import Renderer
 from .base_vertex import VertexRenderer

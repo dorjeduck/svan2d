@@ -25,7 +25,7 @@ class GridPattern(Pattern):
         background: Optional background color
 
     Example:
-        >>> pattern = GridPattern(
+        pattern = GridPattern(
         ...     spacing=30,
         ...     line_width=2,
         ...     line_color=Color("#34495e"),

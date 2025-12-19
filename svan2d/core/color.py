@@ -14,12 +14,19 @@ ColorInput = Union["Color", ColorTuple, str]
 
 
 class ColorSpace(StrEnum):
-    """Color space options for interpolation"""
+    """
+    Color space options for interpolation.
 
-    RGB = "rgb"  # Fast but can look muddy
-    HSV = "hsv"  # Good for hue shifts and rainbow effects
-    LAB = "lab"  # Most perceptually uniform (recommended)
-    LCH = "lch"  # LAB in cylindrical coords (smooth hue transitions)
+    Members:
+        RGB: Fast interpolation in RGB space, but may appear muddy.
+        HSV: Good for hue shifts and rainbow effects.
+        LAB: Most perceptually uniform; recommended for smooth transitions.
+        LCH: LAB in cylindrical coordinates, giving smooth hue transitions.
+    """
+    RGB = "rgb"
+    HSV = "hsv"
+    LAB = "lab"
+    LCH = "lch"
 
 
 class Color:
@@ -29,12 +36,12 @@ class Color:
 
     Initialization can now take any supported format directly:
     Examples:
-        >>> red = Color(255, 0, 0)
-        >>> blue_hex = Color("#0000FF")
-        >>> blue_short = Color("#00F")  # 3-char hex codes supported
-        >>> white = Color("#FFF")       # Expanded to #FFFFFF
-        >>> green_name = Color("green")
-        >>> existing_color = Color(blue_hex)  # Returns copy
+        red = Color(255, 0, 0)
+        blue_hex = Color("#0000FF")
+        blue_short = Color("#00F")  # 3-char hex codes supported
+        white = Color("#FFF")       # Expanded to #FFFFFF
+        green_name = Color("green")
+        existing_color = Color(blue_hex)  # Returns copy
     """
 
     # Define slots to make the class immutable and memory-efficient

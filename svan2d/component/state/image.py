@@ -14,16 +14,23 @@ from svan2d.core.color import Color
 
 
 class ImageFitMode(StrEnum):
-    """Different modes for fitting images into the specified dimensions"""
+    """
+    Different modes for fitting images into the specified dimensions.
 
-    FIT = "fit"  # Scale to fit entirely within bounds
-    FILL = "fill"  # Scale to fill bounds completely, cropping if needed
-    CROP = "crop"  # Keep original size, crop to bounds
-    STRETCH = "stretch"  # Stretch to exact dimensions (changes aspect ratio)
-    ORIGINAL = "original"  # Keep original size, warn if doesn't fit
-    RANDOM_CROP = (
-        "random_crop"  # Randomly cut a section to fit bounds, randomly rotated/flipped
-    )
+    Members:
+        FIT: Scale the image to fit entirely within the bounds, maintaining aspect ratio.
+        FILL: Scale the image to fill the bounds completely, cropping if necessary.
+        CROP: Keep original size, crop to fit the bounds.
+        STRETCH: Stretch the image to exact dimensions, changing aspect ratio if needed.
+        ORIGINAL: Keep original size; may warn if the image doesn't fit the bounds.
+        RANDOM_CROP: Randomly cut a section to fit the bounds, optionally rotated or flipped.
+    """
+    FIT = "fit"
+    FILL = "fill"
+    CROP = "crop"
+    STRETCH = "stretch"
+    ORIGINAL = "original"
+    RANDOM_CROP = "random_crop"
 
 
 @renderer(ImageRenderer)

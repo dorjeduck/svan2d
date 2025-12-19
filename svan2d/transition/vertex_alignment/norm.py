@@ -9,6 +9,7 @@ from typing import Callable, Union, List
 
 # Avoid circular import by using TYPE_CHECKING
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from svan2d.core.point2d import Points2D
 
@@ -17,13 +18,14 @@ class AlignmentNorm(Enum):
     """Built-in alignment norms for vertex matching
 
     Different norms produce different alignment behaviors:
-    - L1: Minimizes sum of distances (economical, may have outliers)
-    - L2: Minimizes root-mean-square distance (balanced, statistically optimal)
-    - LINF: Minimizes maximum distance (minimax, ensures fairness)
+      L1: Minimizes sum of distances (economical, may have outliers)
+      L2: Minimizes root-mean-square distance (balanced, statistically optimal)
+      LINF: Minimizes maximum distance (minimax, ensures fairness)
     """
-    L1 = "l1"       # Sum of absolute differences
-    L2 = "l2"       # Root mean square
-    LINF = "linf"   # Maximum (minimax)
+
+    L1 = "l1"  # Sum of absolute differences
+    L2 = "l2"  # Root mean square
+    LINF = "linf"  # Maximum (minimax)
 
 
 # Type alias for angular distance functions

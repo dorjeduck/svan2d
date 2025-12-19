@@ -28,13 +28,13 @@ def equalize_curve_counts(path1: SVGPath, path2: SVGPath) -> Tuple[SVGPath, SVGP
         Tuple of (equalized_path1, equalized_path2) with same curve counts
 
     Example:
-        >>> from svan2d.paths import line, circle_as_beziers
+        from svan2d.paths import line, circle_as_beziers
         >>>
-        >>> path1 = line(0, 0, 100, 0)           # 1 curve
-        >>> path2 = circle_as_beziers(50, 50, 30)  # 4 curves
+        path1 = line(0, 0, 100, 0)           # 1 curve
+        path2 = circle_as_beziers(50, 50, 30)  # 4 curves
         >>>
-        >>> eq1, eq2 = equalize_curve_counts(path1, path2)
-        >>> # path1 now has 4 curves too (subdivided)
+        eq1, eq2 = equalize_curve_counts(path1, path2)
+        # path1 now has 4 curves too (subdivided)
     """
     # Analyze both paths
     curves1 = analyze_path_curves(path1.commands)
@@ -133,18 +133,18 @@ def smart_normalize(
         ValueError: If normalization fails
 
     Example:
-        >>> from svan2d.paths import line, quadratic_curve, circle_as_beziers
+        from svan2d.paths import line, quadratic_curve, circle_as_beziers
         >>>
-        >>> # Completely different paths!
-        >>> path1 = line(0, 0, 200, 0)              # 1 straight line
-        >>> path2 = circle_as_beziers(100, 0, 50)   # 4 cubic curves (closed)
+        # Completely different paths!
+        path1 = line(0, 0, 200, 0)              # 1 straight line
+        path2 = circle_as_beziers(100, 0, 50)   # 4 cubic curves (closed)
         >>>
-        >>> # Smart normalize makes them compatible
-        >>> norm1, norm2 = smart_normalize(path1, path2)
-        >>> # Both now have same structure and curve count
+        # Smart normalize makes them compatible
+        norm1, norm2 = smart_normalize(path1, path2)
+        # Both now have same structure and curve count
         >>>
-        >>> # Ready to morph!
-        >>> morphed = SVGPath.interpolate(norm1, norm2, t=0.5)
+        # Ready to morph!
+        morphed = SVGPath.interpolate(norm1, norm2, t=0.5)
     """
     # Step 1: Normalize structures first
     struct1 = normalize_path_structure(path1)

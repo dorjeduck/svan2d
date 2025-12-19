@@ -2,6 +2,7 @@
 
 from typing import List
 from svan2d.config import get_config, ConfigKey
+from svan2d.vscene.vscene import VScene
 from .color_schemes import get_color_scheme
 
 
@@ -12,7 +13,7 @@ class PreviewRenderer:
     interactive animation previews with playback controls.
     """
 
-    def __init__(self, vscene):
+    def __init__(self, vscene: VScene):
         """Initialize with a VScene instance
 
         Args:
@@ -136,7 +137,8 @@ class PreviewRenderer:
             svg = self.vscene.to_svg(frame_time=t, log=False)
 
             # Apply scale by wrapping in a scaled container
-            html_parts.append(f'''
+            html_parts.append(
+                f"""
                 <div style="text-align: center;">
                     <div style="font-size: 11px; color: #666; margin-bottom: 3px;">
                         t={t:.2f}
@@ -147,10 +149,11 @@ class PreviewRenderer:
                         </div>
                     </div>
                 </div>
-            ''')
+            """
+            )
 
-        html_parts.append('</div>')
-        return HTML(''.join(html_parts))
+        html_parts.append("</div>")
+        return HTML("".join(html_parts))
 
     def _render_navigator(self, times: List[float], play_interval_ms: int):
         """Display one frame at a time with navigation controls (prev/next, slider, play)
@@ -173,7 +176,8 @@ class PreviewRenderer:
         colors = get_color_scheme()
 
         # Build HTML with navigation
-        html_parts = [f'''
+        html_parts = [
+            f"""
             <style>
                 .preview-container-{preview_id} {{
                     text-align: center;
@@ -367,22 +371,26 @@ class PreviewRenderer:
                     </div>
                 </div>
                 <div class="preview-frames-{preview_id}">
-        ''']
+        """
+        ]
 
         # Add all frames (hidden by default)
         for i, t in enumerate(times):
-            active = 'active' if i == 0 else ''
+            active = "active" if i == 0 else ""
             svg = self.vscene.to_svg(frame_time=t, log=False)
-            html_parts.append(f'''
+            html_parts.append(
+                f"""
                 <div class="preview-frame-{preview_id} {active}" id="frame-{preview_id}-{i}" data-time="{t:.2f}">
                     <div style="border: 1px solid #ddd; display: inline-block;">
                         {svg}
                     </div>
                 </div>
-            ''')
+            """
+            )
 
         # Add JavaScript for navigation
-        html_parts.append(f'''
+        html_parts.append(
+            f"""
                 </div>
                 <div class="preview-slider-container-{preview_id}">
                     <input type="range" min="0" max="{num_frames - 1}" value="0"
@@ -582,6 +590,7 @@ class PreviewRenderer:
                     showFrame_{preview_id}(0);
                 }})();
             </script>
-        ''')
+        """
+        )
 
-        return HTML(''.join(html_parts))
+        return HTML("".join(html_parts))

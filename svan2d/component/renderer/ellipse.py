@@ -14,13 +14,6 @@ if TYPE_CHECKING:
 class EllipseRenderer(Renderer):
     """Renderer class for rendering ellipse elements"""
 
-    def __init__(self) -> None:
-        """Initialize ellipse renderer
-
-        No parameters needed - all attributes come from the state
-        """
-        pass
-
     def _render_core(
         self, state: "EllipseState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Ellipse:

@@ -1,3 +1,5 @@
+"""Generate intermediate values between two numbers."""
+
 from typing import List, Union
 
 Number = Union[int, float]
@@ -19,13 +21,13 @@ def inbetween(start: Number, end: Number, num: int) -> List[float]:
         List of evenly-spaced float values between start and end
 
     Examples:
-        >>> inbetween(0, 10, 1)
+        inbetween(0, 10, 1)
         [5.0]
-        >>> inbetween(0, 10, 4)
+        inbetween(0, 10, 4)
         [2.0, 4.0, 6.0, 8.0]
-        >>> inbetween(0, 1, 3)
+        inbetween(0, 1, 3)
         [0.25, 0.5, 0.75]
-        >>> inbetween(0, 10, 0)
+        inbetween(0, 10, 0)
         []
 
     Note:

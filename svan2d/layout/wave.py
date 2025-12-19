@@ -54,14 +54,14 @@ def wave(
 
     Examples:
         # Basic horizontal wave
-        >>> states = [CircleState(), CircleState(), CircleState()]
-        >>> wave_layout(states, amplitude=30, wavelength=200)
+        states = [CircleState(), CircleState(), CircleState()]
+        wave_layout(states, amplitude=30, wavelength=200)
 
         # Diagonal wave with custom spacing
-        >>> wave_layout(states, rotation=45, spacing=40, amplitude=20)
+        wave_layout(states, rotation=45, spacing=40, amplitude=20)
 
         # Wave with custom distances
-        >>> wave_layout(states, distances=[-100, -50, 0, 50, 100])
+        wave_layout(states, distances=[-100, -50, 0, 50, 100])
     """
     if not states:
         return []
@@ -181,13 +181,13 @@ def wave_between_points(
 
     Examples:
         # Horizontal wave from origin to (200, 0)
-        >>> wave_between_points(states, 0, 0, 200, 0, amplitude=30, wavelength=100)
+        wave_between_points(states, 0, 0, 200, 0, amplitude=30, wavelength=100)
 
         # Diagonal wave
-        >>> wave_between_points(states, -100, -100, 100, 100, amplitude=20)
+        wave_between_points(states, -100, -100, 100, 100, amplitude=20)
 
         # Vertical wave with custom wavelength
-        >>> wave_between_points(states, 50, 0, 50, 200, amplitude=40, wavelength=150)
+        wave_between_points(states, 50, 0, 50, 200, amplitude=40, wavelength=150)
 
         # Equivalent to wave() with center and rotation:
         # wave_between_points(states, 0, 0, 200, 0, amplitude=30)

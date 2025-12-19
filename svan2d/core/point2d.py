@@ -1,3 +1,5 @@
+"""2D point and point list types with vector operations."""
+
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterator

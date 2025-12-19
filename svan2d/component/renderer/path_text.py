@@ -24,27 +24,27 @@ class PathTextRenderer(Renderer):
     - Custom positioning via offset/offsets
 
     Examples:
-        >>> from svan2d.paths import line, quadratic_curve
-        >>> from svan2d.components.path_text import PathTextState, PathTextRenderer
+        from svan2d.paths import line, quadratic_curve
+        from svan2d.components.path_text import PathTextState, PathTextRenderer
         >>>
-        >>> # Static text on curved path
-        >>> state = PathTextState(
+        # Static text on curved path
+        state = PathTextState(
         ...     text="Curved Text",
         ...     path=quadratic_curve(0, 100, 100, 0, 200, 100)
         ... )
-        >>> element = VElement(PathTextRenderer(), state=state)
+        element = VElement(PathTextRenderer(), state=state)
         >>>
-        >>> # Morphing path animation
-        >>> path1 = line(0, 0, 200, 0)
-        >>> path2 = quadratic_curve(0, 0, 100, -50, 200, 0)
-        >>> element = VElement(
+        # Morphing path animation
+        path1 = line(0, 0, 200, 0)
+        path2 = quadratic_curve(0, 0, 100, -50, 200, 0)
+        element = VElement(
         ...     renderer=PathTextRenderer(),
         ...     keystates=[
         ...         (0.0, PathTextState(text="Morphing", path=path1)),
         ...         (1.0, PathTextState(text="Morphing", path=path2))
         ...     ]
         ... )
-        >>> # Path smoothly morphs from straight to curved!
+        # Path smoothly morphs from straight to curved!
     """
 
     def __init__(self) -> None:

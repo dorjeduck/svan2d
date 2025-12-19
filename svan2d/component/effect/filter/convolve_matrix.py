@@ -11,8 +11,14 @@ from .base import Filter
 
 
 class EdgeMode(str, Enum):
-    """Edge modes for ConvolveMatrixFilter"""
+    """
+    Edge modes for ConvolveMatrixFilter.
 
+    Members:
+        DUPLICATE: Extends the edge pixels by duplicating them.
+        WRAP: Wraps around the edges (pixels from the opposite side).
+        NONE: Leaves the edges unchanged (may produce undefined behavior).
+    """
     DUPLICATE = "duplicate"
     WRAP = "wrap"
     NONE = "none"
@@ -33,8 +39,8 @@ class ConvolveMatrixFilter(Filter):
         preserve_alpha: Whether to preserve alpha channel
 
     Example:
-        >>> # 3x3 sharpen kernel
-        >>> sharpen = ConvolveMatrixFilter(
+        # 3x3 sharpen kernel
+        sharpen = ConvolveMatrixFilter(
         ...     kernel_matrix=(0, -1, 0, -1, 5, -1, 0, -1, 0),
         ...     order=3
         ... )

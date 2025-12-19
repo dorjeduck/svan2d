@@ -17,7 +17,7 @@ class MergeNodeFilter(Filter):
         inputs: Tuple of input source names to merge
 
     Example:
-        >>> merge = MergeNodeFilter(inputs=('SourceGraphic', 'blur1', 'blur2'))
+        merge = MergeNodeFilter(inputs=('SourceGraphic', 'blur1', 'blur2'))
     """
 
     inputs: tuple[str, ...]

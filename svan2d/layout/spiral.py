@@ -115,10 +115,10 @@ def spiral_between_radii(
 
     Examples:
         # Spiral outward from 50 to 200
-        >>> spiral_between_radii(states, start_radius=50, end_radius=200)
+        spiral_between_radii(states, start_radius=50, end_radius=200)
 
         # Spiral inward (negative step)
-        >>> spiral_between_radii(states, start_radius=200, end_radius=50)
+        spiral_between_radii(states, start_radius=200, end_radius=50)
 
         # Equivalent to spiral():
         # spiral_between_radii(states, start_radius=50, end_radius=200) with 5 states

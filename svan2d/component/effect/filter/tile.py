@@ -17,14 +17,14 @@ class TileFilter(Filter):
         in_: Input source to tile
 
     Example:
-        >>> tile = TileFilter(in_='SourceGraphic')
+        tile = TileFilter(in_='SourceGraphic')
     """
 
-    in_: str = 'SourceGraphic'
+    in_: str = "SourceGraphic"
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
-        return dw.FilterItem('feTile', in_=self.in_)
+        return dw.FilterItem("feTile", in_=self.in_)
 
     def interpolate(self, other: Filter, t: float):
         """Interpolate between two TileFilter instances"""
@@ -33,5 +33,3 @@ class TileFilter(Filter):
 
         in_ = self.in_ if t < 0.5 else other.in_
         return TileFilter(in_=in_)
-
-

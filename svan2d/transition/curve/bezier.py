@@ -5,7 +5,9 @@ from typing import List, Callable
 from svan2d.core.point2d import Point2D
 
 
-def bezier(control_points: List[Point2D]) -> Callable[[Point2D, Point2D, float], Point2D]:
+def bezier(
+    control_points: List[Point2D],
+) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a bezier curve path function with given control points
 
     Supports quadratic (1 control point), cubic (2 control points),
@@ -21,9 +23,9 @@ def bezier(control_points: List[Point2D]) -> Callable[[Point2D, Point2D, float],
         Path function that interpolates along the bezier curve
 
     Example:
-        >>> # Cubic bezier with curve bulging upward
-        >>> path_func = bezier([Point2D(50, 200), Point2D(150, 200)])
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        # Cubic bezier with curve bulging upward
+        path_func = bezier([Point2D(50, 200), Point2D(150, 200)])
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
         Point2D(100.0, 150.0)  # Point on curve at t=0.5
     """
     if not control_points:
@@ -49,12 +51,10 @@ def bezier(control_points: List[Point2D]) -> Callable[[Point2D, Point2D, float],
 
         # General bezier formula using binomial coefficients
         x = sum(
-            math.comb(n, i) * (1 - t) ** (n - i) * t**i * pts[i].x
-            for i in range(n + 1)
+            math.comb(n, i) * (1 - t) ** (n - i) * t**i * pts[i].x for i in range(n + 1)
         )
         y = sum(
-            math.comb(n, i) * (1 - t) ** (n - i) * t**i * pts[i].y
-            for i in range(n + 1)
+            math.comb(n, i) * (1 - t) ** (n - i) * t**i * pts[i].y for i in range(n + 1)
         )
 
         return Point2D(x, y)
@@ -74,13 +74,15 @@ def bezier_quadratic(control: Point2D) -> Callable[[Point2D, Point2D, float], Po
         Path function for quadratic bezier curve
 
     Example:
-        >>> path_func = bezier_quadratic(Point2D(100, 200))
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        path_func = bezier_quadratic(Point2D(100, 200))
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
     """
     return bezier([control])
 
 
-def bezier_cubic(control1: Point2D, control2: Point2D) -> Callable[[Point2D, Point2D, float], Point2D]:
+def bezier_cubic(
+    control1: Point2D, control2: Point2D
+) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Convenience function for cubic bezier with two control points
 
     Creates a cubic bezier curve: p1 → control1 → control2 → p2
@@ -93,7 +95,7 @@ def bezier_cubic(control1: Point2D, control2: Point2D) -> Callable[[Point2D, Poi
         Path function for cubic bezier curve
 
     Example:
-        >>> path_func = bezier_cubic(Point2D(50, 200), Point2D(150, 200))
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        path_func = bezier_cubic(Point2D(50, 200), Point2D(150, 200))
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
     """
     return bezier([control1, control2])

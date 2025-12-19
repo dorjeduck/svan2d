@@ -26,8 +26,8 @@ class DropShadowFilter(Filter):
         opacity: Shadow opacity (0-1)
 
     Example:
-        >>> from svan2d.core import Color
-        >>> shadow = DropShadowFilter(dx=5, dy=5, std_deviation=3, color=Color("#000000"), opacity=0.5)
+        from svan2d.core import Color
+        shadow = DropShadowFilter(dx=5, dy=5, std_deviation=3, color=Color("#000000"), opacity=0.5)
     """
 
     dx: float = 2.0

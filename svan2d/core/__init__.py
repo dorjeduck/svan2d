@@ -1,3 +1,11 @@
+"""Core utilities for svan2d.
+
+Provides fundamental types and utilities:
+- Color: Color representation with interpolation support
+- Point2D: 2D point with vector operations
+- Logging: Configurable logging system
+"""
+
 from .color import Color, ColorTuple, ColorSpace
 from .logger import (
     configure_logging,
@@ -13,6 +21,5 @@ __all__ = [
     "get_logger",
     "Point2D",
     "Points2D",
-    "Point2DPool",
     "new_point2d",
 ]

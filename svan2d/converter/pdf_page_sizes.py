@@ -2,7 +2,23 @@ from enum import StrEnum
 
 
 class PDFPageSizeInch(StrEnum):
-    # page size in inches (calculated from 300 DPI)
+    """
+    Standard PDF page sizes in inches (calculated from 300 DPI).
+
+    Members:
+        A0, A1, A2, A3, A4, A5, A6: ISO 216 standard paper sizes.
+        LETTER: US Letter size.
+        LEGAL: US Legal size.
+        TABLOID: US Tabloid size.
+        LEDGER: US Ledger size (landscape orientation).
+        SQUARE_10, SQUARE_12: Square formats in inches.
+        ART_PRINT_50x70, ART_PRINT_60x80, ART_PRINT_70x100: Common art print sizes in inches.
+
+    Each member is a dictionary with keys:
+        width: page width in inches
+        height: page height in inches
+    """
+
     A0 = {"width": 33.11, "height": 46.81}
     A1 = {"width": 23.39, "height": 33.11}
     A2 = {"width": 16.54, "height": 23.39}

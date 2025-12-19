@@ -1,3 +1,9 @@
+"""State classes for various shapes and elements.
+
+States are immutable dataclasses that define geometry and visual attributes.
+Each state type has a corresponding renderer (e.g., CircleState → CircleRenderer).
+"""
+
 from .base import State, States
 from .base_color import ColorState
 from .base_vertex import VertexState

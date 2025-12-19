@@ -36,10 +36,10 @@ def get_config() -> Svan2DConfig:
         Global Svan2DConfig instance
 
     Example:
-        >>> from svan2d.config import get_config, ConfigKey
-        >>> config = get_config()
-        >>> width = config.get(ConfigKey.SCENE_WIDTH)
-        >>> width
+        from svan2d.config import get_config, ConfigKey
+        config = get_config()
+        width = config.get(ConfigKey.SCENE_WIDTH)
+        width
         800
     """
     global _global_config
@@ -63,8 +63,8 @@ def load_config(path: Optional[Path | str] = None):
         path: Optional path to configuration file
 
     Example:
-        >>> from svan2d.config import load_config
-        >>> load_config('my_project_config.toml')
+        from svan2d.config import load_config
+        load_config('my_project_config.toml')
     """
     global _global_config
     _global_config = Svan2DConfig.load_with_overrides(path)
@@ -74,8 +74,8 @@ def reset_config():
     """Reset configuration to system defaults
 
     Example:
-        >>> from svan2d.config import reset_config
-        >>> reset_config()
+        from svan2d.config import reset_config
+        reset_config()
     """
     global _global_config
     _global_config = Svan2DConfig.load_defaults()
@@ -90,8 +90,8 @@ def create_config_template(path: Path | str = "svan2d.toml"):
         path: Path where to create the template (default: "svan2d.toml")
 
     Example:
-        >>> from svan2d.config import create_config_template
-        >>> create_config_template("my_config.toml")
+        from svan2d.config import create_config_template
+        create_config_template("my_config.toml")
     """
     import shutil
 

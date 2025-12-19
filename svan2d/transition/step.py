@@ -1,6 +1,8 @@
+"""Step interpolation for discrete value transitions."""
+
 from typing import Any, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def step(start: T, end: T, t: float) -> T:
@@ -21,13 +23,13 @@ def step(start: T, end: T, t: float) -> T:
         Either start or end value (no intermediate values)
 
     Examples:
-        >>> step("hello", "world", 0.3)
+        step("hello", "world", 0.3)
         'hello'
-        >>> step("hello", "world", 0.5)
+        step("hello", "world", 0.5)
         'world'
-        >>> step("hello", "world", 0.8)
+        step("hello", "world", 0.8)
         'world'
-        >>> step(True, False, 0.49)
+        step(True, False, 0.49)
         True
 
     Note:

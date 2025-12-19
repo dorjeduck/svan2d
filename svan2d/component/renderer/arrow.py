@@ -12,17 +12,7 @@ if TYPE_CHECKING:
 
 
 class ArrowRenderer(Renderer):
-    """Renderer class for rendering circle elements
-
-    The radius is now part of the state, making it animatable!
-    """
-
-    def __init__(self) -> None:
-        """Initialize circle renderer
-
-        No parameters needed - all attributes come from the state
-        """
-        pass
+    """Renderer class for rendering circle elements"""
 
     def _render_core(
         self, state: ArrowState, drawing: Optional[dw.Drawing] = None

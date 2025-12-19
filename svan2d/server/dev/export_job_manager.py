@@ -16,7 +16,16 @@ logger = get_logger()
 
 
 class ExportStatus(Enum):
-    """Status of an export job"""
+    """
+    Status of an export job.
+
+    Members:
+        QUEUED: The job is queued and waiting to start.
+        PROCESSING: The job is currently being processed.
+        COMPLETE: The job has finished successfully.
+        ERROR: The job encountered an error during processing.
+        CANCELLED: The job was cancelled before completion.
+    """
 
     QUEUED = "queued"
     PROCESSING = "processing"
@@ -26,7 +35,14 @@ class ExportStatus(Enum):
 
 
 class ExportFormat(Enum):
-    """Supported export formats"""
+    """
+    Supported export formats.
+
+    Members:
+        MP4: Export as an MP4 video file.
+        GIF: Export as an animated GIF.
+        HTML: Export as an HTML file (e.g., for interactive or embedded content).
+    """
 
     MP4 = "mp4"
     GIF = "gif"
@@ -58,7 +74,9 @@ class ExportJob:
             "output_file": str(self.output_file) if self.output_file else None,
             "error": self.error,
             "created_at": self.created_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
         }
 
 
@@ -169,7 +187,9 @@ class ExportJobManager:
             return
 
         try:
-            self.update_job(job_id, status=ExportStatus.PROCESSING, message="Starting export...")
+            self.update_job(
+                job_id, status=ExportStatus.PROCESSING, message="Starting export..."
+            )
 
             # Run export function in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
@@ -206,7 +226,11 @@ class ExportJobManager:
         if not job:
             return False
 
-        if job.status in (ExportStatus.COMPLETE, ExportStatus.ERROR, ExportStatus.CANCELLED):
+        if job.status in (
+            ExportStatus.COMPLETE,
+            ExportStatus.ERROR,
+            ExportStatus.CANCELLED,
+        ):
             return False
 
         job.status = ExportStatus.CANCELLED
@@ -226,7 +250,11 @@ class ExportJobManager:
         to_remove = []
 
         for job_id, job in self.jobs.items():
-            if job.status in (ExportStatus.COMPLETE, ExportStatus.ERROR, ExportStatus.CANCELLED):
+            if job.status in (
+                ExportStatus.COMPLETE,
+                ExportStatus.ERROR,
+                ExportStatus.CANCELLED,
+            ):
                 age = (now - job.created_at).total_seconds()
                 if age > max_age_seconds:
                     to_remove.append(job_id)

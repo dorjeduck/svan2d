@@ -11,9 +11,15 @@ from .base import Filter
 
 
 class MorphologyOperator(str, Enum):
-    """Morphology operators for MorphologyFilter"""
-    ERODE = 'erode'
-    DILATE = 'dilate'
+    """
+    Morphology operators for MorphologyFilter.
+
+    Members:
+        ERODE: Shrinks bright regions and enlarges dark regions (erodes).
+        DILATE: Expands bright regions and shrinks dark regions (dilates).
+    """
+    ERODE = "erode"
+    DILATE = "dilate"
 
 
 @dataclass(frozen=True)
@@ -26,18 +32,20 @@ class MorphologyFilter(Filter):
         in_: Input source (default: 'SourceGraphic')
 
     Example:
-        >>> erode = MorphologyFilter(operator='erode', radius=2)
-        >>> dilate = MorphologyFilter(operator='dilate', radius=3)
+        erode = MorphologyFilter(operator='erode', radius=2)
+        dilate = MorphologyFilter(operator='dilate', radius=3)
     """
 
-    operator: str = 'erode'
+    operator: str = "erode"
     radius: float | tuple[float, float] = 1.0
-    in_: str = 'SourceGraphic'
+    in_: str = "SourceGraphic"
 
     def __post_init__(self):
         valid_operators = {op.value for op in MorphologyOperator}
         if self.operator not in valid_operators:
-            raise ValueError(f"operator must be one of {valid_operators}, got {self.operator}")
+            raise ValueError(
+                f"operator must be one of {valid_operators}, got {self.operator}"
+            )
         if isinstance(self.radius, (int, float)) and self.radius < 0:
             raise ValueError(f"radius must be >= 0, got {self.radius}")
 
@@ -48,10 +56,10 @@ class MorphologyFilter(Filter):
         else:
             radius_str = str(self.radius)
 
-        kwargs = {'operator': self.operator, 'radius': radius_str}
+        kwargs = {"operator": self.operator, "radius": radius_str}
         if self.in_:
-            kwargs['in_'] = self.in_
-        return dw.FilterItem('feMorphology', **kwargs)
+            kwargs["in_"] = self.in_
+        return dw.FilterItem("feMorphology", **kwargs)
 
     def interpolate(self, other: Filter, t: float):
         """Interpolate between two MorphologyFilter instances"""
@@ -65,10 +73,14 @@ class MorphologyFilter(Filter):
         if isinstance(self.radius, tuple) and isinstance(other.radius, tuple):
             radius = (
                 self.radius[0] + (other.radius[0] - self.radius[0]) * t,
-                self.radius[1] + (other.radius[1] - self.radius[1]) * t
+                self.radius[1] + (other.radius[1] - self.radius[1]) * t,
             )
         elif isinstance(self.radius, tuple):
-            other_val = other.radius if isinstance(other.radius, (int, float)) else other.radius[0]
+            other_val = (
+                other.radius
+                if isinstance(other.radius, (int, float))
+                else other.radius[0]
+            )
             if t < 0.5:
                 radius = self.radius
             else:
@@ -83,5 +95,3 @@ class MorphologyFilter(Filter):
             radius = self.radius + (other.radius - self.radius) * t
 
         return MorphologyFilter(operator=operator, radius=radius, in_=in_)
-
-

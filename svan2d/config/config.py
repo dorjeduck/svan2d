@@ -168,9 +168,9 @@ class Svan2DConfig:
             Configuration value with appropriate type conversion
 
         Examples:
-            >>> config.get(ConfigKey.SCENE_WIDTH)
+            config.get(ConfigKey.SCENE_WIDTH)
             800
-            >>> config.get(ConfigKey.STATE_VISUAL_FILL_COLOR)
+            config.get(ConfigKey.STATE_VISUAL_FILL_COLOR)
             Color.NONE
         """
         if not isinstance(key, ConfigKey):

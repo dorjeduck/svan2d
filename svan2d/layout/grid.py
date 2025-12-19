@@ -120,10 +120,10 @@ def grid_in_bbox(
 
     Examples:
         # 3x3 grid in 600x600 box
-        >>> grid_in_bbox(states, 0, 0, 600, 600, rows=3, cols=3)
+        grid_in_bbox(states, 0, 0, 600, 600, rows=3, cols=3)
 
         # Auto-sized grid filling rectangular area
-        >>> grid_in_bbox(states, -200, -150, 400, 300)
+        grid_in_bbox(states, -200, -150, 400, 300)
 
         # Equivalent to grid() with spacing:
         # grid_in_bbox(states, 0, 0, 400, 200, rows=3, cols=4)

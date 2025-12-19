@@ -26,7 +26,7 @@ class CheckerboardPattern(Pattern):
         color2: Color of second square
 
     Example:
-        >>> pattern = CheckerboardPattern(
+        pattern = CheckerboardPattern(
         ...     square_size=20,
         ...     color1=Color("#2c3e50"),
         ...     color2=Color("#ecf0f1")

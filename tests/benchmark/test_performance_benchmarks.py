@@ -13,7 +13,7 @@ from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.component.vertex.vertex_contours import VertexContours
 from svan2d.transition.interpolation_engine import InterpolationEngine
 from svan2d.transition.easing_resolver import EasingResolver
-from svan2d.transition.vertex_loop_mapping import GreedyNearestMapper
+from svan2d.transition.mapping import GreedyMapper
 from svan2d.transition.vertex_alignment import (
     AngularAligner,
     AlignmentContext,
@@ -148,33 +148,33 @@ class TestHoleMappingPerformance:
 
     def test_hole_mapping_equal_counts(self, benchmark):
         """Benchmark hole mapping with equal counts (N=M)"""
-        mapper = GreedyNearestMapper()
+        mapper = GreedyMapper()
 
         holes1 = [self.create_hole_at(i * 20, i * 20) for i in range(10)]
         holes2 = [self.create_hole_at(i * 20 + 5, i * 20 + 5) for i in range(10)]
 
-        result = benchmark(mapper.map, holes1, holes2)
-        assert len(result[0]) == len(result[1])
+        result = benchmark(mapper.map, holes1, holes2, lambda h: h.centroid())
+        assert len(result) == 10
 
     def test_hole_mapping_unequal_counts(self, benchmark):
         """Benchmark hole mapping with unequal counts (N>M)"""
-        mapper = GreedyNearestMapper()
+        mapper = GreedyMapper()
 
         holes1 = [self.create_hole_at(i * 20, i * 20) for i in range(20)]
         holes2 = [self.create_hole_at(i * 20, i * 20) for i in range(10)]
 
-        result = benchmark(mapper.map, holes1, holes2)
-        assert len(result[0]) == len(result[1])
+        result = benchmark(mapper.map, holes1, holes2, lambda h: h.centroid())
+        assert len(result) == 20  # All source items are matched
 
     def test_hole_mapping_many_holes(self, benchmark):
-        """Benchmark hole mapping with many  holes="""
-        mapper = GreedyNearestMapper()
+        """Benchmark hole mapping with many holes"""
+        mapper = GreedyMapper()
 
         holes1 = [self.create_hole_at(i * 10, (i * 7) % 200) for i in range(50)]
         holes2 = [self.create_hole_at((i * 13) % 200, i * 10) for i in range(50)]
 
-        result = benchmark(mapper.map, holes1, holes2)
-        assert len(result[0]) == len(result[1])
+        result = benchmark(mapper.map, holes1, holes2, lambda h: h.centroid())
+        assert len(result) == 50
 
 
 @pytest.mark.benchmark

@@ -43,15 +43,17 @@ class VertexAligner:
             return  # Already preprocessed or not a vertex morph
 
         # Extract morphing config (prefer ks2's config)
-        from svan2d.velement.morphing import Morphing
+        from svan2d.velement.morphing import MorphingConfig
 
         morphing_config = (
-            ks2.transition_config.morphing
+            ks2.transition_config.morphing_config
             if ks2.transition_config
-            else ks1.transition_config.morphing if ks1.transition_config else None
+            else (
+                ks1.transition_config.morphing_config if ks1.transition_config else None
+            )
         )
 
-        if isinstance(morphing_config, Morphing):
+        if isinstance(morphing_config, MorphingConfig):
             morphing_dict = morphing_config.to_dict()
         elif isinstance(morphing_config, dict):
             morphing_dict = morphing_config
@@ -64,16 +66,14 @@ class VertexAligner:
             return  # Skip static preprocessing for rotating morphs
 
         # Perform static alignment
-        vertex_loop_mapper = (
-            morphing_dict.get("vertex_loop_mapper") if morphing_dict else None
-        )
+        mapper = morphing_dict.get("mapper") if morphing_dict else None
         vertex_aligner = morphing_dict.get("vertex_aligner") if morphing_dict else None
 
         contours1_aligned, contours2_aligned = get_aligned_vertices(
             state1,
             state2,
             vertex_aligner=vertex_aligner,
-            vertex_loop_mapper=vertex_loop_mapper,
+            mapper=mapper,
         )
 
         # Adjust fill colors for open↔closed transitions

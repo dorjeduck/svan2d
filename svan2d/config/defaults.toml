@@ -36,7 +36,7 @@ stroke_opacity = 1.0
 stroke_width = 1.0
 
 # Vertex resolution for morphing
-num_vertices = 128
+num_vertices = 256
 
 # Whether shapes are closed by default
 closed = true
@@ -67,7 +67,7 @@ vertex_loop_mapper = "clustering"
 #  | L∞ (linf)    | max(distances)  | Fairness, no vertex travels too far |
 
 # Global default for all alignment (can be overridden per-aligner below)
-vertex_alignment_norm = "l2"
+vertex_alignment_norm = "linf"
 
 # Aligner-specific norm overrides (optional)
 # angular_alignment_norm = "l1"    # For closed ↔ closed shape morphing

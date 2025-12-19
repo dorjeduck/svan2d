@@ -1,3 +1,5 @@
+"""Angle interpolation with shortest-path wraparound handling."""
+
 from typing import Optional
 
 
@@ -20,11 +22,11 @@ def angle(start: Optional[float], end: Optional[float], t: float) -> float:
         Interpolated angle in degrees
 
     Examples:
-        >>> angle(0, 90, 0.5)
+        angle(0, 90, 0.5)
         45.0
-        >>> angle(350, 10, 0.5)  # Goes through 0°, not 180°
+        angle(350, 10, 0.5)  # Goes through 0°, not 180°
         0.0
-        >>> angle(None, 180, 1.0)  # None treated as 0
+        angle(None, 180, 1.0)  # None treated as 0
         180.0
     """
     # Handle None values - treat as 0 degrees

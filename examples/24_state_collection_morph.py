@@ -4,7 +4,7 @@ Demonstrates morphing between different numbers of independent shapes:
 - 3 triangles + 2 squares -> 1 ellipse + 3 rectangles
 
 Each shape has independent colors and properties. The mapping uses
-the same VertexLoopMapper strategies as hole morphing (ClusteringMapper by default).
+Mapper strategies (GreedyMapper by default).
 """
 
 from svan2d.component.state import (

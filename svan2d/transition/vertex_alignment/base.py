@@ -75,6 +75,7 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
     from .angular import AngularAligner
     from .euclidean import EuclideanAligner
     from .sequential import SequentialAligner
+    from .norm import AlignmentNorm
     from svan2d.config import get_config, ConfigKey
 
     config = get_config()
@@ -88,7 +89,7 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
             # Try aligner-specific config first, then fall back to global
             norm = config.get(
                 ConfigKey.MORPHING_ANGULAR_ALIGNMENT_NORM,
-                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, "l1")
+                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1)
             )
         return AngularAligner(norm=norm)
     else:
@@ -97,6 +98,6 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
             # Try aligner-specific config first, then fall back to global
             norm = config.get(
                 ConfigKey.MORPHING_EUCLIDEAN_ALIGNMENT_NORM,
-                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, "l1")
+                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1)
             )
         return EuclideanAligner(norm=norm)

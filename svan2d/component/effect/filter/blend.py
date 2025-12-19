@@ -3,7 +3,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 import drawsvg as dw
 
@@ -11,23 +10,46 @@ from .base import Filter
 
 
 class BlendMode(str, Enum):
-    """Blend modes for BlendFilter"""
-    NORMAL = 'normal'
-    MULTIPLY = 'multiply'
-    SCREEN = 'screen'
-    OVERLAY = 'overlay'
-    DARKEN = 'darken'
-    LIGHTEN = 'lighten'
-    COLOR_DODGE = 'color-dodge'
-    COLOR_BURN = 'color-burn'
-    HARD_LIGHT = 'hard-light'
-    SOFT_LIGHT = 'soft-light'
-    DIFFERENCE = 'difference'
-    EXCLUSION = 'exclusion'
-    HUE = 'hue'
-    SATURATION = 'saturation'
-    COLOR = 'color'
-    LUMINOSITY = 'luminosity'
+    """
+    Blend modes for BlendFilter.
+
+    Each mode determines how two layers are combined:
+
+    Members:
+        NORMAL: Standard alpha blending.
+        MULTIPLY: Multiplies the colors of the layers.
+        SCREEN: Inverse of multiply; brightens the image.
+        OVERLAY: Mix of multiply and screen depending on base color.
+        DARKEN: Chooses the darker of the base or blend color.
+        LIGHTEN: Chooses the lighter of the base or blend color.
+        COLOR_DODGE: Brightens the base color to reflect the blend color.
+        COLOR_BURN: Darkens the base color to reflect the blend color.
+        HARD_LIGHT: Multiplies or screens colors depending on blend color.
+        SOFT_LIGHT: Soft version of hard light.
+        DIFFERENCE: Subtracts darker color from lighter color.
+        EXCLUSION: Similar to difference but lower contrast.
+        HUE: Uses hue of blend color, keeps saturation and lightness of base.
+        SATURATION: Uses saturation of blend color, keeps hue and lightness of base.
+        COLOR: Uses hue and saturation of blend color, keeps lightness of base.
+        LUMINOSITY: Uses lightness of blend color, keeps hue and saturation of base.
+    """
+
+    NORMAL = "normal"
+    MULTIPLY = "multiply"
+    SCREEN = "screen"
+    OVERLAY = "overlay"
+    DARKEN = "darken"
+    LIGHTEN = "lighten"
+    COLOR_DODGE = "color-dodge"
+    COLOR_BURN = "color-burn"
+    HARD_LIGHT = "hard-light"
+    SOFT_LIGHT = "soft-light"
+    DIFFERENCE = "difference"
+    EXCLUSION = "exclusion"
+    HUE = "hue"
+    SATURATION = "saturation"
+    COLOR = "color"
+    LUMINOSITY = "luminosity"
 
 
 @dataclass(frozen=True)
@@ -40,12 +62,12 @@ class BlendFilter(Filter):
         in2: Second input source
 
     Example:
-        >>> blend = BlendFilter(mode='multiply', in_='SourceGraphic', in2='BackgroundImage')
+        blend = BlendFilter(mode='multiply', in_='SourceGraphic', in2='BackgroundImage')
     """
 
-    mode: str = 'normal'
-    in_: str = 'SourceGraphic'
-    in2: str = 'BackgroundImage'
+    mode: str = "normal"
+    in_: str = "SourceGraphic"
+    in2: str = "BackgroundImage"
 
     def __post_init__(self):
         valid_modes = {mode.value for mode in BlendMode}
@@ -54,12 +76,7 @@ class BlendFilter(Filter):
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
-        return dw.FilterItem(
-            'feBlend',
-            mode=self.mode,
-            in_=self.in_,
-            in2=self.in2
-        )
+        return dw.FilterItem("feBlend", mode=self.mode, in_=self.in_, in2=self.in2)
 
     def interpolate(self, other: Filter, t: float):
         """Interpolate between two BlendFilter instances"""
@@ -72,5 +89,3 @@ class BlendFilter(Filter):
         in2 = self.in2 if t < 0.5 else other.in2
 
         return BlendFilter(mode=mode, in_=in_, in2=in2)
-
-

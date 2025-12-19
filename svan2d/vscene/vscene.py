@@ -1,3 +1,5 @@
+"""VScene - container for animated elements with frame generation."""
+
 from __future__ import annotations
 
 from typing import List, Optional, Union, TYPE_CHECKING, Literal

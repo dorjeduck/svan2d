@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Callable, TYPE_CHECKING
 
 import drawsvg as dw
 
-from svan2d.component import State
+from svan2d.component.state.base import State
 from svan2d.velement.base_velement import BaseVElement
 from svan2d.velement.builder import KeystateBuilder, BuilderState
 from svan2d.velement.state_interpolator import StateInterpolator

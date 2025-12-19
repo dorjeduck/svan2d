@@ -30,12 +30,12 @@ class CustomPattern(Pattern):
         pattern_units: "userSpaceOnUse" or "objectBoundingBox"
 
     Example:
-        >>> from svan2d.component import CircleState, CircleRenderer
-        >>> from svan2d.core import Color
-        >>> # Custom pattern with circle
-        >>> circle_state = CircleState(x=10, y=10, radius=5, fill_color=Color("red"))
-        >>> circle_renderer = CircleRenderer()
-        >>> pattern = CustomPattern(
+        from svan2d.component import CircleState, CircleRenderer
+        from svan2d.core import Color
+        # Custom pattern with circle
+        circle_state = CircleState(x=10, y=10, radius=5, fill_color=Color("red"))
+        circle_renderer = CircleRenderer()
+        pattern = CustomPattern(
         ...     width=20,
         ...     height=20,
         ...     content=((circle_state, circle_renderer),)

@@ -153,13 +153,13 @@ def ellipse_in_bbox(
 
     Examples:
         # Ellipse in 400x200 box at origin
-        >>> ellipse_in_bbox(states, 0, 0, 400, 200)
+        ellipse_in_bbox(states, 0, 0, 400, 200)
 
         # Ellipse in square box (becomes circle)
-        >>> ellipse_in_bbox(states, -100, -100, 200, 200)
+        ellipse_in_bbox(states, -100, -100, 200, 200)
 
         # Rotated ellipse in rectangular box
-        >>> ellipse_in_bbox(states, 50, 50, 300, 150, rotation=45)
+        ellipse_in_bbox(states, 50, 50, 300, 150, rotation=45)
 
         # Equivalent to ellipse() with center and radii:
         # ellipse_in_bbox(states, 0, 0, 400, 200)

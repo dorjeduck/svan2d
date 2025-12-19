@@ -11,15 +11,22 @@ from .base import Filter
 
 
 class TurbulenceType(str, Enum):
-    """Turbulence types for TurbulenceFilter"""
-    FRACTAL_NOISE = 'fractalNoise'
-    TURBULENCE = 'turbulence'
+    """
+    Turbulence types for TurbulenceFilter.
+
+    Members:
+        FRACTAL_NOISE: Generates fractal noise, producing smoother, more natural patterns.
+        TURBULENCE: Generates turbulence, producing rougher, more chaotic patterns.
+    """
+    FRACTAL_NOISE = "fractalNoise"
+    TURBULENCE = "turbulence"
 
 
 class StitchTiles(str, Enum):
     """Stitch tile modes for TurbulenceFilter"""
-    STITCH = 'stitch'
-    NO_STITCH = 'noStitch'
+
+    STITCH = "stitch"
+    NO_STITCH = "noStitch"
 
 
 @dataclass(frozen=True)
@@ -34,17 +41,17 @@ class TurbulenceFilter(Filter):
         stitch_tiles: Whether to stitch tiles ('stitch' or 'noStitch')
 
     Example:
-        >>> # Turbulence noise
-        >>> turb = TurbulenceFilter(type_='turbulence', base_frequency=0.05, num_octaves=3)
-        >>> # Fractal noise with different x,y frequencies
-        >>> fractal = TurbulenceFilter(type_='fractalNoise', base_frequency=(0.01, 0.05))
+        # Turbulence noise
+        turb = TurbulenceFilter(type_='turbulence', base_frequency=0.05, num_octaves=3)
+        # Fractal noise with different x,y frequencies
+        fractal = TurbulenceFilter(type_='fractalNoise', base_frequency=(0.01, 0.05))
     """
 
-    type_: str = 'turbulence'
+    type_: str = "turbulence"
     base_frequency: float | tuple[float, float] = 0.05
     num_octaves: int = 1
     seed: int = 0
-    stitch_tiles: str = 'noStitch'
+    stitch_tiles: str = "noStitch"
 
     def __post_init__(self):
         valid_types = {t.value for t in TurbulenceType}
@@ -54,7 +61,9 @@ class TurbulenceFilter(Filter):
             raise ValueError(f"num_octaves must be >= 1, got {self.num_octaves}")
         valid_stitch = {s.value for s in StitchTiles}
         if self.stitch_tiles not in valid_stitch:
-            raise ValueError(f"stitch_tiles must be one of {valid_stitch}, got {self.stitch_tiles}")
+            raise ValueError(
+                f"stitch_tiles must be one of {valid_stitch}, got {self.stitch_tiles}"
+            )
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
@@ -64,12 +73,12 @@ class TurbulenceFilter(Filter):
             freq_str = str(self.base_frequency)
 
         return dw.FilterItem(
-            'feTurbulence',
+            "feTurbulence",
             type=self.type_,
             baseFrequency=freq_str,
             numOctaves=self.num_octaves,
             seed=self.seed,
-            stitchTiles=self.stitch_tiles
+            stitchTiles=self.stitch_tiles,
         )
 
     def interpolate(self, other: Filter, t: float):
@@ -81,28 +90,34 @@ class TurbulenceFilter(Filter):
         stitch_tiles = self.stitch_tiles if t < 0.5 else other.stitch_tiles
 
         # Interpolate num_octaves (round to nearest int)
-        num_octaves = round(self.num_octaves + (other.num_octaves - self.num_octaves) * t)
+        num_octaves = round(
+            self.num_octaves + (other.num_octaves - self.num_octaves) * t
+        )
         seed = round(self.seed + (other.seed - self.seed) * t)
 
         # Interpolate base_frequency
-        if isinstance(self.base_frequency, tuple) and isinstance(other.base_frequency, tuple):
+        if isinstance(self.base_frequency, tuple) and isinstance(
+            other.base_frequency, tuple
+        ):
             base_frequency = (
-                self.base_frequency[0] + (other.base_frequency[0] - self.base_frequency[0]) * t,
-                self.base_frequency[1] + (other.base_frequency[1] - self.base_frequency[1]) * t
+                self.base_frequency[0]
+                + (other.base_frequency[0] - self.base_frequency[0]) * t,
+                self.base_frequency[1]
+                + (other.base_frequency[1] - self.base_frequency[1]) * t,
             )
         elif isinstance(self.base_frequency, tuple):
             base_frequency = self.base_frequency if t < 0.5 else other.base_frequency
         elif isinstance(other.base_frequency, tuple):
             base_frequency = self.base_frequency if t < 0.5 else other.base_frequency
         else:
-            base_frequency = self.base_frequency + (other.base_frequency - self.base_frequency) * t
+            base_frequency = (
+                self.base_frequency + (other.base_frequency - self.base_frequency) * t
+            )
 
         return TurbulenceFilter(
             type_=type_,
             base_frequency=base_frequency,
             num_octaves=num_octaves,
             seed=seed,
-            stitch_tiles=stitch_tiles
+            stitch_tiles=stitch_tiles,
         )
-
-

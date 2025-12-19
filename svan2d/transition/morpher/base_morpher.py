@@ -1,3 +1,8 @@
+"""Base class for SVG path morphers.
+
+Provides abstract base class with built-in LRU caching for interpolation results.
+"""
+
 import abc
 from svan2d.path.svg_path import SVGPath
 from typing import Dict, Any, Optional, List

@@ -47,8 +47,6 @@ def main():
         for states in zip(start_states, end_states)
     ]
 
-    print(elements[0])
-    exit()
 
     # Add all elements to the scene
     scene.add_elements(elements)

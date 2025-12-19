@@ -5,7 +5,7 @@ from dataclasses import replace
 from typing import Dict, List, Any, TYPE_CHECKING
 
 from svan2d.transition import lerp
-from svan2d.component import State
+from svan2d.component.state.base import State
 
 if TYPE_CHECKING:
     from svan2d.velement.keystate import KeyStates

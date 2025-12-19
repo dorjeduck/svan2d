@@ -12,7 +12,7 @@ The (time, state) tuple is kept as a convenience for the common case of explicit
 """
 
 from typing import List, Optional, Tuple, Callable, Dict, Any, Union
-from svan2d.component import State
+from svan2d.component.state.base import State
 from .keystate import KeyState
 
 # Type definitions

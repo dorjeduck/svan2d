@@ -17,7 +17,7 @@ from svan2d.core.point2d import Point2D, Points2D
 from svan2d.velement.keystate import KeyState
 
 if TYPE_CHECKING:
-    from svan2d.velement.morphing import Morphing
+    from svan2d.velement.morphing import MorphingConfig
 
 
 class VElement(BaseVElement, KeystateBuilder):
@@ -133,7 +133,9 @@ class VElement(BaseVElement, KeystateBuilder):
             raise RuntimeError("Cannot modify VElement after rendering has begun.")
 
         for ks in segment_result:
-            self._builder.keystates.append((ks.state, ks.time, ks.transition_config, ks.skip_render_at))
+            self._builder.keystates.append(
+                (ks.state, ks.time, ks.transition_config, ks.skip_render_at)
+            )
 
         return self
 
@@ -233,19 +235,24 @@ class VElement(BaseVElement, KeystateBuilder):
         if cache_key in self._shape_list_cache:
             return self._shape_list_cache[cache_key]
 
-        from svan2d.transition.align_vertices import _get_vertex_loop_mapper_from_config
-        from svan2d.transition.interpolation_engine import InterpolationEngine
+        from svan2d.transition.align_vertices import _get_mapper_from_config
 
-        mapper = _get_vertex_loop_mapper_from_config()
-        engine = InterpolationEngine(easing_resolver=self.easing_resolver)
+        mapper = _get_mapper_from_config()
+        matches = mapper.map(states1, states2, lambda s: s.pos)
 
-        loops1 = [engine._state_to_vertex_loop(s) for s in states1]
-        loops2 = [engine._state_to_vertex_loop(s) for s in states2]
-
-        matched_loops1, matched_loops2 = mapper.map(loops1, loops2)
-
-        matched_states1 = engine._loops_to_states(matched_loops1, states1)
-        matched_states2 = engine._loops_to_states(matched_loops2, states2)
+        # Build matched state lists from matches
+        matched_states1 = []
+        matched_states2 = []
+        for match in matches:
+            if match.is_morph:
+                matched_states1.append(match.start)
+                matched_states2.append(match.end)
+            elif match.is_destruction:
+                matched_states1.append(match.start)
+                matched_states2.append(match.start)  # Morph to self (will fade out)
+            elif match.is_creation:
+                matched_states1.append(match.end)  # Morph from self (will fade in)
+                matched_states2.append(match.end)
 
         result = (matched_states1, matched_states2)
         self._shape_list_cache[cache_key] = result

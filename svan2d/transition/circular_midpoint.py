@@ -1,3 +1,5 @@
+"""Circular midpoint calculation using vector averaging."""
+
 import math
 
 
@@ -16,11 +18,11 @@ def circular_midpoint(a1: float, a2: float) -> float:
         Midpoint angle in degrees (normalized to 0-360 range)
 
     Examples:
-        >>> circular_midpoint(0, 90)
+        circular_midpoint(0, 90)
         45.0
-        >>> circular_midpoint(350, 10)  # Spans 0°
+        circular_midpoint(350, 10)  # Spans 0°
         0.0
-        >>> circular_midpoint(270, 90)  # Opposite sides
+        circular_midpoint(270, 90)  # Opposite sides
         0.0
 
     Note:

@@ -1,5 +1,4 @@
 from dataclasses import replace
-from enum import Enum
 from typing import Callable, Dict, List, Optional, Union
 
 from svan2d.core.point2d import Point2D

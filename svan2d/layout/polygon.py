@@ -158,10 +158,10 @@ def polygon_in_bbox(
 
     Examples:
         # Hexagon in 400x400 box
-        >>> polygon_in_bbox(states, 0, 0, 400, 400, sides=6)
+        polygon_in_bbox(states, 0, 0, 400, 400, sides=6)
 
         # Pentagon in rectangular box (limited by height)
-        >>> polygon_in_bbox(states, -100, -150, 200, 300, sides=5)
+        polygon_in_bbox(states, -100, -150, 200, 300, sides=5)
 
         # Equivalent to polygon():
         # polygon_in_bbox(states, 0, 0, 400, 400, sides=6)

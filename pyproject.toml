@@ -36,11 +36,17 @@ dev = [
     "pytest-xdist>=3.3.0",
 ]
 
+# Font-to-vertex conversion
+font = [
+    "fonttools>=4.40.0",
+]
+
 # All optional dependencies
 all = [
     "svan2d[playwright-server]",
     "svan2d[devserver]",
     "svan2d[dev]",
+    "svan2d[font]",
 ]
 
 [project.scripts]

@@ -1,4 +1,17 @@
-# Type imports for easing2D
+"""Easing functions for animation timing control.
+
+Easing functions map linear time (0.0-1.0) to eased time, controlling
+the rate of change during animations. All functions follow the signature:
+
+    def easing(t: float) -> float
+
+Available functions:
+- linear, step, none: Basic functions
+- in_*, out_*, in_out_*: Directional variants for each curve type
+- Curve types: quad, cubic, quart, quint, sine, expo, circ, back, elastic, bounce
+- easing2D: Create 2D easing with independent x/y control
+"""
+
 from typing import Callable, Tuple
 
 # Individual easing functions
@@ -37,6 +50,7 @@ from .in_bounce import in_bounce
 from .out_bounce import out_bounce
 from .in_out_bounce import in_out_bounce
 
+
 def easing2D(
     easing_x: Callable[[float], float],
     easing_y: Callable[[float], float],
@@ -54,10 +68,10 @@ def easing2D(
         Callable that takes t (0.0-1.0) and returns (eased_tx, eased_ty)
 
     Example:
-        >>> from svan2d.transition.easing import in_quad, out_bounce, easing2D
-        >>> # Fast horizontal, bouncy vertical
-        >>> pos_easing = easing2D(in_quad, out_bounce)
-        >>> element = VElement(
+        from svan2d.transition.easing import in_quad, out_bounce, easing2D
+        # Fast horizontal, bouncy vertical
+        pos_easing = easing2D(in_quad, out_bounce)
+        element = VElement(
         ...     keystates=[...],
         ...     attribute_easing={"pos": pos_easing}
         ... )

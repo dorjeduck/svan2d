@@ -97,6 +97,7 @@ class StateInterpolator:
 
             # Static preprocessing for vertex alignment (if aligner provided)
             if self.vertex_aligner:
+
                 self.vertex_aligner.ensure_segment_preprocessed(self.keystates, i)
                 # Refresh states after potential preprocessing
                 state1 = self.keystates[i].state
@@ -154,6 +155,11 @@ class StateInterpolator:
                     vertex_buffer=vertex_buffer,
                     segment_path_config=(
                         ks1.transition_config.curve_dict
+                        if ks1.transition_config
+                        else None
+                    ),
+                    morphing_config=(
+                        ks1.transition_config.morphing_config
                         if ks1.transition_config
                         else None
                     ),

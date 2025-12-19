@@ -19,9 +19,9 @@ class GaussianBlurFilter(Filter):
         std_deviation_y: Optional separate y-axis blur (overrides std_deviation)
 
     Example:
-        >>> blur = BlurFilter(std_deviation=5.0)
-        >>> # Separate x/y blur:
-        >>> blur_directional = BlurFilter(std_deviation_x=10.0, std_deviation_y=2.0)
+        blur = BlurFilter(std_deviation=5.0)
+        # Separate x/y blur:
+        blur_directional = BlurFilter(std_deviation_x=10.0, std_deviation_y=2.0)
     """
 
     std_deviation: float = 0.0

@@ -25,7 +25,7 @@ class DotsPattern(Pattern):
         background: Optional background color
 
     Example:
-        >>> pattern = DotsPattern(
+        pattern = DotsPattern(
         ...     spacing=20,
         ...     dot_radius=3,
         ...     dot_color=Color("#3498db"),

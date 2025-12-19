@@ -6,7 +6,7 @@ directly in the state via the _aligned_contours field.
 
 This is the main entry point - uses pluggable strategies from:
 - vertex_alignment/: Strategies for aligning outer vertex loops
-- hole_mapping/: Strategies for matching and aligning  vertex_loops
+- mapping/: Generic mapper for matching holes (M→N)
 """
 
 from __future__ import annotations
@@ -21,71 +21,55 @@ from .vertex_alignment import (
     AlignmentContext,
     AngularAligner,
 )
-from .vertex_loop_mapping import (
-    VertexLoopMapper,
-    GreedyNearestMapper,
-    ClusteringMapper,
-    HungarianMapper,
-    DiscreteMapper,
-    SimpleMapper,
-)
+from .mapping import Mapper, GreedyMapper, ClusteringMapper, SimpleMapper
 
 from svan2d.component.state.base_vertex import VertexState
 
 
-def _get_vertex_loop_mapper_from_config() -> VertexLoopMapper:
-    """Get hole matcher instance based on config settings
+def _get_mapper_from_config() -> Mapper:
+    """Get mapper instance based on config settings
 
     Returns:
-        HoleMapper instance configured from svan2d.toml settings
+        Mapper instance configured from svan2d.toml settings
     """
     config = get_config()
-    strategy = config.get(ConfigKey.MORPHING_VERTEX_LOOP_MAPPER, "clustering")
+    strategy = config.get(ConfigKey.MORPHING_VERTEX_LOOP_MAPPER, "greedy")
 
     if strategy == "greedy":
-        return GreedyNearestMapper()
+        return GreedyMapper()
     elif strategy == "clustering":
-        balance = config.get(ConfigKey.MORPHING_CLUSTERING_BALANCE_CLUSTERS, True)
         max_iter = config.get(ConfigKey.MORPHING_CLUSTERING_MAX_ITERATIONS, 50)
         seed = config.get(ConfigKey.MORPHING_CLUSTERING_RANDOM_SEED, 42)
-        return ClusteringMapper(
-            max_iterations=max_iter, random_seed=seed, balance_clusters=balance
-        )
-    elif strategy == "hungarian":
-        return HungarianMapper()  # Requires scipy
-    elif strategy == "discrete":
-        return DiscreteMapper()
+        return ClusteringMapper(max_iterations=max_iter, random_seed=seed)
     elif strategy == "simple":
         return SimpleMapper()
     else:
-        raise ValueError(
-            f"Unknown hole matching strategy: '{strategy}'. "
-            f"Valid options: 'clustering', 'greedy', 'hungarian', 'discrete', 'simple'"
-        )
+        # Default to greedy for unknown strategies
+        return GreedyMapper()
 
 
 def get_aligned_vertices(
     state1: VertexState,
     state2: VertexState,
     vertex_aligner: Optional[VertexAligner] = None,
-    vertex_loop_mapper: Optional[VertexLoopMapper] = None,
+    mapper: Optional[Mapper] = None,
     rotation_target: Optional[float] = None,
 ) -> Tuple[VertexContours, VertexContours]:
     """Align vertex contours and return aligned contours
 
     This is called once per segment during keystate preprocessing.
     Returns new VertexContours instances with aligned outer vertices
-    and matched  vertex_loops .
+    and matched holes.
 
     Uses pluggable strategies:
     - VertexAligner: How to align outer vertex loops (auto-selected by default)
-    - HoleMapper: How to match vertex loops between states (from config by default)
+    - Mapper: How to match holes between states (from config by default)
 
     Args:
         state1: First state in the transition
         state2: Second state in the transition
         vertex_aligner: Custom vertex alignment strategy (default: auto-select based on closure)
-        vertex_loop_mapper: Custom hole matching strategy (default: from config [morphing.vertex_loop_mapper])
+        mapper: Custom mapper for hole matching (default: from config)
         rotation_target: Target rotation for dynamic alignment (default: None, uses state2.rotation)
 
     Returns:
@@ -109,10 +93,8 @@ def get_aligned_vertices(
     if vertex_aligner is None:
         vertex_aligner = get_aligner(state1.closed, state2.closed)
 
-    if vertex_loop_mapper is None:
-        vertex_loop_mapper = (
-            _get_vertex_loop_mapper_from_config()
-        )  # Use strategy from config
+    if mapper is None:
+        mapper = _get_mapper_from_config()
 
     # Align outer vertices
     context = AlignmentContext(
@@ -128,45 +110,71 @@ def get_aligned_vertices(
         rotation_target=rotation_target,
     )
 
-    # Match and align  vertex_loops
-    matched_vertex_loops1, matched_vertex_loops2 = vertex_loop_mapper.map(
-        contours1.holes, contours2.holes
-    )
+    # Match holes using the mapper with centroid as position
+    holes1 = contours1.holes if contours1.holes else []
+    holes2 = contours2.holes if contours2.holes else []
+
+    matches = mapper.map(holes1, holes2, lambda h: h.centroid())
 
     # Align vertices within each matched hole pair
-    aligned_vertex_loops1 = []
-    aligned_vertex_loops2 = []
+    aligned_holes1 = []
+    aligned_holes2 = []
 
-    # Create a hole-specific aligner (always use angular for closed  vertex_loops )
+    # Create a hole-specific aligner (always use angular for closed holes)
     hole_aligner = AngularAligner()
     hole_context = AlignmentContext(
         rotation1=0, rotation2=0, closed1=True, closed2=True
     )
 
-    for hole1, hole2 in zip(matched_vertex_loops1, matched_vertex_loops2):
-        h1_verts = hole1.vertices
-        h2_verts = hole2.vertices
+    for match in matches:
+        if match.is_morph:
+            # Both holes exist - align them
+            h1_verts = match.start.vertices
+            h2_verts = match.end.vertices
 
-        # Both vertex loops should be closed and have matching lengths
-        if len(h1_verts) == len(h2_verts) and len(h1_verts) > 0:
-            h1_aligned, h2_aligned = hole_aligner.align(
-                h1_verts, h2_verts, hole_context
-            )
-            aligned_vertex_loops1.append(VertexLoop(h1_aligned, closed=True))
-            aligned_vertex_loops2.append(VertexLoop(h2_aligned, closed=True))
-        else:
-            # Keep as-is if lengths don't match (shouldn't happen with our matching)
-            aligned_vertex_loops1.append(hole1)
-            aligned_vertex_loops2.append(hole2)
+            if len(h1_verts) == len(h2_verts) and len(h1_verts) > 0:
+                h1_aligned, h2_aligned = hole_aligner.align(
+                    h1_verts, h2_verts, hole_context
+                )
+                aligned_holes1.append(VertexLoop(h1_aligned, closed=True))
+                aligned_holes2.append(VertexLoop(h2_aligned, closed=True))
+            else:
+                aligned_holes1.append(match.start)
+                aligned_holes2.append(match.end)
 
-    # Create new VertexContours with aligned outer loops and aligned  vertex_loops
+        elif match.is_destruction:
+            # Hole disappears - create zero-hole at same position
+            hole = match.start
+            zero_hole = _create_zero_hole(hole)
+            aligned_holes1.append(hole)
+            aligned_holes2.append(zero_hole)
+
+        elif match.is_creation:
+            # Hole appears - create zero-hole at target position
+            hole = match.end
+            zero_hole = _create_zero_hole(hole)
+            aligned_holes1.append(zero_hole)
+            aligned_holes2.append(hole)
+
+    # Create new VertexContours with aligned outer loops and aligned holes
     contours1_aligned = VertexContours(
         outer=VertexLoop(verts1_aligned, closed=contours1.outer.closed),
-        holes=aligned_vertex_loops1,
+        holes=aligned_holes1 if aligned_holes1 else None,
     )
     contours2_aligned = VertexContours(
         outer=VertexLoop(verts2_aligned, closed=contours2.outer.closed),
-        holes=aligned_vertex_loops2,
+        holes=aligned_holes2 if aligned_holes2 else None,
     )
 
     return contours1_aligned, contours2_aligned
+
+
+def _create_zero_hole(hole: VertexLoop) -> VertexLoop:
+    """Create a zero-sized hole at the centroid of the original hole.
+
+    Used for hole creation/destruction animations.
+    """
+    centroid = hole.centroid()
+    # Create a degenerate hole with all vertices at the centroid
+    zero_vertices = [centroid for _ in hole.vertices]
+    return VertexLoop(zero_vertices, closed=True)

@@ -17,9 +17,9 @@ class CompositeFilter(Filter):
         filters: Tuple of filters to apply in sequence
 
     Example:
-        >>> blur = BlurFilter(std_deviation=3.0)
-        >>> shadow = DropShadowFilter(dx=5, dy=5, std_deviation=2)
-        >>> composite = CompositeFilter(filters=(blur, shadow))
+        blur = BlurFilter(std_deviation=3.0)
+        shadow = DropShadowFilter(dx=5, dy=5, std_deviation=2)
+        composite = CompositeFilter(filters=(blur, shadow))
     """
 
     filters: tuple[Filter, ...]
@@ -56,5 +56,3 @@ class CompositeFilter(Filter):
 
         # Otherwise, step interpolation
         return self if t < 0.5 else other
-
-

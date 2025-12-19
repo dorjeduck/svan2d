@@ -1,49 +1,57 @@
+"""Morphing configuration for vertex state transitions.
+
+Specifies strategies for M→N shape matching and vertex alignment during morphing.
+"""
+
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 
 @dataclass
-class Morphing:
-    """Morphing strategy configuration for vertex-based shape transitions
+class MorphingConfig:
+    """Morphing strategy configuration for shape transitions
 
-    Specifies strategies for mapping and aligning vertices during shape morphing.
+    Specifies strategies for mapping items and aligning vertices during morphing.
     Used in KeyState to override default morphing behavior for specific transitions.
 
     Args:
-        vertex_loop_mapper: Strategy for mapping vertex loops between states (SimpleMapper,
-                    GreedyNearestMapper, DiscreteMapper, ClusteringMapper, etc.)
+        mapper: Strategy for M→N mapping (works for both states and holes)
+               (SimpleMapper, GreedyMapper, ClusteringMapper)
         vertex_aligner: Strategy for aligning vertices within matched shapes
                        (AngularAligner, EuclideanAligner, SequentialAligner, etc.)
 
     Examples:
-        Hole mapping only:
-        >>> Morphing(vertex_loop_mapper=SimpleMapper())
+        Simple crossfade (no morphing):
+        from svan2d.transition.mapping import SimpleMapper
+        MorphingConfig(mapper=SimpleMapper())
 
-        Both hole mapping and vertex alignment:
-        >>> Morphing(
-        ...     vertex_loop_mapper=DiscreteMapper(),
-        ...     vertex_aligner=EuclideanAligner()
-        ... )
+        Greedy nearest-neighbor matching:
+        from svan2d.transition.mapping import GreedyMapper
+        MorphingConfig(mapper=GreedyMapper())
 
-        Usage in KeyState:
-        >>> KeyState(
-        ...     state=perforated_state,
-        ...     time=0.5,
-        ...     morphing=Morphing(vertex_loop_mapper=ClusteringMapper())
+        Full configuration:
+        MorphingConfig(
+        ...     mapper=ClusteringMapper(),
+        ...     vertex_aligner=AngularAligner()
         ... )
     """
 
-    vertex_loop_mapper: Optional[Any] = None  # HoleMapper type (avoid circular import)
+    mapper: Optional[Any] = None  # Mapper type (avoid circular import)
     vertex_aligner: Optional[Any] = None  # VertexAligner type (avoid circular import)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dict format for internal processing
-
-        Returns dict with 'vertex_loop_mapper' and 'vertex_aligner' keys for backward compatibility.
-        """
+        """Convert to dict format for internal processing"""
         result = {}
-        if self.vertex_loop_mapper is not None:
-            result["vertex_loop_mapper"] = self.vertex_loop_mapper
+        if self.mapper is not None:
+            result["mapper"] = self.mapper
         if self.vertex_aligner is not None:
             result["vertex_aligner"] = self.vertex_aligner
         return result
+
+    def __repr__(self):
+        parts = []
+        if self.mapper is not None:
+            parts.append(f"mapper={self.mapper.__class__.__name__}")
+        if self.vertex_aligner is not None:
+            parts.append(f"vertex_aligner={self.vertex_aligner.__class__.__name__}")
+        return f"MorphingConfig({', '.join(parts)})"

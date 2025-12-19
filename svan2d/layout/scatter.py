@@ -57,7 +57,7 @@ def scatter(
         else:
             element_angle = state.rotation
 
-        new_state = replace(state, pos=Point2D(x,y), rotation=element_angle)
+        new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
 
     return result
@@ -97,10 +97,10 @@ def scatter_in_bbox(
 
     Examples:
         # Random scatter in 400x300 box
-        >>> scatter_in_bbox(states, 0, 0, 400, 300, seed=42)
+        scatter_in_bbox(states, 0, 0, 400, 300, seed=42)
 
         # Reproducible scatter in square area
-        >>> scatter_in_bbox(states, -200, -200, 400, 400, seed=123)
+        scatter_in_bbox(states, -200, -200, 400, 400, seed=123)
 
         # Equivalent to scatter() with ranges:
         # scatter_in_bbox(states, 0, 0, 400, 300, seed=42)

@@ -52,13 +52,13 @@ def radial_grid(
 
     Examples:
         # Simple radial grid
-        >>> radial_grid(states, rings=3, segments=8)
+        radial_grid(states, rings=3, segments=8)
 
         # Radial grid with center element
-        >>> radial_grid(states, rings=3, segments=6, include_center=True)
+        radial_grid(states, rings=3, segments=6, include_center=True)
 
         # Elements pointing outward from center
-        >>> radial_grid(states, rings=4, segments=12, alignment=ElementAlignment.LAYOUT)
+        radial_grid(states, rings=4, segments=12, alignment=ElementAlignment.LAYOUT)
     """
     if not states:
         return []
@@ -176,7 +176,7 @@ def radial_grid_between_radii(
 
     Examples:
         # Grid from radius 50 to 200 with 4 rings
-        >>> radial_grid_between_radii(states, inner_radius=50, outer_radius=200, rings=4, segments=8)
+        radial_grid_between_radii(states, inner_radius=50, outer_radius=200, rings=4, segments=8)
 
         # Equivalent to radial_grid():
         # radial_grid_between_radii(states, inner_radius=50, outer_radius=200, rings=3)

@@ -25,7 +25,7 @@ class StripesPattern(Pattern):
         angle: Rotation angle in degrees (0 = horizontal, 90 = vertical)
 
     Example:
-        >>> pattern = StripesPattern(
+        pattern = StripesPattern(
         ...     stripe_width=10,
         ...     color1=Color("#e74c3c"),
         ...     color2=Color("#c0392b"),

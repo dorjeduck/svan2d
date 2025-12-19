@@ -13,32 +13,56 @@ from svan2d.transition import easing
 
 
 class MorphMethod(StrEnum):
-    """Path morphing method selection"""
+    """
+    Path morphing method selection.
 
-    STROKE = "stroke"  # Native engine for open paths/strokes
-    SHAPE = "shape"  # Flubber for closed shapes/fills
-    AUTO = "auto"  # Auto-detect based on path structure
+    Members:
+        STROKE: Use native engine for open paths or strokes.
+        SHAPE: Use Flubber algorithm for closed shapes or fills.
+        AUTO: Automatically detect method based on path structure.
+    """
+
+    STROKE = "stroke"
+    SHAPE = "shape"
+    AUTO = "auto"
 
 
 class StrokeLinecap(StrEnum):
-    """SVG stroke-linecap values"""
+    """
+    SVG stroke-linecap values.
 
+    Members:
+        BUTT: The stroke ends exactly at the path endpoint (no extension).
+        ROUND: The stroke ends with a semicircular cap extending beyond the endpoint.
+        SQUARE: The stroke ends with a square cap extending beyond the endpoint.
+    """
     BUTT = "butt"
     ROUND = "round"
     SQUARE = "square"
 
 
 class StrokeLinejoin(StrEnum):
-    """SVG stroke-linejoin values"""
+    """
+    SVG stroke-linejoin values.
 
+    Members:
+        MITER: Sharp corner extending to the intersection of path segments.
+        ROUND: Rounded corner at the join of path segments.
+        BEVEL: Flattened corner, creating a straight line between path segment ends.
+    """
     MITER = "miter"
     ROUND = "round"
     BEVEL = "bevel"
 
 
 class FillRule(StrEnum):
-    """SVG fill-rule values"""
+    """
+    SVG fill-rule values, defining how shapes are filled.
 
+    Members:
+        NONZERO: Fills areas based on the non-zero winding rule.
+        EVENODD: Fills areas based on the even-odd rule.
+    """
     NONZERO = "nonzero"
     EVENODD = "evenodd"
 

@@ -8,8 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Dict, Callable, Any, Union
 
-from svan2d.component import State
-from svan2d.velement.morphing import Morphing
+from svan2d.component.state.base import State
+from svan2d.velement.morphing import MorphingConfig
 from svan2d.velement.transition import TransitionConfig
 
 
@@ -50,15 +50,15 @@ class KeyState:
                 )
 
             # Validate morphing configuration if provided
-            if self.transition_config.morphing is not None:
-                if isinstance(self.transition_config.morphing, Morphing):
+            if self.transition_config.morphing_config is not None:
+                if isinstance(self.transition_config.morphing_config, MorphingConfig):
                     # Morphing class - all good
                     pass
-                elif isinstance(self.transition_config.morphing, dict):
+                elif isinstance(self.transition_config.morphing_config, dict):
                     # Dict format (deprecated but supported) - validate keys
-                    valid_keys = {"vertex_loop_mapper", "vertex_aligner"}
+                    valid_keys = {"mapper", "vertex_aligner"}
                     invalid_keys = (
-                        set(self.transition_config.morphing.keys()) - valid_keys
+                        set(self.transition_config.morphing_config.keys()) - valid_keys
                     )
                     if invalid_keys:
                         raise ValueError(
@@ -68,7 +68,7 @@ class KeyState:
                 else:
                     raise TypeError(
                         f"morphing must be a Morphing instance or dict, "
-                        f"got {type(self.transition_config.morphing).__name__}"
+                        f"got {type(self.transition_config.morphing_config).__name__}"
                     )
 
     def with_time(self, time: float) -> KeyState:
@@ -95,26 +95,30 @@ class KeyState:
         parts = [f"state={self.state.__class__.__name__}(...)"]
         if self.time is not None:
             parts.append(f"time={self.time}")
-        if self.transition_config.easing_dict is not None:
-            parts.append(
-                f"easing={{{', '.join(self.transition_config.easing_dict.keys())}}}"
-            )
-        if self.transition_config.morphing is not None:
-            if isinstance(self.transition_config.morphing, Morphing):
-                morph_parts = []
-                if self.transition_config.morphing.vertex_loop_mapper is not None:
-                    morph_parts.append(
-                        f"vertex_loop_mapper={type(self.transition_config.morphing.vertex_loop_mapper).__name__}"
-                    )
-                if self.transition_config.morphing.vertex_aligner is not None:
-                    morph_parts.append(
-                        f"vertex_aligner={type(self.transition_config.morphing.vertex_aligner).__name__}"
-                    )
-                parts.append(f"morphing=Morphing({', '.join(morph_parts)})")
-            else:
+        if self.transition_config is not None:
+            if self.transition_config.easing_dict is not None:
                 parts.append(
-                    f"morphing={{{', '.join(self.transition_config.morphing.keys())}}}"
+                    f"easing={{{', '.join(self.transition_config.easing_dict.keys())}}}"
                 )
+            if self.transition_config.morphing_config is not None:
+                if isinstance(self.transition_config.morphing_config, MorphingConfig):
+                    morph_parts = []
+                    if self.transition_config.morphing_config.mapper is not None:
+                        morph_parts.append(
+                            f"mapper={type(self.transition_config.morphing_config.mapper).__name__}"
+                        )
+                    if (
+                        self.transition_config.morphing_config.vertex_aligner
+                        is not None
+                    ):
+                        morph_parts.append(
+                            f"vertex_aligner={type(self.transition_config.morphing_config.vertex_aligner).__name__}"
+                        )
+                    parts.append(f"morphing=MorphingConfig({', '.join(morph_parts)})")
+                else:
+                    parts.append(
+                        f"morphing={{{', '.join(self.transition_config.morphing_config.keys())}}}"
+                    )
         return f"KeyState({', '.join(parts)})"
 
 

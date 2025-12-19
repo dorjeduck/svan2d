@@ -174,8 +174,8 @@ class TestVElementBuilderMorphing:
 
     def test_transition_with_morphing(self):
         """Transition should accept morphing config"""
-        from svan2d.velement import Morphing
-        from svan2d.transition.vertex_loop_mapping import SimpleMapper
+        from svan2d.velement import MorphingConfig
+        from svan2d.transition.mapping import SimpleMapper
 
         state1 = CircleState(radius=50)
         state2 = RectangleState(width=100, height=100)
@@ -183,7 +183,7 @@ class TestVElementBuilderMorphing:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(morphing=Morphing(vertex_loop_mapper=SimpleMapper()))
+            .transition(morphing_config=MorphingConfig(mapper=SimpleMapper()))
             .keystate(state2, at=1.0)
         )
 
@@ -192,15 +192,15 @@ class TestVElementBuilderMorphing:
 
         transition = element.keystates[0].transition_config
         assert transition is not None
-        assert transition.morphing is not None
-        assert isinstance(transition.morphing, Morphing)
+        assert transition.morphing_config is not None
+        assert isinstance(transition.morphing_config, MorphingConfig)
 
     def test_morphing_overwrite_in_consecutive_transitions(self):
         """Later morphing call should overwrite previous"""
-        from svan2d.velement import Morphing
-        from svan2d.transition.vertex_loop_mapping import (
+        from svan2d.velement import MorphingConfig
+        from svan2d.transition.mapping import (
             SimpleMapper,
-            GreedyNearestMapper,
+            GreedyMapper,
         )
 
         state1 = CircleState(radius=50)
@@ -209,8 +209,8 @@ class TestVElementBuilderMorphing:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(morphing=Morphing(vertex_loop_mapper=SimpleMapper()))
-            .transition(morphing=Morphing(vertex_loop_mapper=GreedyNearestMapper()))
+            .transition(morphing_config=MorphingConfig(mapper=SimpleMapper()))
+            .transition(morphing_config=MorphingConfig(mapper=GreedyMapper()))
             .keystate(state2, at=1.0)
         )
 
@@ -219,7 +219,7 @@ class TestVElementBuilderMorphing:
 
         transition = element.keystates[0].transition_config
         assert transition is not None
-        assert isinstance(transition.morphing.vertex_loop_mapper, GreedyNearestMapper)
+        assert isinstance(transition.morphing_config.mapper, GreedyMapper)
 
 
 class TestVElementBuilderAttributes:

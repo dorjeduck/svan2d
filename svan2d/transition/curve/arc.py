@@ -15,8 +15,8 @@ def arc(radius: Optional[float] = None) -> Callable[[Point2D, Point2D, float], P
         Path function that interpolates along circular arc
 
     Example:
-        >>> path_func = arc(150)
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        path_func = arc(150)
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
     """
     return arc_counterclockwise(radius)
 
@@ -35,8 +35,8 @@ def arc_counterclockwise(
         Path function that interpolates along counterclockwise arc
 
     Example:
-        >>> path_func = arc_counterclockwise(150)
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        path_func = arc_counterclockwise(150)
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
     """
 
     def arc_ccw_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:
@@ -89,8 +89,8 @@ def arc_clockwise(
         Path function that interpolates along clockwise arc
 
     Example:
-        >>> path_func = arc_clockwise(150)
-        >>> path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        path_func = arc_clockwise(150)
+        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
     """
 
     def arc_cw_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:

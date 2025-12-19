@@ -13,13 +13,6 @@ if TYPE_CHECKING:
 
 class ArcRenderer(Renderer):
 
-    def __init__(self) -> None:
-        """Initialize circle renderer
-
-        No parameters needed - all attributes come from the state
-        """
-        pass
-
     def _render_core(
         self, state: ArcState, drawing: Optional[dw.Drawing] = None
     ) -> dw.Path:

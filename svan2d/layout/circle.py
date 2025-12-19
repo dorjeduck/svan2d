@@ -122,10 +122,10 @@ def circle_between_points(
 
     Examples:
         # Circle with diameter from origin to (200, 0) - radius 100
-        >>> circle_between_points(states, 0, 0, 200, 0)
+        circle_between_points(states, 0, 0, 200, 0)
 
         # Circle with diagonal diameter
-        >>> circle_between_points(states, -100, -100, 100, 100)
+        circle_between_points(states, -100, -100, 100, 100)
 
         # Equivalent to circle() with center and radius:
         # circle_between_points(states, 0, 0, 200, 0)
@@ -205,10 +205,10 @@ def circle_through_points(
 
     Examples:
         # Circle through three points forming a triangle
-        >>> circle_through_points(states, 0, 100, 100, 0, 0, -100)
+        circle_through_points(states, 0, 100, 100, 0, 0, -100)
 
         # Right triangle points
-        >>> circle_through_points(states, 0, 0, 100, 0, 0, 100)
+        circle_through_points(states, 0, 0, 100, 0, 0, 100)
     """
     if not states:
         return []

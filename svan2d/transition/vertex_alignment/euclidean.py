@@ -38,7 +38,7 @@ class EuclideanAligner(VertexAligner):
     Performance: O(n²) - tries n offsets, evaluates n vertex pairs each
     """
 
-    def __init__(self, norm: Union[str, AlignmentNorm, EuclideanDistanceFn] = "l1"):
+    def __init__(self, norm: Union[str, AlignmentNorm, EuclideanDistanceFn] = AlignmentNorm.L1):
         """
         Initialize Euclidean aligner with distance norm.
 

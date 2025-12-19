@@ -7,7 +7,7 @@ import logging
 # Type alias for easing result - can be scalar (normal) or tuple (2D easing)
 EasedT = Union[float, Tuple[float, float]]
 
-from svan2d.component import State
+from svan2d.component.state.base import State
 from svan2d.component.effect.gradient.base import Gradient
 from svan2d.component.effect.pattern.base import Pattern
 from svan2d.component.effect.filter.base import Filter
@@ -19,8 +19,8 @@ from svan2d.path import SVGPath
 from svan2d.transition import lerp, step, angle, inbetween, circular_midpoint
 from svan2d.transition.morpher import NativeMorpher, FlubberMorpher
 from svan2d.core.color import Color
-from svan2d.transition.shape_list_interpolator import (
-    ShapeListInterpolator,
+from svan2d.transition.state_list_interpolator import (
+    StateListInterpolator,
     _normalize_to_state_list,
 )
 
@@ -40,7 +40,7 @@ class InterpolationEngine:
         """
         self.easing_resolver = easing_resolver
         self.path_resolver = path_resolver
-        self._shape_list_interpolator = ShapeListInterpolator(self)
+        self._shape_list_interpolator = StateListInterpolator(self)
 
     def create_eased_state(
         self,
@@ -51,6 +51,7 @@ class InterpolationEngine:
         attribute_keystates_fields: set,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
         segment_path_config: Optional[Dict[str, Callable]] = None,
+        morphing_config: Optional[Any] = None,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -63,13 +64,20 @@ class InterpolationEngine:
             attribute_keystates_fields: Attributes managed by field keystates
             vertex_buffer: Optional reusable buffer for vertex interpolation
             segment_path_config: Optional per-field path config dict {field_name: path_func}
+            morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
         """
         interpolated_values = {}
 
-        # if t == 0:
-        #    return start_state
-        # elif t == 1:
-        #    return end_state
+        # Extract mapper/aligner once (not per-field)
+        mapper = None
+        vertex_aligner = None
+        if morphing_config is not None:
+            if hasattr(morphing_config, "mapper"):
+                mapper = morphing_config.mapper
+                vertex_aligner = morphing_config.vertex_aligner
+            elif isinstance(morphing_config, dict):
+                mapper = morphing_config.get("mapper")
+                vertex_aligner = morphing_config.get("vertex_aligner")
 
         for field in fields(start_state):
             field_name = field.name
@@ -116,6 +124,8 @@ class InterpolationEngine:
                 eased_t,
                 vertex_buffer,
                 segment_path_config,
+                mapper=mapper,
+                vertex_aligner=vertex_aligner,
             )
 
         # return replace(start_state, **interpolated_values)
@@ -135,6 +145,8 @@ class InterpolationEngine:
         eased_t: float,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
         segment_path_config: Optional[Dict[str, Callable]] = None,
+        mapper: Optional[Any] = None,
+        vertex_aligner: Optional[Any] = None,
     ) -> Any:
         """
         Interpolate a single value based on its type and context.
@@ -149,6 +161,8 @@ class InterpolationEngine:
             vertex_buffer: Optional reusable buffer for vertex interpolation
                           (outer_buffer, hole_buffers) to avoid allocations
             segment_path_config: Optional per-field path config dict {field_name: path_func}
+            mapper: Optional mapper for M→N matching
+            vertex_aligner: Optional vertex aligner for shape morphing
 
         Returns:
             Interpolated value
@@ -165,7 +179,11 @@ class InterpolationEngine:
             if start_list is not None and end_list is not None:
                 # Both are state lists (or normalizable to lists)
                 return self._shape_list_interpolator.interpolate_state_list(
-                    start_list, end_list, eased_t
+                    start_list,
+                    end_list,
+                    eased_t,
+                    mapper=mapper,
+                    vertex_aligner=vertex_aligner,
                 )
 
         if (
@@ -270,26 +288,40 @@ class InterpolationEngine:
                 ),
             )
 
-        # 1. State interpolation (for clip_state, mask_state)
+        # 1. State interpolation (for clip_state, mask_state, and recursive calls)
         if isinstance(start_value, State) and isinstance(end_value, State):
+
             # Check if this is a morph between different VertexState types
             from svan2d.component.state.base_vertex import VertexState
 
             if (
                 isinstance(start_value, VertexState)
                 and isinstance(end_value, VertexState)
-                and type(start_value) != type(end_value)
+                and start_value.need_morph(end_value)
             ):
                 # Need to align vertices for morphing
                 from svan2d.transition.align_vertices import get_aligned_vertices
 
                 contours1_aligned, contours2_aligned = get_aligned_vertices(
-                    start_value, end_value
+                    start_value,
+                    end_value,
+                    vertex_aligner=vertex_aligner,
+                    mapper=mapper,
                 )
+
                 start_value = replace(start_value, _aligned_contours=contours1_aligned)
                 end_value = replace(end_value, _aligned_contours=contours2_aligned)
 
             # Recursively interpolate the clip/mask state
+            # Re-wrap mapper/aligner for recursive call
+            morphing_config = None
+            if mapper is not None or vertex_aligner is not None:
+                from svan2d.velement.morphing import MorphingConfig
+
+                morphing_config = MorphingConfig(
+                    mapper=mapper, vertex_aligner=vertex_aligner
+                )
+
             return self.create_eased_state(
                 start_value,
                 end_value,
@@ -298,6 +330,7 @@ class InterpolationEngine:
                 attribute_keystates_fields=set(),
                 vertex_buffer=None,
                 segment_path_config=None,
+                morphing_config=morphing_config,
             )
 
         # Handle State ↔ None transitions

@@ -11,11 +11,19 @@ from .base import Filter
 
 
 class ColorChannel(str, Enum):
-    """Color channels for DisplacementMapFilter"""
-    R = 'R'
-    G = 'G'
-    B = 'B'
-    A = 'A'
+    """
+    Color channels for DisplacementMapFilter.
+
+    Members:
+        R: Red channel.
+        G: Green channel.
+        B: Blue channel.
+        A: Alpha (transparency) channel.
+    """
+    R = "R"
+    G = "G"
+    B = "B"
+    A = "A"
 
 
 @dataclass(frozen=True)
@@ -32,31 +40,35 @@ class DisplacementMapFilter(Filter):
         in2: Displacement map source
 
     Example:
-        >>> disp = DisplacementMapFilter(scale=20, x_channel_selector='R', y_channel_selector='G')
+        disp = DisplacementMapFilter(scale=20, x_channel_selector='R', y_channel_selector='G')
     """
 
     scale: float = 0.0
-    x_channel_selector: str = 'A'
-    y_channel_selector: str = 'A'
-    in_: str = 'SourceGraphic'
-    in2: str = 'SourceAlpha'
+    x_channel_selector: str = "A"
+    y_channel_selector: str = "A"
+    in_: str = "SourceGraphic"
+    in2: str = "SourceAlpha"
 
     def __post_init__(self):
         valid_channels = {channel.value for channel in ColorChannel}
         if self.x_channel_selector not in valid_channels:
-            raise ValueError(f"x_channel_selector must be one of {valid_channels}, got {self.x_channel_selector}")
+            raise ValueError(
+                f"x_channel_selector must be one of {valid_channels}, got {self.x_channel_selector}"
+            )
         if self.y_channel_selector not in valid_channels:
-            raise ValueError(f"y_channel_selector must be one of {valid_channels}, got {self.y_channel_selector}")
+            raise ValueError(
+                f"y_channel_selector must be one of {valid_channels}, got {self.y_channel_selector}"
+            )
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
         return dw.FilterItem(
-            'feDisplacementMap',
+            "feDisplacementMap",
             scale=self.scale,
             xChannelSelector=self.x_channel_selector,
             yChannelSelector=self.y_channel_selector,
             in_=self.in_,
-            in2=self.in2
+            in2=self.in2,
         )
 
     def interpolate(self, other: Filter, t: float):
@@ -65,8 +77,12 @@ class DisplacementMapFilter(Filter):
             return self if t < 0.5 else other
 
         scale = self.scale + (other.scale - self.scale) * t
-        x_channel_selector = self.x_channel_selector if t < 0.5 else other.x_channel_selector
-        y_channel_selector = self.y_channel_selector if t < 0.5 else other.y_channel_selector
+        x_channel_selector = (
+            self.x_channel_selector if t < 0.5 else other.x_channel_selector
+        )
+        y_channel_selector = (
+            self.y_channel_selector if t < 0.5 else other.y_channel_selector
+        )
         in_ = self.in_ if t < 0.5 else other.in_
         in2 = self.in2 if t < 0.5 else other.in2
 
@@ -75,7 +91,5 @@ class DisplacementMapFilter(Filter):
             x_channel_selector=x_channel_selector,
             y_channel_selector=y_channel_selector,
             in_=in_,
-            in2=in2
+            in2=in2,
         )
-
-

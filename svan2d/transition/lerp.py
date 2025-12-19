@@ -1,3 +1,5 @@
+"""Linear interpolation utility."""
+
 from typing import Union
 
 Number = Union[int, float]
@@ -20,11 +22,11 @@ def lerp(start: Number, end: Number, t: float) -> float:
         Interpolated value as float
 
     Examples:
-        >>> lerp(0, 100, 0.5)
+        lerp(0, 100, 0.5)
         50.0
-        >>> lerp(10, 20, 0.25)
+        lerp(10, 20, 0.25)
         12.5
-        >>> lerp(-10, 10, 0.75)
+        lerp(-10, 10, 0.75)
         5.0
 
     Note:

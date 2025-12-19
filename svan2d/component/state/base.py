@@ -1,3 +1,8 @@
+"""Base State class for all shape states.
+
+States are immutable dataclasses that define geometry, position, and visual attributes.
+"""
+
 from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, field, replace

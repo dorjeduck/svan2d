@@ -1,8 +1,15 @@
 """Easing function resolution with 4-level priority system"""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from svan2d.component.state.base import State
+
 from typing import Callable, Dict, Optional
 
-from svan2d.component import State
+
 from svan2d.transition import easing
 
 

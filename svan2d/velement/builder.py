@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Callable, Dict, TypeVar, TYPE_CHECKING
 
-from svan2d.component import State
+from svan2d.component.state.base import State
 from svan2d.velement.transition import TransitionConfig, CurveFunction
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import (
@@ -14,7 +14,7 @@ from svan2d.velement.keystate_parser import (
 )
 
 if TYPE_CHECKING:
-    from svan2d.velement.morphing import Morphing
+    from svan2d.velement.morphing import MorphingConfig
 
 T = TypeVar("T", bound="KeystateBuilder")
 
@@ -141,7 +141,7 @@ class KeystateBuilder:
         self: T,
         easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
-        morphing: Optional["Morphing"] = None,
+        morphing_config: Optional["MorphingConfig"] = None,
     ) -> T:
         """Configure the transition between the previous and next keystate.
 
@@ -150,7 +150,7 @@ class KeystateBuilder:
         Args:
             easing_dict: Per-field easing functions for this segment
             curve_dict: Per-field path functions for this segment
-            morphing: Morphing configuration for vertex state transitions
+            morphing_config: Morphing configuration for vertex state transitions
 
         Returns:
             self for chaining
@@ -164,7 +164,9 @@ class KeystateBuilder:
         # Merge with pending transition if exists
         if self._builder.pending_transition is None:
             self._builder.pending_transition = TransitionConfig(
-                easing_dict=easing_dict, curve_dict=curve_dict, morphing=morphing
+                easing_dict=easing_dict,
+                curve_dict=curve_dict,
+                morphing_config=morphing_config,
             )
         else:
             merged_easing = self._builder.pending_transition.easing_dict or {}
@@ -176,15 +178,15 @@ class KeystateBuilder:
                 merged_path = {**merged_path, **curve_dict}
 
             merged_morphing = (
-                morphing
-                if morphing is not None
-                else self._builder.pending_transition.morphing
+                morphing_config
+                if morphing_config is not None
+                else self._builder.pending_transition.morphing_config
             )
 
             self._builder.pending_transition = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 curve_dict=merged_path if merged_path else None,
-                morphing=merged_morphing,
+                morphing_config=merged_morphing,
             )
         return self
 
@@ -192,7 +194,7 @@ class KeystateBuilder:
         self: T,
         easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
-        morphing: Optional["Morphing"] = None,
+        morphing: Optional["MorphingConfig"] = None,
     ) -> T:
         """Set default transition parameters for all subsequent segments.
 
@@ -209,7 +211,7 @@ class KeystateBuilder:
 
         if self._builder.default_transition is None:
             self._builder.default_transition = TransitionConfig(
-                easing_dict=easing_dict, curve_dict=curve_dict, morphing=morphing
+                easing_dict=easing_dict, curve_dict=curve_dict, morphing_config=morphing
             )
         else:
             merged_easing = self._builder.default_transition.easing_dict or {}
@@ -223,13 +225,13 @@ class KeystateBuilder:
             merged_morphing = (
                 morphing
                 if morphing is not None
-                else self._builder.default_transition.morphing
+                else self._builder.default_transition.morphing_config
             )
 
             self._builder.default_transition = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 curve_dict=merged_path if merged_path else None,
-                morphing=merged_morphing,
+                morphing_config=merged_morphing,
             )
         return self
 
@@ -275,7 +277,7 @@ class KeystateBuilder:
 
         return TransitionConfig(
             easing_dict=transition_config.easing_dict,
-            morphing=transition_config.morphing,
+            morphing_config=transition_config.morphing_config,
             curve_dict=merged_path if merged_path else None,
         )
 

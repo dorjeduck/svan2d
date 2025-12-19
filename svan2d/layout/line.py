@@ -47,25 +47,25 @@ def line(
 
     Examples:
         # Even spacing (automatic distribution)
-        >>> line_layout(states, spacing=50, rotation=0)
+        line_layout(states, spacing=50, rotation=0)
 
         # Explicit distances from center
-        >>> line_layout(states, distances=[-100, -20, 50, 150])
+        line_layout(states, distances=[-100, -20, 50, 150])
 
         # Mixed: some bunched together, others spread out
-        >>> line_layout(states, distances=[-50, -45, 0, 100, 200])
+        line_layout(states, distances=[-50, -45, 0, 100, 200])
 
         # Elements aligned with line direction
-        >>> line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN)
+        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN)
 
         # Elements kept upright regardless of line rotation
-        >>> line_layout(states, rotation=45, element_rotation_offset=ElementRotation.UPRIGHT)
+        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.UPRIGHT)
 
         # Elements upside down (useful for text hanging from a line)
-        >>> line_layout(states, element_rotation_offset=ElementRotation.HEADS_DOWN)
+        line_layout(states, element_rotation_offset=ElementRotation.HEADS_DOWN)
 
         # Elements aligned opposite to line direction (pointing backward)
-        >>> line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN_REVERSE)
+        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN_REVERSE)
     """
     if not states:
         return []

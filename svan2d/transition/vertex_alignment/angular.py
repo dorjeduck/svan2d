@@ -39,7 +39,7 @@ class AngularAligner(VertexAligner):
     Performance: O(n²) - tries n offsets, evaluates n vertices each
     """
 
-    def __init__(self, norm: Union[str, AlignmentNorm, AngularDistanceFn] = "l1"):
+    def __init__(self, norm: Union[str, AlignmentNorm, AngularDistanceFn] = AlignmentNorm.L1):
         """
         Initialize angular aligner with distance norm.
 

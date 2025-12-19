@@ -12,13 +12,6 @@ if TYPE_CHECKING:
 class CrossRenderer(Renderer):
     """Renderer class for rendering cross elements"""
 
-    def __init__(self) -> None:
-        """Initialize circle renderer
-
-        No parameters needed - all attributes come from the state
-        """
-        pass
-
     def _render_core(
         self, state: "CrossState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Lines:

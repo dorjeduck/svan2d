@@ -32,6 +32,7 @@ class State(ABC):
     rotation: Optional[float] = None
     skew_x: Optional[float] = None
     skew_y: Optional[float] = None
+    z_index: float = 0.0
 
     # Clipping and masking support
     clip_state: Optional[State] = None
@@ -54,6 +55,7 @@ class State(ABC):
         "rotation": easing.in_out,
         "skew_x": easing.linear,
         "skew_y": easing.linear,
+        "z_index": easing.linear,
         "clip_state": easing.linear,
         "mask_state": easing.linear,
         "clip_states": easing.linear,

@@ -1,12 +1,3 @@
-"""Example: M->N shape group morphing using ShapeCollectionState
-
-Demonstrates morphing between different numbers of independent shapes:
-- 3 triangles + 2 squares -> 1 ellipse + 3 rectangles
-
-Each shape has independent colors and properties. The mapping uses
-Mapper strategies (GreedyMapper by default).
-"""
-
 from dataclasses import replace
 from svan2d.component.state import (
     StateCollectionState,

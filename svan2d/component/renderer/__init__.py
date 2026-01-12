@@ -15,6 +15,7 @@ from .cross import CrossRenderer
 from .ellipse import EllipseRenderer
 from .heart import HeartRenderer
 from .infinity import InfinityRenderer
+from .number import NumberRenderer
 from .path import PathRenderer
 from .path_and_text_variants import PathAndTextVariantsRenderer
 from .perforated_primitive import PerforatedPrimitiveRenderer
@@ -45,6 +46,7 @@ __all__ = [
     "EllipseRenderer",
     "HeartRenderer",
     "InfinityRenderer",
+    "NumberRenderer",
     "PathAndTextVariantsRenderer",
     "PathRenderer",
     "PerforatedPrimitiveRenderer",

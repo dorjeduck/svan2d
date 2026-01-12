@@ -193,7 +193,17 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         else:
             group = dw.Group()
 
-        for child in self.elements:
+        # Sort children by z_index (stable sort preserves insertion order for equal z_index)
+        def get_z_index(element: "VElement") -> float:
+            if hasattr(element, "get_frame"):
+                state = element.get_frame(t)
+                if state is not None:
+                    return state.z_index
+            return 0.0
+
+        sorted_children = sorted(self.elements, key=get_z_index)
+
+        for child in sorted_children:
             child_element = None
             if hasattr(child, "render_at_frame_time") and child.is_animatable():
                 child_element = child.render_at_frame_time(t)

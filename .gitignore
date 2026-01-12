@@ -123,4 +123,5 @@ ARCHITECTURAL_ANALYSIS.md
 svan2d.toml
 docs/*
 examples/dd/*
+examples/bar_chart_race/*
 reference/*

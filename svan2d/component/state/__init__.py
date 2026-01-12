@@ -15,6 +15,7 @@ from .circle import CircleState
 from .cross import CrossState
 from .ellipse import EllipseState
 from .line import LineState
+from .number import NumberFormat, NumberState
 from .path import PathState
 from .point import PointState
 from .perforated import (
@@ -69,6 +70,8 @@ __all__ = [
     "CrossState",
     "EllipseState",
     "LineState",
+    "NumberFormat",
+    "NumberState",
     "PathState",
     "PointState",
     "PerforatedVertexState",

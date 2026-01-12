@@ -1,4 +1,3 @@
-from dataclasses import replace
 from svan2d.component.state import CircleState, SquareState
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import configure_logging
@@ -45,7 +44,7 @@ def main():
 
     for i, eas in enumerate(easing_overrides):
 
-        vel = vel.keystate(
+        vel.keystate(
             circle,
             at=2 * i * step,
         ).transition(

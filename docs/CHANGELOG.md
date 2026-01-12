@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.4.2] - 2026-01-11
+* Z-Indexing
+
 ## [0.4.0] - 2025-12-17
 * State Collections
 

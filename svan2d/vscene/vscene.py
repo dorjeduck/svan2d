@@ -219,8 +219,18 @@ class VScene:
         transform = self._build_transform(render_scale)
         group = dw.Group(transform=transform) if transform else dw.Group()
 
+        # Sort elements by z_index (stable sort preserves insertion order for equal z_index)
+        def get_z_index(element: RenderableElement) -> float:
+            if hasattr(element, "get_frame"):
+                state = element.get_frame(frame_time)
+                if state is not None:
+                    return state.z_index
+            return 0.0
+
+        sorted_elements = sorted(self.elements, key=get_z_index)
+
         # Add all elements at specified time
-        for element in self.elements:
+        for element in sorted_elements:
             rendered = element.render_at_frame_time(frame_time, drawing=drawing)
             if rendered is not None:
                 group.append(rendered)

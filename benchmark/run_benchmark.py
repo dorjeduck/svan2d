@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import List
 from datetime import datetime
 
+from svan2d.core.point2d import Point2D
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter, ConverterType
 from svan2d.velement import VElement
@@ -38,6 +39,7 @@ class BenchmarkResult:
     process_user_time: float
     process_system_time: float
     total_cpu_time: float
+    parallel_workers: int = 0
     success: bool = True
     error: str | None = None
 
@@ -56,8 +58,7 @@ def create_test_scene() -> VScene:
     for i, color in enumerate(colors):
         x = -250 + i * 166
         circle = CircleState(
-            x=x,
-            y=-100,
+            pos=Point2D(x, 100),
             radius=60,
             fill_color=color,
             stroke_color=Color("#FFFFFF"),
@@ -68,8 +69,7 @@ def create_test_scene() -> VScene:
     # Add text
     text_renderer = TextRenderer()
     text = TextState(
-        x=0,
-        y=150,
+        pos=Point2D(0, 150),
         text="Benchmark Test Scene",
         font_family="Arial",
         font_size=32,
@@ -81,7 +81,10 @@ def create_test_scene() -> VScene:
 
 
 def benchmark_converter(
-    converter_type: ConverterType, num_frames: int, output_dir: Path
+    converter_type: ConverterType,
+    num_frames: int,
+    output_dir: Path,
+    parallel_workers: int = 0,
 ) -> BenchmarkResult:
     """Benchmark a specific converter
 
@@ -89,11 +92,14 @@ def benchmark_converter(
         converter_type: The converter to benchmark
         num_frames: Number of frames to render
         output_dir: Directory for output files
+        parallel_workers: Number of parallel workers (0=sequential)
 
     Returns:
         BenchmarkResult with performance metrics (or error info if failed)
     """
     converter_name = converter_type.value
+    if parallel_workers > 0:
+        converter_name = f"{converter_name} (parallel={parallel_workers})"
     print(f"\n{'='*60}")
     print(f"Benchmarking: {converter_name}")
     print(f"Frames: {num_frames}")
@@ -121,21 +127,29 @@ def benchmark_converter(
         exporter.export("warmup.png", formats=["png"])
 
         # Start benchmark
-        print(f"Rendering {num_frames} frames...")
+        print(f"Rendering {num_frames} frames (parallel_workers={parallel_workers})...")
         start_time = time.time()
 
-        for i in range(num_frames):
-            # Monitor resources periodically
-            if i % max(1, num_frames // 10) == 0:
+        # Use to_mp4 for proper parallel rendering support
+        def progress_callback(current, total):
+            if current % max(1, total // 10) == 0:
                 cpu_percent_samples.append(process.cpu_percent(interval=0))
                 memory_samples.append(process.memory_info().rss / 1024 / 1024)  # MB
-                progress = (i / num_frames) * 100
+                progress = (current / total) * 100
                 print(
-                    f"  Progress: {progress:.1f}% ({i}/{num_frames} frames)", end="\r"
+                    f"  Progress: {progress:.1f}% ({current}/{total} frames)", end="\r"
                 )
 
-            # Render frame
-            exporter.export(f"frame_{i:04d}.png", formats=["png"])
+        # Generate frames using to_frames (supports parallel_workers)
+        for frame_num, t in exporter.to_frames(
+            output_dir=str(output_dir),
+            filename_pattern="frame_{:04d}",
+            total_frames=num_frames,
+            format="png",
+            parallel_workers=parallel_workers,
+            progress_callback=progress_callback,
+        ):
+            pass  # Progress handled by callback
 
         end_time = time.time()
 
@@ -175,6 +189,7 @@ def benchmark_converter(
             process_user_time=user_time,
             process_system_time=system_time,
             total_cpu_time=total_cpu,
+            parallel_workers=parallel_workers,
             success=True,
         )
 
@@ -214,18 +229,19 @@ def print_comparison(results: List[BenchmarkResult]):
         return
 
     # Summary table
-    print("\n" + "-" * 100)
-    header = f"{'Converter':<20} {'Total Time':>12} {'Per Frame':>12} {'CPU %':>10} {'CPU Time':>12} {'Memory':>12}"
+    print("\n" + "-" * 110)
+    header = f"{'Converter':<20} {'Parallel':>8} {'Total Time':>12} {'Per Frame':>12} {'CPU %':>10} {'CPU Time':>12} {'Memory':>12}"
     print(header)
-    print("-" * 100)
+    print("-" * 110)
 
     for r in successful:
+        parallel_str = str(r.parallel_workers) if r.parallel_workers > 0 else "-"
         print(
-            f"{r.converter_name:<20} {r.total_time:>10.2f}s {r.avg_time_per_frame:>10.3f}s "
+            f"{r.converter_type.value:<20} {parallel_str:>8} {r.total_time:>10.2f}s {r.avg_time_per_frame:>10.3f}s "
             f"{r.cpu_percent:>9.1f}% {r.total_cpu_time:>10.2f}s {r.memory_mb:>10.1f}MB"
         )
 
-    print("-" * 100)
+    print("-" * 110)
 
     # Failed converters
     if failed:
@@ -262,12 +278,17 @@ def generate_markdown_report(results: List[BenchmarkResult], output_file: str):
 
         # Performance table
         f.write("## Performance Comparison\n\n")
-        f.write("| Converter | Total Time | Per Frame | CPU % | CPU Time | Memory |\n")
-        f.write("|-----------|------------|-----------|-------|----------|--------|\n")
+        f.write(
+            "| Converter | Parallel | Total Time | Per Frame | CPU % | CPU Time | Memory |\n"
+        )
+        f.write(
+            "|-----------|----------|------------|-----------|-------|----------|--------|\n"
+        )
 
         for r in successful:
+            parallel_str = str(r.parallel_workers) if r.parallel_workers > 0 else "-"
             f.write(
-                f"| {r.converter_name} | {r.total_time:.2f}s | {r.avg_time_per_frame:.3f}s | "
+                f"| {r.converter_type.value} | {parallel_str} | {r.total_time:.2f}s | {r.avg_time_per_frame:.3f}s | "
                 f"{r.cpu_percent:.1f}% | {r.total_cpu_time:.2f}s | {r.memory_mb:.1f}MB |\n"
             )
 
@@ -277,6 +298,8 @@ def generate_markdown_report(results: List[BenchmarkResult], output_file: str):
             f.write(f"### {r.converter_name}\n\n")
             f.write(f"- **Total Time:** {r.total_time:.2f}s\n")
             f.write(f"- **Average Time per Frame:** {r.avg_time_per_frame:.3f}s\n")
+            if r.parallel_workers > 0:
+                f.write(f"- **Parallel Workers:** {r.parallel_workers}\n")
             f.write(f"- **Process CPU Usage:** {r.cpu_percent:.1f}%\n")
             f.write(f"- **User CPU Time:** {r.process_user_time:.2f}s\n")
             f.write(f"- **System CPU Time:** {r.process_system_time:.2f}s\n")
@@ -314,6 +337,18 @@ def main():
         default="BENCHMARK_RESULTS.md",
         help="Output markdown file (default: BENCHMARK_RESULTS.md)",
     )
+    parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=4,
+        help="Max browser pages for Playwright HTTP server (default: 4)",
+    )
+    parser.add_argument(
+        "--parallel-workers",
+        type=int,
+        default=4,
+        help="Parallel workers for Playwright HTTP benchmark (default: 4)",
+    )
 
     args = parser.parse_args()
 
@@ -331,11 +366,13 @@ def main():
 
     try:
         # Check if HTTP server is running for PLAYWRIGHT_HTTP, start it if not
-        manager = ProcessManager()
+        manager = ProcessManager(max_pages=args.max_pages)
         server_was_running = manager.is_running()
 
         if not server_was_running:
-            print("\nStarting HTTP server for PLAYWRIGHT_HTTP benchmark...")
+            print(
+                f"\nStarting HTTP server for PLAYWRIGHT_HTTP benchmark (max_pages={args.max_pages})..."
+            )
             try:
                 manager.start()
                 time.sleep(3)  # Wait for server to be ready
@@ -346,6 +383,9 @@ def main():
                 converters.remove(ConverterType.PLAYWRIGHT_HTTP)
         else:
             print("\nHTTP server already running")
+            print(
+                f"  Note: Using existing server (restart with --max-pages {args.max_pages} if needed)"
+            )
 
         results = []
 
@@ -354,8 +394,30 @@ def main():
             converter_dir = temp_dir / converter_type.value.replace("_", "-")
             converter_dir.mkdir()
 
-            result = benchmark_converter(converter_type, args.frames, converter_dir)
-            results.append(result)
+            # For Playwright HTTP, run both sequential and parallel benchmarks
+            if converter_type == ConverterType.PLAYWRIGHT_HTTP:
+                # Sequential benchmark
+                result = benchmark_converter(
+                    converter_type, args.frames, converter_dir, parallel_workers=0
+                )
+                results.append(result)
+                time.sleep(2)
+
+                # Parallel benchmark
+                parallel_dir = (
+                    temp_dir / f"{converter_type.value.replace('_', '-')}-parallel"
+                )
+                parallel_dir.mkdir()
+                result = benchmark_converter(
+                    converter_type,
+                    args.frames,
+                    parallel_dir,
+                    parallel_workers=args.parallel_workers,
+                )
+                results.append(result)
+            else:
+                result = benchmark_converter(converter_type, args.frames, converter_dir)
+                results.append(result)
 
             # Short pause between benchmarks
             time.sleep(2)

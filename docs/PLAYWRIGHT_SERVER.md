@@ -58,12 +58,17 @@ Then use it in your code:
 ```python
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d.converter.converter_type import ConverterType
 
 scene = VScene(width=800, height=800)
 # ... add elements ...
 
-exporter = VSceneExporter(scene)
-exporter.export("output.png", converter="playwright_http")
+exporter = VSceneExporter(scene, converter=ConverterType.PLAYWRIGHT_HTTP)
+exporter.to_mp4(
+    filename="animation",
+    total_frames=90,
+    parallel_workers=4,  # Use parallel rendering
+)
 ```
 
 ### Auto-Start Mode (Optional)
@@ -95,9 +100,19 @@ Starts the server in the background. Output:
 ✓ Playwright server started successfully
   Host: localhost
   Port: 4000
+  Max pages: 4
   PID file: ~/.svan2d/playwright-server.pid
   Log file: ~/.svan2d/playwright-server.log
 ```
+
+**With custom page pool size:**
+```bash
+svan2d playwright-server start --max-pages 8
+# or
+svan2d playwright-server start -p 8
+```
+
+The `max_pages` setting controls how many browser pages are kept in the pool for parallel rendering.
 
 ### Stop Server
 
@@ -131,6 +146,11 @@ svan2d playwright-server restart
 
 Stops then starts the server (useful after config changes).
 
+**With new max_pages setting:**
+```bash
+svan2d playwright-server restart --max-pages 8
+```
+
 ### View Logs
 
 ```bash
@@ -146,9 +166,12 @@ Configure the server in `svan2d.toml`:
 [playwright_server]
 host = "localhost"       # Server host (default: localhost)
 port = 4000             # Server port (default: 4000)
+max_pages = 4           # Browser pages in pool for parallel rendering (default: 4)
 auto_start = false      # Auto-start if not running (default: false)
 log_level = "INFO"      # Log level: DEBUG, INFO, WARNING, ERROR
 ```
+
+The `max_pages` setting can also be overridden via CLI: `--max-pages 8`
 
 ## Advanced Usage
 
@@ -414,9 +437,19 @@ docker run -p 4000:4000 svan2d-playwright-server
 ```json
 {
   "status": "ok",
-  "service": "playwright-render-server"
+  "service": "playwright-render-server",
+  "pool": {
+    "pages_created": 4,
+    "max_pages": 4,
+    "pages_available": 4
+  }
 }
 ```
+
+The `pool` object shows:
+- `pages_created`: Number of browser pages currently in the pool
+- `max_pages`: Maximum pages allowed (set via `--max-pages`)
+- `pages_available`: Pages currently idle (0 = all pages busy rendering)
 
 ### Render SVG
 
@@ -453,6 +486,79 @@ curl -X POST http://localhost:4000/render \
   --output output.png
 ```
 
+## Parallel Rendering
+
+The server maintains a pool of browser pages that can process multiple render requests concurrently. Combined with client-side parallel workers, this significantly speeds up batch exports.
+
+### How It Works
+
+Export happens in two phases:
+1. **Phase 1 (Sequential)**: Generate SVG content for all frames (state interpolation)
+2. **Phase 2 (Parallel)**: Convert SVGs to PNGs using multiple concurrent HTTP requests
+
+### Usage
+
+```python
+exporter = VSceneExporter(
+    scene=scene,
+    converter=ConverterType.PLAYWRIGHT_HTTP,
+    output_dir="output/",
+)
+
+exporter.to_mp4(
+    filename="animation",
+    total_frames=240,
+    parallel_workers=8,  # Send 8 concurrent requests to server
+)
+```
+
+### Recommended Settings
+
+| Hardware | max_pages | parallel_workers |
+|----------|-----------|------------------|
+| 8GB RAM, 4 cores | 4 | 4 |
+| 16GB RAM, 8 cores (e.g., M2) | 8 | 8 |
+| 32GB RAM, 16 cores | 12-16 | 12-16 |
+
+**Rule of thumb:**
+- Set `max_pages` ≈ number of CPU cores
+- Set `parallel_workers` = `max_pages`
+- Each page uses ~100-150MB RAM
+
+### Monitoring
+
+Check page pool utilization during rendering:
+
+```bash
+curl http://localhost:4000/health
+```
+
+Response includes pool stats:
+```json
+{
+  "status": "ok",
+  "service": "playwright-render-server",
+  "pool": {
+    "pages_created": 8,
+    "max_pages": 8,
+    "pages_available": 0
+  }
+}
+```
+
+When `pages_available` drops to 0 during export, all pages are being utilized.
+
+### Benchmark Results
+
+Typical speedups with parallel rendering (100 elements, 90 frames):
+
+| Configuration | Time | Speedup |
+|---------------|------|---------|
+| Sequential (parallel_workers=0) | 13.7s | 1.0x |
+| Parallel (parallel_workers=4) | 8.8s | 1.56x |
+
+For complex scenes where Phase 1 dominates, speedups may be lower since only Phase 2 benefits from parallelization.
+
 ## Performance Tips
 
 1. **Keep server running**: Starting/stopping frequently adds overhead
@@ -460,6 +566,8 @@ curl -X POST http://localhost:4000/render \
 3. **Manual start for production**: More control and predictability
 4. **Monitor logs**: Watch for errors or warnings
 5. **Batch renders**: If doing many renders, keep server alive between them
+6. **Match parallel_workers to max_pages**: No benefit from more workers than pages
+7. **Monitor with /health endpoint**: Check page pool utilization during renders
 
 ## Comparison with Other Converters
 

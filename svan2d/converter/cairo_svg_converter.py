@@ -81,3 +81,22 @@ class CairoSvgConverter(SVGConverter):
 
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def render_svg_to_png(
+        self,
+        svg_content: str,
+        output_path: str,
+        width: int,
+        height: int,
+    ) -> bool:
+        """Render SVG content directly to PNG using CairoSVG."""
+        try:
+            cairosvg.svg2png(
+                bytestring=svg_content.encode("utf-8"),
+                write_to=output_path,
+                output_width=width,
+                output_height=height,
+            )
+            return True
+        except Exception:
+            return False

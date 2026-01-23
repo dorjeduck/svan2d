@@ -55,6 +55,10 @@ class StateInterpolator:
             attribute_keystates, keystates, easing_resolver, interpolation_engine
         )
 
+        # Cache for pre-computed changed fields per segment
+        # Key: segment_idx, Value: (changed_field_names, field_values)
+        self._changed_fields_cache: Dict[int, tuple] = {}
+
     def get_state_at_time(self, t: float) -> Tuple[Optional[State], bool]:
         """Get the interpolated state at a specific time.
 
@@ -171,6 +175,15 @@ class StateInterpolator:
                             num_verts, num_vertex_loops
                         )
 
+                # Get or compute changed fields for this segment (lazy field interpolation)
+                attr_fields = set(self.attribute_keystates.keys())
+                if i not in self._changed_fields_cache:
+                    from svan2d.transition.interpolation_engine import InterpolationEngine
+                    self._changed_fields_cache[i] = InterpolationEngine.compute_changed_fields(
+                        state1, state2, attr_fields
+                    )
+                changed_fields = self._changed_fields_cache[i]
+
                 interpolated_state = self.interpolation_engine.create_eased_state(
                     state1,
                     state2,
@@ -180,7 +193,7 @@ class StateInterpolator:
                         if ks1.transition_config
                         else None
                     ),
-                    attribute_keystates_fields=set(self.attribute_keystates.keys()),
+                    attribute_keystates_fields=attr_fields,
                     vertex_buffer=vertex_buffer,
                     segment_path_config=(
                         ks1.transition_config.curve_dict
@@ -192,6 +205,7 @@ class StateInterpolator:
                         if ks1.transition_config
                         else None
                     ),
+                    changed_fields=changed_fields,
                 )
 
                 # Determine if this is an "inbetween" frame (different state types morphing)

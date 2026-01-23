@@ -44,6 +44,7 @@ def main():
         width=SCENE_SIZE,
         height=SCENE_SIZE,
         background=COLOR_BACKGROUND,
+        timeline_easing=easing.in_sine,
     )
 
     xs = [i / (NUM_RINGS - 1) for i in range(NUM_RINGS)]
@@ -54,24 +55,27 @@ def main():
     def scale_func(t: float) -> float:
         return float(interp(t))
 
-    scene.animate_camera(
-        scale=scale_func,
-    )
+    # scene.animate_camera(
+    #    scale=scale_func,
+    # )
 
-    text_fade_out_start = min(1, RINGS_WITH_NUMBERS / NUM_RINGS)
+    text_fade_out_start = min(1, (RINGS_WITH_NUMBERS + 1) / NUM_RINGS)
     time_per_ring = 1 / NUM_RINGS
 
     number = 1
 
-    for ring in range(NUM_RINGS):
-        step = time_per_ring / max(8 * ring, 1)
-        for n in range(max(8 * ring, 1)):
-            appear_time = max((ring - 1) * time_per_ring + n * step, 0)
+    fade_duration = time_per_ring
+
+    for round in range(NUM_RINGS + 1):
+        step = time_per_ring / max(8 * round, 1)
+        for n in range(max(8 * round, 1)):
+            appear_time = max((round - 1) * time_per_ring + n * step, 0)
 
             square, text = create_square_element(
                 number,
                 appear_time,
-                ring < RINGS_WITH_NUMBERS,
+                fade_duration,
+                round <= RINGS_WITH_NUMBERS,
                 text_fade_out_start,
             )
 
@@ -85,15 +89,17 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.CAIROSVG,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
     exporter.to_mp4(
-        filename="34_spiral_primes",
+        filename="34_spiral_555",
         total_frames=TOTAL_FRAMES,
         framerate=FRAME_RATE,
         png_width_px=1024,
+        num_thumbnails=20,
+        parallel_workers=4,
     )
 
 

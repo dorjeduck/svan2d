@@ -234,6 +234,32 @@ class SVGConverter(ABC):
             width = height * (scene.width / scene.height)
         return width, height
 
+    def render_svg_to_png(
+        self,
+        svg_content: str,
+        output_path: str,
+        width: int,
+        height: int,
+    ) -> bool:
+        """Render SVG content directly to PNG file.
+
+        This method is used for parallel rendering where SVG content
+        is pre-generated and conversion happens concurrently.
+
+        Args:
+            svg_content: SVG string to render
+            output_path: Output PNG file path
+            width: Output width in pixels
+            height: Output height in pixels
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Default implementation - subclasses should override for efficiency
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support direct SVG rendering"
+        )
+
     def _get_write_scaled_svg_content(
         self,
         scene: VScene,

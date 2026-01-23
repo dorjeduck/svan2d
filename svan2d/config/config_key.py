@@ -101,6 +101,7 @@ class ConfigKey(str, Enum):
     # Playwright server configuration
     PLAYWRIGHT_SERVER_HOST = "playwright_server.host"
     PLAYWRIGHT_SERVER_PORT = "playwright_server.port"
+    PLAYWRIGHT_SERVER_MAX_PAGES = "playwright_server.max_pages"
     PLAYWRIGHT_SERVER_AUTO_START = "playwright_server.auto_start"
     PLAYWRIGHT_SERVER_LOG_LEVEL = "playwright_server.log_level"
 

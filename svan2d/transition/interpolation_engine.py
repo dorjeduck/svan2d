@@ -62,6 +62,54 @@ class InterpolationEngine:
         self._path_morpher = PathMorpher()
         self._type_interpolators = TypeInterpolators(path_resolver)
 
+    @staticmethod
+    def compute_changed_fields(
+        start_state: State,
+        end_state: State,
+        attribute_keystates_fields: set,
+    ) -> Tuple[set, Dict[str, Tuple[Any, Any]]]:
+        """Pre-compute which fields differ between two states.
+
+        Returns:
+            Tuple of (set of changed field names, dict of field_name -> (start_val, end_val))
+        """
+        changed = set()
+        field_values = {}
+        non_interp = start_state.NON_INTERPOLATABLE_FIELDS
+
+        for field in fields(start_state):
+            field_name = field.name
+
+            # Skip class-level constants (not real instance fields)
+            if field_name == "NON_INTERPOLATABLE_FIELDS":
+                continue
+
+            # Skip attributes managed by attribute_keystates
+            if field_name in attribute_keystates_fields:
+                continue
+
+            # Non-interpolatable fields always need processing (step function)
+            if field_name in non_interp:
+                start_val = getattr(start_state, field_name)
+                end_val = getattr(end_state, field_name, start_val)
+                if start_val != end_val:
+                    changed.add(field_name)
+                    field_values[field_name] = (start_val, end_val)
+                continue
+
+            start_val = getattr(start_state, field_name)
+            if not hasattr(end_state, field_name):
+                continue
+
+            end_val = getattr(end_state, field_name)
+
+            # Only track fields that actually differ
+            if start_val != end_val:
+                changed.add(field_name)
+                field_values[field_name] = (start_val, end_val)
+
+        return changed, field_values
+
     def create_eased_state(
         self,
         start_state: State,
@@ -72,6 +120,7 @@ class InterpolationEngine:
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
         segment_path_config: Optional[Dict[str, Callable]] = None,
         morphing_config: Optional[Any] = None,
+        changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]] = None,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -85,6 +134,7 @@ class InterpolationEngine:
             vertex_buffer: Optional reusable buffer for vertex interpolation
             segment_path_config: Optional per-field path config dict {field_name: path_func}
             morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
+            changed_fields: Optional pre-computed (changed_field_names, field_values) tuple
         """
         interpolated_values = {}
 
@@ -99,54 +149,89 @@ class InterpolationEngine:
                 mapper = morphing_config.get("mapper")
                 vertex_aligner = morphing_config.get("vertex_aligner")
 
-        for field in fields(start_state):
-            field_name = field.name
+        # Use pre-computed changed fields if available (lazy field interpolation)
+        if changed_fields is not None:
+            changed_names, field_values = changed_fields
 
-            # Skip attributes managed by attribute_keystates
-            if field_name in attribute_keystates_fields:
-                continue
+            for field_name in changed_names:
+                start_value, end_value = field_values[field_name]
 
-            # Skip non-interpolatable attributes (structural/configuration attributes)
-            if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
-                start_value = getattr(start_state, field_name)
-                interpolated_values[field_name] = (
-                    start_value
-                    if t < 0.5
-                    else getattr(end_state, field_name, start_value)
+                # Non-interpolatable: step function
+                if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
+                    interpolated_values[field_name] = (
+                        start_value if t < 0.5 else end_value
+                    )
+                    continue
+
+                # Get easing function for this field
+                easing_func = self.easing_resolver.get_easing_for_field(
+                    start_state, field_name, segment_easing_overrides
                 )
-                continue
+                eased_t = easing_func(t) if easing_func else t
 
-            start_value = getattr(start_state, field_name)
+                # Interpolate the value
+                interpolated_values[field_name] = self.interpolate_value(
+                    start_state,
+                    end_state,
+                    field_name,
+                    start_value,
+                    end_value,
+                    eased_t,
+                    vertex_buffer,
+                    segment_path_config,
+                    mapper=mapper,
+                    vertex_aligner=vertex_aligner,
+                )
+        else:
+            # Fallback: iterate all fields (original behavior)
+            for field in fields(start_state):
+                field_name = field.name
 
-            if not hasattr(end_state, field_name):
-                continue
+                # Skip attributes managed by attribute_keystates
+                if field_name in attribute_keystates_fields:
+                    continue
 
-            end_value = getattr(end_state, field_name)
+                # Skip non-interpolatable attributes (structural/configuration attributes)
+                if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
+                    start_value = getattr(start_state, field_name)
+                    interpolated_values[field_name] = (
+                        start_value
+                        if t < 0.5
+                        else getattr(end_state, field_name, start_value)
+                    )
+                    continue
 
-            # No interpolation needed if values are identical
-            if start_value == end_value:
-                interpolated_values[field_name] = start_value
-                continue
+                start_value = getattr(start_state, field_name)
 
-            # Get easing function for this field
-            easing_func = self.easing_resolver.get_easing_for_field(
-                start_state, field_name, segment_easing_overrides
-            )
-            eased_t = easing_func(t) if easing_func else t
+                if not hasattr(end_state, field_name):
+                    continue
 
-            # Interpolate the value
-            interpolated_values[field_name] = self.interpolate_value(
-                start_state,
-                end_state,
-                field_name,
-                start_value,
-                end_value,
-                eased_t,
-                vertex_buffer,
-                segment_path_config,
-                mapper=mapper,
-                vertex_aligner=vertex_aligner,
-            )
+                end_value = getattr(end_state, field_name)
+
+                # No interpolation needed if values are identical
+                if start_value == end_value:
+                    interpolated_values[field_name] = start_value
+                    continue
+
+                # Get easing function for this field
+                easing_func = self.easing_resolver.get_easing_for_field(
+                    start_state, field_name, segment_easing_overrides
+                )
+                eased_t = easing_func(t) if easing_func else t
+
+                # Interpolate the value
+                interpolated_values[field_name] = self.interpolate_value(
+                    start_state,
+                    end_state,
+                    field_name,
+                    start_value,
+                    end_value,
+                    eased_t,
+                    vertex_buffer,
+                    segment_path_config,
+                    mapper=mapper,
+                    vertex_aligner=vertex_aligner,
+                )
 
         if t < 0.5:
             return replace(start_state, **interpolated_values)

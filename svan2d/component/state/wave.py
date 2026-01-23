@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
+from typing import Optional
 
-from svan2d.transition import easing
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.vertex import VertexContours
-from svan2d.core.point2d import Point2D
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.wave import WaveRenderer
+from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.state.line import line_endpoints_to_center_rotation_length
+from svan2d.component.vertex import VertexContours
+from svan2d.core.point2d import Point2D
+
 
 @renderer(WaveRenderer)
 @dataclass(frozen=True)
@@ -19,13 +21,6 @@ class WaveState(VertexState):
     amplitude: float = 20
     frequency: float = 2  # Number of complete waves
     closed: bool = False
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "length": easing.in_out,
-        "amplitude": easing.in_out,
-        "frequency": easing.in_out,
-    }
 
     @staticmethod
     def from_endpoints(
@@ -51,6 +46,7 @@ class WaveState(VertexState):
         """Generate wave vertices"""
         vertices = []
         half_length = self.length / 2
+        assert self._num_vertices is not None
 
         for i in range(self._num_vertices):
             t = i / (self._num_vertices - 1) if self._num_vertices > 1 else 0

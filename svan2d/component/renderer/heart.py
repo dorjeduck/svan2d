@@ -1,7 +1,9 @@
 """HeartRenderer - renders heart shapes as SVG paths"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 import drawsvg as dw
 
 from .base import Renderer

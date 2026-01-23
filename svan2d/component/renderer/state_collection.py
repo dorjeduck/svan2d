@@ -1,7 +1,9 @@
 """Renderer for ShapeCollectionState - renders multiple shapes as independent elements"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Optional
+
 import drawsvg as dw
 
 from svan2d.component.renderer.base import Renderer
@@ -19,7 +21,7 @@ class StateCollectionRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "StateCollectionState", drawing: dw.Drawing = None
+        self, state: "StateCollectionState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Group:
         """Render each shape in the collection
 

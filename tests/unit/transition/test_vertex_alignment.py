@@ -1,14 +1,15 @@
 """Unit tests for vertex alignment strategies"""
 
 import pytest
+
+from svan2d.core.point2d import Point2D
 from svan2d.transition.vertex_alignment import (
+    AlignmentContext,
     AngularAligner,
     EuclideanAligner,
     SequentialAligner,
-    AlignmentContext,
     get_aligner,
 )
-from svan2d.core.point2d import Point2D
 
 
 @pytest.fixture

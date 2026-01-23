@@ -5,12 +5,14 @@ default values throughout svan2d.
 """
 
 from __future__ import annotations
+
 import tomllib
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Optional
-from copy import deepcopy
 
 from svan2d.core.color import Color
+
 from .config_key import ConfigKey
 
 
@@ -221,7 +223,7 @@ class Svan2DConfig:
         if isinstance(value, str):
             try:
                 return Color(value)
-            except:
+            except (ValueError, TypeError):
                 return Color.NONE
 
         # Handle RGB tuples/lists

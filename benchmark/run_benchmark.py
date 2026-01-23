@@ -9,11 +9,10 @@ Generates both console output and a markdown report file.
 import time
 import psutil
 import os
-import sys
 import tempfile
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 from datetime import datetime
 
 from svan2d.vscene import VScene
@@ -40,7 +39,7 @@ class BenchmarkResult:
     process_system_time: float
     total_cpu_time: float
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def create_test_scene() -> VScene:

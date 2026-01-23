@@ -5,10 +5,12 @@ Spatially close items are grouped together for morphing.
 """
 
 from __future__ import annotations
+
 import random
-from typing import TypeVar, List, Callable
+from typing import Callable, List, TypeVar
 
 from svan2d.core.point2d import Point2D
+
 from .base import Mapper, Match
 from .greedy import GreedyMapper
 

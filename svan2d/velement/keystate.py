@@ -5,8 +5,9 @@ All tuple formats are converted to KeyState objects internally.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional, Dict, Callable, Any, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from svan2d.component.state.base import State
 from svan2d.velement.morphing import MorphingConfig
@@ -17,7 +18,7 @@ from svan2d.velement.transition import TransitionConfig
 class KeyState:
 
     state: State
-    time: Optional[float] = None
+    time: float | None = None
     transition_config: Optional[TransitionConfig] = None
     skip_render_at: bool = False
 

@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from .base import State
+
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.raw_svg import RawSvgRenderer
+
+from .base import State
 
 
 @renderer(RawSvgRenderer)

@@ -1,29 +1,29 @@
 """Tests for renderer SVG output correctness"""
 
-import pytest
 import drawsvg as dw
+import pytest
 
-from svan2d.core.color import Color
-from svan2d.component.state import (
-    CircleState,
-    RectangleState,
-    TriangleState,
-    PolygonState,
-    StarState,
-    EllipseState,
-    LineState,
-    TextState,
-    RingState,
-)
+from svan2d.component.registry import get_renderer_class_for_state
 from svan2d.component.renderer import (
     CircleRenderer,
-    RectangleRenderer,
-    TriangleRenderer,
-    PolygonRenderer,
     EllipseRenderer,
+    PolygonRenderer,
+    RectangleRenderer,
     TextRenderer,
+    TriangleRenderer,
 )
-from svan2d.component.registry import get_renderer_class_for_state
+from svan2d.component.state import (
+    CircleState,
+    EllipseState,
+    LineState,
+    PolygonState,
+    RectangleState,
+    RingState,
+    StarState,
+    TextState,
+    TriangleState,
+)
+from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
 

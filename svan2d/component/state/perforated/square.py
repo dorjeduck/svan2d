@@ -1,14 +1,13 @@
 """Perforated Square state - Square with  holes"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
+from svan2d.component.vertex import VertexLoop, VertexSquare
 from svan2d.core.point2d import Point2D
 
 from .base import PerforatedVertexState
-from svan2d.component.state.base import State
-from svan2d.component.vertex import VertexSquare, VertexLoop
-from svan2d.transition import easing
 
 
 @dataclass(frozen=True)
@@ -35,13 +34,9 @@ class PerforatedSquareState(PerforatedVertexState):
 
     size: float = 160
 
-    DEFAULT_EASING = {
-        **PerforatedVertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-    }
-
     def _generate_outer_contour(self) -> VertexLoop:
         """Generate rectangular outer contour"""
+        assert self._num_vertices is not None
         return VertexSquare(
             center=Point2D(), size=self.size, num_vertices=self._num_vertices
         )

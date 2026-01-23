@@ -1,11 +1,12 @@
 """Circular arc path interpolation"""
 
 import math
-from typing import Optional, Callable
+from typing import Callable, Optional
+
 from svan2d.core.point2d import Point2D
 
 
-def arc(radius: Optional[float] = None) -> Callable[[Point2D, Point2D, float], Point2D]:
+def arc(radius: float | None = None) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a circular arc path function (counterclockwise by default)
 
     Args:
@@ -22,7 +23,7 @@ def arc(radius: Optional[float] = None) -> Callable[[Point2D, Point2D, float], P
 
 
 def arc_counterclockwise(
-    radius: Optional[float] = None,
+    radius: float | None = None,
 ) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a counterclockwise circular arc path function
 
@@ -76,7 +77,7 @@ def arc_counterclockwise(
 
 
 def arc_clockwise(
-    radius: Optional[float] = None,
+    radius: float | None = None,
 ) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a clockwise circular arc path function
 

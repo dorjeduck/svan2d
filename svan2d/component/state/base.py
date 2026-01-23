@@ -4,15 +4,14 @@ States are immutable dataclasses that define geometry, position, and visual attr
 """
 
 from __future__ import annotations
-from abc import ABC
-from dataclasses import dataclass, field, replace
-from typing import Any, Optional, List
 
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.core.color import Color
-from svan2d.component.registry import get_renderer_class_for_state
+from abc import ABC
+from dataclasses import Field, dataclass, replace
+from typing import Any, List
+
 from svan2d.component.effect.filter import Filter
+from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
 
 @dataclass(frozen=True)
@@ -26,48 +25,32 @@ class State(ABC):
     the configuration system if not explicitly provided.
     """
 
-    pos: Optional[Point2D] = None
-    scale: Optional[float] = None
-    opacity: Optional[float] = None
-    rotation: Optional[float] = None
-    skew_x: Optional[float] = None
-    skew_y: Optional[float] = None
+    pos: Point2D | None = None
+    scale: float | None = None
+    opacity: float | None = None
+    rotation: float | None = None
+    skew_x: float | None = None
+    skew_y: float | None = None
     z_index: float = 0.0
 
     # Clipping and masking support
-    clip_state: Optional[State] = None
-    mask_state: Optional[State] = None
-    clip_states: Optional[List[State]] = None
-    mask_states: Optional[List[State]] = None
+    clip_state: State | None = None
+    mask_state: State | None = None
+    clip_states: List[State] | None = None
+    mask_states: List[State] | None = None
 
     # Filter support
-    filter: Optional[Filter] = None
+    filter: Filter | None = None
 
     # Attributes that should not be interpolated (structural/configuration attributes)
-    NON_INTERPOLATABLE_FIELDS: frozenset[str] = frozenset(
-        ["NON_INTERPOLATABLE_FIELDS", "DEFAULT_EASING"]
-    )
-
-    DEFAULT_EASING = {
-        "pos": easing.in_out,
-        "scale": easing.in_out,
-        "opacity": easing.linear,
-        "rotation": easing.in_out,
-        "skew_x": easing.linear,
-        "skew_y": easing.linear,
-        "z_index": easing.linear,
-        "clip_state": easing.linear,
-        "mask_state": easing.linear,
-        "clip_states": easing.linear,
-        "mask_states": easing.linear,
-    }
+    NON_INTERPOLATABLE_FIELDS: frozenset[str] = frozenset(["NON_INTERPOLATABLE_FIELDS"])
 
     # can be overridden by subclasses to add further angle attributes
     # used in interpolation (shortest angle distance)
 
     def __post_init__(self):
         """Apply configuration defaults for common attributes if not explicitly set"""
-        from svan2d.config import get_config, ConfigKey
+        from svan2d.config import ConfigKey, get_config
 
         config = get_config()
 
@@ -88,19 +71,23 @@ class State(ABC):
 
     @property
     def x(self) -> float:
+        assert self.pos is not None
         return self.pos.x
 
     @property
     def y(self) -> float:
+        assert self.pos is not None
         return self.pos.y
 
     def with_x(self, x: float) -> State:
+        assert self.pos is not None
         return replace(self, pos=self.pos.with_x(x))
 
     def with_y(self, y: float) -> State:
+        assert self.pos is not None
         return replace(self, pos=self.pos.with_y(y))
 
-    def get_renderer_class(self):
+    def get_renderer_class(self) -> type | None:
         """Get the renderer class for this state.
 
         Returns the renderer registered via the @renderer decorator.
@@ -128,7 +115,7 @@ class State(ABC):
     def need_morph(self, state):
         return type(state) is not type(self)
 
-    def is_angle(self, field: field):
+    def is_angle(self, field: Field) -> bool:
         return field.name == "rotation"
 
     def _none_color(self, field_name: str):

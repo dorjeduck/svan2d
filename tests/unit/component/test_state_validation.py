@@ -1,41 +1,42 @@
 """Comprehensive state validation tests for all shape states"""
 
-import pytest
 from dataclasses import replace
 
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+import pytest
+
 from svan2d.component.state import (
-    # Vertex-based states
-    AstroidState,
-    CircleState,
-    EllipseState,
-    HeartState,
-    InfinityState,
-    LineState,
-    PolygonState,
-    RectangleState,
-    SquareState,
-    StarState,
-    TriangleState,
-    SpiralState,
-    WaveState,
-    FlowerState,
-    # Perforated states
-    PolyRingState,
-    RingState,
-    SquareRingState,
-    RadialSegmentsState,
     # Simple states
     ArcState,
     ArrowState,
+    # Vertex-based states
+    AstroidState,
+    CircleState,
+    CircleTextState,
     CrossState,
+    EllipseState,
+    FlowerState,
+    HeartState,
+    InfinityState,
+    LineState,
     PathState,
     PathTextState,
-    CircleTextState,
+    PolygonState,
+    # Perforated states
+    PolyRingState,
+    RadialSegmentsState,
     RawSvgState,
+    RectangleState,
+    RingState,
+    SpiralState,
+    SquareRingState,
+    SquareState,
+    StarState,
     TextState,
+    TriangleState,
+    WaveState,
 )
+from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
 
 @pytest.mark.unit

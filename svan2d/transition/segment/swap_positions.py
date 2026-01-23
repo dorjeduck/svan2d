@@ -1,11 +1,11 @@
 """Swap positions segment function (multi-element)."""
 
 from dataclasses import replace
-from typing import List, Optional, Callable, Dict, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
+from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
-from svan2d.component.state.base import State
 
 
 def swap_positions(

@@ -1,14 +1,13 @@
 from __future__ import annotations
+
 import time
 import traceback
+from typing import TYPE_CHECKING, Optional
 
-from typing import Optional
-from svan2d.converter.svg_converter import SVGConverter
 from playwright.sync_api import sync_playwright
 
+from svan2d.converter.svg_converter import SVGConverter
 from svan2d.core.logger import get_logger
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -24,17 +23,21 @@ class PlaywrightSvgConverter(SVGConverter):
     def _convert(
         self,
         scene: VScene,
-        outputs: dict,
+        output: dict,
         frame_time: Optional[float] = 0.0,
         formats: Optional[list] = ["png", "pdf"],
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
-        pdf_inch_width: Optional[int] = None,
-        pdf_inch_height: Optional[int] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> dict:
         """
         Export both PNG and PDF in a single Chromium session.
         """
+        if formats is None:
+            formats = ["png", "pdf"]
+        if frame_time is None:
+            frame_time = 0.0
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -60,12 +63,12 @@ class PlaywrightSvgConverter(SVGConverter):
                         scene, frame_time, width_px, height_px
                     )
                     page = render_page(width_px, height_px, svg_content)
-                    page.screenshot(path=outputs["png"], full_page=True)
+                    page.screenshot(path=output["png"], full_page=True)
                     page.close()
                     elapsed = time.time() - t0
-                    ret["png"] = outputs["png"]
+                    ret["png"] = output["png"]
                     logger.debug(
-                        f"PNG exported to {outputs['png']} (PlaywrightSvgConverter) in {elapsed:.4f} seconds"
+                        f"PNG exported to {output['png']} (PlaywrightSvgConverter) in {elapsed:.4f} seconds"
                     )
 
                 # PDF
@@ -82,7 +85,7 @@ class PlaywrightSvgConverter(SVGConverter):
                     )
                     page = render_page(width_px, height_px, svg_content)
                     page.pdf(
-                        path=outputs["pdf"],
+                        path=output["pdf"],
                         width=f"{pdf_inch_width}in",
                         height=f"{pdf_inch_height}in",
                         margin={
@@ -95,9 +98,9 @@ class PlaywrightSvgConverter(SVGConverter):
                     )
                     page.close()
                     elapsed = time.time() - t0
-                    ret["pdf"] = outputs["pdf"]
+                    ret["pdf"] = output["pdf"]
                     logger.debug(
-                        f"PDF exported to {outputs['pdf']} (PlaywrightSvgConverter) in {elapsed:.4f} seconds"
+                        f"PDF exported to {output['pdf']} (PlaywrightSvgConverter) in {elapsed:.4f} seconds"
                     )
 
                 browser.close()
@@ -109,10 +112,10 @@ class PlaywrightSvgConverter(SVGConverter):
             logger.error(f"PlaywrightSvgConverter error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _convert_to_png(self, *args, **kwargs):
+    def _convert_to_png(self, *args, **kwargs) -> dict:
         # not called, handled by _convert
-        pass
+        return {}
 
-    def _convert_to_pdf(self, *args, **kwargs):
+    def _convert_to_pdf(self, *args, **kwargs) -> dict:
         # not called, handled by _convert
-        pass
+        return {}

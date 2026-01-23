@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 from typing import Callable, Dict, Optional
 
-
 from svan2d.transition import easing
 
 

@@ -1,6 +1,7 @@
 """Radial gradient implementation"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 import drawsvg as dw
@@ -40,7 +41,8 @@ class RadialGradient(Gradient):
         gradient_id = f"gradient-{uuid.uuid4().hex[:8]}"
 
         grad = dw.RadialGradient(
-            self.center,
+            self.center.x,
+            self.center.y,
             self.r,
             gradientUnits="userSpaceOnUse",
             id=gradient_id,

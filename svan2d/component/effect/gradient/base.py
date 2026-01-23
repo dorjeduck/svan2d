@@ -1,6 +1,7 @@
 """Abstract base class for gradients"""
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 import drawsvg as dw

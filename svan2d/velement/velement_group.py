@@ -1,17 +1,17 @@
 """VElementGroup class - element transform groups with animation support."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass, replace
-from typing import List, Optional, Dict, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, cast
 
 import drawsvg as dw
 
 from svan2d.component.state.base import State
 from svan2d.velement.base_velement import BaseVElement
-from svan2d.velement.builder import KeystateBuilder, BuilderState
-from svan2d.velement.state_interpolator import StateInterpolator
+from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
-from svan2d.transition import easing
+from svan2d.velement.state_interpolator import StateInterpolator
 
 if TYPE_CHECKING:
     from .velement import VElement
@@ -27,16 +27,6 @@ class VElementGroupState(State):
     scale_y: float = 1.0
     skew_x: float = 0
     skew_y: float = 0
-
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "transform_origin_x": easing.in_out,
-        "transform_origin_y": easing.in_out,
-        "scale_x": easing.in_out,
-        "scale_y": easing.in_out,
-        "skew_x": easing.in_out,
-        "skew_y": easing.in_out,
-    }
 
 
 class VElementGroup(BaseVElement, KeystateBuilder):
@@ -64,13 +54,19 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         )
     """
 
-    def __init__(self, elements: Optional[List[VElement]] = None) -> None:
+    def __init__(
+        self,
+        elements: Optional[List[VElement]] = None,
+        group_easing: Optional[Callable[[float], float]] = None,
+    ) -> None:
         """Initialize an element group with builder pattern.
 
         Args:
             elements: Optional initial list of child elements
+            group_easing: Optional easing function applied to the group's animation time
         """
         self.elements: List[VElement] = elements if elements else []
+        self.group_easing = group_easing
 
         # Clip/mask elements
         self.clip_elements: List[VElement] = []
@@ -84,25 +80,34 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Interpolator (created on first render)
         self._interpolator: Optional[StateInterpolator] = None
 
+        # Cache last frame time for render_state (set by get_frame)
+        self._last_frame_time: float = 0.0
+
     def _ensure_built(self) -> None:
         """Convert builder state to final keystates if not already done."""
         if self._builder is None:
             return
+
+        # Auto-create identity keystates if group_easing is set but no keystates defined
+        if self.group_easing is not None and len(self._builder.keystates) == 0:
+            identity = VElementGroupState()
+            self._builder.keystates.append((identity, 0.0, None, False))
+            self._builder.keystates.append((identity, 1.0, None, False))
 
         # Use builder mixin to finalize
         keystates, attribute_keystates = self._finalize_build()
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
-        from svan2d.transition.path_resolver import PathResolver
         from svan2d.transition.interpolation_engine import InterpolationEngine
+        from svan2d.transition.path_resolver import PathResolver
 
         easing_resolver = EasingResolver(self._attribute_easing)
         path_resolver = PathResolver()
         interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
 
         # Store keystates and create interpolator (no vertex aligner for groups)
-        self.keystates = keystates
+        self._keystates_list = keystates
         self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
@@ -176,11 +181,17 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     ) -> Optional[dw.Group]:
         """Render the element transform group at a specific animation time."""
         self._ensure_built()
+        assert self._interpolator is not None
+
+        if self.group_easing is not None:
+            t = self.group_easing(t)
 
         group_state, _ = self._interpolator.get_state_at_time(t)
 
         if group_state is None:
             return None
+
+        group_state = cast(VElementGroupState, group_state)
 
         # Apply clip/mask if present
         if self.clip_elements or self.mask_element:
@@ -214,20 +225,74 @@ class VElementGroup(BaseVElement, KeystateBuilder):
                 group.append(child_element)
 
         if group_state.opacity != 1.0:
-            group.opacity = group_state.opacity
+            group.opacity = group_state.opacity  # type: ignore[attr-defined]
 
         return group
 
     def get_frame(self, t: float) -> Optional[VElementGroupState]:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
+        assert self._interpolator is not None
+
+        if self.group_easing is not None:
+            t = self.group_easing(t)
+
+        self._last_frame_time = t  # Cache for render_state
         state, _ = self._interpolator.get_state_at_time(t)
-        return state
+        return cast(VElementGroupState, state) if state is not None else None
+
+    def render_state(
+        self, state: VElementGroupState, drawing: Optional[dw.Drawing] = None
+    ) -> Optional[dw.Group]:
+        """Render a pre-computed state directly (avoids re-interpolation).
+
+        Uses _last_frame_time (set by get_frame) to render children at the correct time.
+        """
+        if state is None:
+            return None
+
+        t = self._last_frame_time
+
+        # Apply clip/mask if present
+        if self.clip_elements or self.mask_element:
+            state = self._apply_velement_clips(state, t)
+
+        transform_string = self._build_transform_string(state)
+
+        if transform_string:
+            group = dw.Group(transform=transform_string)
+        else:
+            group = dw.Group()
+
+        # Sort children by z_index
+        def get_z_index(element: "VElement") -> float:
+            if hasattr(element, "get_frame"):
+                child_state = element.get_frame(t)
+                if child_state is not None:
+                    return child_state.z_index
+            return 0.0
+
+        sorted_children = sorted(self.elements, key=get_z_index)
+
+        for child in sorted_children:
+            child_element = None
+            if hasattr(child, "render_at_frame_time") and child.is_animatable():
+                child_element = child.render_at_frame_time(t)
+            else:
+                child_element = child.render()
+
+            if child_element is not None:
+                group.append(child_element)
+
+        if state.opacity != 1.0:
+            group.opacity = state.opacity  # type: ignore[attr-defined]
+
+        return group
 
     def is_animatable(self) -> bool:
         """Check if this group can be animated."""
         self._ensure_built()
-        return len(self.keystates) > 1 or bool(self.attribute_keystates)
+        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
 
     # =========================================================================
     # Internal helpers
@@ -280,6 +345,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         if state.scale != 1.0 and (state.scale_x == 1.0 and state.scale_y == 1.0):
             transform_parts.append(f"scale({state.scale})")
         elif state.scale_x != 1.0 or state.scale_y != 1.0:
+            assert state.scale is not None
             final_scale_x = state.scale_x * state.scale
             final_scale_y = state.scale_y * state.scale
             transform_parts.append(f"scale({final_scale_x}, {final_scale_y})")

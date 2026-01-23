@@ -1,5 +1,5 @@
-from typing import List, Tuple, Union
 import re
+from typing import List, Tuple, Union
 
 # Regex to match a command letter or a number (including signs, decimals, and exponents)
 # This handles the complex, comma-less, space-optional SVG syntax like M100-20L10,30

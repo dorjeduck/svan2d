@@ -11,8 +11,10 @@ If you need easing or alignment overrides, use the KeyState class (not complex t
 The (time, state) tuple is kept as a convenience for the common case of explicit timing.
 """
 
-from typing import List, Optional, Tuple, Callable, Dict, Any, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 from svan2d.component.state.base import State
+
 from .keystate import KeyState
 
 # Type definitions
@@ -90,7 +92,7 @@ def parse_attribute_keystates(
     has_explicit_times = False
 
     for item in flexible_list:
-        t: Optional[float] = None
+        t: float | None = None
         val: Any
         easing: Optional[Callable] = None
 
@@ -276,6 +278,7 @@ def _distribute_implicit_times(
             j += 1
 
         t_next = normalized[j].time if j < len(normalized) else 1.0
+        assert t_prev is not None and t_next is not None
 
         # Distribute implicit keystates evenly between anchors
         num_implicit = j - i
@@ -318,6 +321,7 @@ def _distribute_implicit_times_field(
             j += 1
 
         t_next = normalized[j][0] if j < len(normalized) else 1.0
+        assert t_prev is not None and t_next is not None
 
         # Distribute implicit keystates evenly
         num_implicit = j - i
@@ -336,13 +340,15 @@ def _finalize_keystates(
     keystates: List["KeyState"],
 ) -> List["KeyState"]:
     """Sort and deduplicate keystates"""
-    keystates.sort(key=lambda ks: ks.time)
+    keystates.sort(key=lambda ks: ks.time if ks.time is not None else 0.0)
 
     unique_keystates = []
     for ks in keystates:
-        if not unique_keystates or ks.time > unique_keystates[-1].time:
+        assert ks.time is not None
+        last_time = unique_keystates[-1].time if unique_keystates else None
+        if not unique_keystates or (last_time is not None and ks.time > last_time):
             unique_keystates.append(ks)
-        elif ks.time == unique_keystates[-1].time:
+        elif last_time is not None and ks.time == last_time:
             # Replace with last definition at same time
             unique_keystates[-1] = ks
 
@@ -359,7 +365,7 @@ def _finalize_attribute_keystates(
     for t, val, easing in keystates:
         if not unique_keystates or t > unique_keystates[-1][0]:
             unique_keystates.append((t, val, easing))
-        elif t == unique_keystates[-1].time:
+        elif t == unique_keystates[-1][0]:
             # Replace with last definition at same time
             unique_keystates[-1] = (t, val, easing)
 

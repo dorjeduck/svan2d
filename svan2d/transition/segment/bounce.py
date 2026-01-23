@@ -1,10 +1,10 @@
 """Bounce segment function."""
 
-from typing import List, Optional, Callable, Dict
+from typing import Callable, Dict, List, Optional
 
+from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
-from svan2d.component.state.base import State
 
 
 def bounce(
@@ -12,7 +12,7 @@ def bounce(
     s2: State,
     t_start: float,
     t_end: float,
-    hold_duration: Optional[float] = 0,
+    hold_duration: float = 0,
     num_transitions: int = 2,
     easing: Optional[Dict[str, Callable[[float], float]]] = None,
 ) -> List[KeyState]:

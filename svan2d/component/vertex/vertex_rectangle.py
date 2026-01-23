@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from .vertex_loop import VertexLoop
-
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
 
 
 class VertexRectangle(VertexLoop):
@@ -17,7 +17,7 @@ class VertexRectangle(VertexLoop):
 
     def __init__(
         self,
-        center: float = Point2D(0, 0),
+        center: Point2D = Point2D(0, 0),
         width: float = 100.0,
         height: float = 100.0,
         num_vertices: int = 128,

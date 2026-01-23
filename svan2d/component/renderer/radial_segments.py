@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 import math
 
 import drawsvg as dw
+
 from .base import Renderer
 
 if TYPE_CHECKING:
@@ -23,9 +24,10 @@ class RadialSegmentsRenderer(Renderer):
         Returns a drawsvg Group containing all lines.
         """
 
-        angles = state.angles[: state.num_lines] or [
-            i * 360 / state.num_lines for i in range(state.num_lines)
-        ]
+        if state.angles is not None:
+            angles = state.angles[: state.num_lines]
+        else:
+            angles = [i * 360 / state.num_lines for i in range(state.num_lines)]
 
         group = dw.Group()
         stroke = state.stroke_color.to_rgb_string() if state.stroke_color else "black"

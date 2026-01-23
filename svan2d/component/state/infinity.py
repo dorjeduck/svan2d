@@ -1,13 +1,13 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 
-from svan2d.transition import easing
+from svan2d.component.registry import renderer
+from svan2d.component.renderer.infinity import InfinityRenderer
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.infinity import InfinityRenderer
 
 
 @renderer(InfinityRenderer)
@@ -17,15 +17,11 @@ class InfinityState(VertexState):
 
     size: float = 50
 
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-    }
-
     def _generate_contours(self) -> VertexContours:
         """Generate infinity symbol using lemniscate parametric equations"""
         vertices = []
 
+        assert self._num_vertices is not None
         for i in range(self._num_vertices - 1):
             t = (i / (self._num_vertices - 1)) * 2 * math.pi
 

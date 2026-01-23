@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict, Callable
+from typing import Callable, Dict, Optional
 
 from svan2d.core.logger import get_logger
 
@@ -59,7 +59,7 @@ class ExportJob:
     progress: float = 0.0  # 0.0 to 1.0
     message: str = ""
     output_file: Optional[Path] = None
-    error: Optional[str] = None
+    error: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
 
@@ -126,10 +126,10 @@ class ExportJobManager:
         self,
         job_id: str,
         status: Optional[ExportStatus] = None,
-        progress: Optional[float] = None,
-        message: Optional[str] = None,
+        progress: float | None = None,
+        message: str | None = None,
         output_file: Optional[Path] = None,
-        error: Optional[str] = None,
+        error: str | None = None,
     ):
         """
         Update job status.

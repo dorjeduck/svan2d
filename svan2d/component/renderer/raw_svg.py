@@ -1,12 +1,12 @@
-from typing import TYPE_CHECKING, Optional
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional
+
 from .base import Renderer
 
 if TYPE_CHECKING:
     from ..state.raw_svg import RawSvgState
 
 import drawsvg as dw
-
 
 
 class RawSvgRenderer(Renderer):

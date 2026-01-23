@@ -1,9 +1,11 @@
 """Unit tests for basic interpolation functions"""
 
-import pytest
 import math
-from svan2d.transition import lerp, angle, step, inbetween, circular_midpoint
+
+import pytest
+
 from svan2d.core.color import Color
+from svan2d.core.scalar_functions import angle, circular_midpoint, inbetween, lerp, step
 
 
 @pytest.mark.unit

@@ -1,11 +1,11 @@
 """Pattern effects for SVG repeating texture fills"""
 
 from .base import Pattern
+from .checkerboard import CheckerboardPattern
 from .custom import CustomPattern
 from .dots import DotsPattern
-from .stripes import StripesPattern
 from .grid import GridPattern
-from .checkerboard import CheckerboardPattern
+from .stripes import StripesPattern
 
 __all__ = [
     "Pattern",

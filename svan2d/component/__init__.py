@@ -1,32 +1,28 @@
 """Component system for svan2d - renderers and states for various shapes and elements"""
 
 # Import submodules
-from . import effect
-from . import renderer
-from . import state
-from . import vertex
-
+from . import effect, renderer, state, vertex
 
 # Import registry functions
 from .registry import (
-    get_renderer_class_for_state,
-    is_renderer_registered_for_state,
-    get_all_registered_state_renderer_pairs,
-    get_renderer_instance_for_state,
     clear_renderer_cache,
+    get_all_registered_state_renderer_pairs,
+    get_renderer_class_for_state,
+    get_renderer_instance_for_state,
+    is_renderer_registered_for_state,
 )
-
-# Import all states
-from .state import *
 
 # Import all renderers
 from .renderer import *
 
-# Import vertex classes
-from .vertex import *
+# Import all states
+from .state import *
 
 # Import shape classes from perforated submodule
-from .state.perforated import Shape, Circle, Ellipse, Rectangle, Polygon, Star, Astroid
+from .state.perforated import Astroid, Circle, Ellipse, Polygon, Rectangle, Shape, Star
+
+# Import vertex classes
+from .vertex import *
 
 __all__ = [
     # Submodules

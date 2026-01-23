@@ -1,16 +1,18 @@
 """Polygon ring renderer - SVG primitive-based for static/keystate rendering"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
-import drawsvg as dw
+
 import math
+from typing import TYPE_CHECKING, Optional
+
+import drawsvg as dw
 
 from .base import Renderer
 
 if TYPE_CHECKING:
     from ..state.poly_ring import PolyRingState
 
-from svan2d.core.point2d import Points2D, Point2D
+from svan2d.core.point2d import Point2D, Points2D
 
 
 class PolyRingRenderer(Renderer):

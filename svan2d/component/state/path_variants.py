@@ -1,15 +1,13 @@
 """Abstract base class for renderers with multiple path variants"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 
-from svan2d.component.state.base_color import ColorState
-
-from .base import State
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_variants import PathVariantsRenderer
-from svan2d.transition import easing
+from svan2d.component.state.base_color import ColorState
 from svan2d.core.color import Color
 
 
@@ -20,11 +18,6 @@ class PathVariantsState(ColorState):
 
     size: float = 50
     case_sensitive: bool = False
-
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "size": easing.in_out,
-    }
 
     def __post_init__(self):
         super().__post_init__()

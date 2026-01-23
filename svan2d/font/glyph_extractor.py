@@ -1,14 +1,15 @@
 """Extract bezier paths from font glyphs using fonttools"""
 
 from __future__ import annotations
-from typing import List, Tuple, Optional, NamedTuple
+
 from dataclasses import dataclass
+from typing import List, NamedTuple, Optional, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
 try:
-    from fontTools.ttLib import TTFont
     from fontTools.pens.recordingPen import RecordingPen
+    from fontTools.ttLib import TTFont
 
     FONTTOOLS_AVAILABLE = True
 except ImportError:
@@ -62,7 +63,7 @@ def load_font(font_path: str) -> TTFont:
         TTFont object
     """
     _check_fonttools()
-    return TTFont(font_path)
+    return TTFont(font_path)  # type: ignore[reportPossiblyUnboundVariable]
 
 
 def get_glyph_name(font: TTFont, char: str) -> Optional[str]:
@@ -115,7 +116,7 @@ def extract_glyph_outline(font: TTFont, char: str) -> GlyphOutline:
                 bounds = (glyf_glyph.xMin, glyf_glyph.yMin, glyf_glyph.xMax, glyf_glyph.yMax)
 
     # Use RecordingPen to capture the drawing commands
-    pen = RecordingPen()
+    pen = RecordingPen()  # type: ignore[reportPossiblyUnboundVariable]
     glyph.draw(pen)
 
     # Convert recording to contours

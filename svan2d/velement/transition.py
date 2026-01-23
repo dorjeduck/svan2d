@@ -7,7 +7,7 @@ Defines how interpolation happens between two keystates, including:
 """
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
 
 from svan2d.velement.morphing import MorphingConfig
 

@@ -1,10 +1,12 @@
 """VertexCircle - circle approximation as a VertexLoop"""
 
 from __future__ import annotations
+
 import math
 
-from .vertex_loop import VertexLoop
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
 
 
 class VertexCircle(VertexLoop):
@@ -17,7 +19,7 @@ class VertexCircle(VertexLoop):
 
     def __init__(
         self,
-        center: float = Point2D(0, 0),
+        center: Point2D = Point2D(0, 0),
         radius: float = 50.0,
         num_vertices: int = 128,
         start_angle: float = 0.0,

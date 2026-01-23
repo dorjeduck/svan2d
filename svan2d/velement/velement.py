@@ -1,20 +1,26 @@
 """VElement class - the central object that combines renderers and states."""
 
 from __future__ import annotations
+
 from dataclasses import replace
-from typing import Optional, Dict, Callable, List, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 
 import drawsvg as dw
 
-from svan2d.component import Renderer, State, get_renderer_instance_for_state
+from svan2d.component import (
+    Renderer,
+    State,
+    VertexState,
+    get_renderer_instance_for_state,
+)
+from svan2d.component.renderer.base_vertex import VertexRenderer
+from svan2d.core.point2d import Point2D, Points2D
 from svan2d.velement.base_velement import BaseVElement
-from svan2d.velement.builder import KeystateBuilder, BuilderState
+from svan2d.velement.builder import BuilderState, KeystateBuilder
+from svan2d.velement.keystate import KeyState
+from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.state_interpolator import StateInterpolator
 from svan2d.velement.vertex_alignment import VertexAligner
-from svan2d.component.renderer.base_vertex import VertexRenderer
-from svan2d.velement.keystate_parser import AttributeKeyStatesDict
-from svan2d.core.point2d import Point2D, Points2D
-from svan2d.velement.keystate import KeyState
 
 if TYPE_CHECKING:
     from svan2d.velement.morphing import MorphingConfig
@@ -46,7 +52,7 @@ class VElement(BaseVElement, KeystateBuilder):
     def __init__(
         self,
         renderer: Optional[Renderer] = None,
-        state: Optional[State] = None,
+        state: State | None = None,
     ) -> None:
         self._renderer = renderer
 
@@ -87,8 +93,8 @@ class VElement(BaseVElement, KeystateBuilder):
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
-        from svan2d.transition.path_resolver import PathResolver
         from svan2d.transition.interpolation_engine import InterpolationEngine
+        from svan2d.transition.path_resolver import PathResolver
 
         easing_resolver = EasingResolver(self._attribute_easing)
         self.easing_resolver = easing_resolver  # Keep for shape matching
@@ -96,7 +102,7 @@ class VElement(BaseVElement, KeystateBuilder):
         interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
 
         # Store keystates and create interpolator
-        self.keystates = keystates
+        self._keystates_list = keystates
         self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
@@ -152,6 +158,7 @@ class VElement(BaseVElement, KeystateBuilder):
     ) -> Optional[dw.DrawingElement]:
         """Render the element at a specific animation time."""
         self._ensure_built()
+        assert self._interpolator is not None
 
         interpolated_state, inbetween = self._interpolator.get_state_at_time(t)
 
@@ -175,13 +182,31 @@ class VElement(BaseVElement, KeystateBuilder):
     def get_frame(self, t: float) -> Optional[State]:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
+        assert self._interpolator is not None
         state, _ = self._interpolator.get_state_at_time(t)
         return state
+
+    def render_state(
+        self, state: State, drawing: Optional[dw.Drawing] = None
+    ) -> Optional[dw.DrawingElement]:
+        """Render a pre-computed state directly (avoids re-interpolation)."""
+        if state is None:
+            return None
+
+        # Check if this is a morph transition (VertexState with aligned contours)
+        if isinstance(state, VertexState) and state._aligned_contours is not None:
+            renderer = VertexRenderer()
+        elif self._renderer:
+            renderer = self._renderer
+        else:
+            renderer = get_renderer_instance_for_state(state)
+
+        return renderer.render(state, drawing=drawing)
 
     def is_animatable(self) -> bool:
         """Check if this element can be animated."""
         self._ensure_built()
-        return len(self.keystates) > 1 or bool(self.attribute_keystates)
+        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
 
     # =========================================================================
     # Internal helpers
@@ -238,7 +263,7 @@ class VElement(BaseVElement, KeystateBuilder):
         from svan2d.transition.align_vertices import _get_mapper_from_config
 
         mapper = _get_mapper_from_config()
-        matches = mapper.map(states1, states2, lambda s: s.pos)
+        matches = mapper.map(states1, states2, lambda s: s.pos or Point2D(0, 0))
 
         # Build matched state lists from matches
         matched_states1 = []

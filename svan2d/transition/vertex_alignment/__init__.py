@@ -17,11 +17,11 @@ Factory function:
 - get_aligner(closed1, closed2): Auto-selects appropriate aligner
 """
 
-from .base import VertexAligner, AlignmentContext, get_aligner
 from .angular import AngularAligner
+from .base import AlignmentContext, VertexAligner, get_aligner
 from .euclidean import EuclideanAligner
-from .sequential import SequentialAligner
 from .norm import AlignmentNorm, AngularDistanceFn, EuclideanDistanceFn, NormSpec
+from .sequential import SequentialAligner
 
 __all__ = [
     "VertexAligner",

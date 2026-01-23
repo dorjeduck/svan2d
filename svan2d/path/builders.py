@@ -1,13 +1,13 @@
 from svan2d.core.point2d import Point2D
+
 from .commands import (
-    MoveTo,
-    LineTo,
-    QuadraticBezier,
-    CubicBezier,
     ClosePath,
+    CubicBezier,
+    LineTo,
+    MoveTo,
+    QuadraticBezier,
 )
 from .svg_path import SVGPath
-
 
 # ============================================================================
 # Helper functions for creating common paths

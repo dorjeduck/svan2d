@@ -4,6 +4,7 @@
 """PathText component - Text that follows any SVG path with morphing support"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
@@ -56,7 +57,9 @@ class PathTextRenderer(Renderer):
     ) -> dw.Group:
         """Render text along the path with the given state (core geometry only)"""
 
-        # Convert SVGPath to drawsvg Path
+        # Convert SVGPath to drawsvg Path (data is always SVGPath after __post_init__)
+        from svan2d.path.svg_path import SVGPath
+        assert isinstance(state.data, SVGPath), "state.data should be SVGPath after __post_init__"
         path_string = state.data.to_string()
         text_path = dw.Path(
             d=path_string, id=f"text_path_{id(self)}"  # Unique ID for this instance
@@ -107,7 +110,7 @@ class PathTextRenderer(Renderer):
         offset: float,
         text_path: dw.Path,
         state: "PathTextState",
-        drawing: dw.Drawing,
+        drawing: Optional[dw.Drawing],
     ) -> dw.Text:
         """Create a single text element at the specified offset along the path
 
@@ -144,4 +147,4 @@ class PathTextRenderer(Renderer):
         if state.flip_text:
             text_element.args["transform"] = "scale(1, -1)"
 
-        return text_element
+        return text_element  # type: ignore[return-value]

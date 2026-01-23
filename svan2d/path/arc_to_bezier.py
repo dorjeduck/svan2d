@@ -1,7 +1,8 @@
+from math import acos, ceil, cos, hypot, pi, radians, sin, sqrt, tan
 from typing import List, Tuple
-from math import cos, sin, sqrt, acos, radians, pi, hypot, tan, ceil
 
 from svan2d.core.point2d import Point2D
+
 from .commands import CubicBezier, PathCommand  # Import needed command
 
 # Based on principles from SVG specifications and various open-source path libraries
@@ -31,14 +32,20 @@ def arc_to_beziers(
     except Exception:
         # If the arc is degenerate or calculation fails, treat as a LineTo
         # Since this function must return Beziers, we convert the line to a bezier
+        # Line as cubic: control points at 1/3 and 2/3
+        c1 = Point2D(
+            pos1.x + (pos2.x - pos1.x) / 3,
+            pos1.y + (pos2.y - pos1.y) / 3,
+        )
+        c2 = Point2D(
+            pos1.x + 2 * (pos2.x - pos1.x) / 3,
+            pos1.y + 2 * (pos2.y - pos1.y) / 3,
+        )
         return [
             CubicBezier(
-                x1 + (x2 - x1) / 3,
-                y1 + (y2 - y1) / 3,
-                x1 + 2 * (x2 - x1) / 3,
-                y1 + 2 * (y2 - y1) / 3,
-                x2,
-                y2,
+                center1=c1,
+                center2=c2,
+                pos=pos2,
                 absolute=True,
             )
         ]
@@ -85,39 +92,41 @@ def arc_to_beziers(
         # --- Step 3: Rotate and Translate points back to original coordinate system ---
 
         # Rotate and translate Start Point (P0)
-        px1 = cos(rot_rad) * ex1 - sin(rot_rad) * ey1 + cx
-        py1 = sin(rot_rad) * ex1 + cos(rot_rad) * ey1 + cy
+        px1 = cos(rot_rad) * ex1 - sin(rot_rad) * ey1 + center.x
+        py1 = sin(rot_rad) * ex1 + cos(rot_rad) * ey1 + center.y
 
         # Rotate and translate Control Point 1 (P1)
-        pcx1 = cos(rot_rad) * ecx1 - sin(rot_rad) * ecy1 + cx
-        pcy1 = sin(rot_rad) * ecx1 + cos(rot_rad) * ecy1 + cy
+        pcx1 = cos(rot_rad) * ecx1 - sin(rot_rad) * ecy1 + center.x
+        pcy1 = sin(rot_rad) * ecx1 + cos(rot_rad) * ecy1 + center.y
 
         # Rotate and translate Control Point 2 (P2)
-        pcx2 = cos(rot_rad) * ecx2 - sin(rot_rad) * ecy2 + cx
-        pcy2 = sin(rot_rad) * ecx2 + cos(rot_rad) * ecy2 + cy
+        pcx2 = cos(rot_rad) * ecx2 - sin(rot_rad) * ecy2 + center.x
+        pcy2 = sin(rot_rad) * ecx2 + cos(rot_rad) * ecy2 + center.y
 
         # Rotate and translate End Point (P3)
-        px2 = cos(rot_rad) * ex2 - sin(rot_rad) * ey2 + cx
-        py2 = sin(rot_rad) * ex2 + cos(rot_rad) * ey2 + cy
+        px2 = cos(rot_rad) * ex2 - sin(rot_rad) * ey2 + center.x
+        py2 = sin(rot_rad) * ex2 + cos(rot_rad) * ey2 + center.y
 
-        # The start point of the first segment should match the command's start point (x1, y1)
-        # The end point of the last segment should match the command's end point (x2, y2)
+        # The start point of the first segment should match the command's start point (pos1)
+        # The end point of the last segment should match the command's end point (pos2)
 
         # For intermediate segments, the previous end point is the current start point
         if i == 0:
-            start_x, start_y = x1, y1
+            start_pos = pos1
         else:
-            prev_end = segments[-1].get_end_point((0, 0))  # Absolute coordinates
-            start_x, start_y = prev_end
+            start_pos = segments[-1].pos  # Absolute coordinates
 
         # Use the calculated end point (px2, py2) for the segment, but for the last segment
-        # enforce the final (x2, y2) point to avoid floating point drift.
-        end_x, end_y = (x2, y2) if i == num_segments - 1 else (px2, py2)
+        # enforce the final pos2 to avoid floating point drift.
+        end_pos = pos2 if i == num_segments - 1 else Point2D(px2, py2)
 
         # Create the CubicBezier command for this segment
         segments.append(
             CubicBezier(
-                cx1=pcx1, cy1=pcy1, cx2=pcx2, cy2=pcy2, x=end_x, y=end_y, absolute=True
+                center1=Point2D(pcx1, pcy1),
+                center2=Point2D(pcx2, pcy2),
+                pos=end_pos,
+                absolute=True,
             )
         )
 
@@ -148,7 +157,7 @@ def _get_center_and_angles(
     x_axis_rotation: float,
     large_arc_flag: int,
     sweep_flag: int,
-) -> Tuple[float, float, float, float, float]:
+) -> Tuple[Point2D, float, float, float, float, float]:
     """Calculates the center (cx, cy) and start/end angles (theta1, theta2) of the arc."""
 
     # 1. Ensure rx, ry are non-negative

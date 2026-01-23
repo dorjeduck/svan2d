@@ -11,18 +11,19 @@ Implements proper curve subdivision with full tracking of:
 """
 
 from __future__ import annotations
-from typing import Tuple, List
-from dataclasses import dataclass
 
-from svan2d.path.commands import (
-    PathCommand,
-    MoveTo,
-    LineTo,
-    QuadraticBezier,
-    CubicBezier,
-    ClosePath,
-)
+from dataclasses import dataclass
+from typing import List, Tuple
+
 from svan2d.core.point2d import Point2D
+from svan2d.path.commands import (
+    ClosePath,
+    CubicBezier,
+    LineTo,
+    MoveTo,
+    PathCommand,
+    QuadraticBezier,
+)
 
 
 @dataclass
@@ -160,18 +161,18 @@ def subdivide_command(
         new_commands will have 2 commands for curves, 1 for non-subdivided
     """
     # Convert to absolute if needed
-    abs_cmd = cmd.to_absolute(context.current_pos.as_tuple())
+    abs_cmd = cmd.to_absolute(context.current_pos)
 
     if isinstance(abs_cmd, MoveTo):
         # MoveTo doesn't subdivide, just updates context
-        new_pos = Point2D(abs_cmd.x, abs_cmd.y)
+        new_pos = abs_cmd.pos
         new_context = PathContext(current_pos=new_pos, last_move_pos=new_pos)
         return [abs_cmd], new_context
 
     elif isinstance(abs_cmd, LineTo):
         # Convert line to cubic Bezier, then subdivide
         start = context.current_pos
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        end = abs_cmd.pos
 
         # Line as cubic: control points at 1/3 and 2/3
         c1 = lerp_point(start, end, 1 / 3)
@@ -181,8 +182,8 @@ def subdivide_command(
         split, q0, r0, r1, q2 = subdivide_cubic(start, c1, c2, end, t)
 
         # Create two cubic Bezier commands
-        first = CubicBezier(q0.x, q0.y, r0.x, r0.y, split.x, split.y, absolute=True)
-        second = CubicBezier(r1.x, r1.y, q2.x, q2.y, end.x, end.y, absolute=True)
+        first = CubicBezier(center1=q0, center2=r0, pos=split, absolute=True)
+        second = CubicBezier(center1=r1, center2=q2, pos=end, absolute=True)
 
         new_context = PathContext(current_pos=end, last_move_pos=context.last_move_pos)
         return [first, second], new_context
@@ -190,8 +191,8 @@ def subdivide_command(
     elif isinstance(abs_cmd, QuadraticBezier):
         # Convert quadratic to cubic, then subdivide
         start = context.current_pos
-        qc = Point2D(abs_cmd.cx, abs_cmd.cy)
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        qc = abs_cmd.center
+        end = abs_cmd.pos
 
         # Quadratic to cubic conversion
         c1 = Point2D(
@@ -203,8 +204,8 @@ def subdivide_command(
         split, q0, r0, r1, q2 = subdivide_cubic(start, c1, c2, end, t)
 
         # Create two cubic Bezier commands
-        first = CubicBezier(q0.x, q0.y, r0.x, r0.y, split.x, split.y, absolute=True)
-        second = CubicBezier(r1.x, r1.y, q2.x, q2.y, end.x, end.y, absolute=True)
+        first = CubicBezier(center1=q0, center2=r0, pos=split, absolute=True)
+        second = CubicBezier(center1=r1, center2=q2, pos=end, absolute=True)
 
         new_context = PathContext(current_pos=end, last_move_pos=context.last_move_pos)
         return [first, second], new_context
@@ -212,16 +213,16 @@ def subdivide_command(
     elif isinstance(abs_cmd, CubicBezier):
         # Subdivide cubic directly
         start = context.current_pos
-        c1 = Point2D(abs_cmd.cx1, abs_cmd.cy1)
-        c2 = Point2D(abs_cmd.cx2, abs_cmd.cy2)
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        c1 = abs_cmd.center1
+        c2 = abs_cmd.center2
+        end = abs_cmd.pos
 
         # Subdivide
         split, q0, r0, r1, q2 = subdivide_cubic(start, c1, c2, end, t)
 
         # Create two cubic Bezier commands
-        first = CubicBezier(q0.x, q0.y, r0.x, r0.y, split.x, split.y, absolute=True)
-        second = CubicBezier(r1.x, r1.y, q2.x, q2.y, end.x, end.y, absolute=True)
+        first = CubicBezier(center1=q0, center2=r0, pos=split, absolute=True)
+        second = CubicBezier(center1=r1, center2=q2, pos=end, absolute=True)
 
         new_context = PathContext(current_pos=end, last_move_pos=context.last_move_pos)
         return [first, second], new_context
@@ -236,9 +237,9 @@ def subdivide_command(
 
     else:
         # Unknown command - don't subdivide
-        end_pos = abs_cmd.get_end_point(context.current_pos.as_tuple())
+        end_pos = abs_cmd.get_end_point(context.current_pos)
         new_context = PathContext(
-            current_pos=Point2D(*end_pos), last_move_pos=context.last_move_pos
+            current_pos=end_pos, last_move_pos=context.last_move_pos
         )
         return [abs_cmd], new_context
 
@@ -302,21 +303,21 @@ def estimate_command_length(cmd: PathCommand, context: PathContext) -> float:
     Returns:
         Approximate length
     """
-    abs_cmd = cmd.to_absolute(context.current_pos.as_tuple())
+    abs_cmd = cmd.to_absolute(context.current_pos)
 
     if isinstance(abs_cmd, (MoveTo, ClosePath)):
         return 0.0
 
     elif isinstance(abs_cmd, LineTo):
         start = context.current_pos
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        end = abs_cmd.pos
         return start.distance_to(end)
 
     elif isinstance(abs_cmd, QuadraticBezier):
         # Convert to cubic and measure
         start = context.current_pos
-        qc = Point2D(abs_cmd.cx, abs_cmd.cy)
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        qc = abs_cmd.center
+        end = abs_cmd.pos
 
         c1 = Point2D(
             start.x + 2 / 3 * (qc.x - start.x), start.y + 2 / 3 * (qc.y - start.y)
@@ -327,17 +328,16 @@ def estimate_command_length(cmd: PathCommand, context: PathContext) -> float:
 
     elif isinstance(abs_cmd, CubicBezier):
         start = context.current_pos
-        c1 = Point2D(abs_cmd.cx1, abs_cmd.cy1)
-        c2 = Point2D(abs_cmd.cx2, abs_cmd.cy2)
-        end = Point2D(abs_cmd.x, abs_cmd.y)
+        c1 = abs_cmd.center1
+        c2 = abs_cmd.center2
+        end = abs_cmd.pos
 
         return estimate_cubic_length(start, c1, c2, end)
 
     else:
         # Fallback: straight line distance
         start = context.current_pos
-        end_tuple = abs_cmd.get_end_point(start.as_tuple())
-        end = Point2D(*end_tuple)
+        end = abs_cmd.get_end_point(start)
         return start.distance_to(end)
 
 
@@ -372,12 +372,11 @@ def analyze_path_curves(commands: List[PathCommand]) -> List[CurveInfo]:
         # Skip non-drawable commands
         if isinstance(cmd, (MoveTo, ClosePath)):
             # Update context but don't add to curves
-            abs_cmd = cmd.to_absolute(context.current_pos.as_tuple())
-            end_pos = abs_cmd.get_end_point(context.current_pos.as_tuple())
+            abs_cmd = cmd.to_absolute(context.current_pos)
+            end_pos = abs_cmd.get_end_point(context.current_pos)
 
             if isinstance(cmd, MoveTo):
-                new_pos = Point2D(*end_pos)
-                context = PathContext(current_pos=new_pos, last_move_pos=new_pos)
+                context = PathContext(current_pos=end_pos, last_move_pos=end_pos)
             else:  # ClosePath
                 context = PathContext(
                     current_pos=context.last_move_pos,
@@ -394,10 +393,10 @@ def analyze_path_curves(commands: List[PathCommand]) -> List[CurveInfo]:
         )
 
         # Update context
-        abs_cmd = cmd.to_absolute(context.current_pos.as_tuple())
-        end_pos = abs_cmd.get_end_point(context.current_pos.as_tuple())
+        abs_cmd = cmd.to_absolute(context.current_pos)
+        end_pos = abs_cmd.get_end_point(context.current_pos)
         context = PathContext(
-            current_pos=Point2D(*end_pos), last_move_pos=context.last_move_pos
+            current_pos=end_pos, last_move_pos=context.last_move_pos
         )
 
     return curves

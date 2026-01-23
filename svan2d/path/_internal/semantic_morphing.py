@@ -11,14 +11,15 @@ This addresses the fundamental problems with naive subdivision + interpolation:
 """
 
 from __future__ import annotations
-from typing import List, Tuple, Optional
+
 import math
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
-from svan2d.path.commands import PathCommand, MoveTo, LineTo, CubicBezier, ClosePath
-from svan2d.path.svg_path import SVGPath
-from svan2d.path.subdivision import analyze_path_curves
 from svan2d.core.point2d import Point2D
+from svan2d.path.commands import ClosePath, CubicBezier, LineTo, MoveTo, PathCommand
+from svan2d.path.subdivision import analyze_path_curves
+from svan2d.path.svg_path import SVGPath
 
 
 @dataclass
@@ -49,14 +50,12 @@ def analyze_shape_features(path: SVGPath) -> List[ShapeFeature]:
             # Calculate angle if we have previous direction
             if i > 0 and isinstance(commands[i - 1], LineTo):
                 prev_cmd = commands[i - 1]
-                prev_start = (
-                    Point2D(0, 0)
-                    if i == 1
-                    else Point2D(
-                        commands[i - 2].x if hasattr(commands[i - 2], "x") else 0,
-                        commands[i - 2].y if hasattr(commands[i - 2], "y") else 0,
-                    )
-                )
+                prev_start = Point2D(0, 0)
+                if i >= 2:
+                    prev_prev = commands[i - 2]
+                    prev_pos = getattr(prev_prev, "pos", None)
+                    if prev_pos is not None:
+                        prev_start = prev_pos
 
                 # Calculate angle change
                 angle1 = math.atan2(
@@ -99,21 +98,21 @@ def find_extreme_points(path: SVGPath) -> List[ExtremePoint]:
 
     for i, cmd in enumerate(path.commands):
         if isinstance(cmd, MoveTo):
-            current_pos = Point2D(cmd.x, cmd.y)
-        elif hasattr(cmd, "x") and hasattr(cmd, "y"):
-            end_pos = Point2D(cmd.x, cmd.y)
-
-            # Check if this is an extreme point
-            # For now, just find the topmost, bottommost, leftmost, rightmost
-            extremes.append(
-                ExtremePoint(
-                    position=end_pos,
-                    command_index=i,
-                    extreme_type="vertex",  # Will classify later
+            current_pos = cmd.pos
+        else:
+            end_pos = getattr(cmd, "pos", None)
+            if end_pos is not None:
+                # Check if this is an extreme point
+                # For now, just find the topmost, bottommost, leftmost, rightmost
+                extremes.append(
+                    ExtremePoint(
+                        position=end_pos,
+                        command_index=i,
+                        extreme_type="vertex",  # Will classify later
+                    )
                 )
-            )
 
-            current_pos = end_pos
+                current_pos = end_pos
 
     return extremes
 
@@ -138,12 +137,14 @@ def calculate_centroid(path: SVGPath) -> Point2D:
 
     for cmd in path.commands:
         if isinstance(cmd, MoveTo):
-            current_pos = Point2D(cmd.x, cmd.y)
-        elif hasattr(cmd, "x") and hasattr(cmd, "y"):
-            current_pos = Point2D(cmd.x, cmd.y)
-            total_x += current_pos.x
-            total_y += current_pos.y
-            count += 1
+            current_pos = cmd.pos
+        else:
+            pos = getattr(cmd, "pos", None)
+            if pos is not None:
+                current_pos = pos
+                total_x += current_pos.x
+                total_y += current_pos.y
+                count += 1
 
     if count == 0:
         return Point2D(0, 0)
@@ -159,14 +160,16 @@ def find_closest_point_to_target(path: SVGPath, target: Point2D) -> int:
 
     for i, cmd in enumerate(path.commands):
         if isinstance(cmd, MoveTo):
-            current_pos = Point2D(cmd.x, cmd.y)
-        elif hasattr(cmd, "x") and hasattr(cmd, "y"):
-            current_pos = Point2D(cmd.x, cmd.y)
-            distance = current_pos.distance_to(target)
+            current_pos = cmd.pos
+        else:
+            pos = getattr(cmd, "pos", None)
+            if pos is not None:
+                current_pos = pos
+                distance = current_pos.distance_to(target)
 
-            if distance < min_distance:
-                min_distance = distance
-                closest_idx = i
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_idx = i
 
     return closest_idx
 

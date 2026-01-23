@@ -7,7 +7,7 @@ The server is designed to run as a background daemon process and can be
 managed via CLI commands or auto-started by the PlaywrightHttpSvgConverter.
 """
 
-from .render_server import app, create_server
 from .process_manager import ProcessManager
+from .render_server import app, create_server
 
 __all__ = ["app", "create_server", "ProcessManager"]

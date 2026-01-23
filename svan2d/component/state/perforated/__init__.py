@@ -1,21 +1,21 @@
 """Perforated shapes submodule - shapes with  vertex_loops"""
 
 from .base import (
-    PerforatedVertexState,
-    Shape,
+    Astroid,
     Circle,
     Ellipse,
-    Square,
-    Rectangle,
+    PerforatedVertexState,
     Polygon,
+    Rectangle,
+    Shape,
+    Square,
     Star,
-    Astroid,
 )
 from .circle import PerforatedCircleState
-from .star import PerforatedStarState
 from .ellipse import PerforatedEllipseState
-from .rectangle import PerforatedRectangleState
 from .polygon import PerforatedPolygonState
+from .rectangle import PerforatedRectangleState
+from .star import PerforatedStarState
 from .triangle import PerforatedTriangleState
 
 __all__ = [

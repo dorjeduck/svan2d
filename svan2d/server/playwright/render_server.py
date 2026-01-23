@@ -12,8 +12,8 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
-from playwright.async_api import async_playwright
 
+from playwright.async_api import async_playwright
 from svan2d.core.logger import get_logger
 
 logger = get_logger()

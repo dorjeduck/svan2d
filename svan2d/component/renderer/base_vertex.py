@@ -1,10 +1,10 @@
 """Renderer for vertex-based shapes with multi-contour support"""
 
 from __future__ import annotations
-from typing import Optional
-import drawsvg as dw
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+import drawsvg as dw
 
 if TYPE_CHECKING:
     from svan2d.component.state.base_vertex import VertexState
@@ -30,7 +30,7 @@ class VertexRenderer(Renderer):
     - Hole strokes rendered separately at normal width
     """
 
-    def _render_core(
+    def _render_core(  # type: ignore[override]
         self, state: VertexState, drawing: Optional[dw.Drawing] = None
     ) -> dw.Group:
         """Render the vertex-based shape

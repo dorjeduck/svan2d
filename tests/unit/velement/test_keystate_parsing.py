@@ -1,15 +1,16 @@
 """Unit tests for keystate parsing"""
 
 import pytest
-from svan2d.core.point2d import Point2D
-from svan2d.velement.keystate_parser import (
-    parse_element_keystates,
-    parse_attribute_keystates,
-)
-from svan2d.velement.keystate import KeyState
+
 from svan2d.component.state.circle import CircleState
-from svan2d.transition.easing import linear, in_out
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
+from svan2d.transition.easing import in_out, linear
+from svan2d.velement.keystate import KeyState
+from svan2d.velement.keystate_parser import (
+    parse_attribute_keystates,
+    parse_element_keystates,
+)
 from svan2d.velement.transition import TransitionConfig
 
 

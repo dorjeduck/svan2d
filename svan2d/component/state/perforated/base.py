@@ -1,17 +1,15 @@
 """Base classes for perforated shapes - shapes with holes"""
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from svan2d.component.state.base import State
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours, VertexLoop
 from svan2d.core.color import Color
-from svan2d.transition import easing
 from svan2d.core.point2d import Point2D
-
 
 # ============================================================================
 # Base Perforated State Class
@@ -52,22 +50,11 @@ class PerforatedVertexState(VertexState):
     holes_fill_opacity: Optional[float] = 0
 
     holes_stroke_color: Optional[Color] = Color.NONE
-    holes_stroke_opacity: Optional[float] = None
-    holes_stroke_width: Optional[float] = None
+    holes_stroke_opacity: float | None = None
+    holes_stroke_width: float | None = None
 
     # Mark vertex loops as non-interpolatable (structural field)
-    NON_INTERPOLATABLE_FIELDS = frozenset(
-        ["holes", "NON_INTERPOLATABLE_FIELDS", "DEFAULT_EASING"]
-    )
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "holes_fill_color": easing.linear,
-        "holes_fill_opacity": easing.linear,
-        "holes_stroke_color": easing.linear,
-        "holes_stroke_opacity": easing.linear,
-        "holes_stroke_width": easing.linear,
-    }
+    NON_INTERPOLATABLE_FIELDS = frozenset(["holes", "NON_INTERPOLATABLE_FIELDS"])
 
     def __post_init__(self):
         super().__post_init__()
@@ -117,109 +104,124 @@ class PerforatedVertexState(VertexState):
             VertexLoop for the specified shape at specified position
         """
         from svan2d.component.vertex import (
+            VertexAstroid,
             VertexCircle,
             VertexEllipse,
             VertexRectangle,
-            VertexSquare,
-            VertexTriangle,
             VertexRegularPolygon,
+            VertexSquare,
             VertexStar,
-            VertexAstroid,
+            VertexTriangle,
             rotate_vertices,
         )
 
-        if isinstance(shape, Circle):
+        # _num_vertices is guaranteed non-None after __post_init__
+        assert self._num_vertices is not None
+        num_verts = self._num_vertices
 
+        # shape.pos is guaranteed non-None after Shape.__post_init__
+        assert shape.pos is not None
+        center = shape.pos
+
+        if isinstance(shape, Circle):
             return VertexCircle(
-                center=shape.pos,
+                center=center,
                 radius=shape.radius,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
 
         elif isinstance(shape, Ellipse):
             loop = VertexEllipse(
-                center=shape.pos,
+                center=center,
                 rx=shape.rx,
                 ry=shape.ry,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
             if shape.rotation != 0:
                 # Rotate around the shape's center by translating to origin, rotating, translating back
                 translated = [
-                    Point2D(x - shape.x, y - shape.y) for x, y in loop.vertices
+                    Point2D(v.x - shape.x, v.y - shape.y) for v in loop.vertices
                 ]
                 rotated = rotate_vertices(translated, shape.rotation)
-                final = [Point2D(x + shape.x, y + shape.y) for x, y in rotated]
+                final = [Point2D(v.x + shape.x, v.y + shape.y) for v in rotated]
                 return VertexLoop(final, closed=True)
             return loop
 
         elif isinstance(shape, Rectangle):
             loop = VertexRectangle(
-                center=shape.pos,
+                center=center,
                 width=shape.width,
                 height=shape.height,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
             if shape.rotation != 0:
                 # Rotate around the shape's center by translating to origin, rotating, translating back
-                translated = [(x - shape.x, y - shape.y) for x, y in loop.vertices]
+                translated = [
+                    Point2D(v.x - shape.x, v.y - shape.y) for v in loop.vertices
+                ]
                 rotated = rotate_vertices(translated, shape.rotation)
-                final = [Point2D(x + shape.x, y + shape.y) for x, y in rotated]
+                final = [Point2D(v.x + shape.x, v.y + shape.y) for v in rotated]
                 return VertexLoop(final, closed=True)
             return loop
 
         elif isinstance(shape, Square):
             loop = VertexSquare(
-                center=shape.pos,
+                center=center,
                 size=shape.size,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
             if shape.rotation != 0:
                 # Rotate around the shape's center by translating to origin, rotating, translating back
-                translated = [(x - shape.x, y - shape.y) for x, y in loop.vertices]
+                translated = [
+                    Point2D(v.x - shape.x, v.y - shape.y) for v in loop.vertices
+                ]
                 rotated = rotate_vertices(translated, shape.rotation)
-                final = [Point2D(x + shape.x, y + shape.y) for x, y in rotated]
+                final = [Point2D(v.x + shape.x, v.y + shape.y) for v in rotated]
                 return VertexLoop(final, closed=True)
             return loop
 
         elif isinstance(shape, Polygon):
             return VertexRegularPolygon(
-                center=shape.pos,
+                center=center,
                 size=shape.radius,
                 num_sides=shape.num_sides,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
                 rotation=shape.rotation,
             )
 
         elif isinstance(shape, Star):
             loop = VertexStar(
-                center=shape.pos,
+                center=center,
                 outer_radius=shape.outer_radius,
                 inner_radius=shape.inner_radius,
                 num_points=shape.num_points,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
             if shape.rotation != 0:
                 # Rotate around the shape's center by translating to origin, rotating, translating back
-                translated = [(x - shape.x, y - shape.y) for x, y in loop.vertices]
+                translated = [
+                    Point2D(v.x - shape.x, v.y - shape.y) for v in loop.vertices
+                ]
                 rotated = rotate_vertices(translated, shape.rotation)
-                final = [Point2D(x + shape.x, y + shape.y) for x, y in rotated]
+                final = [Point2D(v.x + shape.x, v.y + shape.y) for v in rotated]
                 return VertexLoop(final, closed=True)
             return loop
 
         elif isinstance(shape, Astroid):
             loop = VertexAstroid(
-                center=shape.pos,
+                center=center,
                 radius=shape.radius,
                 num_cusps=shape.num_cusps,
                 curvature=shape.curvature,
-                num_vertices=self._num_vertices,
+                num_vertices=num_verts,
             )
             if shape.rotation != 0:
                 # Rotate around the shape's center by translating to origin, rotating, translating back
-                translated = [(x - shape.x, y - shape.y) for x, y in loop.vertices]
+                translated = [
+                    Point2D(v.x - shape.x, v.y - shape.y) for v in loop.vertices
+                ]
                 rotated = rotate_vertices(translated, shape.rotation)
-                final = [Point2D(x + shape.x, y + shape.y) for x, y in rotated]
+                final = [Point2D(v.x + shape.x, v.y + shape.y) for v in rotated]
                 return VertexLoop(final, closed=True)
             return loop
 
@@ -229,8 +231,7 @@ class PerforatedVertexState(VertexState):
                 f"Supported: Circle, Ellipse, Rectangle, Polygon, Star, Astroid"
             )
 
-    @staticmethod
-    def get_renderer_class():
+    def get_renderer_class(self):
         """Get the primitive renderer for static/keystate rendering"""
         from svan2d.component.renderer.perforated_primitive import (
             PerforatedPrimitiveRenderer,
@@ -238,8 +239,7 @@ class PerforatedVertexState(VertexState):
 
         return PerforatedPrimitiveRenderer
 
-    @staticmethod
-    def get_vertex_renderer_class():
+    def get_vertex_renderer_class(self):
         """Get the vertex renderer for morphing transitions"""
         from svan2d.component.renderer.base_vertex import VertexRenderer
 
@@ -264,17 +264,29 @@ class Shape(ABC):
         rotation: Rotation in degrees (clockwise)
     """
 
-    pos: Point2D = None
+    pos: Point2D | None = None
     rotation: float = 0
-    stroke_opacity = 0.5
+    stroke_opacity: float = 0.5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.pos is None:
             self._set_field("pos", Point2D(0, 0))
 
     def _set_field(self, name: str, value: Any) -> None:
         """Helper to set attributes in frozen dataclass during __post_init__"""
         object.__setattr__(self, name, value)
+
+    @property
+    def x(self) -> float:
+        """X position (from pos.x)"""
+        assert self.pos is not None
+        return self.pos.x
+
+    @property
+    def y(self) -> float:
+        """Y position (from pos.y)"""
+        assert self.pos is not None
+        return self.pos.y
 
 
 @dataclass(frozen=True)
@@ -352,8 +364,9 @@ class Polygon(Shape):
     num_sides: int = 5
     radius: float = 10
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate number of sides"""
+        super().__post_init__()
         if self.num_sides < 3:
             raise ValueError(
                 f"Polygon must have at least 3 sides, got {self.num_sides}"
@@ -377,8 +390,9 @@ class Star(Shape):
     outer_radius: float = 10
     inner_radius: float = 5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate star parameters"""
+        super().__post_init__()
         if self.num_points < 3:
             raise ValueError(f"Star must have at least 3 points, got {self.num_points}")
         if self.inner_radius >= self.outer_radius:
@@ -405,8 +419,9 @@ class Astroid(Shape):
     num_cusps: int = 4
     curvature: float = 0.7
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate astroid parameters"""
+        super().__post_init__()
         if self.num_cusps < 3:
             raise ValueError(
                 f"Astroid must have at least 3 cusps, got {self.num_cusps}"

@@ -8,7 +8,7 @@ import importlib.util
 import sys
 import traceback
 from pathlib import Path
-from typing import Optional, Tuple, Callable
+from typing import Callable, Optional, Tuple
 
 from svan2d.vscene import VScene
 
@@ -177,7 +177,20 @@ def safe_reload_module(file_path: Path) -> Tuple[Optional[VScene], Optional[str]
 
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-        spec.loader.exec_module(module)
+
+        # Add file's directory to sys.path to enable sibling imports
+        file_dir = str(file_path.parent.resolve())
+        path_added = False
+        if file_dir not in sys.path:
+            sys.path.insert(0, file_dir)
+            path_added = True
+
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            # Clean up sys.path to avoid pollution
+            if path_added and file_dir in sys.path:
+                sys.path.remove(file_dir)
 
         # Extract scene using priority order
         scene, error = extract_scene(module)

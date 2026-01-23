@@ -1,17 +1,18 @@
 """Core state interpolation between keystates."""
 
 from __future__ import annotations
-from typing import Optional, Tuple, Dict, List, Callable, TYPE_CHECKING
 
-from svan2d.component import VertexState, State
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+
+from svan2d.component import State, VertexState
 from svan2d.velement.attribute_timeline import AttributeTimelineResolver
 from svan2d.velement.vertex_alignment import VertexAligner
 
 if TYPE_CHECKING:
-    from svan2d.velement.keystate import KeyStates
+    from svan2d.core.point2d import Point2D, Points2D
     from svan2d.transition.easing_resolver import EasingResolver
     from svan2d.transition.interpolation_engine import InterpolationEngine
-    from svan2d.core.point2d import Point2D, Points2D
+    from svan2d.velement.keystate import KeyStates
 
 
 class StateInterpolator:
@@ -73,6 +74,7 @@ class StateInterpolator:
         # Existence check: element only exists within its keystate range
         first_time = self.keystates[0].time
         last_time = self.keystates[-1].time
+        assert first_time is not None and last_time is not None
 
         if t < first_time or t > last_time:
             return None, False
@@ -87,13 +89,40 @@ class StateInterpolator:
             base_state = self.keystates[0].state
             return self.timeline_resolver.apply_field_timelines(base_state, t), False
 
-        # Find the segment containing time t
-        for i in range(len(self.keystates) - 1):
+        # Find the segment containing time t using binary search for many keystates
+        num_keystates = len(self.keystates)
+
+        # Binary search to find segment
+        lo, hi = 0, num_keystates - 1
+        segment_idx = None
+        while lo < hi:
+            mid = (lo + hi) // 2
+            mid_time = self.keystates[mid].time
+            assert mid_time is not None
+            if mid_time <= t:
+                if mid == num_keystates - 1:
+                    segment_idx = mid
+                    break
+                next_time = self.keystates[mid + 1].time
+                assert next_time is not None
+                if next_time >= t:
+                    segment_idx = mid
+                    break
+                lo = mid + 1
+            else:
+                hi = mid
+
+        if segment_idx is None:
+            segment_idx = lo
+
+        # Process only the found segment
+        for i in [segment_idx] if segment_idx < num_keystates - 1 else []:
             ks1 = self.keystates[i]
             ks2 = self.keystates[i + 1]
 
             t1, state1 = ks1.time, ks1.state
             t2, state2 = ks2.time, ks2.state
+            assert t1 is not None and t2 is not None
 
             # Static preprocessing for vertex alignment (if aligner provided)
             if self.vertex_aligner:

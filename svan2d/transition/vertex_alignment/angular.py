@@ -5,20 +5,21 @@ Uses centroid-based angular positions to find optimal vertex correspondence.
 """
 
 from __future__ import annotations
-import math
-from typing import List, Tuple, Optional, Union
+
 import inspect
+import math
+from typing import List, Optional, Tuple, Union
 
 from svan2d.component.vertex import (
-    centroid,
-    angle_from_centroid,
     angle_distance,
+    angle_from_centroid,
+    centroid,
 )
 from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
+from svan2d.core.point2d import Point2D, Points2D
 
-from .base import VertexAligner, AlignmentContext
+from .base import AlignmentContext, VertexAligner
 from .norm import AlignmentNorm, AngularDistanceFn, NormSpec
-from svan2d.core.point2d import Points2D, Point2D
 
 
 class AngularAligner(VertexAligner):
@@ -39,7 +40,9 @@ class AngularAligner(VertexAligner):
     Performance: O(n²) - tries n offsets, evaluates n vertices each
     """
 
-    def __init__(self, norm: Union[str, AlignmentNorm, AngularDistanceFn] = AlignmentNorm.L1):
+    def __init__(
+        self, norm: Union[str, AlignmentNorm, AngularDistanceFn] = AlignmentNorm.L1
+    ):
         """
         Initialize angular aligner with distance norm.
 
@@ -127,7 +130,7 @@ class AngularAligner(VertexAligner):
         verts1: Points2D,
         verts2: Points2D,
         context: AlignmentContext,
-        rotation_target: Optional[float] = None,
+        rotation_target: float | None = None,
     ) -> Tuple[Points2D, Points2D]:
         if len(verts1) != len(verts2):
             raise ValueError(

@@ -1,18 +1,17 @@
 """Rectangle state implementation using VertexContours"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 
+from svan2d.component.registry import renderer
+from svan2d.component.renderer.rectangle import RectangleRenderer
+from svan2d.component.vertex import VertexContours, VertexRectangle
+from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
 from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexRectangle
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.rectangle import RectangleRenderer
-
-from svan2d.transition import easing
-from svan2d.core.color import Color
 
 
 @renderer(RectangleRenderer)
@@ -28,20 +27,6 @@ class RectangleState(VertexState):
     stroke_opacity: float = 1
     corner_radius: float = 0  # For rounded rectangles (TODO: implement)
 
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "width": easing.in_out,
-        "height": easing.in_out,
-        "fill_color": easing.linear,
-        "stroke_color": easing.linear,
-        "fill_opacity": easing.linear,
-        "stroke_opacity": easing.linear,
-        "stroke_width": easing.in_out,
-        "corner_radius": easing.in_out,
-        "rotation": easing.in_out,
-    }
-
     def __post_init__(self):
         super().__post_init__()
         self._none_color("fill_color")
@@ -52,6 +37,7 @@ class RectangleState(VertexState):
 
         Returns VertexContours with a single rectangular outer contour, no  vertex_loops .
         """
+        assert self._num_vertices is not None
         rectangle = VertexRectangle(
             center=Point2D(),
             width=self.width,

@@ -1,22 +1,23 @@
 """Integration tests for complete morphing workflows"""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from svan2d.component.state import (
     CircleState,
-    RectangleState,
-    TriangleState,
-    StarState,
     PolygonState,
-    RingState,
     PolyRingState,
+    RectangleState,
+    RingState,
+    StarState,
+    TriangleState,
 )
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
+from svan2d.transition.easing import in_out, linear
 from svan2d.velement import VElement
 from svan2d.vscene import VScene
-from svan2d.transition.easing import in_out, linear
 
 
 @pytest.mark.integration
@@ -34,7 +35,7 @@ class TestBasicMorphing:
         assert element is not None
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 2
+        assert len(element._keystates_list) == 2
 
     def test_triangle_to_hexagon_morph(self):
         """Test morphing triangle to hexagon"""
@@ -67,7 +68,7 @@ class TestBasicMorphing:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 4
+        assert len(element._keystates_list) == 4
 
 
 @pytest.mark.integration
@@ -84,7 +85,7 @@ class TestHoleMorphing:
         assert element is not None
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 2
+        assert len(element._keystates_list) == 2
 
     def test_ring_to_circle_morph(self):
         """Test morphing ring to solid circle (hole disappears)"""
@@ -143,7 +144,7 @@ class TestColorTransitions:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 4
+        assert len(element._keystates_list) == 4
 
     def test_opacity_transition(self):
         """Test morphing with opacity change"""
@@ -235,7 +236,7 @@ class TestTransformAnimations:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 4
+        assert len(element._keystates_list) == 4
 
 
 @pytest.mark.integration
@@ -479,7 +480,7 @@ class TestComplexMorphingScenarios:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 9
+        assert len(element._keystates_list) == 9
 
     def test_breathing_effect(self):
         """Test creating breathing/pulsing effect"""
@@ -493,7 +494,7 @@ class TestComplexMorphingScenarios:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 3
+        assert len(element._keystates_list) == 3
 
     def test_shape_cycle_animation(self):
         """Test cycling through multiple shapes"""
@@ -509,7 +510,7 @@ class TestComplexMorphingScenarios:
 
         # Trigger build to access keystates
         element.get_frame(0.0)
-        assert len(element.keystates) == 5
+        assert len(element._keystates_list) == 5
 
     def test_tunnel_effect_with_rings(self):
         """Test tunnel effect using rings"""

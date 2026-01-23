@@ -4,9 +4,10 @@ Provides abstract base class with built-in LRU caching for interpolation results
 """
 
 import abc
-from svan2d.path.svg_path import SVGPath
-from typing import Dict, Any, Optional, List
 import logging
+from typing import Any, Dict, List, Optional
+
+from svan2d.path.svg_path import SVGPath
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class BaseMorpher(abc.ABC):
         self,
         path1: SVGPath,
         path2: SVGPath,
-        max_cache_size: Optional[int] = None,
+        max_cache_size: int | None = None,
         **kwargs: Any,
     ):
         """

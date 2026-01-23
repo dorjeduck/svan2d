@@ -1,6 +1,7 @@
 """Text renderer implementation for new architecture"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
@@ -33,4 +34,4 @@ class TextRenderer(Renderer):
         }
         self._set_fill_and_stroke_kwargs(state, text_kwargs, drawing)
 
-        return dw.Text(**text_kwargs)
+        return dw.Text(**text_kwargs)  # type: ignore[return-value]

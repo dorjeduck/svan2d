@@ -1,17 +1,15 @@
 """Polygon ring state implementation using VertexContours"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from svan2d.core.point2d import Point2D
-
-from .base import State
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexRegularPolygon
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.poly_ring import PolyRingRenderer
-from svan2d.transition import easing
-from svan2d.core.color import Color
+from svan2d.component.vertex import VertexContours, VertexRegularPolygon
+from svan2d.core.point2d import Point2D
+
+from .base_vertex import VertexState
 
 
 @renderer(PolyRingRenderer)
@@ -32,15 +30,6 @@ class PolyRingState(VertexState):
     num_edges: int = 6  # Number of edges (3=triangle, 4=square, 5=pentagon, etc.)
     inner_rotation: float = 0  # Rotation of inner polygon in degrees
 
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "inner_size": easing.in_out,
-        "outer_size": easing.in_out,
-        "num_edges": easing.step,  # Discrete values, no smooth interpolation
-        "inner_rotation": easing.in_out,
-    }
-
     def _generate_contours(self) -> VertexContours:
         """Generate polygon ring contours with outer and inner polygons
 
@@ -50,6 +39,7 @@ class PolyRingState(VertexState):
 
         The inner polygon can be rotated independently using inner_rotation.
         """
+        assert self._num_vertices is not None
         # Generate outer polygon (counter-clockwise winding)
         outer_polygon = VertexRegularPolygon(
             center=Point2D(),

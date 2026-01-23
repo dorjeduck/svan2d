@@ -1,21 +1,21 @@
 """Path system for SVG path manipulation and morphing"""
 
-from .commands import (
-    PathCommand,
-    MoveTo,
-    LineTo,
-    QuadraticBezier,
-    CubicBezier,
-    ClosePath,
-)
-from .svg_path import SVGPath
 from .builders import (
+    circle_as_beziers,
+    cubic_curve,
     line,
     quadratic_curve,
-    cubic_curve,
     rectangle,
-    circle_as_beziers,
 )
+from .commands import (
+    ClosePath,
+    CubicBezier,
+    LineTo,
+    MoveTo,
+    PathCommand,
+    QuadraticBezier,
+)
+from .svg_path import SVGPath
 
 __all__ = [
     # Commands

@@ -4,14 +4,22 @@ Provides fundamental types and utilities:
 - Color: Color representation with interpolation support
 - Point2D: 2D point with vector operations
 - Logging: Configurable logging system
+- Scalar functions: lerp, angle, step, inbetween, circular_midpoint
 """
 
-from .color import Color, ColorTuple, ColorSpace
+from .color import Color, ColorSpace, ColorTuple, color_to_oklab, oklab_to_color
 from .logger import (
     configure_logging,
     get_logger,
 )
-from .point2d import Point2D, Points2D, new_point2d
+from .point2d import Point2D, Points2D
+from .mutable_point2d import (
+    MutablePoint2D,
+    MutablePoint2DPool,
+    get_pooled_point,
+    reset_point_pool,
+)
+from .scalar_functions import angle, circular_midpoint, inbetween, lerp, step
 
 __all__ = [
     "Color",
@@ -21,5 +29,15 @@ __all__ = [
     "get_logger",
     "Point2D",
     "Points2D",
-    "new_point2d",
+    "MutablePoint2D",
+    "MutablePoint2DPool",
+    "get_pooled_point",
+    "reset_point_pool",
+    "color_to_oklab",
+    "oklab_to_color",
+    "lerp",
+    "angle",
+    "step",
+    "inbetween",
+    "circular_midpoint",
 ]

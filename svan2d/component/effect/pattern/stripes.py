@@ -1,14 +1,14 @@
 """Stripes pattern implementation"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
 
 from .base import Pattern
-
-from typing import TYPE_CHECKING
+from svan2d.core.point2d import Point2D
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color
@@ -44,9 +44,9 @@ class StripesPattern(Pattern):
 
     def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
-        from svan2d.component import RectangleState, RectangleRenderer
-
         import uuid
+
+        from svan2d.component import RectangleRenderer, RectangleState
 
         pattern_id = f"pattern-{uuid.uuid4().hex[:8]}"
 

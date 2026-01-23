@@ -4,6 +4,7 @@ Used for shape disappearance/appearance transitions.
 """
 
 from svan2d.core.point2d import Point2D
+
 from .vertex_loop import VertexLoop
 
 

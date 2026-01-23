@@ -1,6 +1,7 @@
 """Composite filter primitive"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -70,7 +71,7 @@ class CompositeFilterPrimitive(Filter):
         kwargs = {"operator": self.operator, "in_": self.in_, "in2": self.in2}
 
         if self.operator == "arithmetic":
-            kwargs.update({"k1": self.k1, "k2": self.k2, "k3": self.k3, "k4": self.k4})
+            kwargs.update({"k1": self.k1, "k2": self.k2, "k3": self.k3, "k4": self.k4})  # type: ignore[arg-type]
 
         return dw.FilterItem("feComposite", **kwargs)
 

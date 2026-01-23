@@ -14,11 +14,11 @@ Classes:
     HungarianMapper: Optimal assignment using Hungarian algorithm (requires scipy)
 """
 
-from .base import Match, Mapper
-from .simple import SimpleMapper
-from .greedy import GreedyMapper
+from .base import Mapper, Match
 from .clustering import ClusteringMapper
+from .greedy import GreedyMapper
 from .hungarian import HungarianMapper
+from .simple import SimpleMapper
 
 __all__ = [
     "Match",

@@ -1,6 +1,7 @@
 """Offset filter"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -30,7 +31,7 @@ class OffsetFilter(Filter):
 
     def to_drawsvg(self) -> dw.FilterItem:
         """Convert to drawsvg FilterItem object"""
-        kwargs = {"dx": self.dx, "dy": self.dy}
+        kwargs: dict[str, float | str] = {"dx": self.dx, "dy": self.dy}
         if self.in_:
             kwargs["in_"] = self.in_
         return dw.FilterItem("feOffset", **kwargs)

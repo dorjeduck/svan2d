@@ -9,13 +9,12 @@ This package provides the core animation system for svan2d:
 """
 
 from .base_velement import BaseVElement
-from .velement import VElement
-from .velement_group import VElementGroup, VElementGroupState
 from .keystate import KeyState
 from .morphing import MorphingConfig
+from .segments import bounce, crossfade, fade_inout, hold, linspace
 from .transition import TransitionConfig
-from .segments import fade_inout, hold, linspace, crossfade, bounce
-
+from .velement import VElement
+from .velement_group import VElementGroup, VElementGroupState
 
 __all__ = [
     "BaseVElement",

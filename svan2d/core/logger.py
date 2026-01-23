@@ -11,8 +11,8 @@ _logger.propagate = False
 
 
 def configure_logging(
-    level: Optional[str] = None,
-    log_file: Optional[str] = None,
+    level: str | None = None,
+    log_file: str | None = None,
     console: bool = True,
     silent: bool = False,
 ):
@@ -45,13 +45,13 @@ def configure_logging(
 
     # Get level from config if not specified
     if level is None:
-        from svan2d.config import get_config, ConfigKey
+        from svan2d.config import ConfigKey, get_config
 
         config = get_config()
         level = config.get(ConfigKey.LOGGING_LEVEL, "INFO")
 
     # Convert level string to logging constant
-    log_level = getattr(logging, level.upper(), logging.INFO)
+    log_level = getattr(logging, (level or "INFO").upper(), logging.INFO)
     _logger.setLevel(log_level)
 
     # Add console handler (unless silent)

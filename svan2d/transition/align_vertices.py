@@ -10,20 +10,20 @@ This is the main entry point - uses pluggable strategies from:
 """
 
 from __future__ import annotations
-from typing import Tuple, Optional, TYPE_CHECKING
 
-from svan2d.component.vertex import VertexContours, VertexLoop
-from svan2d.config import get_config, ConfigKey
-
-from .vertex_alignment import (
-    VertexAligner,
-    get_aligner,
-    AlignmentContext,
-    AngularAligner,
-)
-from .mapping import Mapper, GreedyMapper, ClusteringMapper, SimpleMapper
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from svan2d.component.state.base_vertex import VertexState
+from svan2d.component.vertex import VertexContours, VertexLoop
+from svan2d.config import ConfigKey, get_config
+
+from .mapping import ClusteringMapper, GreedyMapper, Mapper, SimpleMapper
+from .vertex_alignment import (
+    AlignmentContext,
+    AngularAligner,
+    VertexAligner,
+    get_aligner,
+)
 
 
 def _get_mapper_from_config() -> Mapper:
@@ -53,7 +53,7 @@ def get_aligned_vertices(
     state2: VertexState,
     vertex_aligner: Optional[VertexAligner] = None,
     mapper: Optional[Mapper] = None,
-    rotation_target: Optional[float] = None,
+    rotation_target: float | None = None,
 ) -> Tuple[VertexContours, VertexContours]:
     """Align vertex contours and return aligned contours
 
@@ -97,6 +97,7 @@ def get_aligned_vertices(
         mapper = _get_mapper_from_config()
 
     # Align outer vertices
+    assert state1.rotation is not None and state2.rotation is not None
     context = AlignmentContext(
         rotation1=state1.rotation,
         rotation2=state2.rotation,
@@ -129,6 +130,7 @@ def get_aligned_vertices(
     for match in matches:
         if match.is_morph:
             # Both holes exist - align them
+            assert match.start is not None and match.end is not None
             h1_verts = match.start.vertices
             h2_verts = match.end.vertices
 
@@ -144,6 +146,7 @@ def get_aligned_vertices(
 
         elif match.is_destruction:
             # Hole disappears - create zero-hole at same position
+            assert match.start is not None
             hole = match.start
             zero_hole = _create_zero_hole(hole)
             aligned_holes1.append(hole)
@@ -151,6 +154,7 @@ def get_aligned_vertices(
 
         elif match.is_creation:
             # Hole appears - create zero-hole at target position
+            assert match.end is not None
             hole = match.end
             zero_hole = _create_zero_hole(hole)
             aligned_holes1.append(zero_hole)

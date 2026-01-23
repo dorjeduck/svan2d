@@ -1,12 +1,12 @@
 """State for collections of states that morph M→N"""
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional, List
 
-from svan2d.component.state.base import State
+from dataclasses import dataclass
+from typing import List, Optional
+
 from svan2d.component.registry import renderer
-from svan2d.transition import easing
+from svan2d.component.state.base import State
 
 
 # Forward reference - actual import happens in renderer module
@@ -39,9 +39,4 @@ class StateCollectionState(State):
         elem = VElement(keystates=[state1, state2])
     """
 
-    states: Optional[List[State]] = None
-
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "states": easing.linear,
-    }
+    states: List[State] | None = None

@@ -1,16 +1,18 @@
 """Integration tests for complete animation workflows"""
 
-import pytest
 from pathlib import Path
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.velement.transition import TransitionConfig
-from svan2d.vscene import VScene
+
+import pytest
+
 from svan2d.component.state.circle import CircleState
 from svan2d.component.state.rectangle import RectangleState
 from svan2d.component.state.text import TextState
-from svan2d.transition.easing import linear, in_out
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
+from svan2d.transition.easing import in_out, linear
+from svan2d.velement import VElement
+from svan2d.velement.transition import TransitionConfig
+from svan2d.vscene import VScene
 
 
 @pytest.mark.integration

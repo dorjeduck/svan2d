@@ -5,10 +5,9 @@ for custom distance functions used in vertex alignment strategies.
 """
 
 from enum import Enum
-from typing import Callable, Union, List
 
 # Avoid circular import by using TYPE_CHECKING
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, List, Union
 
 if TYPE_CHECKING:
     from svan2d.core.point2d import Points2D

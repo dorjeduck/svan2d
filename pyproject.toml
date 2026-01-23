@@ -1,6 +1,6 @@
 [project]
 name = "svan2d"
-version = "0.1.0"
+version = "0.5.0-alpha"
 description = "svan2d - state-driven, SVG-based 2D vector animation engine in python"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -28,12 +28,13 @@ devserver = [
     "jinja2>=3.1.0",
 ]
 
-# Testing dependencies
+# Testing and dev dependencies
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "pytest-benchmark>=4.0.0",
     "pytest-xdist>=3.3.0",
+    "ruff>=0.4.0",
 ]
 
 # Font-to-vertex conversion
@@ -97,3 +98,18 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "@abstractmethod",
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "I",    # isort (import sorting)
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+known-first-party = ["svan2d"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

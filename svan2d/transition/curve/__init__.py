@@ -4,9 +4,9 @@ Path functions define spatial trajectories between two points,
 enabling non-linear motion paths like bezier curves and arcs.
 """
 
-from .linear import linear
-from .bezier import bezier, bezier_quadratic, bezier_cubic
 from .arc import arc, arc_clockwise, arc_counterclockwise
+from .bezier import bezier, bezier_cubic, bezier_quadratic
+from .linear import linear
 
 __all__ = [
     "linear",

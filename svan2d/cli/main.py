@@ -4,8 +4,9 @@ Provides commands for managing the Playwright render server and other utilities.
 """
 
 import click
-from svan2d.cli.playwright_server_commands import playwright_server
+
 from svan2d.cli.devserver_commands import serve
+from svan2d.cli.playwright_server_commands import playwright_server
 
 
 @click.group()
@@ -16,8 +17,8 @@ def cli():
 
 
 # Register command groups
-cli.add_command(playwright_server)
-cli.add_command(serve)
+cli.add_command(playwright_server)  # type: ignore[attr-defined]
+cli.add_command(serve)  # type: ignore[attr-defined]
 
 
 if __name__ == "__main__":

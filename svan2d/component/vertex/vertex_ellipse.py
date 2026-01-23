@@ -1,10 +1,12 @@
 """VertexEllipse - ellipse approximation as a VertexLoop"""
 
 from __future__ import annotations
+
 import math
 
-from .vertex_loop import VertexLoop
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
 
 
 class VertexEllipse(VertexLoop):
@@ -17,7 +19,7 @@ class VertexEllipse(VertexLoop):
 
     def __init__(
         self,
-        center: float = Point2D(0, 0),
+        center: Point2D = Point2D(0, 0),
         rx: float = 50.0,
         ry: float = 50.0,
         num_vertices: int = 128,

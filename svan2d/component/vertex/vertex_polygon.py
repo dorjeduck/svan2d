@@ -1,10 +1,13 @@
 """VertexPolygon - arbitrary polygon as a VertexLoop"""
 
 from __future__ import annotations
-from typing import List, Tuple
+
+from typing import List, Optional, Tuple
+
+from svan2d.core.point2d import Point2D, Points2D
 
 from .vertex_loop import VertexLoop
-from svan2d.core.point2d import Points2D,Point2D
+
 
 class VertexPolygon(VertexLoop):
     """Arbitrary polygon as a VertexLoop
@@ -18,7 +21,7 @@ class VertexPolygon(VertexLoop):
         vertices: Points2D,
         closed: bool = True,
         auto_close: bool = True,
-        num_vertices: int = None
+        num_vertices: Optional[int] = None
     ):
         """Create a polygon from arbitrary vertices
 

@@ -1,14 +1,27 @@
 """Abstract base classes for renderers and states in the svan2d framework"""
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import List, Optional, TYPE_CHECKING
 from dataclasses import replace
+from typing import TYPE_CHECKING, Any, List, Optional, cast
 
 if TYPE_CHECKING:
     from svan2d.component.state.base import State
+    from svan2d.component.state.base_vertex import VertexState
 
 import drawsvg as dw
+
+
+def _set_elem_attr(elem: dw.DrawingElement, key: str, value: Any) -> None:
+    """Set an attribute on a drawsvg element.
+
+    drawsvg elements store attributes in an 'args' dict.
+    This helper encapsulates access to the untyped drawsvg internals.
+    """
+    args = getattr(elem, "args", None)
+    if args is not None:
+        args[key] = value
 
 
 class Renderer(ABC):
@@ -37,11 +50,12 @@ class Renderer(ABC):
     ) -> dw.DrawingElement:
         elem = self._render_core(state, drawing=drawing)
 
-        # Apply clipping/masking before transforms
-        elem = self._apply_clipping_and_masking(elem, state, drawing)
+        # Apply clipping/masking before transforms (only if drawing is available)
+        if drawing is not None:
+            elem = self._apply_clipping_and_masking(elem, state, drawing)
 
-        # Apply filter if specified
-        elem = self._apply_filter(elem, state, drawing)
+            # Apply filter if specified
+            elem = self._apply_filter(elem, state, drawing)
 
         transforms = []
         # SVG applies transforms right-to-left, so order is: translate, rotate, scale
@@ -57,9 +71,9 @@ class Renderer(ABC):
             transforms.append(f"skewY({state.skew_y})")
 
         if transforms:
-            elem.args["transform"] = " ".join(transforms)
+            _set_elem_attr(elem, "transform", " ".join(transforms))
 
-        elem.args["opacity"] = str(state.opacity)
+        _set_elem_attr(elem, "opacity", str(state.opacity))
 
         return elem
 
@@ -130,6 +144,7 @@ class Renderer(ABC):
             ID of the created ClipPath def
         """
         import uuid
+
         from svan2d.component import get_renderer_instance_for_state
         from svan2d.component.renderer.base_vertex import VertexRenderer
 
@@ -143,27 +158,26 @@ class Renderer(ABC):
             # For clipPaths, ensure the state has a fill (color doesn't matter for clipping)
             from svan2d.core.color import Color
 
-            if (
-                not hasattr(clip_state, "fill_color")
-                or clip_state.fill_color == Color.NONE
-            ):
+            fill_color = getattr(clip_state, "fill_color", None)
+            if fill_color is None or fill_color == Color.NONE:
                 clip_state = replace(clip_state, fill_color=Color("#000000"))
 
             # Check if this is a morph state (has _aligned_contours from interpolation)
-            if (
-                hasattr(clip_state, "_aligned_contours")
-                and clip_state._aligned_contours is not None
-            ):
+            aligned_contours = getattr(clip_state, "_aligned_contours", None)
+            if aligned_contours is not None:
                 # This is an interpolated state between different shape types
-                # Use VertexRenderer for morphing
-                renderer = VertexRenderer()
+                # Use VertexRenderer for morphing (state has been prepared with vertex data)
+                renderer: Renderer = VertexRenderer()
+                # Cast to VertexState since aligned_contours indicates vertex-based state
+                clip_elem = renderer._render_core(
+                    cast("VertexState", clip_state), drawing=drawing
+                )
             else:
                 # Normal state - use its registered renderer
                 renderer = get_renderer_instance_for_state(clip_state)
-
-            # Use _render_core to get just the shape without wrapper group
-            # (clipPaths can't have <g> elements in Chrome)
-            clip_elem = renderer._render_core(clip_state, drawing=drawing)
+                # Use _render_core to get just the shape without wrapper group
+                # (clipPaths can't have <g> elements in Chrome)
+                clip_elem = renderer._render_core(clip_state, drawing=drawing)
 
             # Apply transforms directly to the clip element if needed
             transforms = []
@@ -181,11 +195,11 @@ class Renderer(ABC):
             if isinstance(clip_elem, dw.Group) and hasattr(clip_elem, "children"):
                 for child in clip_elem.children:
                     if transforms:
-                        child.args["transform"] = " ".join(transforms)
+                        _set_elem_attr(child, "transform", " ".join(transforms))
                     clip_path.append(child)
             else:
                 if transforms:
-                    clip_elem.args["transform"] = " ".join(transforms)
+                    _set_elem_attr(clip_elem, "transform", " ".join(transforms))
                 clip_path.append(clip_elem)
 
         # Add to drawing's defs
@@ -207,6 +221,7 @@ class Renderer(ABC):
             ID of the created Mask def
         """
         import uuid
+
         from svan2d.component import get_renderer_instance_for_state
         from svan2d.component.renderer.base_vertex import VertexRenderer
 
@@ -219,23 +234,25 @@ class Renderer(ABC):
         # For masks, ensure the state has a fill (masks use white for visible areas)
         from svan2d.core.color import Color
 
-        if not hasattr(mask_state, "fill_color") or mask_state.fill_color == Color.NONE:
+        fill_color = getattr(mask_state, "fill_color", None)
+        if fill_color is None or fill_color == Color.NONE:
             mask_state = replace(mask_state, fill_color=Color("#FFFFFF"))
 
         # Check if this is a morph state (has _aligned_contours from interpolation)
-        if (
-            hasattr(mask_state, "_aligned_contours")
-            and mask_state._aligned_contours is not None
-        ):
+        aligned_contours = getattr(mask_state, "_aligned_contours", None)
+        if aligned_contours is not None:
             # This is an interpolated state between different shape types
-            # Use VertexRenderer for morphing
-            renderer = VertexRenderer()
+            # Use VertexRenderer for morphing (state has been prepared with vertex data)
+            renderer: Renderer = VertexRenderer()
+            # Cast to VertexState since aligned_contours indicates vertex-based state
+            mask_elem = renderer._render_core(
+                cast("VertexState", mask_state), drawing=drawing
+            )
         else:
             # Normal state - use its registered renderer
             renderer = get_renderer_instance_for_state(mask_state)
-
-        # Use _render_core to get just the shape
-        mask_elem = renderer._render_core(mask_state, drawing=drawing)
+            # Use _render_core to get just the shape
+            mask_elem = renderer._render_core(mask_state, drawing=drawing)
 
         # Extract paths from group if needed (VertexRenderer returns a group)
         if isinstance(mask_elem, dw.Group) and hasattr(mask_elem, "children"):
@@ -255,7 +272,7 @@ class Renderer(ABC):
         if transforms or mask_state.opacity != 1.0:
             mask_group = dw.Group(opacity=mask_state.opacity)
             if transforms:
-                mask_group.args["transform"] = " ".join(transforms)
+                _set_elem_attr(mask_group, "transform", " ".join(transforms))
             for elem in elements:
                 mask_group.append(elem)
             mask.append(mask_group)
@@ -288,7 +305,7 @@ class Renderer(ABC):
         filter_id = self._create_filter_def(state.filter, drawing)
 
         # Apply filter to element
-        elem.args["filter"] = f"url(#{filter_id})"
+        _set_elem_attr(elem, "filter", f"url(#{filter_id})")
 
         return elem
 
@@ -337,29 +354,41 @@ class Renderer(ABC):
         - Stroke: pattern → gradient → color (if stroke_width > 0)
 
         Args:
-            state: State containing fill/stroke attributes
+            state: State containing fill/stroke attributes (typically ColorState)
             kwargs: Dictionary to populate with fill/stroke attributes
             drawing: Optional Drawing for pattern rendering
         """
+        # Get fill/stroke attributes (these exist on ColorState subclass)
+        fill_pattern = getattr(state, "fill_pattern", None)
+        fill_gradient = getattr(state, "fill_gradient", None)
+        fill_color = getattr(state, "fill_color", None)
+        fill_opacity = getattr(state, "fill_opacity", 1.0)
+
+        stroke_pattern = getattr(state, "stroke_pattern", None)
+        stroke_gradient = getattr(state, "stroke_gradient", None)
+        stroke_color = getattr(state, "stroke_color", None)
+        stroke_width = getattr(state, "stroke_width", 0)
+        stroke_opacity = getattr(state, "stroke_opacity", 1.0)
+
         # Check pattern first, then gradient, then color for fill
-        if state.fill_pattern:
-            kwargs["fill"] = state.fill_pattern.to_drawsvg(drawing)
-        elif state.fill_gradient:
-            kwargs["fill"] = state.fill_gradient.to_drawsvg()
-        elif state.fill_color:
-            kwargs["fill"] = state.fill_color.to_rgb_string()
-            kwargs["fill_opacity"] = state.fill_opacity
+        if fill_pattern:
+            kwargs["fill"] = fill_pattern.to_drawsvg(drawing)
+        elif fill_gradient:
+            kwargs["fill"] = fill_gradient.to_drawsvg()
+        elif fill_color:
+            kwargs["fill"] = fill_color.to_rgb_string()
+            kwargs["fill_opacity"] = fill_opacity
         else:
             kwargs["fill"] = "none"
 
         # Check pattern first, then gradient, then color for stroke
-        if state.stroke_pattern:
-            kwargs["stroke"] = state.stroke_pattern.to_drawsvg(drawing)
-            kwargs["stroke_width"] = state.stroke_width
-        elif state.stroke_gradient:
-            kwargs["stroke"] = state.stroke_gradient.to_drawsvg()
-            kwargs["stroke_width"] = state.stroke_width
-        elif state.stroke_color and state.stroke_width > 0:
-            kwargs["stroke"] = state.stroke_color.to_rgb_string()
-            kwargs["stroke_width"] = state.stroke_width
-            kwargs["stroke_opacity"] = state.stroke_opacity
+        if stroke_pattern:
+            kwargs["stroke"] = stroke_pattern.to_drawsvg(drawing)
+            kwargs["stroke_width"] = stroke_width
+        elif stroke_gradient:
+            kwargs["stroke"] = stroke_gradient.to_drawsvg()
+            kwargs["stroke_width"] = stroke_width
+        elif stroke_color and stroke_width > 0:
+            kwargs["stroke"] = stroke_color.to_rgb_string()
+            kwargs["stroke_width"] = stroke_width
+            kwargs["stroke_opacity"] = stroke_opacity

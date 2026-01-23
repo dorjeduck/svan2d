@@ -6,11 +6,14 @@ but may benefit from path reversal if oriented in opposite directions.
 """
 
 from __future__ import annotations
-from typing import List, Tuple
-import math
 
-from .base import VertexAligner, AlignmentContext
-from svan2d.core.point2d import Point2D,Points2D
+import math
+from typing import List, Tuple
+
+from svan2d.core.point2d import Point2D, Points2D
+
+from .base import AlignmentContext, VertexAligner
+
 
 class SequentialAligner(VertexAligner):
     """Sequential alignment for open ↔ open shapes with reversal detection

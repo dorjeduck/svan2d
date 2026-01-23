@@ -1,9 +1,11 @@
 """Perforated primitive renderer - SVG primitive-based for static/keystate rendering"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
-import drawsvg as dw
+
 import math
+from typing import TYPE_CHECKING, Optional
+
+import drawsvg as dw
 
 from svan2d.core.color import Color
 
@@ -11,14 +13,14 @@ from .base import Renderer
 
 if TYPE_CHECKING:
     from ..state.perforated.base import (
-        PerforatedVertexState,
-        Shape,
+        Astroid,
         Circle,
         Ellipse,
-        Rectangle,
+        PerforatedVertexState,
         Polygon,
+        Rectangle,
+        Shape,
         Star,
-        Astroid,
     )
 from svan2d.core.point2d import Point2D
 
@@ -38,12 +40,19 @@ class PerforatedPrimitiveRenderer(Renderer):
     smooth transitions between different shapes.
     """
 
-    def _render_core(
-        self, state: PerforatedVertexState, drawing: Optional[dw.Drawing] = None
+    def _render_core(  # type: ignore[override]
+        self, state: "PerforatedVertexState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Group:
         """Render perforated shape using SVG path primitives with evenodd fill-rule"""
 
         group = dw.Group()
+
+        # Get stroke values with defaults for Optional fields
+        stroke_width = state.stroke_width or 0
+        stroke_opacity = state.stroke_opacity or 0
+        holes_stroke_width = state.holes_stroke_width or 0
+        holes_stroke_opacity = state.holes_stroke_opacity or 0
+        holes_fill_opacity = state.holes_fill_opacity or 0
 
         # Create a path that defines the perforated shape using even-odd fill rule
         fill_path = dw.Path(
@@ -57,17 +66,17 @@ class PerforatedPrimitiveRenderer(Renderer):
             fill="none",
             stroke=(
                 state.stroke_color.to_rgb_string()
-                if state.stroke_color and state.stroke_width > 0
+                if state.stroke_color and stroke_width > 0
                 else "none"
             ),
             stroke_width=(
-                state.stroke_width
-                if state.stroke_color and state.stroke_width > 0
+                stroke_width
+                if state.stroke_color and stroke_width > 0
                 else 0
             ),
             stroke_opacity=(
-                state.stroke_opacity
-                if state.stroke_color and state.stroke_width > 0
+                stroke_opacity
+                if state.stroke_color and stroke_width > 0
                 else 0
             ),
             stroke_linejoin="round",
@@ -76,27 +85,27 @@ class PerforatedPrimitiveRenderer(Renderer):
 
         hole_stroke_path = dw.Path(
             fill=(
-                state.vertex_loops_fill_color.to_rgb_string()
-                if state.vertex_loops_fill_color
+                state.holes_fill_color.to_rgb_string()
+                if state.holes_fill_color
                 else "none"
             ),
-            fill_opacity=state.vertex_loops_fill_opacity,
+            fill_opacity=holes_fill_opacity,
             stroke=(
-                state.vertex_loops_stroke_color.to_rgb_string()
-                if state.vertex_loops_stroke_color
-                and state.vertex_loops_stroke_width > 0
+                state.holes_stroke_color.to_rgb_string()
+                if state.holes_stroke_color
+                and holes_stroke_width > 0
                 else "none"
             ),
             stroke_width=(
-                state.vertex_loops_stroke_width
-                if state.vertex_loops_stroke_color
-                and state.vertex_loops_stroke_width > 0
+                holes_stroke_width
+                if state.holes_stroke_color
+                and holes_stroke_width > 0
                 else 0
             ),
             stroke_opacity=(
-                state.vertex_loops_stroke_opacity
-                if state.vertex_loops_stroke_color
-                and state.vertex_loops_stroke_width > 0
+                holes_stroke_opacity
+                if state.holes_stroke_color
+                and holes_stroke_width > 0
                 else 0
             ),
             stroke_linejoin="round",
@@ -110,23 +119,23 @@ class PerforatedPrimitiveRenderer(Renderer):
         self._add_vertex_loop_to_path(fill_path, outer_contour.vertices, clockwise=True)
 
         # Draw hole shapes (counter-clockwise - creates vertex loops due to even-odd rule)
-        for hole_shape in state.vertex_loops:
+        for hole_shape in state.holes:
             self._add_shape_to_path(fill_path, hole_shape, clockwise=False)
 
         group.append(fill_path)
 
-        if state.stroke_width > 0 and state.stroke_opacity > 0:
+        if stroke_width > 0 and stroke_opacity > 0:
             self._add_vertex_loop_to_path(outer_stroke_path, outer_contour.vertices)
             group.append(outer_stroke_path)
 
         if (
-            state.vertex_loops_stroke_width > 0
-            and state.vertex_loops_stroke_opacity > 0
+            holes_stroke_width > 0
+            and holes_stroke_opacity > 0
         ) or (
-            state.vertex_loops_fill_color != Color.NONE
-            and state.vertex_loops_fill_opacity > 0
+            state.holes_fill_color != Color.NONE
+            and holes_fill_opacity > 0
         ):
-            for hole_shape in state.vertex_loops:
+            for hole_shape in state.holes:
                 self._add_shape_to_path(hole_stroke_path, hole_shape)
             group.append(hole_stroke_path)
 
@@ -168,20 +177,22 @@ class PerforatedPrimitiveRenderer(Renderer):
             shape: Shape object (Circle, Ellipse, Rectangle, etc.)
             clockwise: If True, draw clockwise; if False, draw counter-clockwise
         """
+        # shape.pos is guaranteed non-None after Shape.__post_init__
+        assert shape.pos is not None
+        center = shape.pos
 
         if isinstance(shape, Circle):
-            self._add_circle(path, shape.x, shape.y, shape.radius, clockwise)
+            self._add_circle(path, center, shape.radius, clockwise)
 
         elif isinstance(shape, Ellipse):
             self._add_ellipse(
-                path, shape.x, shape.y, shape.rx, shape.ry, shape.rotation, clockwise
+                path, center, shape.rx, shape.ry, shape.rotation, clockwise
             )
 
         elif isinstance(shape, Rectangle):
             self._add_rectangle(
                 path,
-                shape.x,
-                shape.y,
+                center,
                 shape.width,
                 shape.height,
                 shape.rotation,
@@ -191,8 +202,7 @@ class PerforatedPrimitiveRenderer(Renderer):
         elif isinstance(shape, Polygon):
             self._add_polygon(
                 path,
-                shape.x,
-                shape.y,
+                center,
                 shape.radius,
                 shape.num_sides,
                 shape.rotation,
@@ -202,8 +212,7 @@ class PerforatedPrimitiveRenderer(Renderer):
         elif isinstance(shape, Star):
             self._add_star(
                 path,
-                shape.x,
-                shape.y,
+                center,
                 shape.outer_radius,
                 shape.inner_radius,
                 shape.num_points,
@@ -214,8 +223,7 @@ class PerforatedPrimitiveRenderer(Renderer):
         elif isinstance(shape, Astroid):
             self._add_astroid(
                 path,
-                shape.x,
-                shape.y,
+                center,
                 shape.radius,
                 shape.num_cusps,
                 shape.curvature,
@@ -269,9 +277,9 @@ class PerforatedPrimitiveRenderer(Renderer):
         if not clockwise:
             corners = corners[::-1]  # Reverse for counter-clockwise
 
-        path.M(corners[0].x, corners[0].y)
+        path.M(corners[0][0], corners[0][1])
         for corner in corners[1:]:
-            path.L(corner.x, corner.y)
+            path.L(corner[0], corner[1])
         path.Z()
 
     def _add_ellipse(
@@ -316,7 +324,6 @@ class PerforatedPrimitiveRenderer(Renderer):
             x = center.x + size * math.cos(angle)
             y = center.y + size * math.sin(angle)
             corners.append(Point2D(x, y))
-           
 
         if not clockwise:
             corners = corners[::-1]

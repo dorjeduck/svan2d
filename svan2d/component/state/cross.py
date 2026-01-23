@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from svan2d.transition import easing
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.cross import CrossRenderer
+from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
+
+from .base_vertex import VertexState
 
 
 @renderer(CrossRenderer)
@@ -18,12 +19,6 @@ class CrossState(VertexState):
 
     width: float = 60  # Total width
     thickness: float = 20  # Thickness of each arm
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "width": easing.in_out,
-        "thickness": easing.in_out,
-    }
 
     def _generate_contours(self) -> VertexContours:
         """Generate cross vertices (12 corners)"""
@@ -54,6 +49,7 @@ class CrossState(VertexState):
         total_perimeter = sum(edge_lengths)
 
         # Distribute vertices
+        assert self._num_vertices is not None
         vertices = []
         for i in range(self._num_vertices - 1):
             target_distance = (i / (self._num_vertices - 1)) * total_perimeter

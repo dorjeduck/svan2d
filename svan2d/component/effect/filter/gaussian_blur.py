@@ -1,6 +1,7 @@
 """Gaussian blur filter"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -25,8 +26,8 @@ class GaussianBlurFilter(Filter):
     """
 
     std_deviation: float = 0.0
-    std_deviation_x: Optional[float] = None
-    std_deviation_y: Optional[float] = None
+    std_deviation_x: float | None = None
+    std_deviation_y: float | None = None
 
     def __post_init__(self):
         if self.std_deviation < 0:

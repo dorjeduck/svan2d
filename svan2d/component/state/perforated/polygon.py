@@ -1,14 +1,13 @@
 """Perforated polygon state - regular polygon with  holes"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
+from svan2d.component.vertex import VertexLoop, VertexRegularPolygon
 from svan2d.core.point2d import Point2D
 
 from .base import PerforatedVertexState
-from svan2d.component.state.base import State
-from svan2d.component.vertex import VertexRegularPolygon, VertexLoop
-from svan2d.transition import easing
 
 
 @dataclass(frozen=True)
@@ -34,14 +33,9 @@ class PerforatedPolygonState(PerforatedVertexState):
     num_sides: int = 6
     size: float = 100
 
-    DEFAULT_EASING = {
-        **PerforatedVertexState.DEFAULT_EASING,
-        "num_sides": easing.step,  # Integer, step interpolation
-        "size": easing.in_out,
-    }
-
     def _generate_outer_contour(self) -> VertexLoop:
         """Generate regular polygon outer contour"""
+        assert self._num_vertices is not None
         return VertexRegularPolygon(
             center=Point2D(),
             size=self.size,

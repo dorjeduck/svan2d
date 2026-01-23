@@ -1,15 +1,15 @@
 """Rectangle renderer implementation using new architecture"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.square import SquareRenderer
+from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
 
-from svan2d.transition import easing
+from .base_vertex import VertexState
 
 
 @renderer(SquareRenderer)
@@ -18,18 +18,13 @@ class SquareState(VertexState):
     """State class for rectangle elements"""
 
     size: float = 100
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-        "rotation": easing.in_out,
-    }
 
     def _generate_contours(self) -> VertexContours:
         """Generate square vertices, starting at top-left, going clockwise"""
         half = self.size / 2
         perimeter = 4 * self.size
 
+        assert self._num_vertices is not None
         vertices = []
         for i in range(self._num_vertices - 1):
             distance = (i / (self._num_vertices - 1)) * perimeter

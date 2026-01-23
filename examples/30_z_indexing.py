@@ -28,11 +28,11 @@ def main():
     center_element = VElement().keystates([center_circle_start, center_circle_end])
 
     c1 = CircleState(
-        radius=40, pos=Point2D(-70, 0), z_index=1, fill_color=SURROUNDING_CIRCLES
+        radius=40, pos=Point2D(0, -70), z_index=1, fill_color=SURROUNDING_CIRCLES
     )
     c2 = replace(c1, pos=Point2D(70, 0), z_index=2)
-    c3 = replace(c1, pos=Point2D(0, -70), z_index=3)
-    c4 = replace(c1, pos=Point2D(0, 70), z_index=4)
+    c3 = replace(c1, pos=Point2D(0, 70), z_index=3)
+    c4 = replace(c1, pos=Point2D(-70, 0), z_index=4)
 
     surrounding_elements = [VElement().keystates([s, s]) for s in [c1, c2, c3, c4]]
 
@@ -53,6 +53,7 @@ def main():
         total_frames=60,
         framerate=30,
         png_width_px=1024,
+        num_thumbnails=100,
     )
 
 

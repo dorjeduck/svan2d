@@ -1,6 +1,7 @@
 """Convolve matrix filter"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -19,6 +20,7 @@ class EdgeMode(str, Enum):
         WRAP: Wraps around the edges (pixels from the opposite side).
         NONE: Leaves the edges unchanged (may produce undefined behavior).
     """
+
     DUPLICATE = "duplicate"
     WRAP = "wrap"
     NONE = "none"
@@ -48,10 +50,10 @@ class ConvolveMatrixFilter(Filter):
 
     kernel_matrix: tuple[float, ...]
     order: int | tuple[int, int] = 3
-    divisor: Optional[float] = None
+    divisor: float | None = None
     bias: float = 0.0
-    target_x: Optional[int] = None
-    target_y: Optional[int] = None
+    target_x: int | None = None
+    target_y: int | None = None
     edge_mode: str = "duplicate"
     preserve_alpha: bool = False
     in_: str = "SourceGraphic"

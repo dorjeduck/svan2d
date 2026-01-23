@@ -1,14 +1,14 @@
 from __future__ import annotations
+
+import math
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from svan2d.transition import easing
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.vertex import VertexContours
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.polygon import PolygonRenderer
+from svan2d.component.state.base_vertex import VertexState
+from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
-import math
 
 
 @renderer(PolygonRenderer)
@@ -18,13 +18,6 @@ class PolygonState(VertexState):
 
     size: float = 50
     num_sides: int = 6
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-        "num_sides": easing.step,
-    }
-
 
     def need_morph(self, state):
         return not isinstance(state, PolygonState) or state.num_sides != self.num_sides
@@ -48,6 +41,7 @@ class PolygonState(VertexState):
         total_perimeter = sum(edge_lengths)
 
         # Distribute vertices along perimeter
+        assert self._num_vertices is not None
         vertices = []
         for i in range(self._num_vertices - 1):
             target_distance = (i / (self._num_vertices - 1)) * total_perimeter

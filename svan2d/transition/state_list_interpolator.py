@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from svan2d.component.state.base import State
 
-from typing import Any, List, Optional
-from dataclasses import replace
 import logging
+from dataclasses import replace
+from typing import Any, List, Optional
 
-from svan2d.transition.mapping import Mapper, Match, GreedyMapper
+from svan2d.transition.mapping import GreedyMapper, Mapper, Match
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class StateListInterpolator:
             mapper = GreedyMapper()
 
         # Map states using position extractor
-        matches: List[Match] = mapper.map(start_states, end_states, lambda s: s.pos)
+        matches: List[Match] = mapper.map(start_states, end_states, lambda s: s.pos)  # type: ignore[arg-type]
 
         # Process each match
         interpolated_states = []
@@ -109,12 +109,15 @@ class StateListInterpolator:
             Interpolated state, or None if should be removed
         """
         if match.is_creation:
+            assert match.end is not None
             return self._interpolate_creation(match.end, eased_t)
 
         elif match.is_destruction:
+            assert match.start is not None
             return self._interpolate_destruction(match.start, eased_t)
 
         else:
+            assert match.start is not None and match.end is not None
             return self._interpolate_morph(
                 match.start, match.end, eased_t, mapper, vertex_aligner
             )
@@ -199,7 +202,7 @@ class StateListInterpolator:
 
     def _clean_state(self, state: State) -> State:
         """Clean state for final output (remove _aligned_contours)"""
-        if hasattr(state, "_aligned_contours") and state._aligned_contours is not None:
+        if hasattr(state, "_aligned_contours") and getattr(state, "_aligned_contours") is not None:
             return replace(state, _aligned_contours=None)
         return state
 
@@ -209,12 +212,13 @@ class StateListInterpolator:
         Used for fade in/out. Shape stays completely fixed,
         only opacity-related attributes change.
         """
+        assert state.opacity is not None
         updates = {"opacity": state.opacity * opacity_factor}
 
-        if hasattr(state, "fill_opacity") and state.fill_opacity is not None:
-            updates["fill_opacity"] = state.fill_opacity * opacity_factor
+        if hasattr(state, "fill_opacity") and getattr(state, "fill_opacity") is not None:
+            updates["fill_opacity"] = getattr(state, "fill_opacity") * opacity_factor
 
-        if hasattr(state, "stroke_opacity") and state.stroke_opacity is not None:
-            updates["stroke_opacity"] = state.stroke_opacity * opacity_factor
+        if hasattr(state, "stroke_opacity") and getattr(state, "stroke_opacity") is not None:
+            updates["stroke_opacity"] = getattr(state, "stroke_opacity") * opacity_factor
 
         return replace(state, **updates)

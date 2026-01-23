@@ -1,13 +1,13 @@
 """Perforated star state - star with  holes"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
+from svan2d.component.vertex import VertexLoop, VertexStar
 from svan2d.core.point2d import Point2D
 
 from .base import PerforatedVertexState
-from svan2d.component.vertex import VertexStar, VertexLoop
-from svan2d.transition import easing
 
 
 @dataclass(frozen=True)
@@ -36,15 +36,9 @@ class PerforatedStarState(PerforatedVertexState):
     inner_radius: float = 50
     num_points: int = 5
 
-    DEFAULT_EASING = {
-        **PerforatedVertexState.DEFAULT_EASING,
-        "outer_radius": easing.in_out,
-        "inner_radius": easing.in_out,
-        "num_points": easing.step,  # Integer, step interpolation
-    }
-
     def _generate_outer_contour(self) -> VertexLoop:
         """Generate star outer contour"""
+        assert self._num_vertices is not None
         return VertexStar(
             center=Point2D(0, 0),
             outer_radius=self.outer_radius,

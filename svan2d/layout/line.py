@@ -1,11 +1,12 @@
 """Line layout state function"""
 
 import math
-from typing import List, Optional
 from dataclasses import replace
+from typing import List, Optional
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
+
 from .enums import ElementAlignment
 
 

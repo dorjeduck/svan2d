@@ -1,6 +1,6 @@
 """Path function resolution with 2-level priority system"""
 
-from typing import Callable, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 if TYPE_CHECKING:
     from svan2d.core.point2d import Point2D

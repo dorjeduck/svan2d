@@ -1,14 +1,13 @@
 """Color matrix filter"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
 
 from .base import Filter
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color

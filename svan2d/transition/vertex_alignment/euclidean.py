@@ -6,15 +6,17 @@ alignment to preserve intuitive start-end correspondence.
 """
 
 from __future__ import annotations
-import math
-import logging
-from typing import List, Tuple, Optional, Union
+
 import inspect
+import logging
+import math
+from typing import List, Optional, Tuple, Union
 
 from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
-from .base import VertexAligner, AlignmentContext
+from svan2d.core.point2d import Point2D, Points2D
+
+from .base import AlignmentContext, VertexAligner
 from .norm import AlignmentNorm, EuclideanDistanceFn, NormSpec
-from svan2d.core.point2d import Points2D, Point2D
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,9 @@ class EuclideanAligner(VertexAligner):
     Performance: O(n²) - tries n offsets, evaluates n vertex pairs each
     """
 
-    def __init__(self, norm: Union[str, AlignmentNorm, EuclideanDistanceFn] = AlignmentNorm.L1):
+    def __init__(
+        self, norm: Union[str, AlignmentNorm, EuclideanDistanceFn] = AlignmentNorm.L1
+    ):
         """
         Initialize Euclidean aligner with distance norm.
 
@@ -117,7 +121,7 @@ class EuclideanAligner(VertexAligner):
         verts1: Points2D,
         verts2: Points2D,
         context: AlignmentContext,
-        rotation_target: Optional[float] = None,
+        rotation_target: float | None = None,
     ) -> Tuple[Points2D, Points2D]:
         if len(verts1) != len(verts2):
             raise ValueError(

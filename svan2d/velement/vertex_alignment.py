@@ -1,15 +1,17 @@
 """Vertex alignment for shape morphing."""
 
 from __future__ import annotations
-from dataclasses import replace
-from typing import Tuple, TYPE_CHECKING
 
+from dataclasses import replace
+from typing import TYPE_CHECKING, Tuple
+
+from svan2d.component import State, VertexState
 from svan2d.transition.align_vertices import get_aligned_vertices
-from svan2d.component import VertexState, State
 from svan2d.velement.keystate import KeyState
 
 if TYPE_CHECKING:
     from svan2d.velement.keystate import KeyStates
+    from svan2d.velement.morphing import MorphingConfig
 
 
 class VertexAligner:
@@ -141,6 +143,7 @@ class VertexAligner:
             return state1, state2  # Use static preprocessing instead
 
         # Compute current rotation for optimal alignment
+        assert state1.rotation is not None and state2.rotation is not None
         rotation_target = (
             state1.rotation + (state2.rotation - state1.rotation) * segment_t
         )

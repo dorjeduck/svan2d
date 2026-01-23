@@ -1,10 +1,12 @@
 """VertexContours class - outer contour with optional holes"""
 
 from __future__ import annotations
-from typing import List, Tuple, Optional
+
+from typing import List, Optional, Tuple
+
+from svan2d.core.point2d import Point2D, Points2D
 
 from .vertex_loop import VertexLoop
-from svan2d.core.point2d import Points2D, Point2D
 
 
 class VertexContours:
@@ -81,7 +83,7 @@ class VertexContours:
             hole.translate(dx, dy)
         return self
 
-    def scale(self, sx: float, sy: Optional[float] = None) -> VertexContours:
+    def scale(self, sx: float, sy: float | None = None) -> VertexContours:
         """Scale all contours in-place by (sx, sy)
 
         If sy is None, uses sx for both dimensions (uniform scaling).
@@ -93,7 +95,7 @@ class VertexContours:
         return self
 
     def rotate(
-        self, angle_degrees: float, center: Optional[Point2D] = None
+        self, angle_degrees: float, center: Point2D | None = None
     ) -> VertexContours:
         """Rotate all contours in-place around center
 

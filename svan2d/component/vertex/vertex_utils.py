@@ -1,9 +1,11 @@
 """Utility functions for vertex operations"""
 
 from __future__ import annotations
+
 import math
 from statistics import mean
-from svan2d.core.point2d import Points2D, Point2D
+
+from svan2d.core.point2d import Point2D, Points2D
 
 
 def centroid(vertices: Points2D) -> Point2D:

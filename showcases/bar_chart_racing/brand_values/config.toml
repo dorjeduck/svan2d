@@ -1,0 +1,71 @@
+# Bar Chart Race Configuration
+
+[scene]
+width = 512
+height = 512
+background = "#fafafa"
+
+[data]
+path = "showcases/bar_chart_racing/brand_values/data/category-brands.csv"
+top_n = 10
+interpolated_points_per_year = 10
+
+[layout]
+# Margins from scene edges (plot area calculated from scene size minus margins)
+margin_left = 11
+margin_right = 11
+margin_top = 25      # Space for axis labels above bars
+margin_bottom = 15
+
+[bars]
+fill_opacity = 0.75
+name_family = "Inter"
+name_size = 11
+name_weight = "bold"
+name_color = "#000033"
+value_family = "IBM Plex Mono"
+value_size = 9
+value_weight = "normal"
+value_color = "#000033"
+label_gap = 4          # Gap between name and value labels
+# Category palette - first color maps to leading category in final frame
+palette = [
+    "#efb118",  # gold
+    "#4269d0",  # blue
+    "#ff725c",  # coral
+    "#6cc5b0",  # teal
+    "#a463f2",  # purple
+    "#ff8ab7",  # pink
+    "#3ca951",  # green
+    "#9c6b4e",  # brown
+    "#97bbf5",  # light blue
+    "#9498a0",  # gray
+]
+
+[year]
+family = "IBM Plex Mono"
+size = 64
+color = "#000033"
+opacity = 0.25
+offset_right = 10
+offset_bottom = 10
+
+[axis]
+family = "IBM Plex Mono"
+size = 8
+label_color = "#333333"
+line_color = "#fafafa"       # Same as background
+zero_line_color = "#888899"  # Visible y-axis
+target_tick_count = 5
+label_offset = 10            # Distance between axis labels and top bar
+line_width = 1.0
+zero_line_width = 1.0
+
+[export]
+output_dir = "output/"
+filename = "bar_racing_square"
+# Converter options: playwright_http, playwright, cairosvg, inkscape, imagemagick
+converter = "playwright"
+total_frames = 2700      # Video length = total_frames / framerate
+framerate = 60
+png_width_px = 2048

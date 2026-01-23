@@ -20,7 +20,7 @@ Usage:
                 return FancyCircleRenderer
 """
 
-from typing import Dict, Type, Optional, Any
+from typing import Any, Dict, Optional, Type
 
 # Maps state classes → renderer classes
 _renderer_registry: Dict[Type, Type] = {}

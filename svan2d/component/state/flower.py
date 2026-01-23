@@ -1,13 +1,12 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.base_vertex import VertexRenderer
-from svan2d.transition import easing
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours
-
 from svan2d.core.point2d import Point2D
 
 
@@ -19,12 +18,6 @@ class FlowerState(VertexState):
     size: float = 50
     num_petals: int = 5
 
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-        "num_petals": easing.step,
-    }
-
     def _generate_contours(self) -> VertexContours:
         """Generate flower vertices using rose curve: r = a * cos(k*θ)"""
         vertices = []
@@ -33,6 +26,7 @@ class FlowerState(VertexState):
         # For even petals: k = n, range 0 to 2π
         angle_range = math.pi if self.num_petals % 2 == 1 else 2 * math.pi
 
+        assert self._num_vertices is not None
         for i in range(self._num_vertices - 1):
             t = (i / (self._num_vertices - 1)) * angle_range
 

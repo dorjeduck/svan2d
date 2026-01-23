@@ -1,19 +1,19 @@
 """Main API for font-to-vertex conversion"""
 
 from __future__ import annotations
-from typing import List, Optional, Union
-from dataclasses import dataclass, replace
 
-from svan2d.core.point2d import Point2D
-from svan2d.core.color import Color
+from dataclasses import dataclass, replace
+from typing import List, Optional, Union
+
+from svan2d.component.registry import renderer
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.state.state_collection import StateCollectionState
 from svan2d.component.vertex.vertex_contours import VertexContours
-from svan2d.component.registry import renderer
-from svan2d.transition import easing
+from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
-from .glyph_extractor import load_font, extract_glyph_outline, FONTTOOLS_AVAILABLE
 from .contour_classifier import classify_contours
+from .glyph_extractor import FONTTOOLS_AVAILABLE, extract_glyph_outline, load_font
 
 
 def _transform_contours(
@@ -75,18 +75,24 @@ def _transform_contours(
     return VertexContours(new_outer, new_holes)
 
 
-def _offset_contours(contours: VertexContours, offset_x: float, offset_y: float) -> VertexContours:
+def _offset_contours(
+    contours: VertexContours, offset_x: float, offset_y: float
+) -> VertexContours:
     """Offset all vertices in contours by (offset_x, offset_y)."""
     from svan2d.component.vertex.vertex_loop import VertexLoop
 
-    new_outer_vertices = [Point2D(v.x + offset_x, v.y + offset_y) for v in contours.outer.vertices]
+    new_outer_vertices = [
+        Point2D(v.x + offset_x, v.y + offset_y) for v in contours.outer.vertices
+    ]
     new_outer = VertexLoop(new_outer_vertices, closed=contours.outer.closed)
 
     new_holes = None
     if contours.has_holes:
         new_holes = []
         for hole in contours.holes:
-            new_hole_vertices = [Point2D(v.x + offset_x, v.y + offset_y) for v in hole.vertices]
+            new_hole_vertices = [
+                Point2D(v.x + offset_x, v.y + offset_y) for v in hole.vertices
+            ]
             new_holes.append(VertexLoop(new_hole_vertices, closed=hole.closed))
 
     return VertexContours(new_outer, new_holes)
@@ -94,6 +100,7 @@ def _offset_contours(contours: VertexContours, offset_x: float, offset_y: float)
 
 def _get_glyph_renderer():
     from svan2d.component.renderer.base_vertex import VertexRenderer
+
     return VertexRenderer
 
 
@@ -108,10 +115,6 @@ class GlyphState(VertexState):
 
     _contours: Optional[VertexContours] = None
 
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-    }
-
     def need_morph(self, state) -> bool:
         """Always morph between glyphs since they have different contours."""
         # Different glyph characters always need morphing even though same type
@@ -120,7 +123,9 @@ class GlyphState(VertexState):
     def _generate_contours(self) -> VertexContours:
         """Return the pre-computed contours."""
         if self._contours is None:
-            raise ValueError("GlyphState has no contours. Use FontGlyphs.get_state() to create.")
+            raise ValueError(
+                "GlyphState has no contours. Use FontGlyphs.get_state() to create."
+            )
         return self._contours
 
 
@@ -173,10 +178,10 @@ class FontGlyphs:
     def get_state(
         self,
         char: str,
-        num_vertices: Optional[int] = None,
-        height: Optional[float] = None,
-        scale: Optional[float] = None,
-        pos: Optional[Point2D] = None,
+        num_vertices: int | None = None,
+        height: float | None = None,
+        scale: float | None = None,
+        pos: Point2D | None = None,
         fill_color: Optional[Color] = None,
         stroke_color: Optional[Color] = None,
         stroke_width: float = 0.0,
@@ -208,10 +213,12 @@ class FontGlyphs:
 
         # Resolve num_vertices from config if not specified
         if num_vertices is None:
-            from svan2d.config import get_config, ConfigKey
+            from svan2d.config import ConfigKey, get_config
+
             config = get_config()
             num_vertices = config.get(ConfigKey.STATE_VISUAL_NUM_VERTICES, 128)
 
+        assert num_vertices is not None
         # Resolve scale
         resolved_scale = self._resolve_scale(height, scale)
 
@@ -260,11 +267,11 @@ class FontGlyphs:
     def get_word(
         self,
         text: str,
-        num_vertices: Optional[int] = None,
-        height: Optional[float] = None,
-        scale: Optional[float] = None,
+        num_vertices: int | None = None,
+        height: float | None = None,
+        scale: float | None = None,
         letter_spacing: float = 1.0,
-        pos: Optional[Point2D] = None,
+        pos: Point2D | None = None,
         fill_color: Optional[Color] = None,
         stroke_color: Optional[Color] = None,
         stroke_width: float = 0.0,
@@ -293,15 +300,15 @@ class FontGlyphs:
 
         # Resolve num_vertices from config if not specified
         if num_vertices is None:
-            from svan2d.config import get_config, ConfigKey
+            from svan2d.config import ConfigKey, get_config
+
             config = get_config()
             num_vertices = config.get(ConfigKey.STATE_VISUAL_NUM_VERTICES, 128)
 
         # Resolve scale
         resolved_scale = self._resolve_scale(height, scale)
 
-        if pos is None:
-            pos = Point2D(0, 0)
+        target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
 
         # First pass: collect glyphs with text layout positioning in vertices
         all_glyph_states = []
@@ -309,7 +316,9 @@ class FontGlyphs:
 
         for char in text:
             if char == " ":
-                space_width = self.get_advance_width("n") * resolved_scale * letter_spacing
+                space_width = (
+                    self.get_advance_width("n") * resolved_scale * letter_spacing
+                )
                 cursor_x += space_width
                 continue
 
@@ -349,9 +358,9 @@ class FontGlyphs:
         word_center_x = (min_x + max_x) / 2
         word_center_y = (min_y + max_y) / 2
 
-        # Offset to center word at target pos
-        offset_x = pos.x - word_center_x
-        offset_y = pos.y - word_center_y
+        # Offset to center word at target_pos
+        offset_x = target_pos.x - word_center_x
+        offset_y = target_pos.y - word_center_y
 
         # Second pass: for each glyph, center vertices at origin and set pos to actual position
         # This ensures each glyph has a unique pos (required for M→N morphing deduplication)
@@ -364,15 +373,12 @@ class FontGlyphs:
 
             # Center vertices at origin
             centered_contours = _offset_contours(
-                contours,
-                -glyph_centroid.x,
-                -glyph_centroid.y
+                contours, -glyph_centroid.x, -glyph_centroid.y
             )
 
             # Set pos to actual glyph position (centroid + word centering offset)
             glyph_pos = Point2D(
-                glyph_centroid.x + offset_x,
-                glyph_centroid.y + offset_y
+                glyph_centroid.x + offset_x, glyph_centroid.y + offset_y
             )
 
             new_state = replace(

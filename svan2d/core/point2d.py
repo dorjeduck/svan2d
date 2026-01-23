@@ -1,10 +1,10 @@
 """2D point and point list types with vector operations."""
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Iterator
 
 import math
+from dataclasses import dataclass
+from typing import Iterator
 
 
 @dataclass(slots=True, frozen=True)
@@ -72,63 +72,6 @@ class Point2D:
 
 
 Points2D = list[Point2D]
-
-
-# -------------------------------------------------
-# POINT POOL
-# -------------------------------------------------
-class Point2DPool:
-    __slots__ = ("pool", "size", "index")
-
-    def __init__(self, size: int):
-        # Preallocate pool with Point2D objects
-        self.pool = [Point2D(0.0, 0.0) for _ in range(size)]
-        self.size = size
-        self.index = 0
-
-    def reset(self):
-        """Mark all objects reusable for the next cycle."""
-        self.index = 0
-
-    def get(self) -> Point2D:
-        """Retrieves and resets the next available Point2D instance."""
-        i = self.index
-
-        # Check if we need to grow the pool
-        if i >= self.size:
-            # Out of space → grow (double)
-            old_size = self.size
-            new_size = old_size * 2
-
-            # Append new Point2D instances
-            self.pool.extend(Point2D(0.0, 0.0) for _ in range(old_size))
-            self.size = new_size
-
-        # Increment index and retrieve the point
-        self.index = i + 1
-        point = self.pool[i]
-
-        point.x = 0.0
-        point.y = 0.0
-
-        return point
-
-
-# ❗ Private global pool
-_POINT_POOL = Point2DPool(4096)
-
-
-def new_point2d(x: float, y: float) -> Point2D:
-    """Fast pooled point creation."""
-    p = _POINT_POOL.get()
-    p.x = x
-    p.y = y
-    return p
-
-
-def _reset_point2d_pool() -> None:
-    """Internal — called once per frame by the animation loop."""
-    _POINT_POOL.reset()
 
 
 def _lerp(a: float, b: float, t: float) -> float:

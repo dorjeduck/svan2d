@@ -1,11 +1,12 @@
 """Circle layout state function"""
 
 import math
-from typing import List, Optional, Callable
 from dataclasses import replace
+from typing import Callable, List, Optional
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
+
 from .enums import ElementAlignment
 
 

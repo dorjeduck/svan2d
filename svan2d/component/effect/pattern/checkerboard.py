@@ -1,16 +1,15 @@
 """Checkerboard pattern implementation"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
 
 from svan2d.core.point2d import Point2D
 
 from .base import Pattern
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color
@@ -43,7 +42,7 @@ class CheckerboardPattern(Pattern):
 
     def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
-        from svan2d.component import RectangleState, RectangleRenderer
+        from svan2d.component import RectangleRenderer, RectangleState
 
         tile_size = self.square_size * 2
 

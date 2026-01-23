@@ -1,9 +1,10 @@
 """Integration tests for export workflows"""
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from svan2d.component.state import CircleState, RectangleState, StarState, TextState
 from svan2d.core.color import Color
@@ -184,8 +185,8 @@ class TestRasterExport:
         """Test PNG export using CairoSVG converter"""
         pytest.importorskip("cairosvg", reason="CairoSVG not installed")
 
-        from svan2d.vscene.vscene_exporter import VSceneExporter
         from svan2d.converter.converter_type import ConverterType
+        from svan2d.vscene.vscene_exporter import VSceneExporter
 
         state = CircleState(radius=50, fill_color=Color("#FF0000"))
         element = VElement(state=state)
@@ -210,8 +211,8 @@ class TestRasterExport:
         """Test PDF export using CairoSVG converter"""
         pytest.importorskip("cairosvg", reason="CairoSVG not installed")
 
-        from svan2d.vscene.vscene_exporter import VSceneExporter
         from svan2d.converter.converter_type import ConverterType
+        from svan2d.vscene.vscene_exporter import VSceneExporter
 
         state = CircleState(radius=50)
         element = VElement(state=state)

@@ -1,10 +1,12 @@
 """VertexStar - star shape as a VertexLoop"""
 
 from __future__ import annotations
+
 import math
 
-from .vertex_loop import VertexLoop
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
 
 
 class VertexStar(VertexLoop):
@@ -17,7 +19,7 @@ class VertexStar(VertexLoop):
 
     def __init__(
         self,
-        center: float = Point2D(0, 0),
+        center: Point2D = Point2D(0, 0),
         outer_radius: float = 50.0,
         inner_radius: float = 20.0,
         num_points: int = 5,

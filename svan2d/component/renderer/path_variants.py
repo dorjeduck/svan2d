@@ -1,16 +1,16 @@
 """Abstract base class for renderers with multiple path variants"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
-from typing import TYPE_CHECKING, Dict, Any
+
 from abc import ABC
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import drawsvg as dw
 
 from .base import Renderer
 
 if TYPE_CHECKING:
-    from ..state.path_variants import PathVariantState
+    from ..state.path_variants import PathVariantsState
 
 
 class PathVariantsRenderer(Renderer, ABC):
@@ -27,7 +27,7 @@ class PathVariantsRenderer(Renderer, ABC):
     # Subclasses must define this
     PATH_VARIANTS: Dict[str, Dict[str, Any]] = {}
 
-    def __init__(self, variant: str = None) -> None:
+    def __init__(self, variant: Optional[str] = None) -> None:
         """Initialize multi-path renderer
 
         Args:
@@ -48,7 +48,7 @@ class PathVariantsRenderer(Renderer, ABC):
         self.data = self.PATH_VARIANTS[variant]
 
     def _render_core(
-        self, state: "PathVariantState", drawing: Optional[dw.Drawing] = None
+        self, state: "PathVariantsState", drawing: Optional[dw.Drawing] = None
     ) -> dw.Group:
         """Render the renderer geometry centered at (0,0), no scaling or transforms"""
         fill_color = state.fill_color.to_rgb_string()
@@ -66,7 +66,7 @@ class PathVariantsRenderer(Renderer, ABC):
             self._set_fill_and_stroke_kwargs(state, path_kwargs, drawing)
 
             group.append(dw.Path(**path_kwargs))
-        group.transform = f"translate({-cx},{-cy})"
+        group.transform = f"translate({-cx},{-cy})"  # type: ignore[attr-defined]
         return group
 
     @classmethod

@@ -1,18 +1,18 @@
 """Triangle renderer implementation using new architecture"""
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Tuple, Optional, List
 
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours
+import math
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
+
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.triangle import TriangleRenderer
-
-from svan2d.transition import easing
+from svan2d.component.vertex import VertexContours
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-import math
+
+from .base_vertex import VertexState
 
 
 @renderer(TriangleRenderer)
@@ -21,11 +21,6 @@ class TriangleState(VertexState):
     """State class for triangle elements"""
 
     size: float = 50  # Size of the triangle (distance from center to vertex)
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "size": easing.in_out,
-    }
 
     def __post_init__(self):
         super().__post_init__()
@@ -60,12 +55,15 @@ class TriangleState(VertexState):
 
         # Distribute num_points - 1 vertices along the perimeter
         vertices = []
+        assert self._num_vertices is not None
 
         for i in range(self._num_vertices - 1):
             target_distance = (i / (self._num_vertices - 1)) * total_perimeter
 
             # Find which edge we're on
             cumulative = 0
+            current_edge = 0
+            distance_along_edge = 0.0
             for edge_idx in range(3):
                 if cumulative + edge_lengths[edge_idx] >= target_distance:
                     current_edge = edge_idx

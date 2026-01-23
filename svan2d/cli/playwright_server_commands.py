@@ -1,8 +1,9 @@
 """CLI commands for managing the Playwright render server"""
 
 import click
+
+from svan2d.config import ConfigKey, get_config
 from svan2d.server.playwright.process_manager import ProcessManager
-from svan2d.config import get_config, ConfigKey
 
 
 def get_process_manager() -> ProcessManager:
@@ -19,7 +20,7 @@ def playwright_server():
     pass
 
 
-@playwright_server.command()
+@playwright_server.command()  # type: ignore[attr-defined]
 def start():
     """Start the Playwright render server in the background"""
     manager = get_process_manager()
@@ -43,7 +44,7 @@ def start():
         raise click.Abort()
 
 
-@playwright_server.command()
+@playwright_server.command()  # type: ignore[attr-defined]
 def stop():
     """Stop the Playwright render server"""
     manager = get_process_manager()
@@ -60,7 +61,7 @@ def stop():
         raise click.Abort()
 
 
-@playwright_server.command()
+@playwright_server.command()  # type: ignore[attr-defined]
 def restart():
     """Restart the Playwright render server"""
     manager = get_process_manager()
@@ -75,7 +76,7 @@ def restart():
         raise click.Abort()
 
 
-@playwright_server.command()
+@playwright_server.command()  # type: ignore[attr-defined]
 def status():
     """Check Playwright render server status"""
     manager = get_process_manager()
@@ -93,7 +94,7 @@ def status():
         click.echo(f"  Use 'svan2d playwright-server start' to start it")
 
 
-@playwright_server.command()
+@playwright_server.command()  # type: ignore[attr-defined]
 @click.option("--lines", "-n", default=50, help="Number of log lines to show")
 def logs(lines):
     """Show recent server logs"""

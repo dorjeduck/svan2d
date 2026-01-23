@@ -5,10 +5,13 @@ alignment strategies used during morph interpolation.
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import  Tuple
 from dataclasses import dataclass
+from typing import Optional, Tuple
+
 from svan2d.core.point2d import Points2D
+
 
 @dataclass
 class AlignmentContext:
@@ -20,6 +23,7 @@ class AlignmentContext:
         closed1: Whether first shape is closed
         closed2: Whether second shape is closed
     """
+
     rotation1: float = 0
     rotation2: float = 0
     closed1: bool = True
@@ -38,7 +42,8 @@ class VertexAligner(ABC):
         self,
         verts1: Points2D,
         verts2: Points2D,
-        context: AlignmentContext
+        context: AlignmentContext,
+        rotation_target: float | None = None,
     ) -> Tuple[Points2D, Points2D]:
         """Align two vertex lists for optimal morphing
 
@@ -56,7 +61,7 @@ class VertexAligner(ABC):
         pass
 
 
-def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner:
+def get_aligner(closed1: bool, closed2: bool, norm: Optional[str] = None) -> VertexAligner:
     """Factory function to select appropriate aligner based on shape closure
 
     Args:
@@ -72,11 +77,12 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
         - AngularAligner for closed ↔ closed (with norm from config or parameter)
         - EuclideanAligner for open ↔ closed or closed ↔ open (with norm from config or parameter)
     """
+    from svan2d.config import ConfigKey, get_config
+
     from .angular import AngularAligner
     from .euclidean import EuclideanAligner
-    from .sequential import SequentialAligner
     from .norm import AlignmentNorm
-    from svan2d.config import get_config, ConfigKey
+    from .sequential import SequentialAligner
 
     config = get_config()
 
@@ -89,8 +95,9 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
             # Try aligner-specific config first, then fall back to global
             norm = config.get(
                 ConfigKey.MORPHING_ANGULAR_ALIGNMENT_NORM,
-                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1)
+                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1),
             )
+        assert norm is not None
         return AngularAligner(norm=norm)
     else:
         # Open ↔ Closed: Euclidean alignment
@@ -98,6 +105,7 @@ def get_aligner(closed1: bool, closed2: bool, norm: str = None) -> VertexAligner
             # Try aligner-specific config first, then fall back to global
             norm = config.get(
                 ConfigKey.MORPHING_EUCLIDEAN_ALIGNMENT_NORM,
-                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1)
+                config.get(ConfigKey.MORPHING_VERTEX_ALIGNMENT_NORM, AlignmentNorm.L1),
             )
+        assert norm is not None
         return EuclideanAligner(norm=norm)

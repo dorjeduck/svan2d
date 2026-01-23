@@ -5,21 +5,22 @@ Run with: pytest tests/benchmark -v --benchmark-only
 """
 
 import pytest
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
+
 from svan2d.component.state.circle import CircleState
 from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.component.vertex.vertex_contours import VertexContours
-from svan2d.transition.interpolation_engine import InterpolationEngine
-from svan2d.transition.easing_resolver import EasingResolver
-from svan2d.transition.mapping import GreedyMapper
-from svan2d.transition.vertex_alignment import (
-    AngularAligner,
-    AlignmentContext,
-)
+from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
+from svan2d.transition.easing_resolver import EasingResolver
+from svan2d.transition.interpolation_engine import InterpolationEngine
+from svan2d.transition.mapping import GreedyMapper
+from svan2d.transition.vertex_alignment import (
+    AlignmentContext,
+    AngularAligner,
+)
+from svan2d.velement import VElement
+from svan2d.vscene import VScene
 
 
 @pytest.mark.benchmark

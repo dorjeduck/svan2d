@@ -1,14 +1,14 @@
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from svan2d.transition import easing
+from svan2d.component.registry import renderer
+from svan2d.component.renderer.arrow import ArrowRenderer
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours
 from svan2d.core.point2d import Point2D
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.arrow import ArrowRenderer
 
 
 @renderer(ArrowRenderer)
@@ -21,14 +21,6 @@ class ArrowState(VertexState):
     shaft_width: float = 20
 
     closed: bool = True
-
-    DEFAULT_EASING = {
-        **VertexState.DEFAULT_EASING,
-        "length": easing.in_out,
-        "head_width": easing.in_out,
-        "head_length": easing.in_out,
-        "shaft_width": easing.in_out,
-    }
 
     def _generate_contours(self) -> VertexContours:
         """Generate arrow vertices (7 corners)"""
@@ -58,6 +50,7 @@ class ArrowState(VertexState):
         
         # Distribute vertices
         vertices = []
+        assert self._num_vertices is not None
         for i in range(self._num_vertices):
             t = i / (self._num_vertices - 1) if self._num_vertices > 1 else 0
             target_distance = t * total_perimeter

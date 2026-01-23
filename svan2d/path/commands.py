@@ -4,8 +4,10 @@
 """SVG Path Command Classes"""
 
 from __future__ import annotations
-from dataclasses import dataclass
+
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
 from svan2d.core.point2d import Point2D
 
 
@@ -59,7 +61,7 @@ class MoveTo(PathCommand):
         if not isinstance(other, MoveTo):
             raise ValueError(f"Cannot interpolate MoveTo with {type(other).__name__}")
         return MoveTo(
-            self.pos.lerp(other, t),
+            self.pos.lerp(other.pos, t),
             absolute=True,  # Interpolated path should use absolute
         )
 
@@ -89,7 +91,7 @@ class LineTo(PathCommand):
         if not isinstance(other, LineTo):
             raise ValueError(f"Cannot interpolate LineTo with {type(other).__name__}")
         return LineTo(
-            self.pos.lerp(other, t),
+            self.pos.lerp(other.pos, t),
             absolute=True,
         )
 
@@ -111,13 +113,13 @@ class HorizontalLine(PathCommand):
     def to_absolute(self, current_pos: Point2D) -> LineTo:
         """Converts to a standard LineTo command with the current y-coordinate"""
         if self.absolute:
-            return LineTo(self.pos.x, current_pos.y)
-        return LineTo(current_pos.x + self.x, current_pos.y)
+            return LineTo(Point2D(self.x, current_pos.y))
+        return LineTo(Point2D(current_pos.x + self.x, current_pos.y))
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (self.pos.x, current_pos.y)
-        return (current_pos.x + self.x, current_pos.y)
+            return Point2D(self.x, current_pos.y)
+        return Point2D(current_pos.x + self.x, current_pos.y)
 
     def interpolate(self, other: PathCommand, t: float) -> HorizontalLine:
         if not isinstance(other, HorizontalLine):
@@ -141,13 +143,13 @@ class VerticalLine(PathCommand):
     def to_absolute(self, current_pos: Point2D) -> LineTo:
         """Converts to a standard LineTo command with the current x-coordinate"""
         if self.absolute:
-            return LineTo(current_pos.x, self.y)
-        return LineTo(current_pos.x, current_pos.y + self.y)
+            return LineTo(Point2D(current_pos.x, self.y))
+        return LineTo(Point2D(current_pos.x, current_pos.y + self.y))
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (current_pos.x, self.y)
-        return (current_pos.x, current_pos.y + self.y)
+            return Point2D(current_pos.x, self.y)
+        return Point2D(current_pos.x, current_pos.y + self.y)
 
     def interpolate(self, other: PathCommand, t: float) -> VerticalLine:
         if not isinstance(other, VerticalLine):
@@ -192,7 +194,7 @@ class QuadraticBezier(PathCommand):
                 f"Cannot interpolate QuadraticBezier with {type(other).__name__}"
             )
         return QuadraticBezier(
-            self.center.lerp(other, t), self.pos.lerp(other, t), absolute=True
+            self.center.lerp(other.center, t), self.pos.lerp(other.pos, t), absolute=True
         )
 
 
@@ -221,8 +223,8 @@ class CubicBezier(PathCommand):
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (self.pos.x, self.pos.y)
-        return (current_pos.x + self.pos.x, current_pos.y + self.pos.y)
+            return self.pos
+        return Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y)
 
     def interpolate(self, other: PathCommand, t: float) -> CubicBezier:
         if not isinstance(other, CubicBezier):
@@ -230,9 +232,9 @@ class CubicBezier(PathCommand):
                 f"Cannot interpolate CubicBezier with {type(other).__name__}"
             )
         return CubicBezier(
-            self.center1.lerp(other, t),
-            self.center2.lerp(other, t),
-            self.pos.lerp(other, t),
+            self.center1.lerp(other.center1, t),
+            self.center2.lerp(other.center2, t),
+            self.pos.lerp(other.pos, t),
             absolute=True,
         )
 
@@ -255,13 +257,13 @@ class SmoothQuadraticBezier(PathCommand):
         if self.absolute:
             return self
         return SmoothQuadraticBezier(
-            x=current_pos.x + self.pos.x, y=current_pos.y + self.pos.y, absolute=True
+            pos=Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y), absolute=True
         )
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (self.pos.x, self.pos.y)
-        return (current_pos.x + self.pos.x, current_pos.y + self.pos.y)
+            return self.pos
+        return Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y)
 
     def interpolate(self, other: PathCommand, t: float) -> SmoothQuadraticBezier:
         if not isinstance(other, SmoothQuadraticBezier):
@@ -269,7 +271,7 @@ class SmoothQuadraticBezier(PathCommand):
                 f"Cannot interpolate SmoothQuadraticBezier with {type(other).__name__}"
             )
         return SmoothQuadraticBezier(
-            self.pos.lerp(other, t),
+            self.pos.lerp(other.pos, t),
             absolute=True,
         )
 
@@ -297,8 +299,8 @@ class SmoothCubicBezier(PathCommand):
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (self.pos.x, self.pos.y)
-        return (current_pos.x + self.pos.x, current_pos.y + self.pos.y)
+            return self.pos
+        return Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y)
 
     def interpolate(self, other: PathCommand, t: float) -> SmoothCubicBezier:
         if not isinstance(other, SmoothCubicBezier):
@@ -306,8 +308,8 @@ class SmoothCubicBezier(PathCommand):
                 f"Cannot interpolate SmoothCubicBezier with {type(other).__name__}"
             )
         return SmoothCubicBezier(
-            self.center.lerp(other, t),
-            self.pos.lerp(other, t),
+            self.center.lerp(other.center, t),
+            self.pos.lerp(other.pos, t),
             absolute=True,
         )
 
@@ -331,7 +333,7 @@ class Arc(PathCommand):
         cmd = "A" if self.absolute else "a"
         # Flags (large_arc_flag, sweep_flag) are 0 or 1 integers
         return (
-            f"{cmd} {self.rx},{self.ry} {self.pos.x_axis_rotation} "
+            f"{cmd} {self.rx},{self.ry} {self.x_axis_rotation} "
             f"{self.large_arc_flag},{self.sweep_flag} {self.pos.x},{self.pos.y}"
         )
 
@@ -341,18 +343,17 @@ class Arc(PathCommand):
         return Arc(
             rx=self.rx,
             ry=self.ry,
-            x_axis_rotation=self.pos.x_axis_rotation,
+            x_axis_rotation=self.x_axis_rotation,
             large_arc_flag=self.large_arc_flag,
             sweep_flag=self.sweep_flag,
-            x=current_pos.x + self.pos.x,
-            y=current_pos.y + self.pos.y,
+            pos=Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y),
             absolute=True,
         )
 
     def get_end_point(self, current_pos: Point2D) -> Point2D:
         if self.absolute:
-            return (self.pos.x, self.pos.y)
-        return (current_pos.x + self.pos.x, current_pos.y + self.pos.y)
+            return self.pos
+        return Point2D(current_pos.x + self.pos.x, current_pos.y + self.pos.y)
 
     def interpolate(self, other: PathCommand, t: float) -> Arc:
         if not isinstance(other, Arc):
@@ -364,16 +365,15 @@ class Arc(PathCommand):
         return Arc(
             rx=self.rx + (other.rx - self.rx) * t,
             ry=self.ry + (other.ry - self.ry) * t,
-            x_axis_rotation=self.pos.x_axis_rotation
-            + (other.x_axis_rotation - self.pos.x_axis_rotation) * t,
+            x_axis_rotation=self.x_axis_rotation
+            + (other.x_axis_rotation - self.x_axis_rotation) * t,
             large_arc_flag=round(
                 self.large_arc_flag + (other.large_arc_flag - self.large_arc_flag) * t
             ),
             sweep_flag=round(
                 self.sweep_flag + (other.sweep_flag - self.sweep_flag) * t
             ),
-            x=self.pos.x + (other.x - self.pos.x) * t,
-            y=self.pos.y + (other.y - self.pos.y) * t,
+            pos=self.pos.lerp(other.pos, t),
             absolute=True,
         )
 

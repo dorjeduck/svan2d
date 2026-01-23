@@ -12,9 +12,10 @@ The key abstraction is Match, which represents what happens to each item:
 """
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TypeVar, Generic, List, Optional, Callable
+from typing import Callable, Generic, List, Optional, TypeVar
 
 from svan2d.core.point2d import Point2D
 

@@ -1,7 +1,8 @@
 """Grid layout state function"""
 
-from typing import Optional
 from dataclasses import replace
+from typing import Optional
+
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
 
@@ -10,8 +11,8 @@ from .enums import ElementAlignment
 
 def grid(
     states: States,
-    rows: Optional[int] = None,
-    cols: Optional[int] = None,
+    rows: int | None = None,
+    cols: int | None = None,
     spacing_h: float = 100,
     spacing_v: float = 100,
     center: Point2D = Point2D(0, 0),
@@ -47,14 +48,15 @@ def grid(
 
     num_elements = len(states)
 
-    # Determine grid size
-    if rows is None and cols is None:
-        cols = int(num_elements**0.5)
+    # Determine grid size - calculate cols first, then rows
+    if cols is None:
+        if rows is None:
+            cols = int(num_elements**0.5)
+        else:
+            cols = (num_elements + rows - 1) // rows
+
+    if rows is None:
         rows = (num_elements + cols - 1) // cols
-    elif rows is None:
-        rows = (num_elements + cols - 1) // cols
-    elif cols is None:
-        cols = (num_elements + rows - 1) // rows
 
     result = []
     for idx, state in enumerate(states):
@@ -89,8 +91,8 @@ def grid_in_bbox(
     y: float,
     width: float,
     height: float,
-    rows: Optional[int] = None,
-    cols: Optional[int] = None,
+    rows: int | None = None,
+    cols: int | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
 ) -> States:
@@ -140,14 +142,15 @@ def grid_in_bbox(
 
     num_elements = len(states)
 
-    # Determine grid size (same logic as grid())
-    if rows is None and cols is None:
-        cols = int(num_elements**0.5)
+    # Determine grid size - calculate cols first, then rows
+    if cols is None:
+        if rows is None:
+            cols = int(num_elements**0.5)
+        else:
+            cols = (num_elements + rows - 1) // rows
+
+    if rows is None:
         rows = (num_elements + cols - 1) // cols
-    elif rows is None:
-        rows = (num_elements + cols - 1) // cols
-    elif cols is None:
-        cols = (num_elements + rows - 1) // rows
 
     # Calculate spacing to fit in bbox
     spacing_h = width / (cols - 1) if cols > 1 else 0

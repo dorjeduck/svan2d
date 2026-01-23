@@ -1,16 +1,17 @@
 """Per-field timeline interpolation for attribute keystates."""
 
 from __future__ import annotations
-from dataclasses import replace
-from typing import Dict, List, Any, TYPE_CHECKING
 
-from svan2d.transition import lerp
+from dataclasses import replace
+from typing import TYPE_CHECKING, Any, Dict, List
+
 from svan2d.component.state.base import State
+from svan2d.core.scalar_functions import lerp
 
 if TYPE_CHECKING:
-    from svan2d.velement.keystate import KeyStates
     from svan2d.transition.easing_resolver import EasingResolver
     from svan2d.transition.interpolation_engine import InterpolationEngine
+    from svan2d.velement.keystate import KeyStates
 
 
 class AttributeTimelineResolver:

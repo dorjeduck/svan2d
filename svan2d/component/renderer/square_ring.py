@@ -1,7 +1,9 @@
 """Square ring renderer - SVG primitive-based for static/keystate rendering"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
+
 import drawsvg as dw
 
 from .base import Renderer

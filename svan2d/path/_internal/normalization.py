@@ -8,8 +8,10 @@ Integrates robust subdivision with smart path analysis.
 """
 
 from typing import Tuple
-from svan2d.path.svg_path import SVGPath
+
+from svan2d.core.point2d import Point2D
 from svan2d.path.subdivision import analyze_path_curves, subdivide_path_to_count
+from svan2d.path.svg_path import SVGPath
 
 
 def equalize_curve_counts(path1: SVGPath, path2: SVGPath) -> Tuple[SVGPath, SVGPath]:
@@ -73,7 +75,7 @@ def normalize_path_structure(path: SVGPath) -> SVGPath:
     Returns:
         Structurally normalized path
     """
-    from ..commands import MoveTo, LineTo, CubicBezier, ClosePath
+    from ..commands import ClosePath, CubicBezier, LineTo, MoveTo
 
     # Convert to absolute and cubic first
     normalized = path.to_absolute().to_cubic_beziers()
@@ -85,24 +87,28 @@ def normalize_path_structure(path: SVGPath) -> SVGPath:
     for cmd in normalized.commands:
         if isinstance(cmd, MoveTo):
             new_commands.append(cmd)
-            start_pos = (cmd.x, cmd.y)
+            start_pos = cmd.pos
         elif isinstance(cmd, ClosePath):
             # Instead of ClosePath, add a line back to start
             if start_pos is not None:
                 # Convert to cubic Bezier line
                 current_pos = (
-                    new_commands[-1].get_end_point((0, 0)) if new_commands else (0, 0)
+                    new_commands[-1].get_end_point(Point2D(0, 0))
+                    if new_commands
+                    else Point2D(0, 0)
                 )
-                x1, y1 = current_pos
-                x2, y2 = start_pos
 
                 # Control points at 1/3 and 2/3 along the line
-                cx1 = x1 + (x2 - x1) / 3
-                cy1 = y1 + (y2 - y1) / 3
-                cx2 = x1 + 2 * (x2 - x1) / 3
-                cy2 = y1 + 2 * (y2 - y1) / 3
+                c1 = Point2D(
+                    current_pos.x + (start_pos.x - current_pos.x) / 3,
+                    current_pos.y + (start_pos.y - current_pos.y) / 3,
+                )
+                c2 = Point2D(
+                    current_pos.x + 2 * (start_pos.x - current_pos.x) / 3,
+                    current_pos.y + 2 * (start_pos.y - current_pos.y) / 3,
+                )
 
-                new_commands.append(CubicBezier(cx1, cy1, cx2, cy2, x2, y2))
+                new_commands.append(CubicBezier(center1=c1, center2=c2, pos=start_pos))
         else:
             new_commands.append(cmd)
 

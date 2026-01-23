@@ -1,8 +1,9 @@
 """Random (scatter) layout state function"""
 
 import random
-from typing import Optional, Tuple
 from dataclasses import replace
+from typing import Optional, Tuple
+
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
 
@@ -15,7 +16,7 @@ def scatter(
     y_range: Tuple[float, float] = (-100, 100),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> States:
     """
     Arrange states randomly (scatter) within a bounding box.
@@ -69,7 +70,7 @@ def scatter_in_bbox(
     y: float,
     width: float,
     height: float,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
 ) -> States:

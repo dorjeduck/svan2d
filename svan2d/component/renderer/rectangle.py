@@ -1,6 +1,7 @@
 """Rectangle renderer implementation using new architecture"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
@@ -27,8 +28,6 @@ class RectangleRenderer(Renderer):
         Returns:
             dw.Rectangle: The drawsvg rectangle object
         """
-        fill_color = state.fill_color.to_rgb_string()
-
         # Create rectangle centered at origin with scaled dimensions
         rect_kwargs = {
             "x": -(state.width) / 2,  # Center the rectangle

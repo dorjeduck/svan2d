@@ -1,11 +1,14 @@
 """Bezier/path layout state function"""
 
 import math
-from typing import Optional, Callable, Sequence
 from dataclasses import replace
+from typing import Callable, Optional, Sequence
+
 from svan2d.component.state.base import States
-from .enums import ElementAlignment
 from svan2d.core.point2d import Point2D, Points2D
+
+from .enums import ElementAlignment
+
 
 def bezier(
     states: States,
@@ -88,8 +91,8 @@ def bezier(
 
     def build_arc_length_table(pts:Points2D, samples=1000) -> tuple[list[float], list[float], float]:
         """Build a lookup table mapping arc length to t parameter"""
-        arc_lengths = [0]
-        t_values = [0]
+        arc_lengths: list[float] = [0.0]
+        t_values: list[float] = [0.0]
 
 
         prev_point = bezier_point(0, pts)
@@ -134,6 +137,9 @@ def bezier(
         return t_values[left] + ratio * (t_values[right] - t_values[left])
 
     # Build arc length table if needed
+    arc_lengths: list[float] = []
+    t_values: list[float] = []
+    total_length: float = 0.0
     if arc_length_spacing:
         arc_lengths, t_values, total_length = build_arc_length_table(control_points)
 

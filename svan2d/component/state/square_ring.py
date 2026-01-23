@@ -1,17 +1,15 @@
 """Square ring state implementation using VertexContours"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from svan2d.core.point2d import Point2D
-
-from .base import State
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexSquare, rotate_vertices
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.square_ring import SquareRingRenderer
-from svan2d.transition import easing
-from svan2d.core.color import Color
+from svan2d.component.vertex import VertexContours, VertexSquare, rotate_vertices
+from svan2d.core.point2d import Point2D
+
+from .base_vertex import VertexState
 
 
 @renderer(SquareRingRenderer)
@@ -27,14 +25,6 @@ class SquareRingState(VertexState):
     outer_size: float = 70
     inner_rotation: float = 0  # Rotation of inner square in degrees
 
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "inner_size": easing.in_out,
-        "outer_size": easing.in_out,
-        "inner_rotation": easing.in_out,
-    }
-
     def _generate_contours(self) -> VertexContours:
         """Generate square ring contours with outer and inner squares
 
@@ -44,6 +34,7 @@ class SquareRingState(VertexState):
 
         The inner square can be rotated using inner_rotation.
         """
+        assert self._num_vertices is not None
         # Generate outer square (counter-clockwise winding)
         outer_square = VertexSquare(
             center=Point2D(),

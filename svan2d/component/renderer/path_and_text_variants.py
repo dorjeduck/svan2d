@@ -1,9 +1,9 @@
 """Abstract base class for renderers with multiple path variants and text labels"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+
 from abc import ABC
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import drawsvg as dw
 
@@ -29,7 +29,7 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
     # Subclasses must define this
     PATH_VARIANTS: Dict[str, Dict[str, Any]] = {}
 
-    def __init__(self, variant: str = None) -> None:
+    def __init__(self, variant: Optional[str] = None) -> None:
         """Initialize multi-path text renderer
 
         Args:

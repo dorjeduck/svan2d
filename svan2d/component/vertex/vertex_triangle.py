@@ -1,11 +1,12 @@
 """VertexTriangle - triangle as a VertexLoop"""
 
 from __future__ import annotations
+
 import math
 
-from .vertex_loop import VertexLoop
-
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
 
 
 class VertexTriangle(VertexLoop):
@@ -17,7 +18,7 @@ class VertexTriangle(VertexLoop):
     """
 
     def __init__(
-        self, center: float = Point2D(0, 0), size: float = 50.0, num_vertices: int = 128
+        self, center: Point2D = Point2D(0, 0), size: float = 50.0, num_vertices: int = 128
     ):
         """Create an equilateral triangle as a vertex loop
 

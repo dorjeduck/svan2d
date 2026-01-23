@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Optional, Callable
-from datetime import datetime
-from pathlib import Path
-from dataclasses import dataclass
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Callable, Optional
 
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import get_logger
+from svan2d.core.mutable_point2d import reset_point_pool
 
 logger = get_logger()
 
@@ -22,7 +23,7 @@ class ExportResult:
 
     success: bool
     files: dict[str, str]  # format -> file path
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class VSceneExporter:
@@ -56,6 +57,8 @@ class VSceneExporter:
             timestamp_files: Whether to prefix filenames with timestamps
         """
         self.scene = scene
+        if output_dir is None:
+            output_dir = "."
         self.output_dir = (
             Path(output_dir) if not isinstance(output_dir, Path) else output_dir
         )
@@ -71,10 +74,10 @@ class VSceneExporter:
         # Lazy imports to avoid importing optional dependencies at module load time
         from svan2d.converter.cairo_svg_converter import CairoSvgConverter
         from svan2d.converter.inkscape_svg_converter import InkscapeSvgConverter
-        from svan2d.converter.playwright_svg_converter import PlaywrightSvgConverter
         from svan2d.converter.playwright_http_svg_converter import (
             PlaywrightHttpSvgConverter,
         )
+        from svan2d.converter.playwright_svg_converter import PlaywrightSvgConverter
 
         converter_map = {
             ConverterType.CAIROSVG: CairoSvgConverter,
@@ -134,7 +137,9 @@ class VSceneExporter:
     # HELPER METHODS
     # ========================================================================
 
-    def _generate_output_path(self, filename: str, extension: str = None) -> Path:
+    def _generate_output_path(
+        self, filename: str, extension: str | None = None
+    ) -> Path:
         """Generate output path with optional timestamp
 
         Args:
@@ -170,20 +175,17 @@ class VSceneExporter:
         self,
         frame_num: int,
         total_frames: int,
-        easing: Optional[Callable[[float], float]] = None,
     ) -> float:
         """Calculate normalized time for a frame number
 
         Args:
             frame_num: Current frame number (0-indexed)
             total_frames: Total number of frames
-            easing: Optional easing function to apply
 
         Returns:
             Time value between 0.0 and 1.0
         """
-        t = frame_num / (total_frames - 1) if total_frames > 1 else 0.0
-        return easing(t) if easing else t
+        return frame_num / (total_frames - 1) if total_frames > 1 else 0.0
 
     def _infer_formats_from_extension(self, extension: str) -> list[str]:
         """Infer export formats from file extension"""
@@ -218,12 +220,12 @@ class VSceneExporter:
         filename: str,
         frame_time: float = 0.0,
         formats: Optional[list[str]] = None,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
-        png_thumbnail_width_px: Optional[int] = None,
-        png_thumbnail_height_px: Optional[int] = None,
-        pdf_inch_width: Optional[float] = None,
-        pdf_inch_height: Optional[float] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        png_thumbnail_width_px: int | None = None,
+        png_thumbnail_height_px: int | None = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> ExportResult:
         """Export scene at specific time point to various formats.
 
@@ -303,8 +305,8 @@ class VSceneExporter:
         self,
         filename: str,
         frame_time: float = 0.0,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
     ) -> str:
         """Export scene to PNG at specific time point.
 
@@ -330,14 +332,16 @@ class VSceneExporter:
         if not result.success:
             raise RuntimeError(f"PNG export failed: {result.error}")
 
-        return result.files.get("png")
+        png_path = result.files.get("png")
+        assert png_path is not None
+        return png_path
 
     def to_pdf(
         self,
         filename: str,
         frame_time: float = 0.0,
-        pdf_inch_width: Optional[float] = None,
-        pdf_inch_height: Optional[float] = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> str:
         """Export scene to PDF at specific time point.
 
@@ -363,7 +367,9 @@ class VSceneExporter:
         if not result.success:
             raise RuntimeError(f"PDF export failed: {result.error}")
 
-        return result.files.get("pdf")
+        pdf_path = result.files.get("pdf")
+        assert pdf_path is not None
+        return pdf_path
 
     # ========================================================================
     # ANIMATION EXPORTS
@@ -374,9 +380,8 @@ class VSceneExporter:
         filename: str,
         total_frames: int = 60,
         framerate: int = DEFAULT_FRAMERATE,
-        easing: Optional[Callable[[float], float]] = None,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
         loop: int = 0,
         optimize: bool = True,
         cleanup_intermediate_files: bool = True,
@@ -388,7 +393,6 @@ class VSceneExporter:
             filename: Output GIF filename (without extension)
             total_frames: Number of frames to generate
             framerate: Animation framerate (fps)
-            easing: Optional easing function
             png_width_px: Width for frames
             png_height_px: Height for frames
             loop: Number of loops (0 = infinite)
@@ -436,7 +440,6 @@ class VSceneExporter:
                 filename_pattern=self.DEFAULT_FRAME_PATTERN,
                 total_frames=total_frames,
                 format="png",
-                easing=easing,
                 png_width_px=png_width_px,
                 png_height_px=png_height_px,
                 cleanup_svg_after_png_conversion=True,
@@ -677,9 +680,8 @@ class VSceneExporter:
         filename_pattern: str = DEFAULT_FRAME_PATTERN,
         total_frames: int = 60,
         format: str = "svg",
-        easing: Optional[Callable[[float], float]] = None,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
         cleanup_svg_after_png_conversion: bool = True,
         progress_callback: Optional[Callable[[int, int], None]] = None,
     ):
@@ -690,7 +692,6 @@ class VSceneExporter:
             filename_pattern: Pattern for frame filenames (must include format placeholder like {:04d})
             total_frames: Number of frames to generate
             format: Format for frames ("svg", "png", or "pdf")
-            easing: Optional easing function for animation
             png_width_px: Width for PNG frames
             png_height_px: Height for PNG frames
             cleanup_svg_after_png_conversion: If format is PNG, whether to delete intermediate SVG files
@@ -720,9 +721,11 @@ class VSceneExporter:
         svg_files = []
 
         for frame_num in range(total_frames):
-            # Calculate frame time
+            # Reset point pool at frame boundary to reclaim memory
+            reset_point_pool()
 
-            t = self._calculate_frame_time(frame_num, total_frames, easing)
+            # Calculate frame time
+            t = self._calculate_frame_time(frame_num, total_frames)
 
             # Progress tracking
             if progress_callback:
@@ -782,9 +785,8 @@ class VSceneExporter:
         filename: str,
         total_frames: int = 60,
         framerate: int = DEFAULT_FRAMERATE,
-        easing: Optional[Callable[[float], float]] = None,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
         cleanup_intermediate_files: bool = True,
         codec: str = DEFAULT_CODEC,
         num_thumbnails: int = 0,
@@ -796,7 +798,6 @@ class VSceneExporter:
             filename: Output video filename (without extension)
             total_frames: Number of frames to generate
             framerate: Video framerate (fps)
-            easing: Optional easing function
             png_width_px: Width for video frames
             png_height_px: Height for video frames
             cleanup_intermediate_files: Whether to delete frame images after encoding
@@ -840,7 +841,6 @@ class VSceneExporter:
                 filename_pattern=self.DEFAULT_FRAME_PATTERN,
                 total_frames=total_frames,
                 format="png",
-                easing=easing,
                 png_width_px=png_width_px,
                 png_height_px=png_height_px,
                 cleanup_svg_after_png_conversion=False,  # Keep frames for ffmpeg

@@ -7,12 +7,12 @@ Linux, macOS, and Windows using PID files and psutil for process control.
 from __future__ import annotations
 
 import os
+import signal
+import subprocess
 import sys
 import time
-import subprocess
-import signal
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import psutil
 

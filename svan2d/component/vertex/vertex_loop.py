@@ -1,9 +1,12 @@
 """VertexLoop class - sequence of vertices forming an open or closed path"""
 
 from __future__ import annotations
-from typing import List, Tuple, Optional
-from svan2d.core.point2d import Points2D,Point2D
+
 import math
+from typing import List, Optional, Tuple
+
+from svan2d.core.point2d import Point2D, Points2D
+
 
 class VertexLoop:
     """A sequence of vertices forming an open or closed loop
@@ -12,11 +15,7 @@ class VertexLoop:
     Can be subclassed for specific geometric primitives.
     """
 
-    def __init__(
-        self,
-        vertices: Points2D,
-        closed: bool = True
-    ):
+    def __init__(self, vertices: Points2D, closed: bool = True):
         """Initialize a vertex loop
 
         Args:
@@ -28,8 +27,7 @@ class VertexLoop:
 
         # Ensure vertices are Point2D objects
         self._vertices = [
-            v if isinstance(v, Point2D) else Point2D(v[0], v[1])
-            for v in vertices
+            v if isinstance(v, Point2D) else Point2D(v[0], v[1]) for v in vertices
         ]
         self._closed = closed
 
@@ -88,8 +86,8 @@ class VertexLoop:
             return Point2D(x_sum / n, y_sum / n)
 
         area *= 0.5
-        cx /= (6.0 * area)
-        cy /= (6.0 * area)
+        cx /= 6.0 * area
+        cy /= 6.0 * area
 
         return Point2D(cx, cy)
 
@@ -136,11 +134,10 @@ class VertexLoop:
         Returns self for method chaining.
         """
         for v in self._vertices:
-            v.x += dx
-            v.y += dy
+            v += Point2D(dx, dy)
         return self
 
-    def scale(self, sx: float, sy: Optional[float] = None) -> VertexLoop:
+    def scale(self, sx: float, sy: float | None = None) -> VertexLoop:
         """Scale vertices in-place by (sx, sy)
 
         If sy is None, uses sx for both dimensions (uniform scaling).
@@ -150,11 +147,11 @@ class VertexLoop:
             sy = sx
 
         for v in self._vertices:
-            v.x *= sx
-            v.y *= sy
+            v += Point2D(sx, sy)
+
         return self
 
-    def rotate(self, angle_degrees: float, center: Optional[Point2D] = None) -> VertexLoop:
+    def rotate(self, angle_degrees: float, center: Point2D | None = None) -> VertexLoop:
         """Rotate vertices in-place by angle_degrees around center
 
         Args:
@@ -163,8 +160,7 @@ class VertexLoop:
 
         Returns self for method chaining.
         """
-        if center is None:
-            center = Point2D(0.0, 0.0)
+        rot_center: Point2D = center if center is not None else Point2D(0.0, 0.0)
 
         angle_rad = math.radians(angle_degrees)
         cos_a = math.cos(angle_rad)
@@ -172,15 +168,14 @@ class VertexLoop:
 
         for v in self._vertices:
             # Translate to origin
-            x_rel = v.x - center.x             
-            y_rel = v.y - center.y
+            x_rel = v.x - rot_center.x
+            y_rel = v.y - rot_center.y
 
             # Rotate
             x_new = x_rel * cos_a - y_rel * sin_a
             y_new = x_rel * sin_a + y_rel * cos_a
 
             # Translate back
-            v.x = x_new + center.x             
-            v.y = y_new + center.y
+            v = Point2D(x_new, y_new) + rot_center
 
         return self

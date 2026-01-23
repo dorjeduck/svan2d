@@ -4,27 +4,29 @@
 """SVG Path Class with Morphing Support"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .commands import (
-    PathCommand,
-    MoveTo,
-    LineTo,
-    QuadraticBezier,
-    CubicBezier,
-    ClosePath,
-    HorizontalLine,  # New
-    VerticalLine,  # New
-    SmoothCubicBezier,  # New
-    SmoothQuadraticBezier,  # New
-    Arc,  # New
-)
-from .parser import tokenize_path, parse_coordinates
+from svan2d.core.point2d import Point2D
+
 from .arc_to_bezier import (
     arc_to_beziers,
 )  # New: Function to convert Arc to Cubic Beziers
-from svan2d.core.point2d import Point2D
+from .commands import (
+    Arc,  # New
+    ClosePath,
+    CubicBezier,
+    HorizontalLine,  # New
+    LineTo,
+    MoveTo,
+    PathCommand,
+    QuadraticBezier,
+    SmoothCubicBezier,  # New
+    SmoothQuadraticBezier,  # New
+    VerticalLine,  # New
+)
+from .parser import parse_coordinates, tokenize_path
 
 
 @dataclass
@@ -36,7 +38,7 @@ class SVGPath:
     """
 
     commands: List[PathCommand]
-    path_string: Optional[str] = None
+    path_string: str | None = None
 
     @staticmethod
     def from_string(path_string: str) -> SVGPath:
@@ -108,13 +110,13 @@ class SVGPath:
             elif cmd_type == "H":  # New: Horizontal Line
                 # H/h requires 1 arg (x)
                 coords, tokens = parse_coordinates(tokens, 1)
-                x = coords.x
+                (x,) = coords
                 parsed_commands.append(HorizontalLine(x, absolute))
 
             elif cmd_type == "V":  # New: Vertical Line
                 # V/v requires 1 arg (y)
                 coords, tokens = parse_coordinates(tokens, 1)
-                y = coords.y
+                (y,) = coords
                 parsed_commands.append(VerticalLine(y, absolute))
 
             elif cmd_type == "Q":
@@ -253,12 +255,12 @@ class SVGPath:
         everything to the most general form (cubic Bezier).
         """
         normalized = []
-        current_pos = (0.0, 0.0)
+        current_pos = Point2D(0.0, 0.0)
 
         # Track previous curve's control point for S/T smooth commands
         # Stores the control point P2/C1 of the previous C/S command, or P1/C1 of Q/T command.
         # This point is required to calculate the reflection point for the smooth command.
-        previous_control_point = (0.0, 0.0)
+        previous_control_point = Point2D(0.0, 0.0)
 
         for cmd in self.commands:
             # 1. Ensure command is absolute for easy calculation
@@ -282,38 +284,28 @@ class SVGPath:
                 else:
                     line_cmd = abs_cmd
 
-                x1, y1 = current_pos
-                x2, y2 = line_cmd.x, line_cmd.y
+                end_pos = line_cmd.pos
 
                 # Control points at 1/3 and 2/3 along the line
-                cx1 = x1 + (x2 - x1) / 3
-                cy1 = y1 + (y2 - y1) / 3
-                cx2 = x1 + 2 * (x2 - x1) / 3
-                cy2 = y1 + 2 * (y2 - y1) / 3
+                c1 = current_pos.lerp(end_pos, 1.0 / 3)
+                c2 = current_pos.lerp(end_pos, 2.0 / 3)
 
-                new_commands = [CubicBezier(cx1, cy1, cx2, cy2, x2, y2)]
+                new_commands = [CubicBezier(center1=c1, center2=c2, pos=end_pos)]
                 previous_control_point = (
-                    x2,
-                    y2,
-                )  # End point is the effective control point
+                    end_pos  # End point is the effective control point
+                )
 
             elif isinstance(abs_cmd, QuadraticBezier):
                 # Convert QuadraticBezier to CubicBezier
-                x1, y1 = current_pos
-                qcx, qcy = abs_cmd.cx, abs_cmd.cy
-                x2, y2 = abs_cmd.x, abs_cmd.y
+                qc = abs_cmd.center
+                end_pos = abs_cmd.pos
 
                 # Formula: cubic control points = (2/3 * quad_control + 1/3 * start/end)
-                cx1 = x1 + 2 / 3 * (qcx - x1)
-                cy1 = y1 + 2 / 3 * (qcy - y1)
-                cx2 = x2 + 2 / 3 * (qcx - x2)
-                cy2 = y2 + 2 / 3 * (qcy - y2)
+                c1 = current_pos.lerp(qc, 2.0 / 3)
+                c2 = end_pos.lerp(qc, 2.0 / 3)
 
-                new_commands = [CubicBezier(cx1, cy1, cx2, cy2, x2, y2)]
-                previous_control_point = (
-                    qcx,
-                    qcy,
-                )  # Control point for potential T command
+                new_commands = [CubicBezier(center1=c1, center2=c2, pos=end_pos)]
+                previous_control_point = qc  # Control point for potential T command
 
             elif isinstance(abs_cmd, SmoothQuadraticBezier):
                 # Convert Smooth Quadratic (T) to QuadraticBezier, then CubicBezier
@@ -322,50 +314,43 @@ class SVGPath:
 
                 # Calculate reflected control point (qc_reflected)
                 # Reflection formula: P' = 2*End - Control (where 'End' is the start of T command)
-                # Reflected control point (Pq1)
-                qc_reflected_x = current_pos.x + (current_pos.x - p1.x)
-                qc_reflected_y = current_pos.y + (current_pos.y - p1.y)
+                qc_reflected = Point2D(
+                    current_pos.x + (current_pos.x - p1.x),
+                    current_pos.y + (current_pos.y - p1.y),
+                )
 
-                # Convert to Q
-                q_cmd = QuadraticBezier(qc_reflected_x, qc_reflected_y, p2.x, p2.y)
+                # Convert to cubic using quadratic->cubic formula
+                c1 = current_pos.lerp(qc_reflected, 2.0 / 3)
+                c2 = p2.lerp(qc_reflected, 2.0 / 3)
 
-                # Now convert Q to C (using logic from QuadraticBezier handling)
-                qcx, qcy = q_cmd.cx, q_cmd.cy
-
-                cx1 = current_pos.x + 2 / 3 * (qcx - current_pos.x)
-                cy1 = current_pos.y + 2 / 3 * (qcy - current_pos.y)
-                cx2 = p2.x + 2 / 3 * (qcx - p2.x)
-                cy2 = p2.y + 2 / 3 * (qcy - p2.y)
-
-                new_commands = [CubicBezier(cx1, cy1, cx2, cy2, p2.x, p2.y)]
-                previous_control_point = (qc_reflected_x, qc_reflected_y)
+                new_commands = [CubicBezier(center1=c1, center2=c2, pos=p2)]
+                previous_control_point = qc_reflected
 
             elif isinstance(abs_cmd, CubicBezier):
                 # Already cubic
                 new_commands = [abs_cmd]
                 previous_control_point = (
-                    abs_cmd.cx2,
-                    abs_cmd.cy2,
+                    abs_cmd.center2
                 )  # Control point for potential S command
 
             elif isinstance(abs_cmd, SmoothCubicBezier):
                 # Convert Smooth Cubic (S) to CubicBezier
-                px, py = previous_control_point  # Last control point 2 of C or S
-                x2, y2 = abs_cmd.get_end_point(current_pos)
+                end_pos = abs_cmd.get_end_point(current_pos)
 
                 # Calculate reflected control point (P1_reflected)
                 # Reflection formula: P1 = 2*Start - P2_prev
-                cx1 = current_pos.x + (current_pos.x - px)
-                cy1 = current_pos.y + (current_pos.y - py)
+                c1 = Point2D(
+                    current_pos.x + (current_pos.x - previous_control_point.x),
+                    current_pos.y + (current_pos.y - previous_control_point.y),
+                )
 
                 # Control point 2 is explicitly given in the S command
-                cx2, cy2 = abs_cmd.cx2, abs_cmd.cy2
+                c2 = abs_cmd.center
 
-                new_commands = [CubicBezier(cx1, cy1, cx2, cy2, x2, y2)]
+                new_commands = [CubicBezier(center1=c1, center2=c2, pos=end_pos)]
                 previous_control_point = (
-                    cx2,
-                    cy2,
-                )  # Control point 2 for next potential S command
+                    c2  # Control point 2 for next potential S command
+                )
 
             elif isinstance(abs_cmd, Arc):
                 # Convert Arc to multiple Cubic Beziers
@@ -379,12 +364,12 @@ class SVGPath:
                     abs_cmd.sweep_flag,
                     abs_cmd.pos,
                 )
-                new_commands = beziers  # This is a list of CubicBezier objects
+                new_commands = list(beziers)  # This is a list of CubicBezier objects
 
                 # Update control point to the last control point 2 of the final segment
                 if beziers:
                     last_bezier = beziers[-1]
-                    previous_control_point = (last_bezier.cx2, last_bezier.cy2)
+                    previous_control_point = last_bezier.center2
                 else:
                     # If arc is degenerate (0-length), use the end point as the control point
                     previous_control_point = abs_cmd.get_end_point(current_pos)

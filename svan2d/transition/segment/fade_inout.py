@@ -3,17 +3,18 @@
 from dataclasses import replace
 from typing import Callable, Dict, List, Optional, Union
 
-from svan2d.velement.keystate import KeyState
 from svan2d.component.state.base import State
+from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
-from .utils import linspace
+
+from . import linspace
 
 
 def fade_inout(
     states: Union[State, List[State]],
     center_t: Optional[Union[float, List[float]]] = None,
-    hold_duration: Optional[float] = None,
-    fade_duration: Optional[float] = None,
+    hold_duration: float | None = None,
+    fade_duration: float | None = None,
     easing: Optional[Dict[str, Callable[[float], float]]] = None,
 ) -> Union[List[KeyState], List[List[KeyState]]]:
     """Fade in, hold, then fade out.

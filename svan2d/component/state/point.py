@@ -1,10 +1,12 @@
 """Point state for explicit shape disappearance/appearance"""
 
 from dataclasses import dataclass
+
 from svan2d.component.registry import renderer
 from svan2d.component.vertex.vertex_contours import VertexContours
 from svan2d.component.vertex.vertex_point import VertexPoint
 from svan2d.core.point2d import Point2D
+
 from .base_vertex import VertexState
 
 

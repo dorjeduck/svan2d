@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional
-from svan2d.converter.svg_converter import SVGConverter
-from svan2d.core.logger import get_logger
-from svan2d.config import get_config, ConfigKey
 import time
+from typing import TYPE_CHECKING, Optional
+
 import requests
 
-from typing import TYPE_CHECKING
+from svan2d.config import ConfigKey, get_config
+from svan2d.converter.svg_converter import SVGConverter
+from svan2d.core.logger import get_logger
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -48,14 +48,18 @@ class PlaywrightHttpSvgConverter(SVGConverter):
     def _convert(
         self,
         scene: VScene,
-        outputs: dict,
+        output: dict,
         frame_time: Optional[float] = 0.0,
         formats: Optional[list] = ["png", "pdf"],
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
-        pdf_inch_width: Optional[float] = None,
-        pdf_inch_height: Optional[float] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> dict:
+        if formats is None:
+            formats = ["png", "pdf"]
+        if frame_time is None:
+            frame_time = 0.0
         ret = {"success": False}
 
         try:
@@ -71,13 +75,13 @@ class PlaywrightHttpSvgConverter(SVGConverter):
                 )
                 ok = self._render(
                     svg_content,
-                    outputs["png"],
+                    output["png"],
                     "png",
                     width=width_px,
                     height=height_px,
                 )
                 if ok:
-                    ret["png"] = outputs["png"]
+                    ret["png"] = output["png"]
 
             # --- PDF export ---
             if "pdf" in formats and pdf_inch_width and pdf_inch_height:
@@ -89,13 +93,13 @@ class PlaywrightHttpSvgConverter(SVGConverter):
                 )
                 ok = self._render(
                     svg_content,
-                    outputs["pdf"],
+                    output["pdf"],
                     "pdf",
                     width=width_px,
                     height=height_px,
                 )
                 if ok:
-                    ret["pdf"] = outputs["pdf"]
+                    ret["pdf"] = output["pdf"]
             ret["success"] = True
 
             elapsed_total = time.time() - t0_total
@@ -116,8 +120,8 @@ class PlaywrightHttpSvgConverter(SVGConverter):
             return  # Already checked/started this session
 
         # Check if server is responding
+        health_url = f"http://{self.host}:{self.port}/health"
         try:
-            health_url = f"http://{self.host}:{self.port}/health"
             resp = requests.get(health_url, timeout=2)
             if resp.status_code == 200:
                 logger.debug("Playwright server is already running")
@@ -165,8 +169,8 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         svg_content: str,
         output_path: str,
         type_: str,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
         """
         Send SVG to the HTTP render server and save the output.
@@ -178,7 +182,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
 
         t0 = time.time()
         try:
-            payload = {"svg": svg_content, "type": type_}
+            payload: dict[str, str | int] = {"svg": svg_content, "type": type_}
             if width is not None and height is not None:
                 payload.update({"width": width, "height": height})
 
@@ -206,8 +210,8 @@ class PlaywrightHttpSvgConverter(SVGConverter):
             logger.error(f"Render failed for {type_}: {e}")
             return False
 
-    def _convert_to_png(self, *args, **kwargs):
-        pass
+    def _convert_to_png(self, *args, **kwargs) -> dict:
+        return {}
 
-    def _convert_to_pdf(self, *args, **kwargs):
-        pass
+    def _convert_to_pdf(self, *args, **kwargs) -> dict:
+        return {}

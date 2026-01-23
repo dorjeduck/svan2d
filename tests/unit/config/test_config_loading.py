@@ -1,8 +1,10 @@
 """Unit tests for configuration loading and management"""
 
-import pytest
 import tomllib
 from pathlib import Path
+
+import pytest
+
 from svan2d.config.config import Svan2DConfig
 from svan2d.config.config_key import ConfigKey
 from svan2d.core.color import Color

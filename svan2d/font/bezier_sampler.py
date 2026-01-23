@@ -1,8 +1,9 @@
 """Sample bezier curves to evenly-spaced vertices"""
 
 from __future__ import annotations
-from typing import List, Tuple
+
 import math
+from typing import List, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 

@@ -1,11 +1,14 @@
 """Path layout state function for arbitrary paths"""
 
 import math
-from typing import List, Optional, Callable, Sequence, Tuple
 from dataclasses import replace
+from typing import Callable, List, Optional, Sequence, Tuple
+
 from svan2d.component.state.base import States
+from svan2d.core.point2d import Point2D, Points2D
+
 from .enums import ElementAlignment
-from svan2d.core.point2d import Points2D,Point2D
+
 
 def path_points(
     states: States,
@@ -137,7 +140,7 @@ def path_points(
                     )
                     x = points_to_use[i].x + dx * segment_t
                     y = points_to_use[i].y + dy * segment_t
-                    return (x, y)
+                    return Point2D(x, y)
 
                 current_distance += segment_length
 

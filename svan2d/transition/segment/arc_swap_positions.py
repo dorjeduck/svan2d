@@ -2,12 +2,12 @@
 
 import math
 from dataclasses import replace
-from typing import List, Optional, Callable, Dict, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
-from svan2d.velement.keystate import KeyState
-from svan2d.velement.transition import TransitionConfig
 from svan2d.component.state.base import State
 from svan2d.transition.curve.arc import arc_clockwise, arc_counterclockwise
+from svan2d.velement.keystate import KeyState
+from svan2d.velement.transition import TransitionConfig
 
 
 def arc_swap_positions(
@@ -16,7 +16,7 @@ def arc_swap_positions(
     t_start: float,
     t_end: float,
     clockwise: bool = True,
-    arc_radius: Optional[float] = None,
+    arc_radius: float | None = None,
     easing: Optional[Dict[str, Callable[[float], float]]] = None,
 ) -> Tuple[List[KeyState], List[KeyState]]:
     """Swaps the positions of two elements along arc paths.
@@ -42,6 +42,7 @@ def arc_swap_positions(
         elem2 = VElement().segment(ks2)
     """
     # Calculate distance between positions
+    assert state_1.pos is not None and state_2.pos is not None
     dx = state_2.pos.x - state_1.pos.x
     dy = state_2.pos.y - state_1.pos.y
     distance = math.sqrt(dx * dx + dy * dy)

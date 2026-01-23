@@ -7,9 +7,11 @@ Requires scipy for the linear_sum_assignment implementation.
 """
 
 from __future__ import annotations
-from typing import TypeVar, List, Callable
+
+from typing import Callable, List, TypeVar
 
 from svan2d.core.point2d import Point2D
+
 from .base import Mapper, Match
 
 T = TypeVar('T')
@@ -102,7 +104,7 @@ class HungarianMapper(Mapper):
             cost_matrix.append(row)
 
         # Apply Hungarian algorithm
-        row_indices, col_indices = linear_sum_assignment(cost_matrix)
+        row_indices, col_indices = linear_sum_assignment(cost_matrix)  # type: ignore[reportPossiblyUnboundVariable]
 
         # Build matches
         matches = []
@@ -144,7 +146,7 @@ class HungarianMapper(Mapper):
         source_map = source_map[:n_end]
 
         # Apply Hungarian algorithm
-        row_indices, col_indices = linear_sum_assignment(cost_matrix)
+        row_indices, col_indices = linear_sum_assignment(cost_matrix)  # type: ignore[reportPossiblyUnboundVariable]
 
         # Build matches (start items may appear multiple times)
         matches = []
@@ -188,7 +190,7 @@ class HungarianMapper(Mapper):
             cost_matrix.append(row)
 
         # Apply Hungarian algorithm
-        row_indices, col_indices = linear_sum_assignment(cost_matrix)
+        row_indices, col_indices = linear_sum_assignment(cost_matrix)  # type: ignore[reportPossiblyUnboundVariable]
 
         # Build matches (end items may appear multiple times)
         matches = []

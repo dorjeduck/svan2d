@@ -1,13 +1,13 @@
 from dataclasses import replace
-
 from typing import Callable, Dict, List, Optional, Union
 
+from svan2d.component.state.base import State
 from svan2d.core.point2d import Point2D
 from svan2d.transition.segment.slide_effect import SlideEffect
 from svan2d.velement.keystate import KeyState, KeyStates
-from svan2d.component.state.base import State
 from svan2d.velement.transition import TransitionConfig
-from .utils import linspace
+
+from . import linspace
 
 
 def slide_hold_slide(

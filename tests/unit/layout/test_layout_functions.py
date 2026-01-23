@@ -1,10 +1,11 @@
 """Tests for layout functions"""
 
-import pytest
 import math
 
-from svan2d.component.state import CircleState, RectangleState, TextState
+import pytest
+
 from svan2d import layout
+from svan2d.component.state import CircleState, RectangleState, TextState
 from svan2d.core.point2d import Point2D
 
 

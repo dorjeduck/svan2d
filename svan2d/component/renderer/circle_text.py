@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
@@ -61,13 +62,13 @@ class CircleTextRenderer(Renderer):
                     text_position = state.rotation / 360 + (i / num_texts)
 
                 text_element = self._create_text_element(
-                    text_content, text_position, circle_path, state
+                    text_content, text_position, circle_path, state, drawing
                 )
                 group.append(text_element)
         else:
             # Handle single text (original behavior)
             text_element = self._create_text_element(
-                state.text, state.rotation, circle_path, state
+                state.text, state.rotation, circle_path, state, drawing
             )
             group.append(text_element)
 
@@ -108,6 +109,7 @@ class CircleTextRenderer(Renderer):
         offset: float,
         circle_path: dw.Path,
         state: "CircleTextState",
+        drawing: Optional[dw.Drawing],
     ) -> dw.Text:
         """Create a single text element at the specified offset
 
@@ -143,4 +145,4 @@ class CircleTextRenderer(Renderer):
         if abs(state.letter_spacing) > 1e-10:
             text_kwargs["letter_spacing"] = state.letter_spacing
 
-        return dw.Text(**text_kwargs)
+        return dw.Text(**text_kwargs)  # type: ignore[return-value]

@@ -1,14 +1,15 @@
 """Tests for VElement chainable builder methods"""
 
 import pytest
-from svan2d.velement import VElement
+
+from svan2d.component.renderer.circle import CircleRenderer
 from svan2d.component.state.circle import CircleState
 from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.renderer.circle import CircleRenderer
-from svan2d.core.point2d import Point2D
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
-from svan2d.transition.curve import linear, bezier
+from svan2d.transition.curve import bezier, linear
+from svan2d.velement import VElement
 
 
 class TestVElementBuilderBasic:
@@ -24,7 +25,7 @@ class TestVElementBuilderBasic:
         assert isinstance(element, VElement)
         # Trigger build via get_frame
         element.get_frame(0.0)
-        assert len(element.keystates) == 2
+        assert len(element._keystates_list) == 2
 
     def test_builder_renderer(self):
         """Builder should accept a renderer"""
@@ -78,8 +79,8 @@ class TestVElementBuilderTransition:
         element.get_frame(0.0)
 
         # Transition should be attached to first keystate
-        assert element.keystates[0].transition_config is not None
-        assert "radius" in element.keystates[0].transition_config.easing_dict
+        assert element._keystates_list[0].transition_config is not None
+        assert "radius" in element._keystates_list[0].transition_config.easing_dict
 
     def test_transition_before_first_keystate_error(self):
         """Transition before first keystate should error"""
@@ -117,7 +118,7 @@ class TestVElementBuilderTransition:
         # Trigger build
         element.get_frame(0.0)
 
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert "radius" in transition.easing_dict
         assert "opacity" in transition.easing_dict
@@ -141,7 +142,7 @@ class TestVElementBuilderPath:
         # Trigger build
         element.get_frame(0.0)
 
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert "pos" in transition.curve_dict
 
@@ -163,7 +164,7 @@ class TestVElementBuilderPath:
         # Trigger build
         element.get_frame(0.0)
 
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert "pos" in transition.easing_dict
         assert "pos" in transition.curve_dict
@@ -174,8 +175,8 @@ class TestVElementBuilderMorphing:
 
     def test_transition_with_morphing(self):
         """Transition should accept morphing config"""
-        from svan2d.velement import MorphingConfig
         from svan2d.transition.mapping import SimpleMapper
+        from svan2d.velement import MorphingConfig
 
         state1 = CircleState(radius=50)
         state2 = RectangleState(width=100, height=100)
@@ -190,18 +191,18 @@ class TestVElementBuilderMorphing:
         # Trigger build
         element.get_frame(0.0)
 
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert transition.morphing_config is not None
         assert isinstance(transition.morphing_config, MorphingConfig)
 
     def test_morphing_overwrite_in_consecutive_transitions(self):
         """Later morphing call should overwrite previous"""
-        from svan2d.velement import MorphingConfig
         from svan2d.transition.mapping import (
-            SimpleMapper,
             GreedyMapper,
+            SimpleMapper,
         )
+        from svan2d.velement import MorphingConfig
 
         state1 = CircleState(radius=50)
         state2 = RectangleState(width=100, height=100)
@@ -217,7 +218,7 @@ class TestVElementBuilderMorphing:
         # Trigger build
         element.get_frame(0.0)
 
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert isinstance(transition.morphing_config.mapper, GreedyMapper)
 
@@ -260,8 +261,8 @@ class TestVElementBuilderAttributes:
         element.get_frame(0.0)
 
         # Element-level path should be merged into each keystate's transition
-        assert element.keystates[0].transition_config is not None
-        assert "pos" in element.keystates[0].transition_config.curve_dict
+        assert element._keystates_list[0].transition_config is not None
+        assert "pos" in element._keystates_list[0].transition_config.curve_dict
 
     def test_attributes_keystates(self):
         """Attributes should set attribute keystates"""
@@ -352,8 +353,8 @@ class TestVElementBuilderAutoTiming:
         # Trigger build
         element.get_frame(0.0)
 
-        assert element.keystates[0].time == 0.0
-        assert element.keystates[1].time == 1.0
+        assert element._keystates_list[0].time == 0.0
+        assert element._keystates_list[1].time == 1.0
 
     def test_auto_timing_three_keystates(self):
         """Auto-timing should distribute 3 keystates evenly"""
@@ -366,9 +367,9 @@ class TestVElementBuilderAutoTiming:
         # Trigger build
         element.get_frame(0.0)
 
-        assert element.keystates[0].time == 0.0
-        assert element.keystates[1].time == 0.5
-        assert element.keystates[2].time == 1.0
+        assert element._keystates_list[0].time == 0.0
+        assert element._keystates_list[1].time == 0.5
+        assert element._keystates_list[2].time == 1.0
 
     def test_mixed_timing(self):
         """Mixed explicit and auto timing should work"""
@@ -386,9 +387,9 @@ class TestVElementBuilderAutoTiming:
         # Trigger build
         element.get_frame(0.0)
 
-        assert element.keystates[0].time == 0.0
-        assert element.keystates[1].time == 0.5
-        assert element.keystates[2].time == 1.0
+        assert element._keystates_list[0].time == 0.0
+        assert element._keystates_list[1].time == 0.5
+        assert element._keystates_list[2].time == 1.0
 
 
 class TestVElementBuilderInterpolation:
@@ -449,10 +450,10 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # Both segments should have the easing
-        assert element.keystates[0].transition_config is not None
-        assert "radius" in element.keystates[0].transition_config.easing_dict
-        assert element.keystates[1].transition_config is not None
-        assert "radius" in element.keystates[1].transition_config.easing_dict
+        assert element._keystates_list[0].transition_config is not None
+        assert "radius" in element._keystates_list[0].transition_config.easing_dict
+        assert element._keystates_list[1].transition_config is not None
+        assert "radius" in element._keystates_list[1].transition_config.easing_dict
 
     def test_default_transition_can_be_changed(self):
         """Default transition can be changed mid-chain"""
@@ -476,17 +477,17 @@ class TestVElementBuilderDefaultTransition:
 
         # First segment: in_out
         assert (
-            element.keystates[0].transition_config.easing_dict["radius"]
+            element._keystates_list[0].transition_config.easing_dict["radius"]
             == easing.in_out
         )
         # Second segment: linear (changed default)
         assert (
-            element.keystates[1].transition_config.easing_dict["radius"]
+            element._keystates_list[1].transition_config.easing_dict["radius"]
             == easing.linear
         )
         # Third segment: linear (still using changed default)
         assert (
-            element.keystates[2].transition_config.easing_dict["radius"]
+            element._keystates_list[2].transition_config.easing_dict["radius"]
             == easing.linear
         )
 
@@ -510,12 +511,12 @@ class TestVElementBuilderDefaultTransition:
 
         # First segment: explicit linear
         assert (
-            element.keystates[0].transition_config.easing_dict["radius"]
+            element._keystates_list[0].transition_config.easing_dict["radius"]
             == easing.linear
         )
         # Second segment: back to default in_out
         assert (
-            element.keystates[1].transition_config.easing_dict["radius"]
+            element._keystates_list[1].transition_config.easing_dict["radius"]
             == easing.in_out
         )
 
@@ -536,7 +537,7 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # Both easings should be present
-        transition = element.keystates[0].transition_config
+        transition = element._keystates_list[0].transition_config
         assert "radius" in transition.easing_dict
         assert "pos" in transition.easing_dict
         assert transition.easing_dict["radius"] == easing.in_out
@@ -560,10 +561,10 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # Both segments should have the curve_dict
-        assert element.keystates[0].transition_config is not None
-        assert "pos" in element.keystates[0].transition_config.curve_dict
-        assert element.keystates[1].transition_config is not None
-        assert "pos" in element.keystates[1].transition_config.curve_dict
+        assert element._keystates_list[0].transition_config is not None
+        assert "pos" in element._keystates_list[0].transition_config.curve_dict
+        assert element._keystates_list[1].transition_config is not None
+        assert "pos" in element._keystates_list[1].transition_config.curve_dict
 
     def test_default_transition_before_first_keystate(self):
         """default_transition can be called before first keystate"""
@@ -581,7 +582,7 @@ class TestVElementBuilderDefaultTransition:
         # Trigger build
         element.get_frame(0.0)
 
-        assert element.keystates[0].transition_config is not None
+        assert element._keystates_list[0].transition_config is not None
 
     def test_no_default_transition_no_config(self):
         """Without default or explicit transition, no config is attached"""
@@ -594,7 +595,7 @@ class TestVElementBuilderDefaultTransition:
         element.get_frame(0.0)
 
         # No transition config (uses system defaults)
-        assert element.keystates[0].transition_config is None
+        assert element._keystates_list[0].transition_config is None
 
 
 class TestVElementConvenienceConstructor:

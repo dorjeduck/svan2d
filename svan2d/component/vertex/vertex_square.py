@@ -17,7 +17,7 @@ class VertexSquare(VertexRectangle):
 
     def __init__(
         self,
-        center: float = Point2D(0, 0),
+        center: Point2D = Point2D(0, 0),
         size: float = 100.0,
         num_vertices: int = 128,
     ):

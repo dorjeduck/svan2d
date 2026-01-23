@@ -8,23 +8,23 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
+from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import get_logger
 from svan2d.vscene import VScene
 from svan2d.vscene.preview import PreviewRenderer
 from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.converter.converter_type import ConverterType
 
+from .export_job_manager import ExportFormat, ExportJobManager, ExportStatus
 from .file_watcher import FileWatcher
 from .module_loader import safe_reload_module
 from .websocket_manager import ConnectionManager
-from .export_job_manager import ExportJobManager, ExportFormat, ExportStatus
 
 logger = get_logger()
 
@@ -35,7 +35,7 @@ class ExportRequest(BaseModel):
 
     frames: int = 60
     fps: int = 30
-    width_px: Optional[int] = None
+    width_px: int | None = None
     html_interactive: bool = True  # For HTML exports: interactive controls or auto-play
 
 
@@ -45,7 +45,7 @@ class BatchExportRequest(BaseModel):
     formats: list[str]  # e.g., ["mp4", "gif"]
     frames: int = 60
     fps: int = 30
-    width_px: Optional[int] = None
+    width_px: int | None = None
     html_interactive: bool = True
 
 
@@ -80,7 +80,7 @@ class DevServer:
 
         # Current scene state
         self.current_scene: Optional[VScene] = None
-        self.current_error: Optional[str] = None
+        self.current_error: str | None = None
 
         # WebSocket manager
         self.connection_manager = ConnectionManager()
@@ -154,6 +154,12 @@ class DevServer:
 
             except WebSocketDisconnect:
                 pass
+            except RuntimeError as e:
+                # Handle case where websocket disconnects during preview generation
+                if "not connected" in str(e).lower():
+                    logger.debug("WebSocket disconnected during preview generation")
+                else:
+                    raise
             finally:
                 self.connection_manager.disconnect(websocket)
 
@@ -323,7 +329,7 @@ class DevServer:
         )
 
         # Extract HTML string from IPython.display.HTML object
-        html_content = html_obj.data
+        html_content = html_obj.data or ""
 
         # Clean any html/body/head wrapper tags if present
         # (in case IPython.display.HTML added document wrappers)
@@ -360,7 +366,11 @@ class DevServer:
             await self.connection_manager.send_error(self.current_error)
         elif self.current_scene:
             try:
-                html = self._generate_preview_html(self.current_scene)
+                # Run blocking preview generation in thread pool to avoid blocking event loop
+                loop = asyncio.get_event_loop()
+                html = await loop.run_in_executor(
+                    None, self._generate_preview_html, self.current_scene
+                )
                 await self.connection_manager.send_update(html, self.num_frames)
             except Exception as e:
                 error_msg = f"Error generating preview: {str(e)}"
@@ -485,7 +495,7 @@ class DevServer:
         from datetime import datetime
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        frames_dir = None
+        frames_dir = Path("")
         temp_context = None
 
         try:
@@ -614,7 +624,7 @@ class DevServer:
         total_frames: int,
         fps: int,
         width_px: Optional[int],
-        progress_callback: callable,
+        progress_callback: Callable,
     ):
         """Generate PNG frames for batch export (runs in thread pool)."""
         for frame_num, t in exporter.to_frames(
@@ -639,8 +649,8 @@ class DevServer:
         progress_end: float,
     ):
         """Create MP4 from existing PNG frames."""
-        from datetime import datetime
         import subprocess
+        from datetime import datetime
 
         self.export_manager.update_job(
             job_id, progress=progress_start, message="Encoding MP4..."

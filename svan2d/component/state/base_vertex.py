@@ -1,14 +1,13 @@
 """Base state for vertex-based shapes with multi-contour support"""
 
 from __future__ import annotations
+
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from svan2d.component.state.base import State
 from svan2d.component.state.base_color import ColorState
 from svan2d.component.vertex import VertexContours
-from svan2d.transition import easing
 
 
 @dataclass(frozen=True)
@@ -41,19 +40,12 @@ class VertexState(ColorState):
     )
     _aligned_contours: Optional[VertexContours] = None  # Internal use only
 
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "num_vertices": easing.step,
-        "closed": easing.step,
-        "_aligned_contours": easing.linear,  # Contours interpolate linearly
-    }
-
     def __post_init__(self):
         super().__post_init__()
 
         # Apply config default for _num_vertices if not specified
         if self._num_vertices is None:
-            from svan2d.config import get_config, ConfigKey
+            from svan2d.config import ConfigKey, get_config
 
             config = get_config()
             num_verts = config.get(ConfigKey.STATE_VISUAL_NUM_VERTICES, 128)

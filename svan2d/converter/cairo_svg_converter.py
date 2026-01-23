@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import tempfile
+from typing import TYPE_CHECKING, Optional
 
 import cairosvg
-import tempfile
 
 from svan2d.converter.svg_converter import SVGConverter
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -21,29 +20,31 @@ class CairoSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: float,
-        inch_width: float,
-        inch_height: float,
+        frame_time: Optional[float] = 0.0,
+        inch_width: int | None = None,
+        inch_height: int | None = None,
     ) -> dict:
         """Convert a VScene to PDF with page size in inches."""
+        assert inch_width is not None and inch_height is not None
         # CairoSVG expects ~96 px per inch for correct physical scaling
         width_px = int(inch_width * 96)
         height_px = int(inch_height * 96)
         return self._convert_cairo(
-            scene, output_file, frame_time, width_px, height_px, mode="pdf"
+            scene, output_file, frame_time or 0.0, width_px, height_px, mode="pdf"
         )
 
     def _convert_to_png(
         self,
         scene: VScene,
         output_file: str,
-        frame_time: float,
-        width_px: int,
-        height_px: int,
+        frame_time: Optional[float] = 0.0,
+        width_px: int | None = None,
+        height_px: int | None = None,
     ) -> dict:
         """Convert a VScene to PNG with pixel dimensions."""
+        assert width_px is not None and height_px is not None
         return self._convert_cairo(
-            scene, output_file, frame_time, width_px, height_px, mode="png"
+            scene, output_file, frame_time or 0.0, width_px, height_px, mode="png"
         )
 
     def _convert_cairo(

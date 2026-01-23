@@ -1,8 +1,9 @@
 """Polygon layout state function"""
 
 import math
-from typing import List, Optional, Callable
 from dataclasses import replace
+from typing import Callable, List, Optional
+
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
 
@@ -81,7 +82,7 @@ def polygon(
         at_vertex = t < 0.01
 
         if alignment == ElementAlignment.PRESERVE:
-            element_angle = state.rotation
+            element_angle = state.rotation or 0
             additional_rotation = (
                 element_rotation_offset_fn(edge_angle)
                 if element_rotation_offset_fn

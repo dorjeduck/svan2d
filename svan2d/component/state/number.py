@@ -1,14 +1,14 @@
 """Number state implementation for displaying formatted numbers"""
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
-from enum import StrEnum
 
-from svan2d.component.state.text import TextState
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Optional
+
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.number import NumberRenderer
-from svan2d.transition import easing
+from svan2d.component.state.text import TextState
 
 
 class NumberFormat(StrEnum):
@@ -85,20 +85,6 @@ class NumberState(TextState):
 
     # Override text to be auto-generated (user shouldn't set this directly)
     text: str = ""
-
-    DEFAULT_EASING = {
-        **TextState.DEFAULT_EASING,
-        "value": easing.in_out,  # Smooth number interpolation
-        "format": easing.step,  # Format doesn't interpolate
-        "decimals": easing.step,  # Decimals is discrete
-        "max_decimals": easing.step,
-        "prefix": easing.step,
-        "suffix": easing.step,
-        "thousands_separator": easing.step,
-        "_integer_part": easing.step,
-        "_decimal_part": easing.step,
-        "_has_decimals": easing.step,
-    }
 
     def __post_init__(self):
         """Generate formatted text from value"""

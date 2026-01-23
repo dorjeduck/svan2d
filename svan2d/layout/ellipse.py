@@ -1,11 +1,12 @@
 """Ellipse layout state function"""
 
 import math
-from typing import List, Optional, Callable
 from dataclasses import replace
+from typing import Callable, List, Optional
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
+
 from .enums import ElementAlignment
 
 
@@ -96,7 +97,7 @@ def ellipse(
         )
 
         if alignment == ElementAlignment.PRESERVE:
-            element_angle = state.rotation + additional_rotation
+            element_angle = (state.rotation or 0) + additional_rotation
         elif alignment == ElementAlignment.LAYOUT:
             # Tangent to ellipse includes the ellipse's rotation
             element_angle = angle + rotation + additional_rotation

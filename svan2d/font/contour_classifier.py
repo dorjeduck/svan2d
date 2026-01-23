@@ -1,22 +1,23 @@
 """Classify glyph contours as outer boundaries, holes, or disconnected components"""
 
 from __future__ import annotations
-from typing import List, Tuple, Optional
+
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
-from svan2d.core.point2d import Point2D, Points2D
-from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.component.vertex.vertex_contours import VertexContours
+from svan2d.component.vertex.vertex_loop import VertexLoop
+from svan2d.core.point2d import Point2D, Points2D
 
-from .glyph_extractor import GlyphContour, GlyphOutline, BezierSegment
 from .bezier_sampler import (
-    sample_quadratic_arc_length,
-    sample_cubic_arc_length,
-    resample_to_vertex_count,
-    estimate_quadratic_arc_length,
     estimate_cubic_arc_length,
     estimate_line_arc_length,
+    estimate_quadratic_arc_length,
+    resample_to_vertex_count,
+    sample_cubic_arc_length,
+    sample_quadratic_arc_length,
 )
+from .glyph_extractor import BezierSegment, GlyphContour, GlyphOutline
 
 
 @dataclass

@@ -1,18 +1,16 @@
 """Star renderer implementation using new architecture"""
 
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional, List, Tuple
 
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexStar
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
+
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.star import StarRenderer
-from svan2d.core.point2d import Point2D
-
-from .base import State
-from svan2d.transition import easing
+from svan2d.component.state.base_vertex import VertexState
+from svan2d.component.vertex import VertexContours, VertexStar
 from svan2d.core.color import Color
+from svan2d.core.point2d import Point2D
 
 
 @renderer(StarRenderer)
@@ -24,13 +22,6 @@ class StarState(VertexState):
     inner_radius: float = 20  # Radius to inner points
     num_points_star: int = 5  # Number of points (minimum 3)
 
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "outer_radius": easing.in_out,
-        "inner_radius": easing.in_out,
-        "num_points_star": easing.linear,  # Stepped animation for integers
-    }
-
     def __post_init__(self):
         super().__post_init__()
         self._none_color("fill_color")
@@ -38,6 +29,7 @@ class StarState(VertexState):
 
     def _generate_contours(self) -> VertexContours:
         """Generate star vertices"""
+        assert self._num_vertices is not None
         star = VertexStar(
             center=Point2D(),
             outer_radius=self.outer_radius,

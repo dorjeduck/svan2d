@@ -1,26 +1,30 @@
 """Transition functions for smooth animations and morphing"""
 
-from .lerp import lerp
-from .angle import angle
-from .step import step
-from .inbetween import inbetween
-from .circular_midpoint import circular_midpoint
-from .morpher import FlubberMorpher, NativeMorpher
+from . import curve, easing, mapping
+from .align_vertices import get_aligned_vertices
 from .easing_resolver import EasingResolver
+from .interpolation_engine import InterpolationEngine
+from .morpher import FlubberMorpher, NativeMorpher
+from .path_morpher import PathMorpher
+from .path_resolver import PathResolver
 from .state_list_interpolator import StateListInterpolator
-from . import curve
-from . import mapping
+from .type_interpolators import TypeInterpolators
 
 __all__ = [
-    "lerp",
-    "angle",
-    "step",
-    "inbetween",
-    "circular_midpoint",
+    # Infrastructure
+    "InterpolationEngine",
+    "EasingResolver",
+    "PathResolver",
+    "TypeInterpolators",
+    "PathMorpher",
+    "StateListInterpolator",
+    # Morphers
     "FlubberMorpher",
     "NativeMorpher",
+    # Subpackages
     "curve",
     "mapping",
-    "EasingResolver",
-    "StateListInterpolator",
+    "easing",
+    # Utilities
+    "get_aligned_vertices",
 ]

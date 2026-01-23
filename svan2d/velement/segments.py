@@ -14,11 +14,11 @@ sequences of KeyState objects. Use with VElement.segment():
 """
 
 from dataclasses import replace
-from typing import List, Optional, Callable, Dict, Union, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
-from svan2d.component.state.base import State
 
 
 def linspace(n):
@@ -30,7 +30,7 @@ def linspace(n):
 def hold(
     states: Union[State, List[State]],
     at: Optional[Union[float, List[float]]] = None,
-    duration: Optional[float] = None,
+    duration: float | None = None,
 ) -> List[KeyState]:
     """Hold at state(s) for a duration, centered at 'at'.
 
@@ -53,14 +53,13 @@ def hold(
         .segment(hold([s1, s2, s3], at=[0.2, 0.5, 0.8], dur=0.1))
         # Expands to 6 keystates (2 per state)
     """
-    half = duration / 2
-
     # Handle single state case
     if isinstance(states, State):
         if at == None:
             at = 0.5
         if duration == None:
             duration = 1.0 / 3
+        half = duration / 2
         if isinstance(at, list):
             raise ValueError("'at' must be float when 'state' is a single State")
 
@@ -73,6 +72,7 @@ def hold(
         at = linspace(len(states))
     if duration == None:
         duration = 1.0 / (3 * len(states))
+    half = duration / 2
 
     if not isinstance(at, list):
         raise ValueError("'at' must be a list when 'states' is a list of States")
@@ -92,8 +92,8 @@ def hold(
 def fade_inout(
     states: Union[State, List[State]],
     at: Optional[Union[float, List[float]]] = None,
-    hold_duration: Optional[float] = None,
-    fade_duration: Optional[float] = None,
+    hold_duration: float | None = None,
+    fade_duration: float | None = None,
 ) -> List[KeyState]:
 
     def get_keystates(state, t, hold_dur, fade_dur):
@@ -130,9 +130,9 @@ def fade_inout(
     if at == None:
         at = linspace(len(states))
     if hold_duration == None:
-        hold_duration = 1.0 / (3 * linspace(states))
+        hold_duration = 1.0 / (3 * len(states))
     if fade_duration == None:
-        fade_duration = 1.0 / (9 * linspace(states))
+        fade_duration = 1.0 / (9 * len(states))
 
     if not isinstance(at, list):
         raise ValueError("'at' must be a list when 'states' is a list of States")

@@ -5,9 +5,11 @@ positions. No spatial matching or morphing between items.
 """
 
 from __future__ import annotations
-from typing import TypeVar, List, Callable
+
+from typing import Callable, List, TypeVar
 
 from svan2d.core.point2d import Point2D
+
 from .base import Mapper, Match
 
 T = TypeVar('T')

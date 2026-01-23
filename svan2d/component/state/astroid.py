@@ -1,16 +1,15 @@
 """Astroid state implementation - star-like shape with inward-curving cusps"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
-from svan2d.core.point2d import Point2D
-
-from .base import State
-from .base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexAstroid
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.astroid import AstroidRenderer
-from svan2d.transition import easing
+from svan2d.component.vertex import VertexAstroid, VertexContours
+from svan2d.core.point2d import Point2D
+
+from .base_vertex import VertexState
 
 
 @renderer(AstroidRenderer)
@@ -30,14 +29,6 @@ class AstroidState(VertexState):
     num_cusps: int = 4  # Number of pointed tips (4 for classic astroid)
     curvature: float = 0.7  # How much arcs bend inward (0-1)
 
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "radius": easing.in_out,
-        "num_cusps": easing.step,  # Discrete values, no smooth interpolation
-        "curvature": easing.in_out,
-    }
-
     def _generate_contours(self) -> VertexContours:
         """Generate astroid contours
 
@@ -46,6 +37,7 @@ class AstroidState(VertexState):
         -  vertex_loops : none (astroids don't have  vertex_loops )
         """
         # Generate astroid shape
+        assert self._num_vertices is not None
         astroid = VertexAstroid(
             center=Point2D(),
             radius=self.radius,

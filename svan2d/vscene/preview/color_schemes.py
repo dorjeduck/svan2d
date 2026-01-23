@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from typing import Dict, Optional
-from svan2d.config import get_config, ConfigKey
+
+from svan2d.config import ConfigKey, get_config
 
 
 @dataclass
@@ -134,7 +135,7 @@ COLOR_SCHEMES: Dict[str, ColorScheme] = {
 }
 
 
-def get_color_scheme(name: Optional[str] = None) -> ColorScheme:
+def get_color_scheme(name: str | None = None) -> ColorScheme:
     """Get a color scheme by name or from config
 
     Priority:

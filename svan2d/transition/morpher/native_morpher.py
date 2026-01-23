@@ -1,5 +1,7 @@
 from typing import Any
+
 from svan2d.path.svg_path import SVGPath
+
 from .base_morpher import BaseMorpher  # Assumed parent class location
 
 

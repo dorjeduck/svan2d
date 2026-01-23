@@ -1,0 +1,1 @@
+"""Font module tests."""

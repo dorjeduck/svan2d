@@ -15,21 +15,21 @@ not as geometric primitives. This makes interpolation trivial.
 """
 
 from __future__ import annotations
-from typing import List, Tuple
-from dataclasses import dataclass, replace
-import math
-from svan2d.core.point2d import Point2D
 
+import math
+from dataclasses import dataclass, replace
+from typing import List, Tuple
+
+from svan2d.core.point2d import Point2D
 from svan2d.path.commands import (
-    PathCommand,
-    MoveTo,
-    LineTo,
-    QuadraticBezier,
-    CubicBezier,
     ClosePath,
+    CubicBezier,
+    LineTo,
+    MoveTo,
+    PathCommand,
+    QuadraticBezier,
 )
 from svan2d.path.svg_path import SVGPath
-
 
 # ============================================================================
 # Poly-Bezier Data Structure
@@ -57,7 +57,7 @@ class PolyBezier:
 
     def get_start_point(self) -> Point2D:
         """Get the starting point of the path"""
-        return Point2D(self.data[0], self.data[1])
+        return self.data[0]
 
     def get_curves(self) -> List[Tuple[Point2D, Point2D, Point2D, Point2D]]:
         """Get all curves as (start, c1, c2, end) tuples"""
@@ -86,7 +86,7 @@ class PolyBezier:
         if len(self.data) < 1:
             return SVGPath([])
 
-        commands = [MoveTo(self.data[0])]
+        commands: List[PathCommand] = [MoveTo(self.data[0])]
 
         for i in range(1, len(self.data), 3):
             if i + 2 >= len(self.data):
@@ -94,9 +94,9 @@ class PolyBezier:
 
             commands.append(
                 CubicBezier(
-                    self.data[i],
-                    self.data[i + 1],
-                    self.data[i + 2],
+                    center1=self.data[i],
+                    center2=self.data[i + 1],
+                    pos=self.data[i + 2],
                 )
             )
         return SVGPath(commands)
@@ -173,7 +173,7 @@ def convert_to_poly_bezier(path: SVGPath) -> PolyBezier:
                 c1 = current_pos.lerp(start_pos, 1.0 / 3)
                 c2 = current_pos.lerp(start_pos, 2.0 / 3)
 
-                data.extend([c1.x, c1.y, c2.x, c2.y, start_pos.x, start_pos.y])
+                data.extend([c1, c2, start_pos])
             current_pos = start_pos
 
     return PolyBezier(data)
@@ -213,11 +213,11 @@ def normalize_poly_bezier_start(
 
     # Rotate the curve data to start from the best position
     # This involves reconstructing the data array with a new starting point
-    new_data = []
+    new_data: List[Point2D] = []
 
     # New starting point is the end of the best curve
     best_end = curves[best_index][3]
-    new_data.extend([best_end.x, best_end.y])
+    new_data.append(best_end)
 
     # Add curves starting from best_index + 1
     for i in range(best_index + 1, len(curves)):
@@ -227,7 +227,7 @@ def normalize_poly_bezier_start(
     # Add curves from 0 to best_index
     for i in range(best_index + 1):
         start, c1, c2, end = curves[i]
-        new_data.extend([c1.x, c1.y, c2.x, c2.y, end.x, end.y])
+        new_data.extend([c1, c2, end])
 
     return PolyBezier(new_data)
 
@@ -265,16 +265,14 @@ def fill_poly_bezier_to_length(poly: PolyBezier, target_length: int) -> PolyBezi
     new_data = poly.data.copy()
 
     # Get the last point of the path
-    if len(poly.data) >= 8:  # Has at least one curve
-        last_x = poly.data[-2]
-        last_y = poly.data[-1]
+    if len(poly.data) >= 4:  # Has at least one curve (start + 3 points per curve)
+        last_point = poly.data[-1]
     else:
-        last_x = poly.data.x
-        last_y = poly.data.y
+        last_point = poly.data[0]
 
     # Add duplicate curves (point curves where all control points = end point)
     for _ in range(curves_to_add):
-        new_data.extend([last_x, last_y, last_x, last_y, last_x, last_y])
+        new_data.extend([last_point, last_point, last_point])
 
     return PolyBezier(new_data)
 
@@ -291,7 +289,7 @@ def interpolate_poly_beziers(
     Interpolate between two poly-beziers using matrix approach
 
     This is the core of Polymorph's smooth morphing:
-    result[i] = poly1[i] + (poly2[i] - poly1[i]) * t
+    result[i] = poly1[i].lerp(poly2[i], t)
 
     Simple, elegant, and mathematically sound.
     """
@@ -302,12 +300,17 @@ def interpolate_poly_beziers(
     filled_poly1 = fill_poly_bezier_to_length(poly1, max_length)
     filled_poly2 = fill_poly_bezier_to_length(poly2, max_length)
 
-    # Linear interpolation of all values
-    result_data = []
+    # Linear interpolation of all points
+    result_data: List[Point2D] = []
     for i in range(max_length):
-        val1 = filled_poly1.data[i] if i < len(filled_poly1.data) else 0
-        val2 = filled_poly2.data[i] if i < len(filled_poly2.data) else 0
-        result_data.append(val1 + (val2 - val1) * t)
+        if i < len(filled_poly1.data) and i < len(filled_poly2.data):
+            pt1 = filled_poly1.data[i]
+            pt2 = filled_poly2.data[i]
+            result_data.append(pt1.lerp(pt2, t))
+        elif i < len(filled_poly1.data):
+            result_data.append(filled_poly1.data[i])
+        elif i < len(filled_poly2.data):
+            result_data.append(filled_poly2.data[i])
 
     return PolyBezier(result_data)
 

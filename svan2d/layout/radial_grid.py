@@ -1,8 +1,9 @@
 """Radial (polar) grid layout state function"""
 
 import math
-from typing import Optional, Callable
 from dataclasses import replace
+from typing import Callable, Optional
+
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
 

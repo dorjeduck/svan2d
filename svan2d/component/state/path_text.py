@@ -4,14 +4,15 @@
 """PathText component - Text that follows any SVG path with morphing support"""
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Union, List, Optional
 
-from .text import TextState
-from svan2d.path import SVGPath
+from dataclasses import dataclass, field
+from typing import List, Optional, Union
+
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_text import PathTextRenderer
-from svan2d.transition import easing
+from svan2d.path import SVGPath
+
+from .text import TextState
 
 
 @renderer(PathTextRenderer)
@@ -30,15 +31,6 @@ class PathTextState(TextState):
 
     # Path rendering options
     flip_text: bool = False  # Flip text upside down (for bottom of curves)
-
-    # Default easing functions for each field
-    DEFAULT_EASING = {
-        **TextState.DEFAULT_EASING,
-        "path": easing.in_out,  # SVGPath will morph smoothly!
-        "offset": easing.in_out,
-        "offsets": easing.linear,
-        "flip_text": easing.step,
-    }
 
     def __post_init__(self):
         super().__post_init__()

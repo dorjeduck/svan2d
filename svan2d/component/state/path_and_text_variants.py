@@ -5,13 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from svan2d.component.state.base_color import ColorState
-
-from .base import State
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_and_text_variants import PathAndTextVariantsRenderer
-from svan2d.transition import easing
-
+from svan2d.component.state.base_color import ColorState
 from svan2d.core.color import Color
 
 
@@ -29,17 +25,6 @@ class PathAndTextVariantsState(ColorState):
     text_align: str = "left"
     font_weight: str = "normal"
     text_color: Optional[Color] = Color.NONE
-
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "size": easing.in_out,
-        "font_size": easing.in_out,
-        "letter_spacing": easing.in_out,
-        "font_family": easing.linear,
-        "text_align": easing.linear,
-        "font_weight": easing.linear,
-        "text_color": easing.linear,
-    }
 
     def __post_init__(self):
         super().__post_init__()

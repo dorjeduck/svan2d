@@ -1,8 +1,10 @@
 """Preview rendering utilities for VScene (Jupyter notebooks and dev server)"""
 
 from typing import List
-from svan2d.config import get_config, ConfigKey
+
+from svan2d.config import ConfigKey, get_config
 from svan2d.vscene.vscene import VScene
+
 from .color_schemes import get_color_scheme
 
 
@@ -28,7 +30,9 @@ class PreviewRenderer:
             SVG string representation
         """
         drawing = self.vscene.to_drawing(frame_time=0.0)
-        return drawing.as_svg(randomize_ids=True)
+        result = drawing.as_svg(randomize_ids=True)
+        assert result is not None
+        return result
 
     def display_inline(self, frame_time: float = 0.0):
         """Display inline in the Jupyter web page.
@@ -165,8 +169,9 @@ class PreviewRenderer:
         Returns:
             HTML object with navigator interface
         """
-        from IPython.display import HTML
         import uuid
+
+        from IPython.display import HTML
 
         # Generate unique ID for this preview instance
         preview_id = str(uuid.uuid4())[:8]

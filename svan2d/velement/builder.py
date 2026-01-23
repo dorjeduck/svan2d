@@ -1,17 +1,18 @@
 """Shared builder mixin for VElement and VElementGroup."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Callable, Dict, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypeVar
 
 from svan2d.component.state.base import State
-from svan2d.velement.transition import TransitionConfig, CurveFunction
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import (
     AttributeKeyStatesDict,
-    parse_element_keystates,
     parse_attribute_keystates,
+    parse_element_keystates,
 )
+from svan2d.velement.transition import CurveFunction, TransitionConfig
 
 if TYPE_CHECKING:
     from svan2d.velement.morphing import MorphingConfig
@@ -47,7 +48,7 @@ class KeystateBuilder:
     _attribute_keystates: Optional[AttributeKeyStatesDict]
 
     def keystate(
-        self: T, state: State, at: Optional[float] = None, skip_render_at: bool = False
+        self: T, state: State, at: float | None = None, skip_render_at: bool = False
     ) -> T:
         """Add a keystate at the specified time.
 
@@ -351,4 +352,4 @@ class KeystateBuilder:
         # Clear builder state
         self._builder = None
 
-        return parse_element_keystates(keystates), attribute_keystates
+        return parse_element_keystates(keystates), attribute_keystates  # type: ignore[arg-type]

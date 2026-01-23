@@ -1,14 +1,11 @@
 # abstract base class for converting SVG to other formats
 from __future__ import annotations
 
-
 from abc import ABC, abstractmethod
-from typing import Optional
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 from svan2d.core.logger import get_logger
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -27,12 +24,12 @@ class SVGConverter(ABC):
         output_file: str,
         frame_time: Optional[float] = 0.0,
         formats: Optional[list[str]] = None,
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
-        png_thumb_width_px: Optional[int] = None,
-        png_thumb_height_px: Optional[int] = None,
-        pdf_inch_width: Optional[float] = None,
-        pdf_inch_height: Optional[float] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        png_thumb_width_px: int | None = None,
+        png_thumb_height_px: int | None = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> dict:
         if formats is None:
             if output_file.lower().endswith(".png"):
@@ -66,7 +63,9 @@ class SVGConverter(ABC):
             try:
                 from PIL import Image
             except ImportError:
-                logger.warning("Pillow not installed. Skipping thumbnail generation. Install with: pip install Pillow")
+                logger.warning(
+                    "Pillow not installed. Skipping thumbnail generation. Install with: pip install Pillow"
+                )
             else:
                 thumb_path = Path(result["png"]).with_suffix(".thumb.png")
                 # create thumbnail for result['png']
@@ -79,7 +78,9 @@ class SVGConverter(ABC):
                     img.thumbnail((png_thumb_width_px, png_thumb_height_px))
                     img.save(thumb_path)
 
-                    result["png_thumb"] = str(Path(output_file).with_suffix(".thumb.png"))
+                    result["png_thumb"] = str(
+                        Path(output_file).with_suffix(".thumb.png")
+                    )
 
         return result
 
@@ -89,13 +90,17 @@ class SVGConverter(ABC):
         output: dict,
         frame_time: Optional[float] = 0.0,
         formats: Optional[list] = ["png", "pdf"],
-        png_width_px: Optional[int] = None,
-        png_height_px: Optional[int] = None,
-        pdf_inch_width: Optional[float] = None,
-        pdf_inch_height: Optional[float] = None,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        pdf_inch_width: float | None = None,
+        pdf_inch_height: float | None = None,
     ) -> dict:
+        if formats is None:
+            formats = ["png", "pdf"]
 
         success = True
+        _pdf: dict | None = None
+        _png: dict | None = None
 
         ret = {}
 
@@ -145,10 +150,10 @@ class SVGConverter(ABC):
             }
         else:
             errors = ""
-            if "_pdf" in locals() and _pdf is not None:
+            if _pdf is not None:
                 if not _pdf.get("success", False):
                     errors += f"PDF Error: {_pdf.get('error', 'Unknown error')}\n"
-            if "_png" in locals() and _png is not None:
+            if _png is not None:
                 if not _png.get("success", False):
                     errors += f"PNG Error: {_png.get('error', 'Unknown error')}\n"
             logger.error(f"SVG export error {errors}")
@@ -160,8 +165,8 @@ class SVGConverter(ABC):
         scene: VScene,
         output_file: str,
         frame_time: Optional[float] = 0.0,
-        width_px: Optional[int] = None,
-        height_px: Optional[int] = None,
+        width_px: int | None = None,
+        height_px: int | None = None,
     ) -> dict:
         pass
 
@@ -171,8 +176,8 @@ class SVGConverter(ABC):
         scene: VScene,
         output_file: str,
         frame_time: Optional[float] = 0.0,
-        inch_width: Optional[int] = None,
-        inch_height: Optional[int] = None,
+        inch_width: int | None = None,
+        inch_height: int | None = None,
     ) -> dict:
         pass
 
@@ -235,7 +240,7 @@ class SVGConverter(ABC):
         frame_time: float,
         width: int,
         height: int,
-        filename: Optional[str] = None,
+        filename: str | None = None,
         log: bool = True,
     ):
         """

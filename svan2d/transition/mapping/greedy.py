@@ -5,9 +5,11 @@ Each item morphs to its nearest available neighbor.
 """
 
 from __future__ import annotations
-from typing import TypeVar, List, Set, Callable
+
+from typing import Callable, List, Set, TypeVar
 
 from svan2d.core.point2d import Point2D
+
 from .base import Mapper, Match
 
 T = TypeVar('T')

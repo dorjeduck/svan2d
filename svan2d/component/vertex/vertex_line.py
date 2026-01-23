@@ -1,10 +1,13 @@
 """VertexLine - line (open or closed) as a VertexLoop"""
 
 from __future__ import annotations
+
 from typing import Tuple
 
-from .vertex_loop import VertexLoop
 from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
+
 
 class VertexLine(VertexLoop):
     """Line (open or closed) as a VertexLoop

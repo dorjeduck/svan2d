@@ -1,15 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional, Union
 from enum import StrEnum
+from typing import Optional, Union
 
-from svan2d.component.state.base_color import ColorState
-from svan2d.path.svg_path import SVGPath
-from svan2d.core.color import Color
-
-from .base import State
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path import PathRenderer
-from svan2d.transition import easing
+from svan2d.component.state.base_color import ColorState
+from svan2d.core.color import Color
+from svan2d.path.svg_path import SVGPath
 
 
 class MorphMethod(StrEnum):
@@ -36,6 +33,7 @@ class StrokeLinecap(StrEnum):
         ROUND: The stroke ends with a semicircular cap extending beyond the endpoint.
         SQUARE: The stroke ends with a square cap extending beyond the endpoint.
     """
+
     BUTT = "butt"
     ROUND = "round"
     SQUARE = "square"
@@ -50,6 +48,7 @@ class StrokeLinejoin(StrEnum):
         ROUND: Rounded corner at the join of path segments.
         BEVEL: Flattened corner, creating a straight line between path segment ends.
     """
+
     MITER = "miter"
     ROUND = "round"
     BEVEL = "bevel"
@@ -63,6 +62,7 @@ class FillRule(StrEnum):
         NONZERO: Fills areas based on the non-zero winding rule.
         EVENODD: Fills areas based on the even-odd rule.
     """
+
     NONZERO = "nonzero"
     EVENODD = "evenodd"
 
@@ -78,7 +78,7 @@ class PathState(ColorState):
 
     stroke_linecap: Union[StrokeLinecap, str] = StrokeLinecap.BUTT
     stroke_linejoin: Union[StrokeLinejoin, str] = StrokeLinejoin.MITER
-    stroke_dasharray: Optional[str] = None
+    stroke_dasharray: str | None = None
 
     # Fill attributes
     fill_rule: Union[str, FillRule] = FillRule.EVENODD  # nonzero, evenodd
@@ -88,21 +88,6 @@ class PathState(ColorState):
 
     # Morphing method
     morph_method: Optional[Union[MorphMethod, str]] = None
-
-    # Default easing for PathState
-    DEFAULT_EASING = {
-        **State.DEFAULT_EASING,
-        "data": easing.linear,  # Linear interpolation for paths
-        "stroke_color": easing.linear,
-        "fill_color": easing.linear,
-        "fill_opacity": easing.linear,
-        "stroke_opacity": easing.linear,
-        "stroke_width": easing.linear,
-        "stroke_dasharray": easing.step,
-        "stroke_linecap": easing.step,
-        "stroke_linejoin": easing.step,
-        "fill_rule": easing.step,
-    }
 
     def __post_init__(self):
         super().__post_init__()

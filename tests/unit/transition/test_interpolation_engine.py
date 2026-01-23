@@ -1,15 +1,16 @@
 """Unit tests for InterpolationEngine"""
 
 import pytest
-from svan2d.transition.interpolation_engine import InterpolationEngine
-from svan2d.transition.easing_resolver import EasingResolver
-from svan2d.transition.easing import linear, in_out
+
 from svan2d.component.state.circle import CircleState
 from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.component.vertex.vertex_contours import VertexContours
+from svan2d.component.vertex.vertex_loop import VertexLoop
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
+from svan2d.transition.easing import in_out, linear
+from svan2d.transition.easing_resolver import EasingResolver
+from svan2d.transition.interpolation_engine import InterpolationEngine
 
 
 @pytest.fixture

@@ -1,10 +1,14 @@
 """Base element class - minimal abstract interface."""
 
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
+
+if TYPE_CHECKING:
+    from svan2d.component.state.base import State
 
 
 class BaseVElement(ABC):
@@ -36,6 +40,6 @@ class BaseVElement(ABC):
         pass
 
     @abstractmethod
-    def get_frame(self, t: float):
+    def get_frame(self, t: float) -> Optional["State"]:
         """Get the interpolated state at a specific time."""
         pass

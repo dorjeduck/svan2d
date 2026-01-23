@@ -1,8 +1,8 @@
 """Path renderer implementation for custom SVG paths (like zodiac signs)"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
 
+from typing import TYPE_CHECKING, Optional
 
 import drawsvg as dw
 
@@ -27,12 +27,9 @@ class PathRenderer(Renderer):
         """
         # Create path with basic attributes
 
+        path_d = state.data.to_string() if isinstance(state.data, SVGPath) else str(state.data)
         path_kwargs = {
-            "d": (
-                state.data.to_string()
-                if isinstance(state.data, SVGPath)
-                else state.data
-            ),
+            "d": path_d,
             "fill_rule": state.fill_rule,
             "stroke_dasharray": state.stroke_dasharray,
             "stroke_linecap": state.stroke_linecap,

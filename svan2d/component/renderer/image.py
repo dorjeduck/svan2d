@@ -1,20 +1,19 @@
 """Image renderer implementation using new architecture"""
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
 
-from typing import TYPE_CHECKING, Tuple
-
-from PIL import Image
-import logging
-import drawsvg as dw
-import random
 import io
+import logging
+import random
+from typing import TYPE_CHECKING, Optional, Tuple
+
+import drawsvg as dw
+from PIL import Image
 
 from .base import Renderer
 
 if TYPE_CHECKING:
-    from ..state.image import ImageState, ImageFitMode
+    from ..state.image import ImageFitMode, ImageState
 
 
 class ImageRenderer(Renderer):
@@ -142,7 +141,7 @@ class ImageRenderer(Renderer):
         elif fit_mode == ImageFitMode.STRETCH:
             # Stretch to exact dimensions (changes aspect ratio)
             logging.warning(
-                f"Image {self.state.href} aspect ratio will be changed due to STRETCH mode"
+                f"Image {href} aspect ratio will be changed due to STRETCH mode"
             )
             return (target_width, target_height, False)
 

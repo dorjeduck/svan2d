@@ -546,6 +546,8 @@ class VSceneExporter:
         # Only clean if we detect wrapper tags to avoid unnecessary modifications
         import re
 
+        assert html_content is not None
+
         if any(
             tag in html_content.lower()
             for tag in ["<!doctype", "<html", "<body", "<head"]
@@ -596,6 +598,7 @@ class VSceneExporter:
 </body>
 </html>
 """
+        assert final_html is not None
 
         # Write to file
         output_path.write_text(final_html, encoding="utf-8")
@@ -726,6 +729,7 @@ class VSceneExporter:
             from svan2d.converter.playwright_http_svg_converter import (
                 PlaywrightHttpSvgConverter,
             )
+
             if isinstance(self.converter, PlaywrightHttpSvgConverter):
                 yield from self._to_frames_parallel(
                     frames_dir,
@@ -845,10 +849,15 @@ class VSceneExporter:
         svg_temp_dir = frames_dir / "_temp_svg"
         svg_temp_dir.mkdir(exist_ok=True)
 
+        logger.debug(f"Writing svg to tmp dir: {svg_temp_dir}")
+
+
         # Phase 1: Generate SVGs and write to temp files immediately
         logger.info("Phase 1: Generating SVG files...")
         svg_start = time.time()
-        frame_data = []  # List of (frame_num, t, svg_path, png_path) - only paths, not content
+        frame_data = (
+            []
+        )  # List of (frame_num, t, svg_path, png_path) - only paths, not content
 
         for frame_num in range(total_frames):
             reset_point_pool()
@@ -857,7 +866,9 @@ class VSceneExporter:
             # Progress every 10%
             if frame_num % max(1, total_frames // 10) == 0:
                 progress_pct = (frame_num / total_frames) * 100
-                logger.info(f"  SVG generation: {frame_num}/{total_frames} ({progress_pct:.0f}%)")
+                logger.info(
+                    f"  SVG generation: {frame_num}/{total_frames} ({progress_pct:.0f}%)"
+                )
 
             # Generate SVG content
             svg_content = self.scene.to_svg(
@@ -875,6 +886,7 @@ class VSceneExporter:
 
             with open(svg_path, "w", encoding="utf-8") as f:
                 f.write(svg_content)
+
 
             # Only store paths, not content
             frame_data.append((frame_num, t, str(svg_path), str(png_path)))
@@ -904,8 +916,7 @@ class VSceneExporter:
 
         with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
             futures = {
-                executor.submit(convert_frame, data): data[0]
-                for data in frame_data
+                executor.submit(convert_frame, data): data[0] for data in frame_data
             }
 
             for future in as_completed(futures):
@@ -922,7 +933,9 @@ class VSceneExporter:
                 # Progress every 10%
                 if frames_done % max(1, total_frames // 10) == 0:
                     progress_pct = (frames_done / total_frames) * 100
-                    logger.info(f"  PNG conversion: {frames_done}/{total_frames} ({progress_pct:.0f}%)")
+                    logger.info(
+                        f"  PNG conversion: {frames_done}/{total_frames} ({progress_pct:.0f}%)"
+                    )
 
         png_time = time.time() - png_start
         logger.info(f"Phase 2 complete: {png_time:.2f}s")

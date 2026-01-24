@@ -4,20 +4,6 @@ import logging
 from dataclasses import fields, replace
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-# Type alias for easing result - can be scalar (normal) or tuple (2D easing)
-EasedT = Union[float, Tuple[float, float]]
-
-
-def _scalar_t(eased_t: EasedT) -> float:
-    """Extract scalar t value from EasedT.
-
-    For 2D easing (tuple), uses the first component.
-    For scalar easing, returns the value directly.
-    """
-    if isinstance(eased_t, tuple):
-        return eased_t[0]
-    return eased_t
-
 from svan2d.component.effect.filter.base import Filter
 from svan2d.component.effect.gradient.base import Gradient
 from svan2d.component.effect.pattern.base import Pattern
@@ -39,6 +25,21 @@ from svan2d.transition.state_list_interpolator import (
 from svan2d.transition.type_interpolators import TypeInterpolators
 
 logger = logging.getLogger(__name__)
+
+
+# Type alias for easing result - can be scalar (normal) or tuple (2D easing)
+EasedT = Union[float, Tuple[float, float]]
+
+
+def _scalar_t(eased_t: EasedT) -> float:
+    """Extract scalar t value from EasedT.
+
+    For 2D easing (tuple), uses the first component.
+    For scalar easing, returns the value directly.
+    """
+    if isinstance(eased_t, tuple):
+        return eased_t[0]
+    return eased_t
 
 
 class InterpolationEngine:
@@ -326,7 +327,9 @@ class InterpolationEngine:
         # State ↔ None transitions (fade in/out)
         if isinstance(start_value, State) and end_value is None:
             assert isinstance(start_value, State)  # Help type checker
-            start_opacity = start_value.opacity if start_value.opacity is not None else 1.0
+            start_opacity = (
+                start_value.opacity if start_value.opacity is not None else 1.0
+            )
             return replace(start_value, opacity=lerp(start_opacity, 0.0, scalar_t))
         if start_value is None and isinstance(end_value, State):
             assert isinstance(end_value, State)  # Help type checker
@@ -362,7 +365,9 @@ class InterpolationEngine:
             )
 
         # Numeric interpolation
-        if isinstance(start_value, (int, float)) and isinstance(end_value, (int, float)):
+        if isinstance(start_value, (int, float)) and isinstance(
+            end_value, (int, float)
+        ):
             return self._type_interpolators.interpolate_numeric(
                 start_value, end_value, eased_t
             )

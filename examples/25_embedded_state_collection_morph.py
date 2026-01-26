@@ -73,12 +73,8 @@ def main():
     scene.add_elements(start_elements)
 
     # 2. Morph
-    # skip_render_at=True to avoid double rendering
-
     morph_element = (
-        VElement()
-        .keystate(collection_1, at=0.2, skip_render_at=True)
-        .keystate(collection_2, at=0.8, skip_render_at=True)
+        VElement().keystate(collection_1, at=0.2).keystate(collection_2, at=0.8)
     )
 
     scene.add_element(morph_element)

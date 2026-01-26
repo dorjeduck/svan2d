@@ -140,7 +140,7 @@ class VElement(BaseVElement, KeystateBuilder):
 
         for ks in segment_result:
             self._builder.keystates.append(
-                (ks.state, ks.time, ks.transition_config, ks.skip_render_at)
+                (ks.state, ks.outgoing_state, ks.time, ks.transition_config, ks.render_index)
             )
 
         return self

@@ -55,9 +55,9 @@ def main():
     def scale_func(t: float) -> float:
         return float(interp(t))
 
-    # scene.animate_camera(
-    #    scale=scale_func,
-    # )
+    scene.animate_camera(
+        scale=scale_func,
+    )
 
     text_fade_out_start = min(1, (RINGS_WITH_NUMBERS + 1) / NUM_RINGS)
     time_per_ring = 1 / NUM_RINGS
@@ -94,7 +94,7 @@ def main():
     )
 
     exporter.to_mp4(
-        filename="34_spiral_555",
+        filename="ulam_spiral_by_steps",
         total_frames=TOTAL_FRAMES,
         framerate=FRAME_RATE,
         png_width_px=1024,

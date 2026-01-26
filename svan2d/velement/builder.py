@@ -3,7 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -24,10 +33,10 @@ T = TypeVar("T", bound="KeystateBuilder")
 class BuilderState:
     """Internal state for chainable builder methods."""
 
-    # Tuple: (state, time, transition_config, skip_render_at)
-    keystates: List[Tuple[State, Optional[float], Optional[TransitionConfig], bool]] = (
-        field(default_factory=list)
-    )
+    # Tuple: (state, outgoing_state, time, transition_config, render_index)
+    keystates: List[
+        Tuple[State, Optional[State], Optional[float], Optional[TransitionConfig], int]
+    ] = field(default_factory=list)
     pending_transition: Optional[TransitionConfig] = None
     default_transition: Optional[TransitionConfig] = None
     curve_dict: Optional[Dict[str, CurveFunction]] = None
@@ -48,15 +57,21 @@ class KeystateBuilder:
     _attribute_keystates: Optional[AttributeKeyStatesDict]
 
     def keystate(
-        self: T, state: State, at: float | None = None, skip_render_at: bool = False
+        self: T,
+        state: State | list[State],
+        at: float | None = None,
+        render_index: int = 0,
     ) -> T:
         """Add a keystate at the specified time.
 
         Args:
-            state: State for this keystate
+            state: State for this keystate, or a 2-element list [incoming_state, outgoing_state]
+                   for dual-state keystates. When using dual-state:
+                   - state[0]: interpolation target coming IN
+                   - state[1]: interpolation source going OUT
             at: Time position (0.0-1.0), or None for auto-timing
-            skip_render_at: If True, skip rendering at exactly this time point.
-                           Useful for boundary handoffs between elements.
+            render_index: Which state to render at exactly this time (0 or 1, default 0).
+                          Only applicable for dual-state keystates.
 
         Returns:
             self for chaining
@@ -64,9 +79,33 @@ class KeystateBuilder:
         if self._builder is None:
             raise RuntimeError("Cannot modify element after rendering has begun.")
 
+        # Parse dual-state format
+        incoming_state: State
+        outgoing_state: State | None = None
+
+        if isinstance(state, list):
+            if len(state) != 2:
+                raise ValueError(
+                    f"Dual-state keystate requires exactly 2 states, got {len(state)}"
+                )
+            if not isinstance(state[0], State) or not isinstance(state[1], State):
+                raise TypeError(
+                    "Both elements of dual-state list must be State instances"
+                )
+            incoming_state = state[0]
+            outgoing_state = state[1]
+        else:
+            incoming_state = state
+            if render_index != 0:
+                raise ValueError(
+                    "render_index can only be used with dual-state keystates"
+                )
+
         # Attach transition to previous keystate (explicit or default)
         if len(self._builder.keystates) > 0:
-            prev_state, prev_time, _, prev_skip = self._builder.keystates[-1]
+            prev_state, prev_outgoing, prev_time, _, prev_render_index = (
+                self._builder.keystates[-1]
+            )
 
             transition_to_apply = (
                 self._builder.pending_transition or self._builder.default_transition
@@ -75,20 +114,23 @@ class KeystateBuilder:
             if transition_to_apply is not None:
                 self._builder.keystates[-1] = (
                     prev_state,
+                    prev_outgoing,
                     prev_time,
                     transition_to_apply,
-                    prev_skip,
+                    prev_render_index,
                 )
 
             self._builder.pending_transition = None
 
         # Add new keystate
-        self._builder.keystates.append((state, at, None, skip_render_at))
+        self._builder.keystates.append(
+            (incoming_state, outgoing_state, at, None, render_index)
+        )
         return self
 
     def keystates(
         self: T,
-        states: List[State],
+        states: Sequence[State],
         between: Optional[List[float]] = None,
         extend: bool = False,
         at: Optional[List[float]] = None,
@@ -326,9 +368,23 @@ class KeystateBuilder:
                 "Remove the trailing transition() call."
             )
 
+        # Check for duplicate keystate times
+        times = [ks[2] for ks in self._builder.keystates if ks[2] is not None]
+        seen = set()
+        for t in times:
+            if t in seen:
+                raise ValueError(f"Duplicate keystate time {t} detected.")
+            seen.add(t)
+
         # Convert internal keystates to KeyState objects
         keystates: List[KeyState] = []
-        for state, time, transition_config, skip_render_at in self._builder.keystates:
+        for (
+            state,
+            outgoing_state,
+            time,
+            transition_config,
+            render_index,
+        ) in self._builder.keystates:
             effective_transition = self._merge_element_path_into_transition(
                 transition_config
             )
@@ -337,7 +393,8 @@ class KeystateBuilder:
                     state=state,
                     time=time,
                     transition_config=effective_transition,
-                    skip_render_at=skip_render_at,
+                    outgoing_state=outgoing_state,
+                    render_index=render_index,
                 )
             )
 

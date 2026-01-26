@@ -74,6 +74,9 @@ class SVGConverter(ABC):
                     scene, png_thumb_width_px, png_thumb_height_px
                 )
 
+                assert png_thumb_width_px is not None
+                assert png_thumb_height_px is not None
+
                 with Image.open(result["png"]) as img:
                     img.thumbnail((png_thumb_width_px, png_thumb_height_px))
                     img.save(thumb_path)

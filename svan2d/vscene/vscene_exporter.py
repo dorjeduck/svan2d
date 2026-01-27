@@ -42,6 +42,17 @@ class VSceneExporter:
     SUPPORTED_FORMATS = {"svg", "png", "pdf"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
 
+    @staticmethod
+    def _round_to_even(value: int | float) -> int:
+        """Round a value to the nearest even integer.
+
+        Video codecs like h264 require even dimensions.
+        """
+        rounded = int(round(value))
+        if rounded % 2 != 0:
+            rounded += 1
+        return rounded
+
     def __init__(
         self,
         scene,
@@ -830,11 +841,11 @@ class VSceneExporter:
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
-        # Infer dimensions
+        # Infer dimensions (ensure even for video codec compatibility)
         width = png_width_px or self.scene.width
         height = png_height_px
         if height is None:
-            height = int(width * (self.scene.height / self.scene.width))
+            height = self._round_to_even(width * (self.scene.height / self.scene.width))
 
         # Calculate scale for SVG generation
         scale = min(width / self.scene.width, height / self.scene.height)

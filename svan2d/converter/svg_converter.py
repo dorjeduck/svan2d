@@ -225,17 +225,29 @@ class SVGConverter(ABC):
         </html>
         """
 
+    @staticmethod
+    def _round_to_even(value: int | float) -> int:
+        """Round a value to the nearest even integer.
+
+        Video codecs like h264 require even dimensions.
+        """
+        rounded = int(round(value))
+        if rounded % 2 != 0:
+            rounded += 1
+        return rounded
+
     def _infer_dimensions(self, scene, width, height):
         """
         Infer missing width or height based on aspect ratio.
+        Returns integer pixel dimensions, rounded to even for video codec compatibility.
         """
         if width is None and height is None:
-            return scene.width, scene.height
+            return self._round_to_even(scene.width), self._round_to_even(scene.height)
         elif width is not None and height is None:
-            height = width * (scene.height / scene.width)
+            height = self._round_to_even(width * (scene.height / scene.width))
         elif height is not None and width is None:
-            width = height * (scene.width / scene.height)
-        return width, height
+            width = self._round_to_even(height * (scene.width / scene.height))
+        return self._round_to_even(width), self._round_to_even(height)
 
     def render_svg_to_png(
         self,

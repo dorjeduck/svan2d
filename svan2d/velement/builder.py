@@ -35,7 +35,7 @@ class BuilderState:
 
     # Tuple: (state, outgoing_state, time, transition_config, render_index)
     keystates: List[
-        Tuple[State, Optional[State], Optional[float], Optional[TransitionConfig], int]
+        Tuple[State, Optional[State], Optional[float], Optional[TransitionConfig], int | None]
     ] = field(default_factory=list)
     pending_transition: Optional[TransitionConfig] = None
     default_transition: Optional[TransitionConfig] = None
@@ -60,7 +60,7 @@ class KeystateBuilder:
         self: T,
         state: State | list[State],
         at: float | None = None,
-        render_index: int = 0,
+        render_index: int | None = 0,
     ) -> T:
         """Add a keystate at the specified time.
 
@@ -96,9 +96,9 @@ class KeystateBuilder:
             outgoing_state = state[1]
         else:
             incoming_state = state
-            if render_index != 0:
+            if render_index not in (0, None):
                 raise ValueError(
-                    "render_index can only be used with dual-state keystates"
+                    "render_index=1 can only be used with dual-state keystates"
                 )
 
         # Attach transition to previous keystate (explicit or default)

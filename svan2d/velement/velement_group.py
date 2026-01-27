@@ -91,8 +91,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Auto-create identity keystates if group_easing is set but no keystates defined
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
-            self._builder.keystates.append((identity, 0.0, None, False))
-            self._builder.keystates.append((identity, 1.0, None, False))
+            # Tuple format: (state, outgoing_state, time, transition_config, render_index)
+            self._builder.keystates.append((identity, None, 0.0, None, None))
+            self._builder.keystates.append((identity, None, 1.0, None, None))
 
         # Use builder mixin to finalize
         keystates, attribute_keystates = self._finalize_build()

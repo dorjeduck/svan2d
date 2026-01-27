@@ -21,7 +21,7 @@ class KeyState:
     time: float | None = None
     transition_config: Optional[TransitionConfig] = None
     outgoing_state: Optional[State] = None
-    render_index: int = 0
+    render_index: int | None = 0
 
     def __post_init__(self):
         """Validate time range and morphing configuration"""
@@ -47,9 +47,9 @@ class KeyState:
             )
 
         # Validate render_index
-        if self.render_index not in (0, 1):
+        if self.render_index not in (0, 1, None):
             raise ValueError(
-                f"render_index must be 0 or 1, got {self.render_index}"
+                f"render_index must be 0, 1, or None, got {self.render_index}"
             )
         if self.render_index == 1 and self.outgoing_state is None:
             raise ValueError(

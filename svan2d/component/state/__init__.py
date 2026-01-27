@@ -18,7 +18,7 @@ from .flower import FlowerState
 from .heart import HeartState
 from .infinity import InfinityState
 from .line import LineState
-from .number import NumberFormat, NumberState
+from .number import NumberFormat, NumberState, Rounding
 from .path import PathState
 from .path_and_text_variants import PathAndTextVariantsState
 from .path_text import PathTextState
@@ -69,6 +69,7 @@ __all__ = [
     "LineState",
     "NumberFormat",
     "NumberState",
+    "Rounding",
     "PathState",
     "PointState",
     "PerforatedVertexState",

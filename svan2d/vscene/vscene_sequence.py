@@ -57,6 +57,7 @@ class VSceneSequence:
     VSceneSequence provides a builder API for combining multiple scenes
     with animated transitions. It handles time mapping so each scene's
     internal time (0.0-1.0) is correctly mapped to the sequence timeline.
+    All methods return new instances (immutable pattern).
 
     Example:
         sequence = (
@@ -75,6 +76,9 @@ class VSceneSequence:
         width: Optional[float] = None,
         height: Optional[float] = None,
         origin: Optional[Literal["center", "top-left"]] = None,
+        *,
+        # Private param for _replace - don't use directly
+        _entries: Optional[List[Union[_SceneEntry, _TransitionEntry]]] = None,
     ) -> None:
         """Initialize an empty scene sequence.
 
@@ -83,21 +87,35 @@ class VSceneSequence:
             height: Override height (default: use first scene's height)
             origin: Override origin mode (default: use first scene's origin)
         """
-        self._entries: List[Union[_SceneEntry, _TransitionEntry]] = []
+        self._entries: List[Union[_SceneEntry, _TransitionEntry]] = _entries if _entries is not None else []
         self._segments: Optional[List[_TimeSegment]] = None
         self._width = width
         self._height = height
         self._origin = origin
 
+    def _replace(
+        self,
+        *,
+        entries: Optional[List[Union[_SceneEntry, _TransitionEntry]]] = None,
+    ) -> "VSceneSequence":
+        """Return a new VSceneSequence with specified attributes replaced."""
+        new = VSceneSequence.__new__(VSceneSequence)
+        new._entries = entries if entries is not None else self._entries.copy()
+        new._segments = None  # Always invalidate cached segments
+        new._width = self._width
+        new._height = self._height
+        new._origin = self._origin
+        return new
+
     def scene(self, scene: "VScene", duration: float = 1.0) -> "VSceneSequence":
-        """Add a scene to the sequence.
+        """Add a scene to the sequence. Returns new VSceneSequence.
 
         Args:
             scene: The VScene to add
             duration: Relative duration weight for this scene
 
         Returns:
-            self for method chaining
+            New VSceneSequence with scene added
 
         Raises:
             ValueError: If duration is not positive or if a scene follows
@@ -113,18 +131,17 @@ class VSceneSequence:
                 "Use .transition() between scenes."
             )
 
-        self._entries.append(_SceneEntry(scene=scene, duration=duration))
-        self._segments = None  # Invalidate cached segments
-        return self
+        new_entries = self._entries + [_SceneEntry(scene=scene, duration=duration)]
+        return self._replace(entries=new_entries)
 
     def transition(self, transition: SceneTransition) -> "VSceneSequence":
-        """Add a transition between scenes.
+        """Add a transition between scenes. Returns new VSceneSequence.
 
         Args:
             transition: The SceneTransition to apply
 
         Returns:
-            self for method chaining
+            New VSceneSequence with transition added
 
         Raises:
             ValueError: If no scene has been added yet, or if consecutive
@@ -140,9 +157,8 @@ class VSceneSequence:
                 "Cannot add consecutive transitions. Add a scene between transitions."
             )
 
-        self._entries.append(_TransitionEntry(transition=transition))
-        self._segments = None  # Invalidate cached segments
-        return self
+        new_entries = self._entries + [_TransitionEntry(transition=transition)]
+        return self._replace(entries=new_entries)
 
     @property
     def width(self) -> float:

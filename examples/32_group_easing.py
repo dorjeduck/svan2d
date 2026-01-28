@@ -56,7 +56,7 @@ def main():
         group_easing=easing.in_cubic,
     )
 
-    scene.add_elements([vg1, elements[12], vg2])
+    scene = scene.add_elements([vg1, elements[12], vg2])
 
     # Export
     exporter = VSceneExporter(

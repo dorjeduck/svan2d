@@ -309,7 +309,7 @@ class TestSceneIntegration:
 
         element = VElement().keystates([state1, state2])
         scene = VScene(width=800, height=600)
-        scene.add_element(element)
+        scene = scene.add_element(element)
 
         # Should render without errors
         assert scene is not None
@@ -336,8 +336,8 @@ class TestSceneIntegration:
         )
 
         scene = VScene(width=800, height=600)
-        scene.add_element(element1)
-        scene.add_element(element2)
+        scene = scene.add_element(element1)
+        scene = scene.add_element(element2)
 
         assert len(scene.elements) == 2
 
@@ -388,9 +388,9 @@ class TestSceneIntegration:
         )
 
         scene = VScene(width=800, height=600)
-        scene.add_element(morph_element)
-        scene.add_element(color_element)
-        scene.add_element(move_element)
+        scene = scene.add_element(morph_element)
+        scene = scene.add_element(color_element)
+        scene = scene.add_element(move_element)
 
         assert len(scene.elements) == 3
 
@@ -401,7 +401,7 @@ class TestSceneIntegration:
 
         element = VElement().keystates([state1, state2])
         scene = VScene(width=400, height=300)
-        scene.add_element(element)
+        scene = scene.add_element(element)
 
         # Generate a frame at different times
         frame_start = scene.to_drawing(frame_time=0.0)

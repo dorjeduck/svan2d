@@ -58,16 +58,20 @@ class TestVSceneSequenceBuilder:
         seq = VSceneSequence().scene(simple_scene_1, duration=1.0)
         assert "scenes=1" in repr(seq)
 
-    def test_add_scene_returns_self(self, simple_scene_1):
+    def test_add_scene_returns_new_instance(self, simple_scene_1):
         seq = VSceneSequence()
         result = seq.scene(simple_scene_1)
-        assert result is seq
+        # Now returns a new instance, not self
+        assert isinstance(result, VSceneSequence)
+        assert "scenes=1" in repr(result)
+        assert "scenes=0" in repr(seq)  # Original unchanged
 
-    def test_add_transition_returns_self(self, simple_scene_1, simple_scene_2):
-        seq = VSceneSequence()
-        seq.scene(simple_scene_1)
+    def test_add_transition_returns_new_instance(self, simple_scene_1, simple_scene_2):
+        seq = VSceneSequence().scene(simple_scene_1)
         result = seq.transition(Fade())
-        assert result is seq
+        # Now returns a new instance, not self
+        assert isinstance(result, VSceneSequence)
+        assert "transitions=1" in repr(result)
 
     def test_chain_scenes_with_transitions(
         self, simple_scene_1, simple_scene_2, simple_scene_3

@@ -60,7 +60,7 @@ def main():
 
     # Multi-step zoom with camera_keystate()
 
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     # Export
     exporter = VSceneExporter(

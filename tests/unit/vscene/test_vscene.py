@@ -68,39 +68,38 @@ class TestVSceneElementManagement:
     def test_add_element(self):
         scene = VScene()
         mock_element = MagicMock()
-        scene.add_element(mock_element)
+        scene = scene.add_element(mock_element)
         assert len(scene.elements) == 1
         assert scene.elements[0] is mock_element
 
     def test_add_elements(self):
         scene = VScene()
         elements = [MagicMock(), MagicMock(), MagicMock()]
-        scene.add_elements(elements)
+        scene = scene.add_elements(elements)
         assert len(scene.elements) == 3
 
     def test_remove_element(self):
         scene = VScene()
         element = MagicMock()
-        scene.add_element(element)
-        result = scene.remove_element(element)
-        assert result is True
+        scene = scene.add_element(element)
+        scene = scene.remove_element(element)
         assert len(scene.elements) == 0
 
     def test_remove_element_not_found(self):
         scene = VScene()
         element = MagicMock()
-        result = scene.remove_element(element)
-        assert result is False
+        with pytest.raises(ValueError, match="Element not found"):
+            scene.remove_element(element)
 
     def test_clear_elements(self):
         scene = VScene()
-        scene.add_elements([MagicMock(), MagicMock()])
-        scene.clear_elements()
+        scene = scene.add_elements([MagicMock(), MagicMock()])
+        scene = scene.clear_elements()
         assert len(scene.elements) == 0
 
     def test_element_count(self):
         scene = VScene()
-        scene.add_elements([MagicMock(), MagicMock()])
+        scene = scene.add_elements([MagicMock(), MagicMock()])
         assert scene.element_count() == 2
 
     def test_animatable_element_count(self):
@@ -109,7 +108,7 @@ class TestVSceneElementManagement:
         animatable.is_animatable.return_value = True
         static = MagicMock()
         static.is_animatable.return_value = False
-        scene.add_elements([animatable, static])
+        scene = scene.add_elements([animatable, static])
         assert scene.animatable_element_count() == 1
 
 
@@ -158,7 +157,7 @@ class TestVSceneRendering:
         element = MagicMock()
         element.get_frame.return_value = MagicMock(z_index=0)
         element.render_state.return_value = None
-        scene.add_element(element)
+        scene = scene.add_element(element)
         svg = scene.to_svg(frame_time=0.5)
         assert isinstance(svg, str)
         element.get_frame.assert_called()
@@ -209,8 +208,8 @@ class TestVSceneCameraAnimation:
         scene = VScene()
         state = CameraState(scale=1.0)
         result = scene.camera_keystate(state, at=0.0)
-        assert result is scene  # Returns self for chaining
-        assert len(scene._camera_keystates) == 1
+        assert isinstance(result, VScene)  # Returns new VScene
+        assert len(result._camera_keystates) == 1
 
     def test_camera_transition_without_keystate_raises(self):
         scene = VScene()
@@ -219,17 +218,17 @@ class TestVSceneCameraAnimation:
 
     def test_animate_camera_creates_keystates(self):
         scene = VScene()
-        scene.animate_camera(scale=(1.0, 2.0))
+        scene = scene.animate_camera(scale=(1.0, 2.0))
         assert len(scene._camera_keystates) == 2
 
     def test_animate_camera_with_offset(self):
         scene = VScene()
-        scene.animate_camera(offset=((0, 0), (100, 100)))
+        scene = scene.animate_camera(offset=((0, 0), (100, 100)))
         assert len(scene._camera_keystates) == 2
 
     def test_animate_camera_with_rotation(self):
         scene = VScene()
-        scene.animate_camera(rotation=(0, 360))
+        scene = scene.animate_camera(rotation=(0, 360))
         assert len(scene._camera_keystates) == 2
 
     def test_get_camera_state_no_keystates(self):
@@ -241,7 +240,7 @@ class TestVSceneCameraAnimation:
 
     def test_get_camera_state_with_keystates(self):
         scene = VScene()
-        scene.animate_camera(scale=(1.0, 2.0))
+        scene = scene.animate_camera(scale=(1.0, 2.0))
         state = scene._get_camera_state_at_time(0.5)
         assert 1.0 <= state.scale <= 2.0
 
@@ -258,7 +257,7 @@ class TestVSceneTimelineEasing:
         element = MagicMock()
         element.get_frame.return_value = MagicMock(z_index=0)
         element.render_state.return_value = None
-        scene.add_element(element)
+        scene = scene.add_element(element)
 
         # At frame_time=1.0, with easing, should call get_frame with 0.5
         scene.to_drawing(frame_time=1.0)
@@ -283,7 +282,7 @@ class TestVSceneAnimationTimeRange:
         keystate2 = MagicMock()
         keystate2.time = 0.8
         element._keystates_list = [keystate1, keystate2]
-        scene.add_element(element)
+        scene = scene.add_element(element)
 
         min_t, max_t = scene.get_animation_time_range()
         assert min_t == 0.2

@@ -30,7 +30,7 @@ def main():
     )
 
     # Add all elements to the scene
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Create the exporter
     exporter = VSceneExporter(

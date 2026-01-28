@@ -70,14 +70,14 @@ def main():
         )
     ]
 
-    scene.add_elements(start_elements)
+    scene = scene.add_elements(start_elements)
 
     # 2. Morph
     morph_element = (
         VElement().keystate(collection_1, at=0.2).keystate(collection_2, at=0.8)
     )
 
-    scene.add_element(morph_element)
+    scene = scene.add_element(morph_element)
 
     # fade out
 
@@ -89,7 +89,7 @@ def main():
         )
     ]
 
-    scene.add_elements(end_elements)
+    scene = scene.add_elements(end_elements)
 
     # Create the exporter
     exporter = VSceneExporter(

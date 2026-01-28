@@ -52,11 +52,11 @@ def create_square_element(n, report, step_time):
         or report["status"] == NumberStatus.PRIME
     ):
         # Simple case: state_start -> state_end
-        square.keystate(state_start, at=0)
+        square = square.keystate(state_start, at=0)
         if change_time > 0:
-            square.keystate(state_start, change_time)
+            square = square.keystate(state_start, change_time)
         last_time = change_time + step_time
-        square.keystate(state_end, last_time)
+        square = square.keystate(state_end, last_time)
 
     else:
         # Sieve prime case: involves intermediate state_sieve color
@@ -65,28 +65,28 @@ def create_square_element(n, report, step_time):
         if report["identified_at_step"] == report["sieve_prime_at_step"]:
             # n == 2 case: identified at step 1, sieve at step 1
             # At t=0: show start, then switch to sieve
-            square.keystate([state_start, state_sieve], at=0)
+            square = square.keystate([state_start, state_sieve], at=0)
             last_time = change_time + step_time
-            square.keystate([state_sieve, state_end], at=last_time)
+            square = square.keystate([state_sieve, state_end], at=last_time)
 
         else:
 
             # Other sieve primes: identified later, sieve even later
             sieve_time = (report["sieve_prime_at_step"] - 1) * step_time
 
-            square.keystate(state_start, at=0)
+            square = square.keystate(state_start, at=0)
 
             if change_time > 0:
-                square.keystate(state_start, at=change_time)
+                square = square.keystate(state_start, at=change_time)
             if change_time + step_time < sieve_time:
-                square.keystate(state_end, at=change_time + step_time)
+                square = square.keystate(state_end, at=change_time + step_time)
 
-            square.keystate([state_end, state_sieve], at=sieve_time)
+            square = square.keystate([state_end, state_sieve], at=sieve_time)
             last_time = min(1, sieve_time + step_time)
-            square.keystate([state_sieve, state_end], at=last_time, render_index=1)
+            square = square.keystate([state_sieve, state_end], at=last_time, render_index=1)
 
     # Only add final keystate if not already at t=1
     if last_time < 1:
-        square.keystate(state_end, at=1)
+        square = square.keystate(state_end, at=1)
 
     return square

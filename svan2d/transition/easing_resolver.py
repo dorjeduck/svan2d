@@ -7,9 +7,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from svan2d.component.state.base import State
 
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple, Union
 
 from svan2d.transition import easing
+
+# Easing function can return float (1D) or Tuple[float, float] (2D for Point2D)
+EasingFunction = Callable[[float], Union[float, Tuple[float, float]]]
 
 
 class EasingResolver:
@@ -25,7 +28,7 @@ class EasingResolver:
 
     def __init__(
         self,
-        attribute_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        attribute_easing_dict: Optional[Dict[str, EasingFunction]] = None,
     ):
         """
         Initialize the easing resolver.
@@ -39,8 +42,8 @@ class EasingResolver:
         self,
         state: State,
         field_name: str,
-        segment_easing_overrides: Optional[Dict[str, Callable[[float], float]]] = None,
-    ) -> Callable[[float], float]:
+        segment_easing_overrides: Optional[Dict[str, EasingFunction]] = None,
+    ) -> EasingFunction:
         """
         Get the easing function for a field following the 4-level priority.
 
@@ -72,7 +75,7 @@ class EasingResolver:
         self,
         state: Optional[State],
         field_name: str,
-    ) -> Callable[[float], float]:
+    ) -> EasingFunction:
         """
         Get fallback easing for custom field timelines.
 

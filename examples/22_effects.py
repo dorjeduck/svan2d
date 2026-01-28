@@ -72,7 +72,7 @@ end_states = [
 elements = [VElement().keystates([s1, s2]) for s1, s2 in zip(start_states, end_states)]
 
 # Add all elements to the scene
-scene.add_elements(elements)
+scene = scene.add_elements(elements)
 
 # Create the exporter
 exporter = VSceneExporter(

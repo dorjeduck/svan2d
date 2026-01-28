@@ -46,7 +46,7 @@ def main():
 
             elements.append(VElement().keystates([s1, s2]))
 
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     # Export
     exporter = VSceneExporter(

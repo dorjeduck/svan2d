@@ -37,7 +37,7 @@ def create_scene_1() -> VScene:
         fill_color=Color("#0f3460"),
     )
     circle = VElement().keystates([start_state, end_state])
-    scene.add_element(circle)
+    scene = scene.add_element(circle)
 
     # Scene label
     label = VElement(
@@ -48,7 +48,7 @@ def create_scene_1() -> VScene:
             fill_color=Color("#ffffff"),
         )
     )
-    scene.add_element(label)
+    scene = scene.add_element(label)
 
     return scene
 
@@ -73,7 +73,7 @@ def create_scene_2() -> VScene:
         fill_color=Color("#16c79a"),
     )
     rect = VElement().keystates([start_state, end_state])
-    scene.add_element(rect)
+    scene = scene.add_element(rect)
 
     # Scene label
     label = VElement(
@@ -84,7 +84,7 @@ def create_scene_2() -> VScene:
             fill_color=Color("#ffffff"),
         )
     )
-    scene.add_element(label)
+    scene = scene.add_element(label)
 
     return scene
 
@@ -107,7 +107,7 @@ def create_scene_3() -> VScene:
             fill_color=color,
         )
         circle = VElement().keystates([start_state, end_state])
-        scene.add_element(circle)
+        scene = scene.add_element(circle)
 
     # Scene label
     label = VElement(
@@ -118,7 +118,7 @@ def create_scene_3() -> VScene:
             fill_color=Color("#1a1a2e"),
         )
     )
-    scene.add_element(label)
+    scene = scene.add_element(label)
 
     return scene
 

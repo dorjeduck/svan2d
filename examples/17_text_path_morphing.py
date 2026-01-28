@@ -38,9 +38,9 @@ def main():
 
     renderer = PathTextRenderer()
 
-    element = VElement(renderer=renderer, keystates=[start_state, end_state])
+    element = VElement(renderer=renderer).keystates([start_state, end_state])
 
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Create the exporter
     exporter = VSceneExporter(

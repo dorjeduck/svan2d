@@ -41,13 +41,10 @@ def main():
     # Create a text renderer for all numbers
     renderer = PathRenderer()
 
-    element = VElement(
-        renderer=renderer,
-        keystates=[start_state, end_state],
-    )
+    element = VElement(renderer=renderer).keystates([start_state, end_state])
 
     # Add all elements to the scene
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Create the exporter
     exporter = VSceneExporter(

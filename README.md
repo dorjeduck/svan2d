@@ -103,7 +103,7 @@ elements = [
 ]
 
 # (6) Add all elements to the scene
-scene.add_elements(elements)
+scene = scene.add_elements(elements)
 
 # (7) Export to PNG 
 exporter = VSceneExporter(
@@ -223,7 +223,7 @@ elements = [
 ]
 
 # Add all elements to the scene
-scene.add_elements(elements)
+scene = scene.add_elements(elements)
 
 # Export to MP4 
 exporter = VSceneExporter(

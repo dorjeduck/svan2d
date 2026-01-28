@@ -3,12 +3,13 @@ Comprehensive showcase of all svan2d layout functions
 Demonstrates each layout's unique characteristics with animated transitions
 """
 
+from typing import List
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
 from svan2d.core.logger import configure_logging
 from svan2d.velement import VElement
-from svan2d.transition import segments
+from svan2d.transition import segment
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from dataclasses import replace
@@ -185,29 +186,29 @@ def main():
 
     elements = [
         VElement(renderer=renderer).segment(
-            segments.hold(states, segments.linspace(len(states)), hold_duration)
+            segment.hold(list(states), segment.linspace(len(states)), hold_duration)
         )
         for states in zip(*layout_states)
     ]
 
     # Add all elements to the scene
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     texts = VElement(renderer=renderer).segment(
-        segments.fade_inout(
+        segment.fade_inout(
             layout_name_states,
-            segments.linspace(num_states),
+            segment.linspace(num_states),
             hold_duration,
             fade_duration,
         )
     )
 
-    scene.add_element(texts)
+    scene = scene.add_element(texts)
 
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

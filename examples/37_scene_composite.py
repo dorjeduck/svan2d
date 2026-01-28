@@ -35,7 +35,7 @@ def create_timer_scene(
 
     element = VElement().keystate(start_state, at=0).keystate(end_state, at=1)
 
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     return scene
 
@@ -78,7 +78,7 @@ def create_scene(
     )
 
     text = VElement().keystates([state, state])
-    scene.add_element(text)
+    scene = scene.add_element(text)
 
     return scene
 

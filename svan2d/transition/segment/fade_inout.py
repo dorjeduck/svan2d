@@ -16,7 +16,7 @@ def fade_inout(
     hold_duration: float | None = None,
     fade_duration: float | None = None,
     easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Union[List[KeyState], List[List[KeyState]]]:
+) -> List[KeyState]:
     """Fade in, hold, then fade out.
 
     Args:
@@ -49,7 +49,6 @@ def fade_inout(
                 )
             )
         res.append(KeyState(state=state, time=max(0, t - half_hold)))
-        res.append(KeyState(state=state, time=min(1, t + half_hold)))
         if t + half_hold < 1:
             res.append(
                 KeyState(
@@ -94,6 +93,6 @@ def fade_inout(
 
     result = []
     for s, t in zip(states, center_t):
-        result.append(get_keystates(s, t, hold_duration, fade_duration, easing))
+        result.extend(get_keystates(s, t, hold_duration, fade_duration, easing))
 
     return result

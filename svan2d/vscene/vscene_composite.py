@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, List, Literal, Optional, Union
 import drawsvg as dw
 
 from svan2d.core import get_logger
+from svan2d.core.color import Color
+from svan2d.core.enums import Origin
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -49,7 +51,8 @@ class VSceneComposite:
         scenes: List[ComposableScene],
         direction: Literal["horizontal", "vertical"] = "horizontal",
         gap: float = 0.0,
-        origin: Optional[Literal["center", "top-left"]] = None,
+        origin: Optional[Origin] = None,
+        background: Optional[Color] = None,
     ) -> None:
         """Initialize a composite of scenes.
 
@@ -58,6 +61,7 @@ class VSceneComposite:
             direction: Stack direction - "horizontal" or "vertical"
             gap: Gap between scenes in pixels (default: 0.0)
             origin: Override origin mode (default: use first scene's origin)
+            background: Background color to fill gaps (default: first scene's background)
 
         Raises:
             ValueError: If scenes list is empty or direction is invalid
@@ -74,6 +78,13 @@ class VSceneComposite:
         self._direction: Literal["horizontal", "vertical"] = direction
         self._gap = gap
         self._origin_override = origin
+
+        # Use provided background or try to get from first scene
+        if background is not None:
+            self._background: Optional[Color] = background
+        else:
+            first_scene = self._scenes[0]
+            self._background = getattr(first_scene, "background", None)
 
         # Compute scales and dimensions
         self._scales: List[float] = []
@@ -131,11 +142,11 @@ class VSceneComposite:
         return self._total_height
 
     @property
-    def origin(self) -> Literal["center", "top-left"]:
+    def origin(self) -> Origin:
         """Get the composite origin mode (from first scene or override)."""
         if self._origin_override is not None:
             return self._origin_override
-        return self._scenes[0].origin  # type: ignore[return-value]
+        return Origin(self._scenes[0].origin)
 
     @property
     def direction(self) -> Literal["horizontal", "vertical"]:
@@ -151,6 +162,11 @@ class VSceneComposite:
     def scenes(self) -> List[ComposableScene]:
         """Get the list of composed scenes."""
         return list(self._scenes)
+
+    @property
+    def background(self) -> Optional[Color]:
+        """Get the composite background color."""
+        return self._background
 
     def to_drawing(
         self,
@@ -173,21 +189,38 @@ class VSceneComposite:
         Raises:
             ValueError: If frame_time is outside [0.0, 1.0]
         """
-        _ = width, height  # Unused, for API compatibility
-
         if not 0.0 <= frame_time <= 1.0:
             raise ValueError(
                 f"frame_time must be between 0.0 and 1.0, got {frame_time}"
             )
 
-        # Apply render_scale to final dimensions
-        final_width = self._total_width * render_scale
-        final_height = self._total_height * render_scale
+        # Use explicit width/height if provided, otherwise calculate from render_scale
+        final_width = width if width is not None else self._total_width * render_scale
+        final_height = height if height is not None else self._total_height * render_scale
 
         drawing = dw.Drawing(final_width, final_height, origin=self.origin)
 
+        # Draw background rectangle to fill any gaps from rounding/anti-aliasing
+        if self._background is not None:
+            if self.origin == Origin.CENTER:
+                bg_x = -final_width / 2
+                bg_y = -final_height / 2
+            else:  # top-left
+                bg_x = 0
+                bg_y = 0
+            drawing.append(
+                dw.Rectangle(
+                    bg_x,
+                    bg_y,
+                    final_width,
+                    final_height,
+                    fill=self._background.to_rgb_string(),
+                )
+            )
+
         # Determine starting offset based on origin mode
-        if self.origin == "center":
+        # Use float for accumulation, round when creating transforms
+        if self.origin == Origin.CENTER:
             if self._direction == "horizontal":
                 offset = -self._total_width / 2 * render_scale
             else:
@@ -196,29 +229,38 @@ class VSceneComposite:
             offset = 0.0
 
         # Render each child scene with appropriate transforms
-        for scene, scale in zip(self._scenes, self._scales):
+        # Use slight overlap (1 pixel) between scenes to prevent anti-aliasing gaps
+        overlap = 1 * render_scale
+
+        for i, (scene, scale) in enumerate(zip(self._scenes, self._scales)):
             child_drawing = scene.to_drawing(frame_time=frame_time, render_scale=1.0)
 
             # Combined scale: child scale * render_scale
             total_scale = scale * render_scale
 
-            # Build transform
+            # Build transform (round offsets to integers to avoid sub-pixel gaps)
             if self._direction == "horizontal":
-                if self.origin == "center":
+                if self.origin == Origin.CENTER:
                     # For center origin: position child's center at correct location
-                    child_center_x = offset + (scene.width * total_scale) / 2
+                    child_center_x = round(offset + (scene.width * total_scale) / 2)
                     transform = f"translate({child_center_x}, 0) scale({total_scale})"
                 else:  # top-left
-                    transform = f"translate({offset}, 0) scale({total_scale})"
+                    transform = f"translate({round(offset)}, 0) scale({total_scale})"
+                # Subtract overlap so next scene overlaps slightly (except after last)
                 offset += scene.width * total_scale + self._gap * render_scale
+                if i < len(self._scenes) - 1:
+                    offset -= overlap
             else:  # vertical
-                if self.origin == "center":
+                if self.origin == Origin.CENTER:
                     # For center origin: position child's center at correct location
-                    child_center_y = offset + (scene.height * total_scale) / 2
+                    child_center_y = round(offset + (scene.height * total_scale) / 2)
                     transform = f"translate(0, {child_center_y}) scale({total_scale})"
                 else:  # top-left
-                    transform = f"translate(0, {offset}) scale({total_scale})"
+                    transform = f"translate(0, {round(offset)}) scale({total_scale})"
+                # Subtract overlap so next scene overlaps slightly (except after last)
                 offset += scene.height * total_scale + self._gap * render_scale
+                if i < len(self._scenes) - 1:
+                    offset -= overlap
 
             # Create group with transform and add child elements
             group = dw.Group(transform=transform)
@@ -242,16 +284,17 @@ class VSceneComposite:
         Args:
             frame_time: Time point to render (0.0 to 1.0)
             render_scale: Scale factor for rendering
-            width: Unused, for VSceneExporter compatibility
-            height: Unused, for VSceneExporter compatibility
+            width: Target width for the drawing
+            height: Target height for the drawing
             filename: Optional filename to save SVG to
             log: Whether to log the save operation
 
         Returns:
             SVG string
         """
-        _ = width, height  # Unused, for API compatibility
-        drawing = self.to_drawing(frame_time=frame_time, render_scale=render_scale)
+        drawing = self.to_drawing(
+            frame_time=frame_time, render_scale=render_scale, width=width, height=height
+        )
         svg_string: str = drawing.as_svg()  # type: ignore[assignment]
 
         if filename:

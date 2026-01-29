@@ -44,11 +44,12 @@ def create_square_element(
             square_state_1,
             at=fade_in_end,
         )
-        .keystate(
+    )
+    if fade_in_end < 1:
+        square = square.keystate(
             square_state_1,
             at=1.0,
         )
-    )
 
     # Text with appearance animation
     if do_text:
@@ -82,7 +83,7 @@ def create_square_element(
         )
 
         if text_fade_out_start < 1:
-            text.keystate(
+            text = text.keystate(
                 text_state_0,
                 at=text_fade_out_end,
             )

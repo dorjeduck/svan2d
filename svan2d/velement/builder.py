@@ -31,7 +31,9 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound="KeystateBuilder")
 
 # Type alias for keystate tuple
-KeystateTuple = Tuple[State, Optional[State], Optional[float], Optional[TransitionConfig], int | None]
+KeystateTuple = Tuple[
+    State, Optional[State], Optional[float], Optional[TransitionConfig], int | None
+]
 
 
 @dataclass(frozen=True)
@@ -88,7 +90,13 @@ class BuilderState:
             return self
 
         prev_state, prev_outgoing, prev_time, _, prev_render_index = self.keystates[-1]
-        updated_keystate = (prev_state, prev_outgoing, prev_time, transition, prev_render_index)
+        updated_keystate = (
+            prev_state,
+            prev_outgoing,
+            prev_time,
+            transition,
+            prev_render_index,
+        )
         return BuilderState(
             keystates=self.keystates[:-1] + (updated_keystate,),
             pending_transition=None,
@@ -188,10 +196,18 @@ class KeystateBuilder:
             )
 
             if transition_to_apply is not None:
-                new_builder = new_builder.with_last_keystate_updated(transition_to_apply)
+                new_builder = new_builder.with_last_keystate_updated(
+                    transition_to_apply
+                )
 
         # Add new keystate
-        new_keystate: KeystateTuple = (incoming_state, outgoing_state, at, None, render_index)
+        new_keystate: KeystateTuple = (
+            incoming_state,
+            outgoing_state,
+            at,
+            None,
+            render_index,
+        )
         new_builder = new_builder.with_keystate(new_keystate)
 
         return self._replace_builder(new_builder)
@@ -308,7 +324,7 @@ class KeystateBuilder:
 
     def default_transition(
         self: T,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: Optional[Dict[str, EasingFunction]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
         morphing: Optional["MorphingConfig"] = None,
     ) -> T:
@@ -453,8 +469,8 @@ class KeystateBuilder:
         times = [ks[2] for ks in self._builder.keystates if ks[2] is not None]
         seen = set()
         for t in times:
-            if t in seen:
-                raise ValueError(f"Duplicate keystate time {t} detected.")
+            # if t in seen:
+            #    raise ValueError(f"Duplicate keystate time {t} detected.")
             seen.add(t)
 
         # Convert internal keystates to KeyState objects

@@ -7,12 +7,13 @@ such as fades, wipes, slides, and more.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import drawsvg as dw
 
 from svan2d.core import get_logger
 from svan2d.transition.scene.base import RenderContext, SceneTransition
+from svan2d.core.enums import Origin
 
 if TYPE_CHECKING:
     from svan2d.vscene import VScene
@@ -75,7 +76,7 @@ class VSceneSequence:
         self,
         width: Optional[float] = None,
         height: Optional[float] = None,
-        origin: Optional[Literal["center", "top-left"]] = None,
+        origin: Optional[Origin] = None,
         *,
         # Private param for _replace - don't use directly
         _entries: Optional[List[Union[_SceneEntry, _TransitionEntry]]] = None,
@@ -181,14 +182,14 @@ class VSceneSequence:
         return 800.0  # Default fallback
 
     @property
-    def origin(self) -> Literal["center", "top-left"]:
+    def origin(self) -> Origin:
         """Get the sequence origin mode (from first scene or override)."""
         if self._origin is not None:
-            return self._origin  # type: ignore[return-value]
+            return self._origin
         for entry in self._entries:
             if isinstance(entry, _SceneEntry):
-                return entry.scene.origin  # type: ignore[return-value]
-        return "center"  # Default fallback
+                return Origin(entry.scene.origin)
+        return Origin.CENTER  # Default fallback
 
     def _compute_segments(self) -> List[_TimeSegment]:
         """Compute time segments for all scenes and transitions.

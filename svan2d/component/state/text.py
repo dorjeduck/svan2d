@@ -22,7 +22,6 @@ class TextState(ColorState):
 
     text: Union[str, List[str]] = ""
     font_family: str = "Arial"
-    text_align: str = "middle"
     font_weight: str = "normal"
     text_anchor: str = "middle"
     dominant_baseline: str = "central"

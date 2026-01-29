@@ -115,6 +115,52 @@ class Sieve:
     def get_full_report(self):
         return self.status_map
 
+    def get_step_stats(self):
+        """
+        Compute cumulative statistics per step.
+        Returns a list of dicts (indexed by step number) with:
+        - sieve_prime: the prime used to sieve at this step (None if not applicable)
+        - num_primes: cumulative primes discovered (excluding 0, 1)
+        - num_composites: cumulative composites discovered (excluding 0, 1)
+        - num_unclassified: remaining unclassified numbers
+        """
+        if not self.is_complete:
+            raise RuntimeError("Sieve must be complete before calling get_step_stats()")
+
+        total_numbers = self.limit - 1  # numbers 2 to limit
+
+        # Build step -> sieve_prime mapping
+        sieve_prime_at: dict[int, int | None] = {0: None}  # step 0 has no sieve prime
+        for num, data in self.status_map.items():
+            if data["sieve_prime_at_step"] is not None:
+                sieve_prime_at[data["sieve_prime_at_step"]] = num
+
+        # Final step has no sieve prime (wrap-up)
+        if self.current_step not in sieve_prime_at:
+            sieve_prime_at[self.current_step] = None
+
+        stats = []
+        for step in range(self.current_step + 1):
+            primes = 0
+            composites = 0
+            for num in range(2, self.limit + 1):
+                data = self.status_map[num]
+                identified = data["identified_at_step"]
+                if identified is not None and identified <= step:
+                    if data["status"] in (NumberStatus.PRIME, NumberStatus.SIEVE_PRIME):
+                        primes += 1
+                    elif data["status"] == NumberStatus.COMPOSITE:
+                        composites += 1
+
+            stats.append({
+                "sieve_prime": sieve_prime_at.get(step),
+                "num_primes": primes,
+                "num_composites": composites,
+                "num_unclassified": total_numbers - primes - composites,
+            })
+
+        return stats
+
 
 def print_sieve_audit(limit):
     sieve = Sieve(limit)

@@ -12,9 +12,12 @@ from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import configure_logging
 from svan2d.transition import easing
 from svan2d.vscene import VScene
+from svan2d.vscene.vscene_composite import VSceneComposite
 from svan2d.vscene.vscene_exporter import VSceneExporter
 
+from side_panel_scene import create_side_panel
 from square_element import create_square_element
+from utils import is_prime
 
 
 from config import (
@@ -55,7 +58,7 @@ def main():
     def scale_func(t: float) -> float:
         return float(interp(t))
 
-    scene.animate_camera(
+    scene = scene.animate_camera(
         scale=scale_func,
     )
 
@@ -63,8 +66,20 @@ def main():
     time_per_ring = 1 / NUM_RINGS
 
     number = 1
-
     fade_duration = time_per_ring
+
+    # Track stats for side panel
+    # Initial state at t=0: only number 1 visible, no primes/composites yet
+    step_stats = [
+        {
+            "step": 1,
+            "num_primes": 0,
+            "num_composites": 0,
+            "appear_time": 0.0,
+        }
+    ]
+    num_primes = 0
+    num_composites = 0
 
     for round in range(NUM_RINGS + 1):
         step = time_per_ring / max(8 * round, 1)
@@ -79,16 +94,45 @@ def main():
                 text_fade_out_start,
             )
 
-            scene.add_element(square)
+            scene = scene.add_element(square)
 
             if text is not None:
-                scene.add_element(text)
+                scene = scene.add_element(text)
+
+            # Track stats for numbers >= 2
+            if number >= 2:
+                if is_prime(number):
+                    num_primes += 1
+                else:
+                    num_composites += 1
+
+                step_stats.append(
+                    {
+                        "step": number,
+                        "num_primes": num_primes,
+                        "num_composites": num_composites,
+                        "appear_time": min(1, appear_time + step),
+                    }
+                )
 
             number += 1
 
+    # Create side panel
+    # Scale factor to maintain consistent text size across different SCENE_SIZE values
+    reference_size = 2500
+    scale_factor = SCENE_SIZE / reference_size
+    panel_width = int(SCENE_SIZE * 0.4)
+
+    side_panel = create_side_panel(
+        panel_width, SCENE_SIZE, easing.in_sine, step_stats, scale_factor
+    )
+
+    # Combine animation and side panel
+    composite = VSceneComposite([scene, side_panel], direction="horizontal")
+
     # Export
     exporter = VSceneExporter(
-        scene=scene,
+        scene=composite,
         converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )

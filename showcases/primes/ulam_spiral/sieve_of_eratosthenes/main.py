@@ -1,8 +1,11 @@
 from svan2d.converter.converter_type import ConverterType
+from svan2d.core.color import Color
 from svan2d.core.logger import configure_logging
 from svan2d.vscene import VScene
+from svan2d.vscene.vscene_composite import VSceneComposite
 from svan2d.vscene.vscene_exporter import VSceneExporter
 
+from side_panel_scene import create_side_panel
 from sieve import Sieve
 from square_element import create_square_element
 from utils import ring_to_total_number
@@ -22,7 +25,7 @@ configure_logging(level="INFO")
 def main():
 
     cell_size = SQUARE_SIZE + GAP
-    scene_size = 1.05 * (NUM_RINGS * 2 + 1) * cell_size
+    scene_size = int(1.05 * (NUM_RINGS * 2 + 1) * cell_size)
 
     num = ring_to_total_number(NUM_RINGS)
 
@@ -30,6 +33,7 @@ def main():
     sieve.run_all()
 
     num_steps = sieve.get_total_steps()
+    step_stats = sieve.get_step_stats()
 
     step_time = 1 / num_steps
 
@@ -39,16 +43,28 @@ def main():
         create_square_element(i, report[i], step_time) for i in range(1, num + 1)
     ]
 
-    scene = VScene(
+    animation_scene = VScene(
         width=scene_size,
         height=scene_size,
         background=COLOR_BACKGROUND,
     )
 
-    scene.add_elements(elements)
+    animation_scene = animation_scene.add_elements(elements)
+
+    # Scale factor to maintain consistent text size across different NUM_RINGS values
+    reference_size = 2500
+    scale_factor = scene_size / reference_size
+    panel_width = int(scene_size * 0.4)
+
+    side_panel_scene = create_side_panel(
+        panel_width, scene_size, step_stats, scale_factor
+    )
+
+    comp = VSceneComposite([animation_scene, side_panel_scene], direction="horizontal")
+
     # Export
     exporter = VSceneExporter(
-        scene=scene,
+        comp,
         converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )

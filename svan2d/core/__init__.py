@@ -8,6 +8,7 @@ Provides fundamental types and utilities:
 """
 
 from .color import Color, ColorSpace, ColorTuple, color_to_oklab, oklab_to_color
+from .enums import Origin
 from .logger import (
     configure_logging,
     get_logger,
@@ -25,6 +26,7 @@ __all__ = [
     "Color",
     "ColorTuple",
     "ColorSpace",
+    "Origin",
     "configure_logging",
     "get_logger",
     "Point2D",

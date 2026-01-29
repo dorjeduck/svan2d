@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from ..state.text import TextState
 
 
-
-
 class TextRenderer(Renderer):
     """Renderer class for rendering text elements"""
 

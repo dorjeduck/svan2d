@@ -7,7 +7,6 @@ from typing import (
     Callable,
     Dict,
     List,
-    Literal,
     Optional,
     Sequence,
     TypeAlias,
@@ -26,6 +25,7 @@ import drawsvg as dw
 
 from svan2d.config import ConfigKey, get_config
 from svan2d.core import Color, get_logger
+from svan2d.core.enums import Origin
 from svan2d.core.point2d import Point2D
 from svan2d.vscene.camera_state import CameraState
 
@@ -57,7 +57,7 @@ class VScene:
         height: float | None = None,
         background: Color | None = None,
         background_opacity: float | None = None,
-        origin: Optional[Literal["center", "top-left"]] = None,
+        origin: Optional[Origin] = None,
         offset_x: float = 0.0,
         offset_y: float = 0.0,
         scale: float = 1.0,
@@ -106,10 +106,10 @@ class VScene:
             if background_opacity is not None
             else config.get(ConfigKey.SCENE_BACKGROUND_OPACITY, 1.0)
         )
-        _origin: Literal["center", "top-left"] = (
+        _origin: Origin = (
             origin
             if origin is not None
-            else config.get(ConfigKey.SCENE_ORIGIN_MODE, "center")
+            else Origin(config.get(ConfigKey.SCENE_ORIGIN_MODE, "center"))
         )
 
         # Validation
@@ -697,7 +697,7 @@ class VScene:
         # Add background
         if self.background is not None and self.background_opacity > 0.0:
             # Calculate background position based on origin
-            if self.origin == "center":
+            if self.origin == Origin.CENTER:
                 bg_x, bg_y = -ww / 2, -hh / 2
             else:  # top-left
                 bg_x, bg_y = 0, 0

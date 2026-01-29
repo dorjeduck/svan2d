@@ -9,12 +9,14 @@ VScene manages elements and renders frames for animation:
 """
 
 from .camera_state import CameraState
+from svan2d.core.enums import Origin
 from .vscene import VScene
 from .vscene_composite import VSceneComposite
 from .vscene_exporter import VSceneExporter
 from .vscene_sequence import VSceneSequence
 
 __all__ = [
+    "Origin",
     "VScene",
     "VSceneExporter",
     "VSceneSequence",

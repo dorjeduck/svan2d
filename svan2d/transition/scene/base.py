@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Literal
+from typing import TYPE_CHECKING, Callable
 
 import drawsvg as dw
 
+from svan2d.core.enums import Origin
 from svan2d.transition.easing import linear
 
 if TYPE_CHECKING:
@@ -34,7 +35,7 @@ class RenderContext:
     width: float
     height: float
     render_scale: float = 1.0
-    origin: Literal["center", "top-left"] = "center"
+    origin: Origin = Origin.CENTER
 
 
 class SceneTransition(ABC):

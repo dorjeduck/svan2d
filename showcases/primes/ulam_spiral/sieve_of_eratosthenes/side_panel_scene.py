@@ -13,6 +13,7 @@ from config import (
     COLOR_ONE,
     COLOR_PRIME,
     COLOR_BACKGROUND,
+    COLOR_CANDIDATE,
 )
 
 
@@ -107,9 +108,15 @@ def create_side_panel(
     legend_text_size = 80 * scale_factor
 
     vert_dist = legend_text_size + 30 * scale_factor
-    start_y = panel_height / 2 - 6 * legend_text_size
+    start_y = panel_height / 2 - 7 * legend_text_size
 
-    colors = [COLOR_ONE, COLOR_COMPOSITE, COLOR_PRIME, COLOR_CURRENT_SIEVE_PRIME]
+    colors = [
+        COLOR_ONE,
+        COLOR_COMPOSITE,
+        COLOR_PRIME,
+        COLOR_CURRENT_SIEVE_PRIME,
+        COLOR_CANDIDATE,
+    ]
 
     square_states = [
         SquareState(
@@ -128,7 +135,7 @@ def create_side_panel(
 
     scene = scene.add_elements(square_elements)
 
-    texts = ["Number 1", "Composite", "Prime", "Current Sieve Prime"]
+    texts = ["Number 1", "Composite", "Prime", "Current Sieve Prime", "Unclassified"]
 
     text_states = [
         TextState(

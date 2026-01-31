@@ -1,11 +1,5 @@
 from svan2d.core.color import Color
 
-# Font path - adjust for your system
-# macOS: /System/Library/Fonts/Supplemental/Arial.ttf
-# Linux: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
-# Windows: C:/Windows/Fonts/arial.ttf
-FONT_PATH = "/System/Library/Fonts/Supplemental/Arial.ttf"
-
 COLOR_ONE = Color(70, 70, 180)
 COLOR_BACKGROUND = Color(10, 10, 30)
 COLOR_PRIME = Color(255, 170, 0)

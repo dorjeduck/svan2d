@@ -29,6 +29,7 @@ class TextRenderer(Renderer):
             "text_anchor": state.text_anchor,
             "letter_spacing": state.letter_spacing,
             "dominant_baseline": state.dominant_baseline,
+            "text_rendering": state.text_rendering.value,
         }
         self._set_fill_and_stroke_kwargs(state, text_kwargs, drawing)
 

@@ -31,28 +31,27 @@ pip install drawsvg
 
 ### Rasterization
 
-Svan2D offers multiple ways to convert SVG graphics to PNG and PDF formats. Each has different trade-offs in terms of quality, speed, and setup complexity.
+Svan2D offers multiple ways to convert SVG graphics to PNG and PDF formats. **Playwright HTTP is recommended** for the best balance of speed and quality.
+
+* **ConverterType.PLAYWRIGHT_HTTP** ⭐ Recommended
+  - Install: `pip install svan2d[playwright-server]` then `playwright install chromium`
+  - Start server: `svan2d playwright-server start`
+  - **Best quality** (browser-accurate) + **fast** (17ms/frame with parallel=4)
+  - See **[PLAYWRIGHT_SERVER.md](docs/PLAYWRIGHT_SERVER.md)** for setup guide
 
 * **ConverterType.CAIROSVG**
   - Install: `pip install cairosvg`
-  - Fast rendering but may have font rendering limitations.
+  - Fastest (11ms/frame) but may have font rendering limitations.
 
 * **ConverterType.INKSCAPE**
   - Install: Download from [inkscape.org](https://inkscape.org) and ensure it's in your PATH
-  - Moderate speed with good quality, though text-on-path features may have issues.
+  - Good quality, though text-on-path features may have issues.
 
 * **ConverterType.PLAYWRIGHT**
   - Install: `pip install playwright` then `playwright install chromium`
-  - Most accurate rendering but slowest performance and largest installation size.
+  - Most accurate rendering but slow (~870ms/frame). Use PLAYWRIGHT_HTTP instead.
 
-* **ConverterType.PLAYWRIGHT_HTTP** (Recommended for high-quality batch rendering)
-  - Install: `pip install svan2d[playwright-server]` then `playwright install chromium`
-  - Highest quality (same as PLAYWRIGHT), runs as background service
-  - Start server: `svan2d playwright-server start`
-  - Best for: batch rendering, long-running processes, production workflows
-  - See **[PLAYWRIGHT_SERVER.md](docs/PLAYWRIGHT_SERVER.md)** for complete setup guide and features
-
-**Performance Comparison:** See **[benchmark/README.md](benchmark/README.md)** for detailed performance comparisons between all converters. Run `python benchmark/run_benchmark.py` to generate fresh benchmark reports comparing speed, CPU usage, and memory consumption.
+**Performance Comparison:** See **[benchmark/README.md](benchmark/README.md)** for detailed benchmarks.
   
 ## 🚀 Quick Start
 

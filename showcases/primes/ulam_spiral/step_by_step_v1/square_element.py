@@ -1,11 +1,12 @@
 from dataclasses import replace
 
-from svan2d.component.state import SquareState, TextPathState
+from svan2d.component.state import SquareState, TextState
+from svan2d.component.state.text import TextRendering
 from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
 from svan2d.velement import VElement
 
-from config import COLOR_TEXT, FONT_PATH, GAP, SQUARE_SIZE
+from config import COLOR_TEXT, GAP, SQUARE_SIZE
 from utils import get_color, get_spiral_position
 
 
@@ -53,12 +54,12 @@ def create_square_element(
 
     # Text with appearance animation
     if do_text:
-        text_state_0 = TextPathState(
+        text_state_0 = TextState(
             text=str(n),
             pos=pos,
-            font_path=FONT_PATH,
             font_size=SQUARE_SIZE * 0.35,
             fill_color=COLOR_TEXT,
+            text_rendering=TextRendering.GEOMETRIC_PRECISION,
             scale=0,
         )
 

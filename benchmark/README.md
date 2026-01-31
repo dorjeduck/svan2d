@@ -14,73 +14,30 @@ Generates console output + `BENCHMARK_RESULTS.md` with detailed metrics.
 
 ## Svan2D PNG Converter Benchmark Results
 
-**Generated:** 2025-11-22 11:47:37
+**Generated:** 2026-01-31
 
-**Frames rendered:** 100
+**Frames rendered:** 50
 
 ## Performance Comparison
 
-| Converter | Total Time | Per Frame | CPU % | CPU Time | Memory |
-|-----------|------------|-----------|-------|----------|--------|
-| cairosvg | 1.34s | 0.013s | 89.0% | 1.37s | 125.5MB |
-| inkscape | 31.89s | 0.319s | 1.0% | 0.36s | 126.3MB |
-| playwright | 87.76s | 0.878s | 2.0% | 1.98s | 115.7MB |
-| playwright_http | 88.40s | 0.884s | 0.6% | 0.57s | 119.2MB |
-
-## Detailed Metrics
-
-### cairosvg
-
-- **Total Time:** 1.34s
-- **Average Time per Frame:** 0.013s
-- **Process CPU Usage:** 89.0%
-- **User CPU Time:** 1.31s
-- **System CPU Time:** 0.06s
-- **Total CPU Time:** 1.37s
-- **Memory Usage:** 125.5MB
-
-### inkscape
-
-- **Total Time:** 31.89s
-- **Average Time per Frame:** 0.319s
-- **Process CPU Usage:** 1.0%
-- **User CPU Time:** 0.07s
-- **System CPU Time:** 0.29s
-- **Total CPU Time:** 0.36s
-- **Memory Usage:** 126.3MB
-
-### playwright
-
-- **Total Time:** 87.76s
-- **Average Time per Frame:** 0.878s
-- **Process CPU Usage:** 2.0%
-- **User CPU Time:** 1.30s
-- **System CPU Time:** 0.68s
-- **Total CPU Time:** 1.98s
-- **Memory Usage:** 115.7MB
-
-### playwright_http
-
-- **Total Time:** 88.40s
-- **Average Time per Frame:** 0.884s
-- **Process CPU Usage:** 0.6%
-- **User CPU Time:** 0.40s
-- **System CPU Time:** 0.17s
-- **Total CPU Time:** 0.57s
-- **Memory Usage:** 119.2MB
-
-
+| Converter | Parallel | Total Time | Per Frame | CPU % | CPU Time | Memory |
+|-----------|----------|------------|-----------|-------|----------|--------|
+| cairosvg | - | 0.57s | 0.011s | 89.4% | 0.75s | 127.7MB |
+| inkscape | - | 19.11s | 0.382s | 0.8% | 0.19s | 132.2MB |
+| playwright | - | 43.64s | 0.873s | 2.1% | 1.06s | 137.3MB |
+| playwright_http | - | 2.48s | 0.050s | 3.4% | 0.11s | 116.5MB |
+| playwright_http | 4 | 0.85s | 0.017s | 7.8% | 0.10s | 116.7MB |
 
 ## Converter Trade-offs
 
 | Converter | Speed | Quality | Process CPU | Setup |
 |-----------|-------|---------|-------------|-------|
-| **CairoSVG** | Fastest | Good (font limits) | Moderate | `pip install cairosvg` |
-| **Inkscape** | Moderate | Good | Low | Download from inkscape.org |
-| **Playwright** | Slow | Best | High | `pip install playwright` |
-| **Playwright HTTP** | Slow | Best | Very Low | `pip install svan2d[playwright-server]` |
+| **CairoSVG** | Fastest | Good (font limits) | High | `pip install cairosvg` |
+| **Playwright HTTP** | Very Fast | Best | Low | `pip install svan2d[playwright-server]` |
+| **Inkscape** | Slow | Good | Low | Download from inkscape.org |
+| **Playwright** | Slowest | Best | Moderate | `pip install playwright` |
 
-**Key insight:** Playwright HTTP has same wall-clock time as local Playwright, but offloads CPU/memory to server process (85-95% reduction in your process).
+**Recommendation:** Use **Playwright HTTP** for the best combination of speed and quality. With parallel rendering, it approaches CairoSVG speeds while delivering browser-accurate rendering.
 
 ## Options
 

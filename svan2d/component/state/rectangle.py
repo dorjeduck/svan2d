@@ -25,7 +25,7 @@ class RectangleState(VertexState):
     fill_opacity: float = 1
     stroke_color: Optional[Color] = Color.NONE
     stroke_opacity: float = 1
-    corner_radius: float = 0  # For rounded rectangles (TODO: implement)
+    corner_radius: float = 0
 
     def __post_init__(self):
         super().__post_init__()
@@ -35,7 +35,7 @@ class RectangleState(VertexState):
     def _generate_contours(self) -> VertexContours:
         """Generate rectangle contours
 
-        Returns VertexContours with a single rectangular outer contour, no  vertex_loops .
+        Returns VertexContours with a single rectangular outer contour, no vertex_loops.
         """
         assert self._num_vertices is not None
         rectangle = VertexRectangle(
@@ -43,6 +43,7 @@ class RectangleState(VertexState):
             width=self.width,
             height=self.height,
             num_vertices=self._num_vertices,
+            corner_radius=self.corner_radius,
         )
 
         return VertexContours(outer=rectangle, holes=None)

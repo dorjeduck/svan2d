@@ -50,7 +50,8 @@ from .square import SquareState
 from .square_ring import SquareRingState
 from .star import StarState
 from .state_collection import StateCollectionState
-from .text import TextState
+from .text import TextRendering, TextState
+from .text_path import TextPathState
 from .triangle import TriangleState
 from .wave import WaveState
 
@@ -97,6 +98,8 @@ __all__ = [
     "SquareState",
     "SquareRingState",
     "StarState",
+    "TextPathState",
+    "TextRendering",
     "TextState",
     "TriangleState",
     "FlowerState",

@@ -38,6 +38,13 @@ class SquareRenderer(Renderer):
             "height": state.size,
         }
 
+        if state.corner_radius > 0:
+            # Clamp to max valid radius
+            max_radius = state.size / 2
+            r = min(state.corner_radius, max_radius)
+            rect_kwargs["rx"] = r
+            rect_kwargs["ry"] = r
+
         self._set_fill_and_stroke_kwargs(state, rect_kwargs, drawing)
 
         return dw.Rectangle(**rect_kwargs)

@@ -31,17 +31,17 @@ pip install drawsvg
 
 ### Rasterization
 
-Svan2D offers multiple ways to convert SVG graphics to PNG and PDF formats. **Playwright HTTP is recommended** for the best balance of speed and quality.
+Svan2D offers multiple ways to convert SVG graphics to PNG and PDF formats. **Playwright HTTP is recommended** for speed and quality.
 
 * **ConverterType.PLAYWRIGHT_HTTP** ⭐ Recommended
   - Install: `pip install svan2d[playwright-server]` then `playwright install chromium`
   - Start server: `svan2d playwright-server start`
-  - **Best quality** (browser-accurate) + **fast** (17ms/frame with parallel=4)
+  - **Best quality** (browser-accurate) and **fast** with parallel rendering
   - See **[PLAYWRIGHT_SERVER.md](docs/PLAYWRIGHT_SERVER.md)** for setup guide
 
 * **ConverterType.CAIROSVG**
   - Install: `pip install cairosvg`
-  - Fastest (11ms/frame) but may have font rendering limitations.
+  - Fastest option but may have font rendering limitations.
 
 * **ConverterType.INKSCAPE**
   - Install: Download from [inkscape.org](https://inkscape.org) and ensure it's in your PATH

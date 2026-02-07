@@ -1,0 +1,50 @@
+[scene]
+width = 640
+height = 480
+background = "#1a1a2e"
+
+[fonts]
+quote_path = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+quote_size = 36
+author_cursive_path = "/System/Library/Fonts/Supplemental/Brush Script.ttf"
+author_block_path = "/System/Library/Fonts/Supplemental/Arial.ttf"
+author_block_size = 10
+author_cursive_size = 30
+
+[text]
+quote_lines = ["mirror","facing mirror","nowhere else"]
+author = "Ikkyu"
+
+[animation.quote]
+scatter_start = 0.0      # chars begin flying in
+scatter_end = 0.50       # chars finish flying in
+scatter_radius = 300
+scatter_rotation = 360
+
+[animation.decorations]
+start = 0.25             # circles + lines begin appearing
+end = 0.55               # circles + lines fully visible
+
+[animation.author]
+fade_start = 0.45        # author name begins fading in
+fade_end = 0.55          # author name fully visible
+morph_start = 0.55       # font morph begins (block → cursive)
+morph_end = 0.85         # font morph complete
+
+[style]
+quote_color = "#e94560"
+author_color = "#4ecdc4"
+line_color = "#533483"
+circle_colors = ["#0f3460", "#533483", "#4ecdc4"]
+circle_count = 5
+circle_radius_range = [8, 25]
+line_width = 2
+line_length_ratio = 0.6
+
+[export]
+output_dir = "output/"
+filename = "quote_poster"
+converter = "playwright_http"
+total_frames = 300
+framerate = 30
+png_width_px = 1280

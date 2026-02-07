@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -40,6 +41,17 @@ class VSceneExporter:
     DEFAULT_CODEC = "libx264"
     SUPPORTED_FORMATS = {"svg", "png", "pdf"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
+
+    @staticmethod
+    def _round_to_even(value: int | float) -> int:
+        """Round a value to the nearest even integer.
+
+        Video codecs like h264 require even dimensions.
+        """
+        rounded = int(round(value))
+        if rounded % 2 != 0:
+            rounded += 1
+        return rounded
 
     def __init__(
         self,
@@ -545,6 +557,8 @@ class VSceneExporter:
         # Only clean if we detect wrapper tags to avoid unnecessary modifications
         import re
 
+        assert html_content is not None
+
         if any(
             tag in html_content.lower()
             for tag in ["<!doctype", "<html", "<body", "<head"]
@@ -595,6 +609,7 @@ class VSceneExporter:
 </body>
 </html>
 """
+        assert final_html is not None
 
         # Write to file
         output_path.write_text(final_html, encoding="utf-8")
@@ -684,6 +699,7 @@ class VSceneExporter:
         png_height_px: int | None = None,
         cleanup_svg_after_png_conversion: bool = True,
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        parallel_workers: int = 0,
     ):
         """Export animation as frame sequence.
 
@@ -696,6 +712,7 @@ class VSceneExporter:
             png_height_px: Height for PNG frames
             cleanup_svg_after_png_conversion: If format is PNG, whether to delete intermediate SVG files
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
 
         Yields:
             Tuple of (frame_num, frame_time) for progress tracking
@@ -714,6 +731,32 @@ class VSceneExporter:
 
         frames_dir = Path(output_dir)
         frames_dir.mkdir(parents=True, exist_ok=True)
+
+        # Use parallel rendering for PNG if requested and converter supports it
+        # Only I/O-bound converters benefit from ThreadPoolExecutor (HTTP-based)
+        # CPU-bound converters (CairoSVG) would need ProcessPoolExecutor
+        # Minimum 2 workers needed for parallelism benefit
+        if format == "png" and parallel_workers >= 2:
+            from svan2d.converter.playwright_http_svg_converter import (
+                PlaywrightHttpSvgConverter,
+            )
+
+            if isinstance(self.converter, PlaywrightHttpSvgConverter):
+                yield from self._to_frames_parallel(
+                    frames_dir,
+                    filename_pattern,
+                    total_frames,
+                    png_width_px,
+                    png_height_px,
+                    parallel_workers,
+                    progress_callback,
+                )
+                return
+            else:
+                logger.warning(
+                    f"Parallel rendering not supported for {type(self.converter).__name__}, "
+                    "using sequential. Only PlaywrightHttpSvgConverter supports parallel."
+                )
 
         logger.info(f"Generating {total_frames} frames in {format} format...")
 
@@ -780,6 +823,154 @@ class VSceneExporter:
 
         logger.info(f"Frame generation complete: {total_frames} frames in {frames_dir}")
 
+    def _to_frames_parallel(
+        self,
+        frames_dir: Path,
+        filename_pattern: str,
+        total_frames: int,
+        png_width_px: int | None,
+        png_height_px: int | None,
+        parallel_workers: int,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+    ):
+        """Generate PNG frames with parallel conversion using temp files.
+
+        Phase 1: Generate SVGs sequentially, write to temp files (minimal memory)
+        Phase 2: Convert all SVGs to PNGs in parallel
+        Phase 3: Clean up temp SVG files
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        # Infer dimensions (ensure even for video codec compatibility)
+        width = png_width_px or self.scene.width
+        height = png_height_px
+        if height is None:
+            height = self._round_to_even(width * (self.scene.height / self.scene.width))
+
+        # Calculate scale for SVG generation
+        scale = min(width / self.scene.width, height / self.scene.height)
+
+        total_start = time.time()
+
+        # Create temp directory for SVG files
+        svg_temp_dir = frames_dir / "_temp_svg"
+        svg_temp_dir.mkdir(exist_ok=True)
+
+        logger.debug(f"Writing svg to tmp dir: {svg_temp_dir}")
+
+
+        # Phase 1: Generate SVGs and write to temp files immediately
+        logger.info("Phase 1: Generating SVG files...")
+        svg_start = time.time()
+        frame_data = (
+            []
+        )  # List of (frame_num, t, svg_path, png_path) - only paths, not content
+
+        for frame_num in range(total_frames):
+            reset_point_pool()
+            t = self._calculate_frame_time(frame_num, total_frames)
+
+            # Progress every 10%
+            if frame_num % max(1, total_frames // 10) == 0:
+                progress_pct = (frame_num / total_frames) * 100
+                logger.info(
+                    f"  SVG generation: {frame_num}/{total_frames} ({progress_pct:.0f}%)"
+                )
+
+            # Generate SVG content
+            svg_content = self.scene.to_svg(
+                frame_time=t,
+                render_scale=scale,
+                width=width,
+                height=height,
+                log=False,
+            )
+
+            # Write to temp file immediately
+            filename = filename_pattern.format(frame_num)
+            svg_path = svg_temp_dir / f"{filename}.svg"
+            png_path = frames_dir / f"{filename}.png"
+
+            with open(svg_path, "w", encoding="utf-8") as f:
+                f.write(svg_content)
+
+
+            # Only store paths, not content
+            frame_data.append((frame_num, t, str(svg_path), str(png_path)))
+
+            # Free SVG content from memory
+            del svg_content
+
+        svg_time = time.time() - svg_start
+        logger.info(f"Phase 1 complete: {svg_time:.2f}s")
+
+        # Phase 2: Convert all SVGs to PNGs in parallel
+        workers_info = f" with {parallel_workers} parallel workers" if parallel_workers > 1 else ""
+        logger.info(f"Phase 2: Converting {total_frames} SVGs to PNG{workers_info}...")
+        png_start = time.time()
+
+        def convert_frame(data):
+            frame_num, t, svg_path, png_path = data
+            # Read SVG from temp file
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            success = self.converter.render_svg_to_png(
+                svg_content, png_path, width, height
+            )
+            return frame_num, t, success
+
+        completed = {}
+        frames_done = 0
+
+        with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
+            futures = {
+                executor.submit(convert_frame, data): data[0] for data in frame_data
+            }
+
+            for future in as_completed(futures):
+                frame_num, t, success = future.result()
+                completed[frame_num] = (frame_num, t)
+
+                if not success:
+                    logger.warning(f"Frame {frame_num} conversion failed")
+
+                frames_done += 1
+                if progress_callback:
+                    progress_callback(frames_done, total_frames)
+
+                # Progress every 10%
+                if frames_done % max(1, total_frames // 10) == 0:
+                    progress_pct = (frames_done / total_frames) * 100
+                    logger.info(
+                        f"  PNG conversion: {frames_done}/{total_frames} ({progress_pct:.0f}%)"
+                    )
+
+        png_time = time.time() - png_start
+        logger.info(f"Phase 2 complete: {png_time:.2f}s")
+
+        # Phase 3: Clean up temp SVG files
+        logger.debug("Cleaning up temp SVG files...")
+        for _, _, svg_path, _ in frame_data:
+            try:
+                Path(svg_path).unlink()
+            except OSError:
+                pass
+        try:
+            svg_temp_dir.rmdir()
+        except OSError:
+            pass
+
+        # Yield results in frame order
+        for frame_num in range(total_frames):
+            if frame_num in completed:
+                yield completed[frame_num]
+
+        total_time = time.time() - total_start
+        logger.info(
+            f"Frame generation complete: {total_frames} frames in {total_time:.2f}s "
+            f"(SVG: {svg_time:.2f}s, PNG: {png_time:.2f}s)"
+        )
+
     def to_mp4(
         self,
         filename: str,
@@ -791,6 +982,7 @@ class VSceneExporter:
         codec: str = DEFAULT_CODEC,
         num_thumbnails: int = 0,
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        parallel_workers: int = 0,
     ) -> str:
         """Export scene as MP4 video file, with optional thumbnail generation.
 
@@ -804,6 +996,7 @@ class VSceneExporter:
             codec: Video codec (default: libx264 for MP4)
             num_thumbnails: Number of thumbnails to generate (0 = none, 1 = middle, 2 = start/end, etc.)
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
 
         Returns:
             Path to the exported video file
@@ -845,6 +1038,7 @@ class VSceneExporter:
                 png_height_px=png_height_px,
                 cleanup_svg_after_png_conversion=False,  # Keep frames for ffmpeg
                 progress_callback=progress_callback,
+                parallel_workers=parallel_workers,
             ):
                 frame_times.append(t)
 

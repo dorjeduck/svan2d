@@ -7,7 +7,7 @@ Defines how interpolation happens between two keystates, including:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Union
 
 from svan2d.velement.morphing import MorphingConfig
 
@@ -19,6 +19,9 @@ CurveFunction = Callable[["Point2D", "Point2D", float], "Point2D"]
 
 # Per-field curve configuration: {field_name: curve_function}
 CurveConfig = Dict[str, CurveFunction]
+
+# Easing function can return float (1D) or Tuple[float, float] (2D for Point2D)
+EasingFunction = Callable[[float], Union[float, Tuple[float, float]]]
 
 
 @dataclass
@@ -32,7 +35,7 @@ class TransitionConfig:
                     Curve functions control spatial trajectory for Point2D interpolation.
     """
 
-    easing_dict: Optional[Dict[str, Callable[[float], float]]] = None
+    easing_dict: Optional[Dict[str, EasingFunction]] = None
     morphing_config: Optional[Union[MorphingConfig, Dict[str, Any]]] = None
     curve_dict: Optional[CurveConfig] = None
 

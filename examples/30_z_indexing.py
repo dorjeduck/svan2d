@@ -36,8 +36,8 @@ def main():
 
     surrounding_elements = [VElement().keystates([s, s]) for s in [c1, c2, c3, c4]]
 
-    scene.add_element(center_element)
-    scene.add_elements(surrounding_elements)
+    scene = scene.add_element(center_element)
+    scene = scene.add_elements(surrounding_elements)
 
     # Export to mp4
 

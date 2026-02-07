@@ -150,9 +150,9 @@ def create_scene() -> VScene:
     bar_elements, name_elements, value_elements = create_bar_elements(
         company_data, category_colors, bar_config
     )
-    scene.add_elements(bar_elements)
-    scene.add_elements(name_elements)
-    scene.add_elements(value_elements)
+    scene = scene.add_elements(bar_elements)
+    scene = scene.add_elements(name_elements)
+    scene = scene.add_elements(value_elements)
 
     # Create axis (lines aligned with bar edges)
     max_values = get_max_values_per_frame(company_data)
@@ -181,7 +181,7 @@ def create_scene() -> VScene:
         zero_line_width=cfg["axis"]["zero_line_width"],
     )
     axis_elements = create_axis_elements(max_values, axis_config)
-    scene.add_elements(axis_elements)
+    scene = scene.add_elements(axis_elements)
 
     # Create year display
     year_element = create_year_element(
@@ -194,7 +194,7 @@ def create_scene() -> VScene:
         offset_right=cfg["year"]["offset_right"],
         offset_bottom=cfg["year"]["offset_bottom"],
     )
-    scene.add_element(year_element)
+    scene = scene.add_element(year_element)
 
     return scene
 
@@ -214,4 +214,7 @@ if __name__ == "__main__":
         total_frames=cfg["export"]["total_frames"],
         framerate=cfg["export"]["framerate"],
         png_width_px=cfg["export"]["png_width_px"],
+        parallel_workers=(
+            4 if ConverterType(cfg["export"]["converter"]) == "playwright_http" else 1
+        ),
     )

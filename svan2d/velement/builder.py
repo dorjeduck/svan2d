@@ -2,8 +2,19 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -12,25 +23,86 @@ from svan2d.velement.keystate_parser import (
     parse_attribute_keystates,
     parse_element_keystates,
 )
-from svan2d.velement.transition import CurveFunction, TransitionConfig
+from svan2d.velement.transition import CurveFunction, EasingFunction, TransitionConfig
 
 if TYPE_CHECKING:
     from svan2d.velement.morphing import MorphingConfig
 
 T = TypeVar("T", bound="KeystateBuilder")
 
+# Type alias for keystate tuple
+KeystateTuple = Tuple[
+    State, Optional[State], Optional[float], Optional[TransitionConfig], int | None
+]
 
-@dataclass
+
+@dataclass(frozen=True)
 class BuilderState:
-    """Internal state for chainable builder methods."""
+    """Internal state for chainable builder methods (immutable)."""
 
-    # Tuple: (state, time, transition_config, skip_render_at)
-    keystates: List[Tuple[State, Optional[float], Optional[TransitionConfig], bool]] = (
-        field(default_factory=list)
-    )
+    # Tuple: (state, outgoing_state, time, transition_config, render_index)
+    keystates: Tuple[KeystateTuple, ...] = field(default_factory=tuple)
     pending_transition: Optional[TransitionConfig] = None
     default_transition: Optional[TransitionConfig] = None
     curve_dict: Optional[Dict[str, CurveFunction]] = None
+
+    def with_keystate(self, keystate: KeystateTuple) -> "BuilderState":
+        """Return new BuilderState with keystate added."""
+        return BuilderState(
+            keystates=self.keystates + (keystate,),
+            pending_transition=None,  # Reset pending after adding keystate
+            default_transition=self.default_transition,
+            curve_dict=self.curve_dict,
+        )
+
+    def with_pending_transition(self, transition: TransitionConfig) -> "BuilderState":
+        """Return new BuilderState with pending transition set."""
+        return BuilderState(
+            keystates=self.keystates,
+            pending_transition=transition,
+            default_transition=self.default_transition,
+            curve_dict=self.curve_dict,
+        )
+
+    def with_default_transition(self, transition: TransitionConfig) -> "BuilderState":
+        """Return new BuilderState with default transition set."""
+        return BuilderState(
+            keystates=self.keystates,
+            pending_transition=self.pending_transition,
+            default_transition=transition,
+            curve_dict=self.curve_dict,
+        )
+
+    def with_curve_dict(self, curve_dict: Dict[str, CurveFunction]) -> "BuilderState":
+        """Return new BuilderState with curve_dict set."""
+        return BuilderState(
+            keystates=self.keystates,
+            pending_transition=self.pending_transition,
+            default_transition=self.default_transition,
+            curve_dict=curve_dict,
+        )
+
+    def with_last_keystate_updated(
+        self, transition: Optional[TransitionConfig]
+    ) -> "BuilderState":
+        """Return new BuilderState with last keystate's transition updated."""
+        if not self.keystates:
+            return self
+
+        prev_state, prev_outgoing, prev_time, _, prev_render_index = self.keystates[-1]
+        updated_keystate = (
+            prev_state,
+            prev_outgoing,
+            prev_time,
+            transition,
+            prev_render_index,
+        )
+        return BuilderState(
+            keystates=self.keystates[:-1] + (updated_keystate,),
+            pending_transition=None,
+            default_transition=self.default_transition,
+            curve_dict=self.curve_dict,
+        )
 
 
 class KeystateBuilder:
@@ -40,55 +112,109 @@ class KeystateBuilder:
     - Initialize self._builder = BuilderState() in __init__
     - Initialize self._attribute_easing = None in __init__
     - Initialize self._attribute_keystates = None in __init__
+    - Implement _replace_builder() to return new instance with updated builder
     - Call _finalize_build() to convert builder state to final keystates
     """
 
     _builder: Optional[BuilderState]
-    _attribute_easing: Optional[Dict[str, Callable[[float], float]]]
+    _attribute_easing: Optional[Dict[str, EasingFunction]]
     _attribute_keystates: Optional[AttributeKeyStatesDict]
 
+    @abstractmethod
+    def _replace_builder(self: T, new_builder: BuilderState) -> T:
+        """Return a new instance with the updated builder state.
+
+        Subclasses must implement this to create a copy with the new builder.
+        """
+        ...
+
+    @abstractmethod
+    def _replace_attributes(
+        self: T,
+        new_builder: BuilderState,
+        new_easing: Optional[Dict[str, EasingFunction]],
+        new_keystates: Optional[AttributeKeyStatesDict],
+    ) -> T:
+        """Return a new instance with updated builder and attribute settings.
+
+        Subclasses must implement this to create a copy with the new settings.
+        """
+        ...
+
     def keystate(
-        self: T, state: State, at: float | None = None, skip_render_at: bool = False
+        self: T,
+        state: State | list[State],
+        at: float | None = None,
+        render_index: int | None = 0,
     ) -> T:
         """Add a keystate at the specified time.
 
         Args:
-            state: State for this keystate
+            state: State for this keystate, or a 2-element list [incoming_state, outgoing_state]
+                   for dual-state keystates. When using dual-state:
+                   - state[0]: interpolation target coming IN
+                   - state[1]: interpolation source going OUT
             at: Time position (0.0-1.0), or None for auto-timing
-            skip_render_at: If True, skip rendering at exactly this time point.
-                           Useful for boundary handoffs between elements.
+            render_index: Which state to render at exactly this time (0 or 1, default 0).
+                          Only applicable for dual-state keystates.
 
         Returns:
-            self for chaining
+            New instance with keystate added
         """
         if self._builder is None:
             raise RuntimeError("Cannot modify element after rendering has begun.")
 
-        # Attach transition to previous keystate (explicit or default)
-        if len(self._builder.keystates) > 0:
-            prev_state, prev_time, _, prev_skip = self._builder.keystates[-1]
+        # Parse dual-state format
+        incoming_state: State
+        outgoing_state: State | None = None
 
+        if isinstance(state, list):
+            if len(state) != 2:
+                raise ValueError(
+                    f"Dual-state keystate requires exactly 2 states, got {len(state)}"
+                )
+            if not isinstance(state[0], State) or not isinstance(state[1], State):
+                raise TypeError(
+                    "Both elements of dual-state list must be State instances"
+                )
+            incoming_state = state[0]
+            outgoing_state = state[1]
+        else:
+            incoming_state = state
+            if render_index not in (0, None):
+                raise ValueError(
+                    "render_index=1 can only be used with dual-state keystates"
+                )
+
+        # Build new builder state
+        new_builder = self._builder
+
+        # Attach transition to previous keystate (explicit or default)
+        if len(new_builder.keystates) > 0:
             transition_to_apply = (
-                self._builder.pending_transition or self._builder.default_transition
+                new_builder.pending_transition or new_builder.default_transition
             )
 
             if transition_to_apply is not None:
-                self._builder.keystates[-1] = (
-                    prev_state,
-                    prev_time,
-                    transition_to_apply,
-                    prev_skip,
+                new_builder = new_builder.with_last_keystate_updated(
+                    transition_to_apply
                 )
 
-            self._builder.pending_transition = None
-
         # Add new keystate
-        self._builder.keystates.append((state, at, None, skip_render_at))
-        return self
+        new_keystate: KeystateTuple = (
+            incoming_state,
+            outgoing_state,
+            at,
+            None,
+            render_index,
+        )
+        new_builder = new_builder.with_keystate(new_keystate)
+
+        return self._replace_builder(new_builder)
 
     def keystates(
         self: T,
-        states: List[State],
+        states: Sequence[State],
         between: Optional[List[float]] = None,
         extend: bool = False,
         at: Optional[List[float]] = None,
@@ -103,7 +229,7 @@ class KeystateBuilder:
             at: Exact times for each state (overrides between if both given)
 
         Returns:
-            self for chaining
+            New instance with keystates added
         """
         if not states:
             return self
@@ -124,23 +250,26 @@ class KeystateBuilder:
             else:
                 times = [start + (end - start) * i / (n - 1) for i in range(n)]
 
+        # Chain immutably
+        result = self
+
         # Extend with first state at 0.0 if needed
         if extend and start > 0.0:
-            self.keystate(states[0], at=0.0)
+            result = result.keystate(states[0], at=0.0)
 
         # Add keystates at calculated times
         for state, t in zip(states, times):
-            self.keystate(state, at=t)
+            result = result.keystate(state, at=t)
 
         # Extend with last state at 1.0 if needed
         if extend and end < 1.0:
-            self.keystate(states[-1], at=1.0)
+            result = result.keystate(states[-1], at=1.0)
 
-        return self
+        return result
 
     def transition(
         self: T,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: Optional[Dict[str, EasingFunction]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
         morphing_config: Optional["MorphingConfig"] = None,
     ) -> T:
@@ -154,7 +283,7 @@ class KeystateBuilder:
             morphing_config: Morphing configuration for vertex state transitions
 
         Returns:
-            self for chaining
+            New instance with transition configured
         """
         if self._builder is None:
             raise RuntimeError("Cannot modify element after rendering has begun.")
@@ -164,7 +293,7 @@ class KeystateBuilder:
 
         # Merge with pending transition if exists
         if self._builder.pending_transition is None:
-            self._builder.pending_transition = TransitionConfig(
+            new_transition = TransitionConfig(
                 easing_dict=easing_dict,
                 curve_dict=curve_dict,
                 morphing_config=morphing_config,
@@ -184,16 +313,18 @@ class KeystateBuilder:
                 else self._builder.pending_transition.morphing_config
             )
 
-            self._builder.pending_transition = TransitionConfig(
+            new_transition = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 curve_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
             )
-        return self
+
+        new_builder = self._builder.with_pending_transition(new_transition)
+        return self._replace_builder(new_builder)
 
     def default_transition(
         self: T,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: Optional[Dict[str, EasingFunction]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
         morphing: Optional["MorphingConfig"] = None,
     ) -> T:
@@ -205,13 +336,13 @@ class KeystateBuilder:
             morphing: Morphing configuration to use as default
 
         Returns:
-            self for chaining
+            New instance with default transition set
         """
         if self._builder is None:
             raise RuntimeError("Cannot modify element after rendering has begun.")
 
         if self._builder.default_transition is None:
-            self._builder.default_transition = TransitionConfig(
+            new_default = TransitionConfig(
                 easing_dict=easing_dict, curve_dict=curve_dict, morphing_config=morphing
             )
         else:
@@ -229,16 +360,18 @@ class KeystateBuilder:
                 else self._builder.default_transition.morphing_config
             )
 
-            self._builder.default_transition = TransitionConfig(
+            new_default = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 curve_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
             )
-        return self
+
+        new_builder = self._builder.with_default_transition(new_default)
+        return self._replace_builder(new_builder)
 
     def attributes(
         self: T,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: Optional[Dict[str, EasingFunction]] = None,
         curve_dict: Optional[Dict[str, CurveFunction]] = None,
         keystates_dict: Optional[AttributeKeyStatesDict] = None,
     ) -> T:
@@ -250,17 +383,23 @@ class KeystateBuilder:
             keystates_dict: Per-field keystate timelines {field_name: [values]}
 
         Returns:
-            self for chaining
+            New instance with attributes set
         """
+        if self._builder is None:
+            raise RuntimeError("Cannot modify element after rendering has begun.")
+
+        new_builder = self._builder
+        new_easing = self._attribute_easing
+        new_keystates = self._attribute_keystates
+
         if easing_dict is not None:
-            self._attribute_easing = easing_dict
+            new_easing = easing_dict
         if curve_dict is not None:
-            if self._builder is None:
-                raise RuntimeError("Cannot modify element after rendering has begun.")
-            self._builder.curve_dict = curve_dict
+            new_builder = new_builder.with_curve_dict(curve_dict)
         if keystates_dict is not None:
-            self._attribute_keystates = keystates_dict
-        return self
+            new_keystates = keystates_dict
+
+        return self._replace_attributes(new_builder, new_easing, new_keystates)
 
     def _merge_element_path_into_transition(
         self, transition_config: Optional[TransitionConfig]
@@ -326,9 +465,23 @@ class KeystateBuilder:
                 "Remove the trailing transition() call."
             )
 
+        # Check for duplicate keystate times
+        times = [ks[2] for ks in self._builder.keystates if ks[2] is not None]
+        seen = set()
+        for t in times:
+            # if t in seen:
+            #    raise ValueError(f"Duplicate keystate time {t} detected.")
+            seen.add(t)
+
         # Convert internal keystates to KeyState objects
         keystates: List[KeyState] = []
-        for state, time, transition_config, skip_render_at in self._builder.keystates:
+        for (
+            state,
+            outgoing_state,
+            time,
+            transition_config,
+            render_index,
+        ) in self._builder.keystates:
             effective_transition = self._merge_element_path_into_transition(
                 transition_config
             )
@@ -337,7 +490,8 @@ class KeystateBuilder:
                     state=state,
                     time=time,
                     transition_config=effective_transition,
-                    skip_render_at=skip_render_at,
+                    outgoing_state=outgoing_state,
+                    render_index=render_index,
                 )
             )
 

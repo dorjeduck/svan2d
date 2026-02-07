@@ -49,7 +49,7 @@ def main():
 
 
     # Add all elements to the scene
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     # Create the exporter
     exporter = VSceneExporter(
@@ -60,7 +60,7 @@ def main():
 
     # Export to mp4
     exporter.to_mp4(
-        filename="02c_simple_animation",
+        filename="02_simple_animation",
         total_frames=60,
         framerate=30,
         png_width_px=1024,

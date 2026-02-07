@@ -91,6 +91,7 @@ png_width_px = 1920
 
 host = "localhost"       # Server host
 port = 4000             # Server port
+max_pages = 4           # Max browser pages in pool (for parallel rendering)
 auto_start = false      # Automatically start server if not running (default: false)
 log_level = "INFO"      # Server log level: "DEBUG", "INFO", "WARNING", "ERROR"
 

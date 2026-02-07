@@ -1,0 +1,48 @@
+[scene]
+width = 512
+height = 512
+background = "#1a1a2e"
+
+[font]
+path = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+size = 48
+
+[text]
+lines = [
+    "Code",
+    "is",
+    "poetry",
+    "in",
+    "motion",
+]
+
+[animation]
+# Stagger between characters (fraction of total time)
+char_stagger = 0.012
+# Duration for each character's entrance
+entrance_duration = 0.15
+# Hold time after all characters visible
+hold = 0.20
+# Scatter radius — how far characters start from their target
+scatter_radius = 250
+# Max random rotation for hidden characters (degrees)
+scatter_rotation = 360
+
+[style]
+palette = [
+    "#e94560",
+    "#0f3460",
+    "#16213e",
+    "#533483",
+    "#4ecdc4",
+]
+# Entrance modes to show (one scene each): "scatter", "rain", "explode", "spiral"
+entrance_modes = ["scatter", "rain", "explode", "spiral"]
+
+[export]
+output_dir = "output/"
+filename = "kinetic_typography"
+converter = "playwright_http"
+total_frames = 600
+framerate = 30
+png_width_px = 1024

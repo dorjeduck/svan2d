@@ -18,7 +18,7 @@ from .flower import FlowerState
 from .heart import HeartState
 from .infinity import InfinityState
 from .line import LineState
-from .number import NumberFormat, NumberState
+from .number import NumberFormat, NumberState, Rounding
 from .path import PathState
 from .path_and_text_variants import PathAndTextVariantsState
 from .path_text import PathTextState
@@ -50,7 +50,8 @@ from .square import SquareState
 from .square_ring import SquareRingState
 from .star import StarState
 from .state_collection import StateCollectionState
-from .text import TextState
+from .text import TextRendering, TextState
+from .text_path import TextPathState
 from .triangle import TriangleState
 from .wave import WaveState
 
@@ -69,6 +70,7 @@ __all__ = [
     "LineState",
     "NumberFormat",
     "NumberState",
+    "Rounding",
     "PathState",
     "PointState",
     "PerforatedVertexState",
@@ -96,6 +98,8 @@ __all__ = [
     "SquareState",
     "SquareRingState",
     "StarState",
+    "TextPathState",
+    "TextRendering",
     "TextState",
     "TriangleState",
     "FlowerState",

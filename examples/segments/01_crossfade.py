@@ -52,7 +52,7 @@ def main():
     elem_circle = VElement().keystate(c1, at=0).segment(circle_out)
     elem_rectangle = VElement().segment(rectangle_in).keystate(s2, at=1)
 
-    scene.add_elements([elem_circle, elem_rectangle])
+    scene = scene.add_elements([elem_circle, elem_rectangle])
 
     # Export
     exporter = VSceneExporter(

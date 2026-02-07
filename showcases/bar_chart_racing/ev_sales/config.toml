@@ -1,0 +1,66 @@
+# EV Sales Bar Chart Race Configuration
+
+[scene]
+width = 768
+height = 432
+background = "#fafafa"
+
+[data]
+path = "showcases/bar_chart_racing/ev_sales/data/IEA Global EV Data 2024.csv"
+top_n = 10
+interpolated_points_per_year = 10
+
+[layout]
+margin_left = 11
+margin_right = 11
+margin_top = 25
+margin_bottom = 15
+
+[bars]
+fill_opacity = 0.75
+name_family = "Inter"
+name_size = 11
+name_weight = "bold"
+name_color = "#000033"
+value_family = "IBM Plex Mono"
+value_size = 9
+value_weight = "normal"
+value_color = "#000033"
+label_gap = 4
+# Geographic region palette
+palette = [
+    "#e15759",  # red — Asia (dominant by end)
+    "#4e79a7",  # blue — North America
+    "#59a14f",  # green — Europe
+    "#f28e2b",  # orange — Oceania
+    "#b07aa1",  # purple — South America
+    "#76b7b2",  # teal — Middle East & Africa
+    "#9c755f",  # brown — Other
+]
+
+[year]
+family = "IBM Plex Mono"
+size = 64
+color = "#000033"
+opacity = 0.25
+offset_right = 10
+offset_bottom = 10
+
+[axis]
+family = "IBM Plex Mono"
+size = 8
+label_color = "#333333"
+line_color = "#fafafa"
+zero_line_color = "#888899"
+target_tick_count = 5
+label_offset = 10
+line_width = 1.0
+zero_line_width = 1.0
+
+[export]
+output_dir = "output/"
+filename = "ev_sales_racing"
+converter = "playwright_http"
+total_frames = 2700
+framerate = 60
+png_width_px = 2048

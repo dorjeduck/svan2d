@@ -1,6 +1,6 @@
 """Transition functions for smooth animations and morphing"""
 
-from . import curve, easing, mapping
+from . import curve, easing, mapping, scene
 from .align_vertices import get_aligned_vertices
 from .easing_resolver import EasingResolver
 from .interpolation_engine import InterpolationEngine
@@ -25,6 +25,7 @@ __all__ = [
     "curve",
     "mapping",
     "easing",
+    "scene",
     # Utilities
     "get_aligned_vertices",
 ]

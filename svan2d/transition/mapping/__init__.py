@@ -16,6 +16,7 @@ Classes:
 
 from .base import Mapper, Match
 from .clustering import ClusteringMapper
+from .explicit import ExplicitMapper
 from .greedy import GreedyMapper
 from .hungarian import HungarianMapper
 from .simple import SimpleMapper
@@ -27,4 +28,5 @@ __all__ = [
     "GreedyMapper",
     "ClusteringMapper",
     "HungarianMapper",
+    "ExplicitMapper",
 ]

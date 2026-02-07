@@ -19,6 +19,7 @@ from svan2d.velement.base_velement import BaseVElement
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
+from svan2d.velement.transition import EasingFunction
 from svan2d.velement.state_interpolator import StateInterpolator
 from svan2d.velement.vertex_alignment import VertexAligner
 
@@ -30,7 +31,8 @@ class VElement(BaseVElement, KeystateBuilder):
     """Central object that combines a renderer with its state(s).
 
     Can be used for static rendering (single state) or animation (keystates).
-    Uses chainable methods for animation construction.
+    Uses chainable methods for animation construction. All methods return new
+    instances (immutable pattern).
 
     Examples:
         # Static element
@@ -49,17 +51,40 @@ class VElement(BaseVElement, KeystateBuilder):
         element = VElement().keystates([s1, s2, s3])
     """
 
+    __slots__ = (
+        "_renderer",
+        "clip_element",
+        "mask_element",
+        "clip_elements",
+        "_vertex_buffer_cache",
+        "_shape_list_cache",
+        "_builder",
+        "_attribute_easing",
+        "_attribute_keystates",
+        "_interpolator",
+        "_keystates_list",
+        "attribute_keystates",
+        "easing_resolver",
+    )
+
     def __init__(
         self,
         renderer: Optional[Renderer] = None,
         state: State | None = None,
+        *,
+        # Private params for _replace - don't use directly
+        _builder: Optional[BuilderState] = None,
+        _clip_elements: Optional[List["VElement"]] = None,
+        _mask_element: Optional["VElement"] = None,
+        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
+        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
     ) -> None:
         self._renderer = renderer
 
         # Clip/mask elements
         self.clip_element: Optional[VElement] = None
-        self.mask_element: Optional[VElement] = None
-        self.clip_elements: List[VElement] = []
+        self.mask_element: Optional[VElement] = _mask_element
+        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
 
         # Vertex buffer cache for optimized interpolation
         self._vertex_buffer_cache: Dict[
@@ -72,16 +97,65 @@ class VElement(BaseVElement, KeystateBuilder):
         ] = {}
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = BuilderState()
-        self._attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = None
+        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
+        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
+        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
 
         # Interpolator (created on first render)
         self._interpolator: Optional[StateInterpolator] = None
 
         # Handle static state convenience parameter
         if state is not None:
-            self.keystate(state)
+            # Chain immutably - replace self with new instance
+            new_self = self.keystate(state)
+            # Copy all attributes from new_self to self
+            self._builder = new_self._builder
+            self._attribute_easing = new_self._attribute_easing
+            self._attribute_keystates = new_self._attribute_keystates
+            self.clip_elements = new_self.clip_elements
+            self.mask_element = new_self.mask_element
+
+    def _replace(
+        self,
+        *,
+        renderer: Optional[Renderer] = None,
+        clip_elements: Optional[List["VElement"]] = None,
+        mask_element: Optional["VElement"] = ...,  # type: ignore[assignment]
+        builder: Optional[BuilderState] = None,
+        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
+        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+    ) -> "VElement":
+        """Return a new VElement with specified attributes replaced."""
+        # Use sentinel value for mask_element to distinguish None from "not provided"
+        new = VElement.__new__(VElement)
+        new._renderer = renderer if renderer is not None else self._renderer
+        new.clip_element = None
+        new.mask_element = self.mask_element if mask_element is ... else mask_element
+        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
+        new._vertex_buffer_cache = {}
+        new._shape_list_cache = {}
+        new._builder = builder if builder is not None else self._builder
+        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
+        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._interpolator = None
+        return new
+
+    def _replace_builder(self, new_builder: BuilderState) -> "VElement":
+        """Return a new VElement with the updated builder state."""
+        return self._replace(builder=new_builder)
+
+    def _replace_attributes(
+        self,
+        new_builder: BuilderState,
+        new_easing: Optional[Dict[str, EasingFunction]],
+        new_keystates: Optional[AttributeKeyStatesDict],
+    ) -> "VElement":
+        """Return a new VElement with updated builder and attribute settings."""
+        return self._replace(
+            builder=new_builder,
+            attribute_easing=new_easing,
+            attribute_keystates=new_keystates,
+        )
 
     def _ensure_built(self) -> None:
         """Convert builder state to final keystates if not already done."""
@@ -119,31 +193,34 @@ class VElement(BaseVElement, KeystateBuilder):
     # =========================================================================
 
     def renderer(self, renderer: Renderer) -> "VElement":
-        """Set the renderer for this element."""
-        self._renderer = renderer
-        return self
+        """Set the renderer for this element. Returns new VElement."""
+        return self._replace(renderer=renderer)
 
     def clip(self, velement: "VElement") -> "VElement":
-        """Add a clip element. Can be called multiple times."""
-        self.clip_elements.append(velement)
-        return self
+        """Add a clip element. Can be called multiple times. Returns new VElement."""
+        return self._replace(clip_elements=self.clip_elements + [velement])
 
     def mask(self, velement: "VElement") -> "VElement":
-        """Set the mask element."""
-        self.mask_element = velement
-        return self
+        """Set the mask element. Returns new VElement."""
+        return self._replace(mask_element=velement)
 
     def segment(self, segment_result: List[KeyState]) -> "VElement":
-        """Add keystates from a segment function result."""
+        """Add keystates from a segment function result. Returns new VElement."""
         if self._builder is None:
             raise RuntimeError("Cannot modify VElement after rendering has begun.")
 
-        for ks in segment_result:
-            self._builder.keystates.append(
-                (ks.state, ks.time, ks.transition_config, ks.skip_render_at)
-            )
-
-        return self
+        # Build new keystates tuple
+        new_keystates = self._builder.keystates + tuple(
+            (ks.state, ks.outgoing_state, ks.time, ks.transition_config, ks.render_index)
+            for ks in segment_result
+        )
+        new_builder = BuilderState(
+            keystates=new_keystates,
+            pending_transition=self._builder.pending_transition,
+            default_transition=self._builder.default_transition,
+            curve_dict=self._builder.curve_dict,
+        )
+        return self._replace(builder=new_builder)
 
     # =========================================================================
     # Rendering

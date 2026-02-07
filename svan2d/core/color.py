@@ -261,19 +261,6 @@ class Color:
 
         return Color(rgb[0], rgb[1], rgb[2])
 
-    def with_alpha(self, alpha: int) -> "Color":
-        """Create a new color with different alpha value
-
-        Args:
-            alpha: Alpha value 0-255 (0=transparent, 255=opaque)
-
-        Returns:
-            New Color instance with updated alpha
-        """
-        if not (0 <= alpha <= 255):
-            raise ValueError(f"Alpha must be 0-255, got {alpha}")
-        return Color(self.r, self.g, self.b, alpha)
-
     def darken(self, amount: int) -> "Color":
         """Create darker version of this color (preserves alpha)"""
         return Color(
@@ -289,17 +276,6 @@ class Color:
             min(255, self.g + amount),
             min(255, self.b + amount),
         )
-
-    def with_opacity(self, opacity: float) -> "Color":
-        """Create color with opacity (0.0 to 1.0)
-
-        Args:
-            opacity: Opacity value 0.0 (transparent) to 1.0 (opaque)
-
-        Returns:
-            New Color with alpha set from opacity
-        """
-        return self.with_alpha(int(opacity * 255))
 
     # ========================================================================
     # Special methods

@@ -180,38 +180,65 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         # Ensure server is running (auto-start if configured)
         self._ensure_server_running()
 
-        t0 = time.time()
-        try:
-            payload: dict[str, str | int] = {"svg": svg_content, "type": type_}
-            if width is not None and height is not None:
-                payload.update({"width": width, "height": height})
+        max_retries = 3
+        timeout = 120  # seconds
 
-            resp = requests.post(
-                self.base_url,
-                json=payload,
-                timeout=30,
-            )
-            resp.raise_for_status()
+        for attempt in range(max_retries):
+            t0 = time.time()
+            try:
+                payload: dict[str, str | int] = {"svg": svg_content, "type": type_}
+                if width is not None and height is not None:
+                    payload.update({"width": width, "height": height})
 
-            with open(output_path, "wb") as f:
-                f.write(resp.content)
+                resp = requests.post(
+                    self.base_url,
+                    json=payload,
+                    timeout=timeout,
+                )
+                resp.raise_for_status()
 
-            elapsed = time.time() - t0
-            logger.debug(f"{type_.upper()} saved to {output_path} in {elapsed:.4f}s")
-            return True
+                with open(output_path, "wb") as f:
+                    f.write(resp.content)
 
-        except requests.exceptions.ConnectionError as e:
-            logger.error(f"Cannot connect to Playwright server at {self.base_url}: {e}")
-            logger.error(
-                "Ensure the server is running with 'svan2d playwright-server start'"
-            )
-            return False
-        except Exception as e:
-            logger.error(f"Render failed for {type_}: {e}")
-            return False
+                elapsed = time.time() - t0
+                logger.debug(f"{type_.upper()} saved to {output_path} in {elapsed:.4f}s")
+                return True
+
+            except requests.exceptions.ConnectionError as e:
+                logger.error(f"Cannot connect to Playwright server at {self.base_url}: {e}")
+                logger.error(
+                    "Ensure the server is running with 'svan2d playwright-server start'"
+                )
+                return False
+            except (requests.exceptions.Timeout, requests.exceptions.ReadTimeout) as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Render timeout (attempt {attempt + 1}/{max_retries}), retrying...")
+                    time.sleep(1)  # Brief pause before retry
+                    continue
+                logger.error(f"Render failed after {max_retries} attempts: {e}")
+                return False
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Render error (attempt {attempt + 1}/{max_retries}): {e}, retrying...")
+                    time.sleep(1)
+                    continue
+                logger.error(f"Render failed for {type_}: {e}")
+                return False
+
+        return False
 
     def _convert_to_png(self, *args, **kwargs) -> dict:
         return {}
 
     def _convert_to_pdf(self, *args, **kwargs) -> dict:
         return {}
+
+    def render_svg_to_png(
+        self,
+        svg_content: str,
+        output_path: str,
+        width: int,
+        height: int,
+    ) -> bool:
+        """Render SVG content directly to PNG via HTTP server."""
+        return self._render(svg_content, output_path, "png", width, height)

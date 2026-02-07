@@ -1,0 +1,26 @@
+[scene]
+width = 400
+height = 400
+background = "#0a0a1a"
+
+[fonts]
+path = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+digit_size = 80
+go_size = 60
+
+[countdown]
+start = 21
+finale = "Yeah"
+morph_ratio = 1
+hold_ratio = 1
+
+[style]
+colors = ["#e94560", "#f5a623", "#4ecdc4", "#ffffff"]
+
+[export]
+output_dir = "output/"
+filename = "countdown"
+converter = "playwright_http"
+total_frames = 150
+framerate = 30
+png_width_px = 800

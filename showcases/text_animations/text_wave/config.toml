@@ -1,0 +1,30 @@
+[scene]
+width = 800
+height = 800
+background = "#0a0a1a"
+
+[font]
+path = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+size = 40
+
+[wave]
+text = "HELLO WAVE"
+amplitude = 50
+wavelength = 250
+speed = 2.0             # wave cycles over full animation
+entry_duration = 0.3    # fraction of timeline for each letter's slide-in
+stagger = 0.05          # time gap between consecutive letter entries
+align_rotation = true   # rotate letters to follow the wave slope
+decay_start = 0.6       # normalised time when amplitude starts decaying
+decay_end = 0.9         # normalised time when amplitude reaches zero
+
+[style]
+color = "#4ecdc4"
+
+[export]
+output_dir = "output/"
+filename = "text_wave"
+converter = "playwright_http"
+total_frames = 150
+framerate = 30
+png_width_px = 1600

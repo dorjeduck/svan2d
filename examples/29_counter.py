@@ -35,7 +35,7 @@ def main():
         VElement().keystates([bar_state, bar_state]) for bar_state in bar_states
     ]
 
-    scene.add_elements(bar_elements)
+    scene = scene.add_elements(bar_elements)
 
     # counter
 

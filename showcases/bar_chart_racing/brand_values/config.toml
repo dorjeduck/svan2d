@@ -65,7 +65,7 @@ zero_line_width = 1.0
 output_dir = "output/"
 filename = "bar_racing_square"
 # Converter options: playwright_http, playwright, cairosvg, inkscape, imagemagick
-converter = "playwright"
+converter = "playwright_http"
 total_frames = 2700      # Video length = total_frames / framerate
 framerate = 60
 png_width_px = 2048

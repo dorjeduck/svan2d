@@ -14,6 +14,14 @@ if TYPE_CHECKING:
     from svan2d.transition.interpolation_engine import InterpolationEngine
     from svan2d.velement.keystate import KeyStates
 
+# Epsilon for floating-point time comparison to handle precision issues
+TIME_EPSILON = 1e-9
+
+
+def _times_equal(t1: float, t2: float) -> bool:
+    """Check if two times are approximately equal within epsilon tolerance."""
+    return abs(t1 - t2) < TIME_EPSILON
+
 
 class StateInterpolator:
     """Handles state interpolation between keystates.
@@ -55,6 +63,10 @@ class StateInterpolator:
             attribute_keystates, keystates, easing_resolver, interpolation_engine
         )
 
+        # Cache for pre-computed changed fields per segment
+        # Key: segment_idx, Value: (changed_field_names, field_values)
+        self._changed_fields_cache: Dict[int, tuple] = {}
+
     def get_state_at_time(self, t: float) -> Tuple[Optional[State], bool]:
         """Get the interpolated state at a specific time.
 
@@ -76,18 +88,34 @@ class StateInterpolator:
         last_time = self.keystates[-1].time
         assert first_time is not None and last_time is not None
 
-        if t < first_time or t > last_time:
+        if t < first_time - TIME_EPSILON or t > last_time + TIME_EPSILON:
             return None, False
 
-        # Check skip_render_at flag for keystates at exactly time t
-        for ks in self.keystates:
-            if ks.time == t and ks.skip_render_at:
-                return None, False
-
         # Handle edge case: at first keystate or single keystate
-        if t == first_time or len(self.keystates) == 1:
-            base_state = self.keystates[0].state
+        if _times_equal(t, first_time) or len(self.keystates) == 1:
+            ks = self.keystates[0]
+            if ks.render_index is None:
+                return None, False  # Don't render
+            if ks.render_index == 1:
+                assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
+                base_state = ks.outgoing_state
+            else:
+                base_state = ks.state
             return self.timeline_resolver.apply_field_timelines(base_state, t), False
+
+        # Check if t exactly matches any keystate time - return that keystate's state directly
+        # This is important for dual-state keystates: at exactly the keystate time,
+        # render based on render_index (0=incoming state, 1=outgoing state, None=don't render)
+        for ks in self.keystates:
+            if ks.time is not None and _times_equal(ks.time, t):
+                if ks.render_index is None:
+                    return None, False  # Don't render
+                if ks.render_index == 1:
+                    assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
+                    rendered_state = ks.outgoing_state
+                else:
+                    rendered_state = ks.state
+                return self.timeline_resolver.apply_field_timelines(rendered_state, t), False
 
         # Find the segment containing time t using binary search for many keystates
         num_keystates = len(self.keystates)
@@ -120,8 +148,11 @@ class StateInterpolator:
             ks1 = self.keystates[i]
             ks2 = self.keystates[i + 1]
 
-            t1, state1 = ks1.time, ks1.state
-            t2, state2 = ks2.time, ks2.state
+            t1 = ks1.time
+            t2 = ks2.time
+            # Use outgoing_state for segment source if available
+            state1 = ks1.outgoing_state or ks1.state
+            state2 = ks2.state
             assert t1 is not None and t2 is not None
 
             # Static preprocessing for vertex alignment (if aligner provided)
@@ -129,12 +160,12 @@ class StateInterpolator:
 
                 self.vertex_aligner.ensure_segment_preprocessed(self.keystates, i)
                 # Refresh states after potential preprocessing
-                state1 = self.keystates[i].state
+                state1 = self.keystates[i].outgoing_state or self.keystates[i].state
                 state2 = self.keystates[i + 1].state
 
             if t1 <= t <= t2:
                 # Handle coincident keystates
-                if t1 == t2:
+                if _times_equal(t1, t2):
                     return (
                         self.timeline_resolver.apply_field_timelines(state2, t),
                         False,
@@ -171,6 +202,15 @@ class StateInterpolator:
                             num_verts, num_vertex_loops
                         )
 
+                # Get or compute changed fields for this segment (lazy field interpolation)
+                attr_fields = set(self.attribute_keystates.keys())
+                if i not in self._changed_fields_cache:
+                    from svan2d.transition.interpolation_engine import InterpolationEngine
+                    self._changed_fields_cache[i] = InterpolationEngine.compute_changed_fields(
+                        state1, state2, attr_fields
+                    )
+                changed_fields = self._changed_fields_cache[i]
+
                 interpolated_state = self.interpolation_engine.create_eased_state(
                     state1,
                     state2,
@@ -180,7 +220,7 @@ class StateInterpolator:
                         if ks1.transition_config
                         else None
                     ),
-                    attribute_keystates_fields=set(self.attribute_keystates.keys()),
+                    attribute_keystates_fields=attr_fields,
                     vertex_buffer=vertex_buffer,
                     segment_path_config=(
                         ks1.transition_config.curve_dict
@@ -192,6 +232,7 @@ class StateInterpolator:
                         if ks1.transition_config
                         else None
                     ),
+                    changed_fields=changed_fields,
                 )
 
                 # Determine if this is an "inbetween" frame (different state types morphing)
@@ -209,5 +250,12 @@ class StateInterpolator:
                 )
 
         # At or past final keystate
-        final_state = self.keystates[-1].state
+        final_ks = self.keystates[-1]
+        if final_ks.render_index is None:
+            return None, False  # Don't render
+        if final_ks.render_index == 1:
+            assert final_ks.outgoing_state is not None  # Guaranteed by KeyState validation
+            final_state = final_ks.outgoing_state
+        else:
+            final_state = final_ks.state
         return self.timeline_resolver.apply_field_timelines(final_state, t), False

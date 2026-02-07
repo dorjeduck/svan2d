@@ -74,6 +74,9 @@ class SVGConverter(ABC):
                     scene, png_thumb_width_px, png_thumb_height_px
                 )
 
+                assert png_thumb_width_px is not None
+                assert png_thumb_height_px is not None
+
                 with Image.open(result["png"]) as img:
                     img.thumbnail((png_thumb_width_px, png_thumb_height_px))
                     img.save(thumb_path)
@@ -222,17 +225,55 @@ class SVGConverter(ABC):
         </html>
         """
 
+    @staticmethod
+    def _round_to_even(value: int | float) -> int:
+        """Round a value to the nearest even integer.
+
+        Video codecs like h264 require even dimensions.
+        """
+        rounded = int(round(value))
+        if rounded % 2 != 0:
+            rounded += 1
+        return rounded
+
     def _infer_dimensions(self, scene, width, height):
         """
         Infer missing width or height based on aspect ratio.
+        Returns integer pixel dimensions, rounded to even for video codec compatibility.
         """
         if width is None and height is None:
-            return scene.width, scene.height
+            return self._round_to_even(scene.width), self._round_to_even(scene.height)
         elif width is not None and height is None:
-            height = width * (scene.height / scene.width)
+            height = self._round_to_even(width * (scene.height / scene.width))
         elif height is not None and width is None:
-            width = height * (scene.width / scene.height)
-        return width, height
+            width = self._round_to_even(height * (scene.width / scene.height))
+        return self._round_to_even(width), self._round_to_even(height)
+
+    def render_svg_to_png(
+        self,
+        svg_content: str,
+        output_path: str,
+        width: int,
+        height: int,
+    ) -> bool:
+        """Render SVG content directly to PNG file.
+
+        This method is used for parallel rendering where SVG content
+        is pre-generated and conversion happens concurrently.
+
+        Args:
+            svg_content: SVG string to render
+            output_path: Output PNG file path
+            width: Output width in pixels
+            height: Output height in pixels
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Default implementation - subclasses should override for efficiency
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support direct SVG rendering"
+        )
 
     def _get_write_scaled_svg_content(
         self,

@@ -47,7 +47,7 @@ def main():
 
     elements = [VElement().segment(seg) for seg in segs]
 
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     # Export
     exporter = VSceneExporter(

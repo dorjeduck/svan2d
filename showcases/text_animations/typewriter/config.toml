@@ -1,0 +1,37 @@
+[scene]
+width = 640
+height = 360
+background = "#1e1e1e"
+
+[font]
+path = "/System/Library/Fonts/Supplemental/Courier New.ttf"
+size = 24
+
+[text]
+lines = [
+    "def hello():",
+    '    print("Hello, World!")',
+    "",
+    "hello()",
+    "",
+    "Hello, World!"
+]
+
+[animation]
+typing_ratio = 0.9          # fraction of video duration spent typing
+line_pause_chars = 4        # line pause duration expressed as N character intervals
+end_blinks = 1              # blink cycles after typing a line finishes
+
+[style]
+text_color = "#d4d4d4"
+cursor_color = "#aeafad"
+cursor_width = 2
+cursor_height_ratio = 1.1  # relative to font_size
+
+[export]
+output_dir = "output/"
+filename = "typewriter"
+converter = "playwright_http"
+total_frames = 300
+framerate = 30
+png_width_px = 1280

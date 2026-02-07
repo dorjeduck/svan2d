@@ -11,6 +11,7 @@ from svan2d.component.state.base import State
 from svan2d.velement.base_velement import BaseVElement
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
+from svan2d.velement.transition import EasingFunction
 from svan2d.velement.state_interpolator import StateInterpolator
 
 if TYPE_CHECKING:
@@ -32,7 +33,8 @@ class VElementGroupState(State):
 class VElementGroup(BaseVElement, KeystateBuilder):
     """Element transform group with complete SVG transform capabilities.
 
-    Uses chainable builder pattern for animation construction.
+    Uses chainable builder pattern for animation construction. All methods
+    return new instances (immutable pattern).
 
     Examples:
         # Static group
@@ -58,6 +60,13 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         self,
         elements: Optional[List[VElement]] = None,
         group_easing: Optional[Callable[[float], float]] = None,
+        *,
+        # Private params for _replace - don't use directly
+        _builder: Optional[BuilderState] = None,
+        _clip_elements: Optional[List[VElement]] = None,
+        _mask_element: Optional[VElement] = None,
+        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
+        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
     ) -> None:
         """Initialize an element group with builder pattern.
 
@@ -65,23 +74,64 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             elements: Optional initial list of child elements
             group_easing: Optional easing function applied to the group's animation time
         """
-        self.elements: List[VElement] = elements if elements else []
+        self.elements: List[VElement] = list(elements) if elements else []
         self.group_easing = group_easing
 
         # Clip/mask elements
-        self.clip_elements: List[VElement] = []
-        self.mask_element: Optional[VElement] = None
+        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
+        self.mask_element: Optional[VElement] = _mask_element
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = BuilderState()
-        self._attribute_easing: Optional[Dict[str, Callable[[float], float]]] = None
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = None
+        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
+        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
+        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
 
         # Interpolator (created on first render)
         self._interpolator: Optional[StateInterpolator] = None
 
         # Cache last frame time for render_state (set by get_frame)
         self._last_frame_time: float = 0.0
+
+    def _replace(
+        self,
+        *,
+        elements: Optional[List[VElement]] = None,
+        group_easing: Optional[Callable[[float], float]] = ...,  # type: ignore[assignment]
+        clip_elements: Optional[List[VElement]] = None,
+        mask_element: Optional[VElement] = ...,  # type: ignore[assignment]
+        builder: Optional[BuilderState] = None,
+        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
+        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+    ) -> "VElementGroup":
+        """Return a new VElementGroup with specified attributes replaced."""
+        new = VElementGroup.__new__(VElementGroup)
+        new.elements = elements if elements is not None else self.elements.copy()
+        new.group_easing = self.group_easing if group_easing is ... else group_easing
+        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
+        new.mask_element = self.mask_element if mask_element is ... else mask_element
+        new._builder = builder if builder is not None else self._builder
+        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
+        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._interpolator = None
+        new._last_frame_time = 0.0
+        return new
+
+    def _replace_builder(self, new_builder: BuilderState) -> "VElementGroup":
+        """Return a new VElementGroup with the updated builder state."""
+        return self._replace(builder=new_builder)
+
+    def _replace_attributes(
+        self,
+        new_builder: BuilderState,
+        new_easing: Optional[Dict[str, EasingFunction]],
+        new_keystates: Optional[AttributeKeyStatesDict],
+    ) -> "VElementGroup":
+        """Return a new VElementGroup with updated builder and attribute settings."""
+        return self._replace(
+            builder=new_builder,
+            attribute_easing=new_easing,
+            attribute_keystates=new_keystates,
+        )
 
     def _ensure_built(self) -> None:
         """Convert builder state to final keystates if not already done."""
@@ -91,8 +141,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Auto-create identity keystates if group_easing is set but no keystates defined
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
-            self._builder.keystates.append((identity, 0.0, None, False))
-            self._builder.keystates.append((identity, 1.0, None, False))
+            # Tuple format: (state, outgoing_state, time, transition_config, render_index)
+            self._builder.keystates.append((identity, None, 0.0, None, None))
+            self._builder.keystates.append((identity, None, 1.0, None, None))
 
         # Use builder mixin to finalize
         keystates, attribute_keystates = self._finalize_build()
@@ -124,41 +175,34 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     # =========================================================================
 
     def clip(self, velement: "VElement") -> "VElementGroup":
-        """Add a clip element. Can be called multiple times."""
-        self.clip_elements.append(velement)
-        return self
+        """Add a clip element. Can be called multiple times. Returns new VElementGroup."""
+        return self._replace(clip_elements=self.clip_elements + [velement])
 
     def mask(self, velement: "VElement") -> "VElementGroup":
-        """Set the mask element."""
-        self.mask_element = velement
-        return self
+        """Set the mask element. Returns new VElementGroup."""
+        return self._replace(mask_element=velement)
 
     # =========================================================================
-    # Element Management Methods (chainable)
+    # Element Management Methods (chainable, immutable)
     # =========================================================================
 
     def add_element(self, child: "VElement") -> "VElementGroup":
-        """Add a child element to the group."""
-        self.elements.append(child)
-        return self
+        """Add a child element to the group. Returns new VElementGroup."""
+        return self._replace(elements=self.elements + [child])
 
     def add_elements(self, elements: List["VElement"]) -> "VElementGroup":
-        """Add multiple child elements to the group."""
-        self.elements.extend(elements)
-        return self
+        """Add multiple child elements to the group. Returns new VElementGroup."""
+        return self._replace(elements=self.elements + list(elements))
 
     def remove_element(self, child: "VElement") -> "VElementGroup":
-        """Remove a child element from the group."""
-        if child in self.elements:
-            self.elements.remove(child)
-        else:
+        """Remove a child element from the group. Returns new VElementGroup."""
+        if child not in self.elements:
             raise ValueError("Element not found in group")
-        return self
+        return self._replace(elements=[e for e in self.elements if e is not child])
 
     def clear_elements(self) -> "VElementGroup":
-        """Remove all child elements from the group."""
-        self.elements.clear()
-        return self
+        """Remove all child elements from the group. Returns new VElementGroup."""
+        return self._replace(elements=[])
 
     def get_elements(self) -> List["VElement"]:
         """Get the list of child elements."""

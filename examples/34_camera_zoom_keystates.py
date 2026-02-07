@@ -4,7 +4,7 @@ from svan2d.converter.converter_type import ConverterType
 from svan2d.core.color import Color
 from svan2d.core.logger import configure_logging
 from svan2d.core.point2d import Point2D
-from svan2d.transition import easing, lerp
+from svan2d.transition import easing
 from svan2d.velement import VElement
 from svan2d.vscene import VScene, CameraState
 from svan2d.vscene.vscene_exporter import VSceneExporter
@@ -60,7 +60,7 @@ def main():
 
     # Multi-step zoom with camera_keystate()
 
-    scene.add_elements(elements)
+    scene = scene.add_elements(elements)
 
     # Export
     exporter = VSceneExporter(

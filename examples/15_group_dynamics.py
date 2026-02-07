@@ -68,10 +68,10 @@ def main():
         .keystate(g_start_state, at=0.5)
         .keystate(g2_end_state, at=1)
     )
-    scene.add_elements([g1, g2])
+    scene = scene.add_elements([g1, g2])
 
     # adding the middle element as it is not part of any group
-    scene.add_element(elements[4])
+    scene = scene.add_element(elements[4])
 
     # Create the exporter
     exporter = VSceneExporter(

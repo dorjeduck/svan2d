@@ -7,7 +7,6 @@ from typing import (
     Callable,
     Dict,
     List,
-    Literal,
     Optional,
     Sequence,
     TypeAlias,
@@ -26,6 +25,7 @@ import drawsvg as dw
 
 from svan2d.config import ConfigKey, get_config
 from svan2d.core import Color, get_logger
+from svan2d.core.enums import Origin
 from svan2d.core.point2d import Point2D
 from svan2d.vscene.camera_state import CameraState
 
@@ -57,7 +57,7 @@ class VScene:
         height: float | None = None,
         background: Color | None = None,
         background_opacity: float | None = None,
-        origin: Optional[Literal["center", "top-left"]] = None,
+        origin: Optional[Origin] = None,
         offset_x: float = 0.0,
         offset_y: float = 0.0,
         scale: float = 1.0,
@@ -106,10 +106,10 @@ class VScene:
             if background_opacity is not None
             else config.get(ConfigKey.SCENE_BACKGROUND_OPACITY, 1.0)
         )
-        _origin: Literal["center", "top-left"] = (
+        _origin: Origin = (
             origin
             if origin is not None
-            else config.get(ConfigKey.SCENE_ORIGIN_MODE, "center")
+            else Origin(config.get(ConfigKey.SCENE_ORIGIN_MODE, "center"))
         )
 
         # Validation
@@ -162,44 +162,88 @@ class VScene:
         self._camera_rotation_func: Optional[RotationFunc] = None
         self._camera_func_easing: Optional[EasingFunc] = None
 
+    def _replace(
+        self,
+        *,
+        elements: Optional[List[RenderableElement]] = None,
+        camera_keystates: Optional[List[tuple[CameraState, float, Optional[Dict]]]] = None,
+        camera_pending_easing: Optional[Dict[str, Callable[[float], float]]] = ...,  # type: ignore[assignment]
+        camera_scale_func: Optional[ScaleFunc] = ...,  # type: ignore[assignment]
+        camera_offset_func: Optional[OffsetFunc] = ...,  # type: ignore[assignment]
+        camera_rotation_func: Optional[RotationFunc] = ...,  # type: ignore[assignment]
+        camera_func_easing: Optional[EasingFunc] = ...,  # type: ignore[assignment]
+    ) -> "VScene":
+        """Return a new VScene with specified attributes replaced."""
+        new = VScene.__new__(VScene)
+        # Copy all base attributes
+        new.width = self.width
+        new.height = self.height
+        new.origin = self.origin
+        new.background = self.background
+        new.background_opacity = self.background_opacity
+        new.offset_x = self.offset_x
+        new.offset_y = self.offset_y
+        new.scale = self.scale
+        new.rotation = self.rotation
+        new.clip_state = self.clip_state
+        new.mask_state = self.mask_state
+        new.timeline_easing = self.timeline_easing
+
+        # Replace specified attributes
+        new.elements = elements if elements is not None else self.elements.copy()
+        new._camera_keystates = camera_keystates if camera_keystates is not None else self._camera_keystates.copy()
+        new._camera_pending_easing = self._camera_pending_easing if camera_pending_easing is ... else camera_pending_easing
+        new._camera_scale_func = self._camera_scale_func if camera_scale_func is ... else camera_scale_func
+        new._camera_offset_func = self._camera_offset_func if camera_offset_func is ... else camera_offset_func
+        new._camera_rotation_func = self._camera_rotation_func if camera_rotation_func is ... else camera_rotation_func
+        new._camera_func_easing = self._camera_func_easing if camera_func_easing is ... else camera_func_easing
+        return new
+
     # ========================================================================
     # Element Management
     # ========================================================================
 
-    def add_element(self, element: RenderableElement) -> None:
-        """Add an element or group to the scene
+    def add_element(self, element: RenderableElement) -> "VScene":
+        """Add an element or group to the scene. Returns new VScene.
 
         Args:
             element: The element or group to add to the scene
-        """
-        self.elements.append(element)
 
-    def add_elements(self, elements: Sequence[RenderableElement]) -> None:
-        """Add multiple elements or groups to the scene
+        Returns:
+            New VScene with the element added
+        """
+        return self._replace(elements=self.elements + [element])
+
+    def add_elements(self, elements: Sequence[RenderableElement]) -> "VScene":
+        """Add multiple elements or groups to the scene. Returns new VScene.
 
         Args:
             elements: List of elements or groups to add to the scene
-        """
-        self.elements.extend(elements)
 
-    def remove_element(self, element: RenderableElement) -> bool:
-        """Remove specific element from scene
+        Returns:
+            New VScene with elements added
+        """
+        return self._replace(elements=self.elements + list(elements))
+
+    def remove_element(self, element: RenderableElement) -> "VScene":
+        """Remove specific element from scene. Returns new VScene.
 
         Args:
             element: The element to remove
 
         Returns:
-            True if element was found and removed, False otherwise
-        """
-        try:
-            self.elements.remove(element)
-            return True
-        except ValueError:
-            return False
+            New VScene with the element removed
 
-    def clear_elements(self) -> None:
-        """Remove all elements from scene"""
-        self.elements.clear()
+        Raises:
+            ValueError: If element not found in scene
+        """
+        if element not in self.elements:
+            raise ValueError("Element not found in scene")
+        return self._replace(elements=[e for e in self.elements if e is not element])
+
+    def clear_elements(self) -> "VScene":
+        """Remove all elements from scene. Returns new VScene."""
+        return self._replace(elements=[])
 
     def element_count(self) -> int:
         """Get total number of elements in scene"""
@@ -214,39 +258,39 @@ class VScene:
     # ========================================================================
 
     def camera_keystate(self, state: CameraState, at: float) -> "VScene":
-        """Add a camera keystate at the specified time.
+        """Add a camera keystate at the specified time. Returns new VScene.
 
         Args:
             state: CameraState for this keyframe
             at: Time position (0.0-1.0)
 
         Returns:
-            self for chaining
+            New VScene with camera keystate added
         """
-        # Attach pending easing to previous keystate
-        if len(self._camera_keystates) > 0 and self._camera_pending_easing is not None:
-            prev_state, prev_time, _ = self._camera_keystates[-1]
-            self._camera_keystates[-1] = (
-                prev_state,
-                prev_time,
-                self._camera_pending_easing,
-            )
-            self._camera_pending_easing = None
+        new_keystates = self._camera_keystates.copy()
+        new_pending = self._camera_pending_easing
 
-        self._camera_keystates.append((state, at, None))
-        return self
+        # Attach pending easing to previous keystate
+        if len(new_keystates) > 0 and new_pending is not None:
+            prev_state, prev_time, _ = new_keystates[-1]
+            new_keystates[-1] = (prev_state, prev_time, new_pending)
+            new_pending = None
+
+        new_keystates.append((state, at, None))
+        return self._replace(camera_keystates=new_keystates, camera_pending_easing=new_pending)
 
     def camera_transition(
         self,
         easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
     ) -> "VScene":
         """Configure the transition between the previous and next camera keystate.
+        Returns new VScene.
 
         Args:
             easing_dict: Per-field easing functions for this segment
 
         Returns:
-            self for chaining
+            New VScene with camera transition configured
         """
         if len(self._camera_keystates) == 0:
             raise ValueError(
@@ -254,11 +298,13 @@ class VScene:
             )
 
         if self._camera_pending_easing is None:
-            self._camera_pending_easing = easing_dict or {}
+            new_pending = easing_dict or {}
         elif easing_dict:
-            self._camera_pending_easing = {**self._camera_pending_easing, **easing_dict}
+            new_pending = {**self._camera_pending_easing, **easing_dict}
+        else:
+            new_pending = self._camera_pending_easing
 
-        return self
+        return self._replace(camera_pending_easing=new_pending)
 
     def animate_camera(
         self,
@@ -270,7 +316,7 @@ class VScene:
         pivot: Optional[tuple[float, float]] = None,
         easing: Optional[Callable[[float], float]] = None,
     ) -> "VScene":
-        """Convenience method for simple 2-point camera animation.
+        """Convenience method for simple 2-point camera animation. Returns new VScene.
 
         Supports both tuple-based (start, end) values and function-based values.
         Functions receive eased_t (0.0-1.0) and return the value at that time.
@@ -285,27 +331,21 @@ class VScene:
                     or interpolation
 
         Returns:
-            self for chaining
+            New VScene with camera animation configured
 
         Example:
             # Tuple-based (original behavior)
-            scene.animate_camera(scale=(1.0, 0.5), easing=easing.in_out)
+            scene = scene.animate_camera(scale=(1.0, 0.5), easing=easing.in_out)
 
             # Function-based (new behavior)
             import math
-            scene.animate_camera(
+            scene = scene.animate_camera(
                 scale=lambda t: 1.0 + 0.5 * math.sin(t * 2 * math.pi),
                 offset=lambda t: (100 * t, 50 * math.sin(t * math.pi)),
                 rotation=lambda t: 360 * t * t,
                 easing=easing.in_out
             )
         """
-        # Clear previous function settings
-        self._camera_scale_func = None
-        self._camera_offset_func = None
-        self._camera_rotation_func = None
-        self._camera_func_easing = easing
-
         pivot_pt = Point2D(pivot[0], pivot[1]) if pivot else Point2D(0, 0)
 
         # Determine if using functions or tuples for each parameter
@@ -313,13 +353,10 @@ class VScene:
         offset_is_func = callable(offset)
         rotation_is_func = callable(rotation)
 
-        # Store functions if provided
-        if scale_is_func:
-            self._camera_scale_func = scale
-        if offset_is_func:
-            self._camera_offset_func = offset
-        if rotation_is_func:
-            self._camera_rotation_func = rotation
+        # Build function settings
+        new_scale_func = scale if scale_is_func else None
+        new_offset_func = offset if offset_is_func else None
+        new_rotation_func = rotation if rotation_is_func else None
 
         # Determine start/end values (use defaults for function-based params)
         start_scale = 1.0 if scale_is_func or scale is None else scale[0]
@@ -356,10 +393,19 @@ class VScene:
         if easing is not None:
             easing_dict = {"scale": easing, "pos": easing, "rotation": easing}
 
-        return (
+        # Chain camera methods and set function values
+        result = (
             self.camera_keystate(start, at=0.0)
             .camera_transition(easing_dict=easing_dict)
             .camera_keystate(end, at=1.0)
+        )
+
+        # Apply function settings using _replace
+        return result._replace(
+            camera_scale_func=new_scale_func,
+            camera_offset_func=new_offset_func,
+            camera_rotation_func=new_rotation_func,
+            camera_func_easing=easing,
         )
 
     def _get_camera_state_at_time(self, frame_time: float) -> CameraState:
@@ -651,7 +697,7 @@ class VScene:
         # Add background
         if self.background is not None and self.background_opacity > 0.0:
             # Calculate background position based on origin
-            if self.origin == "center":
+            if self.origin == Origin.CENTER:
                 bg_x, bg_y = -ww / 2, -hh / 2
             else:  # top-left
                 bg_x, bg_y = 0, 0

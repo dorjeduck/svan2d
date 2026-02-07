@@ -2,19 +2,27 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Optional
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.number import NumberRenderer
 from svan2d.component.state.text import TextState
 
 
+class Rounding(StrEnum):
+    """Rounding modes for INTEGER format"""
+
+    FLOOR = "floor"  # Round down (e.g., 1.9 -> 1) - ideal for counters/stopwatches
+    ROUND = "round"  # Round to nearest (e.g., 1.5 -> 2) - ideal for measurements
+    CEIL = "ceil"  # Round up (e.g., 1.1 -> 2)
+
+
 class NumberFormat(StrEnum):
     """Number formatting modes"""
 
-    INTEGER = "integer"  # No decimal places (rounds to nearest int)
+    INTEGER = "integer"  # No decimal places (uses rounding parameter)
 
     # experimental ...
     AUTO = "auto"  # Shows decimals only when needed (e.g., 5 vs 5.25)
@@ -60,6 +68,7 @@ class NumberState(TextState):
     Attributes:
         value: The numeric value to display
         format: How to format the number (INTEGER, AUTO, AUTO_ALIGNED, FIXED, FIXED_ALIGNED)
+        rounding: Rounding mode for INTEGER format (FLOOR, ROUND, CEIL). Default: FLOOR
         decimals: Number of decimal places (for FIXED/FIXED_ALIGNED modes, default 2)
         max_decimals: Maximum decimals for AUTO_ALIGNED (default 2)
         prefix: Optional text before number (e.g., "$")
@@ -69,6 +78,7 @@ class NumberState(TextState):
 
     value: float = 0.0
     format: NumberFormat = NumberFormat.FIXED
+    rounding: Rounding = Rounding.FLOOR  # Used when format=INTEGER
     decimals: int = 2  # Used when format=FIXED or FIXED_ALIGNED
     max_decimals: int = 2  # Maximum decimals for AUTO_ALIGNED
     prefix: str = ""
@@ -149,8 +159,13 @@ class NumberState(TextState):
     def _format_value(self) -> str:
         """Format the numeric value based on format settings"""
         if self.format == NumberFormat.INTEGER:
-            # Round to nearest integer
-            result = str(round(self.value))
+            # Apply rounding based on rounding mode
+            if self.rounding == Rounding.FLOOR:
+                result = str(math.floor(self.value))
+            elif self.rounding == Rounding.CEIL:
+                result = str(math.ceil(self.value))
+            else:  # ROUND
+                result = str(round(self.value))
 
         elif (
             self.format == NumberFormat.AUTO or self.format == NumberFormat.AUTO_ALIGNED

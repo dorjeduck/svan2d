@@ -19,7 +19,13 @@ from .keystate import KeyState
 
 # Type definitions
 AttributeKeyframeTuple = Tuple[float, Any, Optional[Callable[[float], float]]]
-AttributeKeyStatesDict = Dict[str, List[AttributeKeyframeTuple]]
+
+# Flexible input type for attribute keystates - accepts:
+# - Bare values (auto-distributed in timeline)
+# - (time, value) tuples for explicit timing
+# - (value, easing) tuples for auto-timed with custom easing
+# - Full (time, value, easing) tuples
+AttributeKeyStatesDict = Dict[str, List[Any]]
 
 # Flexible input accepts three formats
 FlexibleKeystateInput = Union[

@@ -30,6 +30,7 @@ class ProcessManager:
         log_file: Optional[Path] = None,
         host: str = "localhost",
         port: int = 4000,
+        max_pages: int = 4,
     ):
         """Initialize process manager
 
@@ -38,6 +39,7 @@ class ProcessManager:
             log_file: Path to log file (default: ~/.svan2d/playwright-server.log)
             host: Server host (default: localhost)
             port: Server port (default: 4000)
+            max_pages: Maximum browser pages in pool (default: 4)
         """
         svan2d_dir = Path.home() / ".svan2d"
         svan2d_dir.mkdir(exist_ok=True)
@@ -46,6 +48,7 @@ class ProcessManager:
         self.log_file = log_file or svan2d_dir / "playwright-server.log"
         self.host = host
         self.port = port
+        self.max_pages = max_pages
 
     def is_running(self) -> bool:
         """Check if server is currently running
@@ -91,7 +94,7 @@ class ProcessManager:
                 python_exe,
                 "-m",
                 "uvicorn",
-                "svan2d.playwright_server.render_server:app",
+                "svan2d.server.playwright.render_server:app",
                 "--host",
                 self.host,
                 "--port",
@@ -103,6 +106,10 @@ class ProcessManager:
             # Open log file for output
             log_fd = open(self.log_file, "a")
 
+            # Set environment variable for max_pages
+            env = os.environ.copy()
+            env["SVAN2D_PLAYWRIGHT_MAX_PAGES"] = str(self.max_pages)
+
             # Platform-specific daemon spawning
             if sys.platform == "win32":
                 # Windows: Use CREATE_NEW_PROCESS_GROUP and DETACHED_PROCESS
@@ -113,6 +120,7 @@ class ProcessManager:
                     stdout=log_fd,
                     stderr=subprocess.STDOUT,
                     stdin=subprocess.DEVNULL,
+                    env=env,
                     creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP,
                 )
             else:
@@ -122,6 +130,7 @@ class ProcessManager:
                     stdout=log_fd,
                     stderr=subprocess.STDOUT,
                     stdin=subprocess.DEVNULL,
+                    env=env,
                     start_new_session=True,  # Detach from parent session
                 )
 

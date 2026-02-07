@@ -41,6 +41,7 @@ class VertexAligner:
             isinstance(state1, VertexState)
             and isinstance(state2, VertexState)
             and state2._aligned_contours is None
+            and state1.need_morph(state2)
         ):
             return  # Already preprocessed or not a vertex morph
 

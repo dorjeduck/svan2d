@@ -194,7 +194,7 @@ def main():
             duration=hold_duration,
         )
     )
-    scene.add_element(morph_element)
+    scene = scene.add_element(morph_element)
 
     texts = VElement().segment(
         fade_inout(
@@ -204,7 +204,7 @@ def main():
         )
     )
 
-    scene.add_element(texts)
+    scene = scene.add_element(texts)
 
     # Create the exporter
     exporter = VSceneExporter(

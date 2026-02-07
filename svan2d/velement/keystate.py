@@ -7,7 +7,7 @@ All tuple formats are converted to KeyState objects internally.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Optional
 
 from svan2d.component.state.base import State
 from svan2d.velement.morphing import MorphingConfig
@@ -20,7 +20,8 @@ class KeyState:
     state: State
     time: float | None = None
     transition_config: Optional[TransitionConfig] = None
-    skip_render_at: bool = False
+    outgoing_state: Optional[State] = None
+    render_index: int | None = 0
 
     def __post_init__(self):
         """Validate time range and morphing configuration"""
@@ -37,6 +38,22 @@ class KeyState:
         if not isinstance(self.state, State):
             raise TypeError(
                 f"state must be a State instance, got {type(self.state).__name__}"
+            )
+
+        # Validate outgoing_state if provided
+        if self.outgoing_state is not None and not isinstance(self.outgoing_state, State):
+            raise TypeError(
+                f"outgoing_state must be a State instance, got {type(self.outgoing_state).__name__}"
+            )
+
+        # Validate render_index
+        if self.render_index not in (0, 1, None):
+            raise ValueError(
+                f"render_index must be 0, 1, or None, got {self.render_index}"
+            )
+        if self.render_index == 1 and self.outgoing_state is None:
+            raise ValueError(
+                "render_index=1 requires a dual-state keystate with outgoing_state"
             )
 
         # Validate easing dict if provided
@@ -88,7 +105,8 @@ class KeyState:
             state=self.state,
             time=time,
             transition_config=self.transition_config,
-            skip_render_at=self.skip_render_at,
+            outgoing_state=self.outgoing_state,
+            render_index=self.render_index,
         )
 
     def __repr__(self) -> str:
@@ -96,6 +114,10 @@ class KeyState:
         parts = [f"state={self.state.__class__.__name__}(...)"]
         if self.time is not None:
             parts.append(f"time={self.time}")
+        if self.outgoing_state is not None:
+            parts.append(f"outgoing_state={self.outgoing_state.__class__.__name__}(...)")
+        if self.render_index != 0:
+            parts.append(f"render_index={self.render_index}")
         if self.transition_config is not None:
             if self.transition_config.easing_dict is not None:
                 parts.append(

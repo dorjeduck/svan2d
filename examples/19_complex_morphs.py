@@ -8,7 +8,6 @@ from svan2d.component.state import (
     Polygon,
     Circle,
 )
-from svan2d.component.state.ring import RingState
 
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import configure_logging
@@ -72,7 +71,7 @@ def main():
         hold(states=states, duration=1.0 / (3 * len(states)))
     )
 
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Create the exporter
     exporter = VSceneExporter(

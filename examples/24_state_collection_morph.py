@@ -75,7 +75,7 @@ def main():
         .keystate(state1, at=1.0)
     )
 
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Create the exporter
     exporter = VSceneExporter(

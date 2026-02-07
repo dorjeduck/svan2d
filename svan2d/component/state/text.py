@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from enum import Enum
+from typing import List, Union
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.text import TextRenderer
 from svan2d.component.state.base_color import ColorState
-from svan2d.core.color import Color
+
+
+class TextRendering(Enum):
+    """SVG text-rendering attribute options."""
+
+    AUTO = "auto"
+    OPTIMIZE_SPEED = "optimizeSpeed"
+    OPTIMIZE_LEGIBILITY = "optimizeLegibility"
+    GEOMETRIC_PRECISION = "geometricPrecision"
 
 
 @renderer(TextRenderer)
@@ -22,10 +31,10 @@ class TextState(ColorState):
 
     text: Union[str, List[str]] = ""
     font_family: str = "Arial"
-    text_align: str = "middle"
     font_weight: str = "normal"
     text_anchor: str = "middle"
     dominant_baseline: str = "central"
+    text_rendering: TextRendering = TextRendering.AUTO
 
     def __post_init__(self):
         super().__post_init__()

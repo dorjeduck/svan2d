@@ -390,6 +390,137 @@ class FontGlyphs:
 
         return StateCollectionState(states=final_states)
 
+    def get_letters(
+        self,
+        text: str,
+        num_vertices: int | None = None,
+        height: float | None = None,
+        scale: float | None = None,
+        letter_spacing: float = 1.0,
+        pos: Point2D | None = None,
+        fill_color: Optional[Color] = None,
+        stroke_color: Optional[Color] = None,
+        stroke_width: float = 0.0,
+    ) -> list[StateCollectionState]:
+        """Get individually-animatable letter states with shared baseline alignment.
+
+        Like get_word(), computes a word-level bounding box so all letters share
+        a consistent vertical reference. Unlike get_word(), returns one
+        StateCollectionState per non-space character instead of flattening into one.
+
+        Args:
+            text: String to convert
+            num_vertices: Vertex count per contour
+            height: Desired letter height in scene units (preferred over scale)
+            scale: Direct scale factor (use height instead for intuitive sizing)
+            letter_spacing: Multiplier for space between letters (1.0 = normal)
+            pos: Center position of the whole word (default: origin)
+            fill_color: Fill color
+            stroke_color: Stroke color
+            stroke_width: Stroke width
+
+        Returns:
+            List of StateCollectionState, one per non-space character.
+            Spaces affect layout but are not included in the output.
+        """
+        if not text:
+            return []
+
+        # Resolve num_vertices from config if not specified
+        if num_vertices is None:
+            from svan2d.config import ConfigKey, get_config
+
+            config = get_config()
+            num_vertices = config.get(ConfigKey.STATE_VISUAL_NUM_VERTICES, 128)
+
+        # Resolve scale
+        resolved_scale = self._resolve_scale(height, scale)
+
+        target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
+
+        # First pass: collect glyphs with text layout positioning,
+        # tracking which glyph states belong to which character
+        char_glyph_groups: list[list[GlyphState]] = []
+        all_glyph_states: list[GlyphState] = []
+        cursor_x = 0.0
+
+        for char in text:
+            if char == " ":
+                space_width = (
+                    self.get_advance_width("n") * resolved_scale * letter_spacing
+                )
+                cursor_x += space_width
+                continue
+
+            char_state = self.get_state(
+                char=char,
+                num_vertices=num_vertices,
+                scale=resolved_scale,
+                pos=Point2D(0, 0),
+                fill_color=fill_color,
+                stroke_color=stroke_color,
+                stroke_width=stroke_width,
+                _center=False,
+                _cursor_x=cursor_x,
+            )
+            char_glyph_groups.append(list(char_state.states))
+            all_glyph_states.extend(char_state.states)
+
+            advance = self.get_advance_width(char) * resolved_scale * letter_spacing
+            cursor_x += advance
+
+        if not all_glyph_states:
+            return []
+
+        # Calculate word bounding box for centering
+        all_vertices = []
+        for state in all_glyph_states:
+            contours = state._contours
+            all_vertices.extend(contours.outer.vertices)
+            if contours.has_holes:
+                for hole in contours.holes:
+                    all_vertices.extend(hole.vertices)
+
+        min_x = min(v.x for v in all_vertices)
+        max_x = max(v.x for v in all_vertices)
+        min_y = min(v.y for v in all_vertices)
+        max_y = max(v.y for v in all_vertices)
+
+        word_center_x = (min_x + max_x) / 2
+        word_center_y = (min_y + max_y) / 2
+
+        offset_x = target_pos.x - word_center_x
+        offset_y = target_pos.y - word_center_y
+
+        # Second pass: center each glyph's vertices at origin, set pos to actual position
+        # Build a lookup from id -> final state
+        final_state_by_id: dict[int, GlyphState] = {}
+        for state in all_glyph_states:
+            contours = state._contours
+            glyph_centroid = contours.centroid()
+
+            centered_contours = _offset_contours(
+                contours, -glyph_centroid.x, -glyph_centroid.y
+            )
+
+            glyph_pos = Point2D(
+                glyph_centroid.x + offset_x, glyph_centroid.y + offset_y
+            )
+
+            final_state_by_id[id(state)] = replace(
+                state,
+                pos=glyph_pos,
+                _contours=centered_contours,
+            )
+
+        # Group final states back into per-character StateCollectionStates
+        result = []
+        for group in char_glyph_groups:
+            group_states = [final_state_by_id[id(s)] for s in group]
+            result.append(StateCollectionState(states=group_states))
+
+        return result
+
     def close(self):
         """Close the font file."""
         if self._font is not None:

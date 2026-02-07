@@ -6,12 +6,15 @@ from svan2d.config import ConfigKey, get_config
 from svan2d.server.playwright.process_manager import ProcessManager
 
 
-def get_process_manager() -> ProcessManager:
+def get_process_manager(max_pages: int | None = None) -> ProcessManager:
     """Create ProcessManager with config settings"""
     config = get_config()
     host = config.get(ConfigKey.PLAYWRIGHT_SERVER_HOST, "localhost")
     port = config.get(ConfigKey.PLAYWRIGHT_SERVER_PORT, 4000)
-    return ProcessManager(host=host, port=port)
+    if max_pages is None:
+        max_pages = config.get(ConfigKey.PLAYWRIGHT_SERVER_MAX_PAGES, 4)
+    assert max_pages is not None
+    return ProcessManager(host=host, port=port, max_pages=max_pages)
 
 
 @click.group(name="playwright-server")
@@ -21,12 +24,20 @@ def playwright_server():
 
 
 @playwright_server.command()  # type: ignore[attr-defined]
-def start():
+@click.option(
+    "--max-pages",
+    "-p",
+    default=None,
+    type=int,
+    help="Max browser pages in pool (default: from config)",
+)
+def start(max_pages):
     """Start the Playwright render server in the background"""
-    manager = get_process_manager()
+    manager = get_process_manager(max_pages=max_pages)
 
     if manager.is_running():
         click.echo("✓ Playwright server is already running")
+        click.echo("  Stop it first to change max-pages setting")
         status = manager.status()
         click.echo(f"  PID: {status['pid']}")
         click.echo(f"  Uptime: {status['uptime_seconds']:.1f}s")
@@ -37,6 +48,7 @@ def start():
         click.echo("✓ Playwright server started successfully")
         click.echo(f"  Host: {manager.host}")
         click.echo(f"  Port: {manager.port}")
+        click.echo(f"  Max pages: {manager.max_pages}")
         click.echo(f"  PID file: {manager.pid_file}")
         click.echo(f"  Log file: {manager.log_file}")
     except Exception as e:
@@ -62,15 +74,23 @@ def stop():
 
 
 @playwright_server.command()  # type: ignore[attr-defined]
-def restart():
+@click.option(
+    "--max-pages",
+    "-p",
+    default=None,
+    type=int,
+    help="Max browser pages in pool (default: from config)",
+)
+def restart(max_pages):
     """Restart the Playwright render server"""
-    manager = get_process_manager()
+    manager = get_process_manager(max_pages=max_pages)
 
     try:
         manager.restart()
         click.echo("✓ Playwright server restarted successfully")
         click.echo(f"  Host: {manager.host}")
         click.echo(f"  Port: {manager.port}")
+        click.echo(f"  Max pages: {manager.max_pages}")
     except Exception as e:
         click.echo(f"✗ Failed to restart server: {e}", err=True)
         raise click.Abort()

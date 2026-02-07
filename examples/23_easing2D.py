@@ -44,7 +44,7 @@ def main():
 
     for i, eas in enumerate(easing_overrides):
 
-        vel.keystate(
+        vel = vel.keystate(
             circle,
             at=2 * i * step,
         ).transition(
@@ -54,9 +54,7 @@ def main():
                     easing_y=eas,
                 )
             }
-        )
-
-        vel.keystate(
+        ).keystate(
             square,
             at=min(1, (2 * i + 1) * step),
         ).transition(
@@ -67,9 +65,9 @@ def main():
                 )
             }
         )
-    vel.keystate(circle, at=1)
+    vel = vel.keystate(circle, at=1)
 
-    scene.add_element(vel)
+    scene = scene.add_element(vel)
 
     # Export
     exporter = VSceneExporter(

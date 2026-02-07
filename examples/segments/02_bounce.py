@@ -43,7 +43,7 @@ def main():
     bounce_element = (
         VElement().keystate(circle, at=0).segment(segs).keystate(rectangle, at=1)
     )
-    scene.add_element(bounce_element)
+    scene = scene.add_element(bounce_element)
 
     # Export
     exporter = VSceneExporter(

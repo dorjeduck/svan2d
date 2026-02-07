@@ -73,7 +73,7 @@ def main():
         .keystate(word1, at=1.0)
     )
 
-    scene.add_element(element)
+    scene = scene.add_element(element)
 
     # Export
     exporter = VSceneExporter(

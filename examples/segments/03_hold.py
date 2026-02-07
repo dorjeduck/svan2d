@@ -56,7 +56,7 @@ def main():
 
     hold_element = VElement().keystate(start, at=0).segment(segs).keystate(end, at=1)
 
-    scene.add_element(hold_element)
+    scene = scene.add_element(hold_element)
 
     # Export
     exporter = VSceneExporter(

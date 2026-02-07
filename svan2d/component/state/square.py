@@ -1,4 +1,4 @@
-"""Rectangle renderer implementation using new architecture"""
+"""Square state implementation using VertexRectangle"""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.square import SquareRenderer
-from svan2d.component.vertex import VertexContours
+from svan2d.component.vertex import VertexContours, VertexRectangle
 from svan2d.core.point2d import Point2D
 
 from .base_vertex import VertexState
@@ -15,34 +15,19 @@ from .base_vertex import VertexState
 @renderer(SquareRenderer)
 @dataclass(frozen=True)
 class SquareState(VertexState):
-    """State class for rectangle elements"""
+    """State class for square elements"""
 
     size: float = 100
+    corner_radius: float = 0
 
     def _generate_contours(self) -> VertexContours:
-        """Generate square vertices, starting at top-left, going clockwise"""
-        half = self.size / 2
-        perimeter = 4 * self.size
-
+        """Generate square contours using VertexRectangle"""
         assert self._num_vertices is not None
-        vertices = []
-        for i in range(self._num_vertices - 1):
-            distance = (i / (self._num_vertices - 1)) * perimeter
-
-            if distance < self.size:  # Top edge
-                x = -half + distance
-                y = -half
-            elif distance < 2 * self.size:  # Right edge
-                x = half
-                y = -half + (distance - self.size)
-            elif distance < 3 * self.size:  # Bottom edge
-                x = half - (distance - 2 * self.size)
-                y = half
-            else:  # Left edge
-                x = -half
-                y = half - (distance - 3 * self.size)
-
-            vertices.append(Point2D(x, y))
-
-        vertices.append(vertices[0])
-        return VertexContours.from_single_loop(vertices, closed=True)
+        square = VertexRectangle(
+            center=Point2D(),
+            width=self.size,
+            height=self.size,
+            num_vertices=self._num_vertices,
+            corner_radius=self.corner_radius,
+        )
+        return VertexContours(outer=square, holes=None)

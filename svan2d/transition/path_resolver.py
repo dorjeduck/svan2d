@@ -30,22 +30,22 @@ class PathResolver:
     def get_path_for_field(
         self,
         field_name: str,
-        segment_path_config: Optional[PathConfig] = None,
+        segment_interpolation_config: Optional[PathConfig] = None,
     ) -> PathFunction:
         """
         Get the path function for a specific field following the 2-level priority.
 
         Args:
             field_name: Name of the Point2D field (e.g., "pos", "anchor")
-            segment_path_config: Optional segment-level path config dict
+            segment_interpolation_config: Optional segment-level path config dict
                                  {field_name: path_function}
 
         Returns:
             Path function to apply for Point2D interpolation of this field
         """
         # Level 1: Segment-level path for this field (highest priority)
-        if segment_path_config is not None and field_name in segment_path_config:
-            return segment_path_config[field_name]
+        if segment_interpolation_config is not None and field_name in segment_interpolation_config:
+            return segment_interpolation_config[field_name]
 
         # Level 2: Global default (linear)
         from svan2d.transition.curve import linear

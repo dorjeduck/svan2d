@@ -58,7 +58,9 @@ def main():
         decay_end=wave_cfg.get("decay_end", 1.0),
     )
 
-    scene = VScene(width=width, height=height, background=Color(scene_cfg["background"]))
+    scene = VScene(
+        width=width, height=height, background=Color(scene_cfg["background"])
+    )
     scene = scene.add_elements(elements)
 
     exporter = VSceneExporter(
@@ -72,6 +74,7 @@ def main():
         total_frames=total_frames,
         framerate=export_cfg["framerate"],
         png_width_px=export_cfg["png_width_px"],
+        num_thumbnails=100,
     )
 
 

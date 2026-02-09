@@ -97,7 +97,9 @@ class StateInterpolator:
             if ks.render_index is None:
                 return None, False  # Don't render
             if ks.render_index == 1:
-                assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
+                assert (
+                    ks.outgoing_state is not None
+                )  # Guaranteed by KeyState validation
                 base_state = ks.outgoing_state
             else:
                 base_state = ks.state
@@ -111,11 +113,16 @@ class StateInterpolator:
                 if ks.render_index is None:
                     return None, False  # Don't render
                 if ks.render_index == 1:
-                    assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
+                    assert (
+                        ks.outgoing_state is not None
+                    )  # Guaranteed by KeyState validation
                     rendered_state = ks.outgoing_state
                 else:
                     rendered_state = ks.state
-                return self.timeline_resolver.apply_field_timelines(rendered_state, t), False
+                return (
+                    self.timeline_resolver.apply_field_timelines(rendered_state, t),
+                    False,
+                )
 
         # Find the segment containing time t using binary search for many keystates
         num_keystates = len(self.keystates)
@@ -205,9 +212,14 @@ class StateInterpolator:
                 # Get or compute changed fields for this segment (lazy field interpolation)
                 attr_fields = set(self.attribute_keystates.keys())
                 if i not in self._changed_fields_cache:
-                    from svan2d.transition.interpolation_engine import InterpolationEngine
-                    self._changed_fields_cache[i] = InterpolationEngine.compute_changed_fields(
-                        state1, state2, attr_fields
+                    from svan2d.transition.interpolation_engine import (
+                        InterpolationEngine,
+                    )
+
+                    self._changed_fields_cache[i] = (
+                        InterpolationEngine.compute_changed_fields(
+                            state1, state2, attr_fields
+                        )
                     )
                 changed_fields = self._changed_fields_cache[i]
 
@@ -222,8 +234,8 @@ class StateInterpolator:
                     ),
                     attribute_keystates_fields=attr_fields,
                     vertex_buffer=vertex_buffer,
-                    segment_path_config=(
-                        ks1.transition_config.curve_dict
+                    segment_interpolation_config=(
+                        ks1.transition_config.interpolation_dict
                         if ks1.transition_config
                         else None
                     ),
@@ -233,6 +245,11 @@ class StateInterpolator:
                         else None
                     ),
                     changed_fields=changed_fields,
+                    linear_angle_interpolation=(
+                        ks1.transition_config.linear_angle_interpolation
+                        if ks1.transition_config
+                        else False
+                    ),
                 )
 
                 # Determine if this is an "inbetween" frame (different state types morphing)
@@ -254,7 +271,9 @@ class StateInterpolator:
         if final_ks.render_index is None:
             return None, False  # Don't render
         if final_ks.render_index == 1:
-            assert final_ks.outgoing_state is not None  # Guaranteed by KeyState validation
+            assert (
+                final_ks.outgoing_state is not None
+            )  # Guaranteed by KeyState validation
             final_state = final_ks.outgoing_state
         else:
             final_state = final_ks.state

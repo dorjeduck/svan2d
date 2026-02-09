@@ -23,4 +23,4 @@ filename = "countdown"
 converter = "playwright_http"
 total_frames = 150
 framerate = 30
-png_width_px = 800
+png_width_px = 1024

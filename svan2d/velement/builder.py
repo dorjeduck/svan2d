@@ -6,6 +6,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
     List,
@@ -44,7 +45,7 @@ class BuilderState:
     keystates: Tuple[KeystateTuple, ...] = field(default_factory=tuple)
     pending_transition: Optional[TransitionConfig] = None
     default_transition: Optional[TransitionConfig] = None
-    curve_dict: Optional[Dict[str, CurveFunction]] = None
+    interpolation_dict: Optional[Dict[str, Any]] = None
 
     def with_keystate(self, keystate: KeystateTuple) -> "BuilderState":
         """Return new BuilderState with keystate added."""
@@ -52,7 +53,7 @@ class BuilderState:
             keystates=self.keystates + (keystate,),
             pending_transition=None,  # Reset pending after adding keystate
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
     def with_pending_transition(self, transition: TransitionConfig) -> "BuilderState":
@@ -61,7 +62,7 @@ class BuilderState:
             keystates=self.keystates,
             pending_transition=transition,
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
     def with_default_transition(self, transition: TransitionConfig) -> "BuilderState":
@@ -70,16 +71,18 @@ class BuilderState:
             keystates=self.keystates,
             pending_transition=self.pending_transition,
             default_transition=transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
-    def with_curve_dict(self, curve_dict: Dict[str, CurveFunction]) -> "BuilderState":
-        """Return new BuilderState with curve_dict set."""
+    def with_interpolation_dict(
+        self, interpolation_dict: Dict[str, Any]
+    ) -> "BuilderState":
+        """Return new BuilderState with interpolation_dict set."""
         return BuilderState(
             keystates=self.keystates,
             pending_transition=self.pending_transition,
             default_transition=self.default_transition,
-            curve_dict=curve_dict,
+            interpolation_dict=interpolation_dict,
         )
 
     def with_last_keystate_updated(
@@ -101,7 +104,7 @@ class BuilderState:
             keystates=self.keystates[:-1] + (updated_keystate,),
             pending_transition=None,
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
 
@@ -270,8 +273,9 @@ class KeystateBuilder:
     def transition(
         self: T,
         easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
+        interpolation_dict: Optional[Dict[str, Any]] = None,
         morphing_config: Optional["MorphingConfig"] = None,
+        linear_angle_interpolation: bool = False,
     ) -> T:
         """Configure the transition between the previous and next keystate.
 
@@ -279,8 +283,11 @@ class KeystateBuilder:
 
         Args:
             easing_dict: Per-field easing functions for this segment
-            curve_dict: Per-field path functions for this segment
+            interpolation_dict: Per-field interpolation functions {field_name: func}
+                              - Point2D: (p1, p2, t) -> Point2D
+                              - Rotation: (r1, r2, t) -> float
             morphing_config: Morphing configuration for vertex state transitions
+            linear_angle_interpolation: If True, rotation interpolates linearly without angle wrapping
 
         Returns:
             New instance with transition configured
@@ -295,17 +302,18 @@ class KeystateBuilder:
         if self._builder.pending_transition is None:
             new_transition = TransitionConfig(
                 easing_dict=easing_dict,
-                curve_dict=curve_dict,
+                interpolation_dict=interpolation_dict,
                 morphing_config=morphing_config,
+                linear_angle_interpolation=linear_angle_interpolation,
             )
         else:
             merged_easing = self._builder.pending_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
 
-            merged_path = self._builder.pending_transition.curve_dict or {}
-            if curve_dict:
-                merged_path = {**merged_path, **curve_dict}
+            merged_path = self._builder.pending_transition.interpolation_dict or {}
+            if interpolation_dict:
+                merged_path = {**merged_path, **interpolation_dict}
 
             merged_morphing = (
                 morphing_config
@@ -313,10 +321,18 @@ class KeystateBuilder:
                 else self._builder.pending_transition.morphing_config
             )
 
+            # linear_angle_interpolation: new call overrides pending
+            merged_linear_angle_interpolation = (
+                linear_angle_interpolation
+                if linear_angle_interpolation
+                else self._builder.pending_transition.linear_angle_interpolation
+            )
+
             new_transition = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
-                curve_dict=merged_path if merged_path else None,
+                interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
+                linear_angle_interpolation=merged_linear_angle_interpolation,
             )
 
         new_builder = self._builder.with_pending_transition(new_transition)
@@ -325,14 +341,14 @@ class KeystateBuilder:
     def default_transition(
         self: T,
         easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
+        interpolation_dict: Optional[Dict[str, Any]] = None,
         morphing: Optional["MorphingConfig"] = None,
     ) -> T:
         """Set default transition parameters for all subsequent segments.
 
         Args:
             easing_dict: Per-field easing functions to use as default
-            curve_dict: Per-field path functions to use as default
+            interpolation_dict: Per-field path functions to use as default
             morphing: Morphing configuration to use as default
 
         Returns:
@@ -343,16 +359,18 @@ class KeystateBuilder:
 
         if self._builder.default_transition is None:
             new_default = TransitionConfig(
-                easing_dict=easing_dict, curve_dict=curve_dict, morphing_config=morphing
+                easing_dict=easing_dict,
+                interpolation_dict=interpolation_dict,
+                morphing_config=morphing,
             )
         else:
             merged_easing = self._builder.default_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
 
-            merged_path = self._builder.default_transition.curve_dict or {}
-            if curve_dict:
-                merged_path = {**merged_path, **curve_dict}
+            merged_path = self._builder.default_transition.interpolation_dict or {}
+            if interpolation_dict:
+                merged_path = {**merged_path, **interpolation_dict}
 
             merged_morphing = (
                 morphing
@@ -362,7 +380,7 @@ class KeystateBuilder:
 
             new_default = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
-                curve_dict=merged_path if merged_path else None,
+                interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
             )
 
@@ -372,14 +390,14 @@ class KeystateBuilder:
     def attributes(
         self: T,
         easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
+        interpolation_dict: Optional[Dict[str, Any]] = None,
         keystates_dict: Optional[AttributeKeyStatesDict] = None,
     ) -> T:
         """Set element-level attribute configuration.
 
         Args:
             easing_dict: Per-field easing functions {field_name: easing_func}
-            curve_dict: Per-field path functions {field_name: path_func}
+            interpolation_dict: Per-field path functions {field_name: path_func}
             keystates_dict: Per-field keystate timelines {field_name: [values]}
 
         Returns:
@@ -394,8 +412,8 @@ class KeystateBuilder:
 
         if easing_dict is not None:
             new_easing = easing_dict
-        if curve_dict is not None:
-            new_builder = new_builder.with_curve_dict(curve_dict)
+        if interpolation_dict is not None:
+            new_builder = new_builder.with_interpolation_dict(interpolation_dict)
         if keystates_dict is not None:
             new_keystates = keystates_dict
 
@@ -405,20 +423,20 @@ class KeystateBuilder:
         self, transition_config: Optional[TransitionConfig]
     ) -> Optional[TransitionConfig]:
         """Merge element-level path config into segment transition."""
-        if self._builder is None or self._builder.curve_dict is None:
+        if self._builder is None or self._builder.interpolation_dict is None:
             return transition_config
 
         if transition_config is None:
-            return TransitionConfig(curve_dict=self._builder.curve_dict)
+            return TransitionConfig(interpolation_dict=self._builder.interpolation_dict)
 
         # Segment path takes precedence, element path fills gaps
-        segment_path = transition_config.curve_dict or {}
-        merged_path = {**self._builder.curve_dict, **segment_path}
+        segment_path = transition_config.interpolation_dict or {}
+        merged_path = {**self._builder.interpolation_dict, **segment_path}
 
         return TransitionConfig(
             easing_dict=transition_config.easing_dict,
             morphing_config=transition_config.morphing_config,
-            curve_dict=merged_path if merged_path else None,
+            interpolation_dict=merged_path if merged_path else None,
         )
 
     def _finalize_build(self) -> Tuple[List[KeyState], Dict]:

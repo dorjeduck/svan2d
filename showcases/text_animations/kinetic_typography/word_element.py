@@ -18,7 +18,7 @@ def measure_char_widths(font_path: str, text: str, font_size: float) -> list[flo
     """Get pixel-space advance width for each character using the glyph cache."""
     cache = get_glyph_cache()
     font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm
+    units_per_em = font["head"].unitsPerEm # type: ignore
     scale = font_size / units_per_em
 
     widths = []

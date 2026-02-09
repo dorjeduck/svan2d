@@ -37,7 +37,7 @@ class TypeInterpolators:
         end_value: Point2D,
         eased_t: EasedT,
         field_name: str,
-        segment_path_config: Optional[Dict[str, Callable]] = None,
+        segment_interpolation_config: Optional[Dict[str, Callable]] = None,
     ) -> Point2D:
         """
         Interpolate between two Point2D values.
@@ -52,18 +52,18 @@ class TypeInterpolators:
             end_value: Ending Point2D
             eased_t: Eased interpolation parameter (scalar or 2D tuple)
             field_name: Name of the field being interpolated
-            segment_path_config: Optional per-field path config dict
+            segment_interpolation_config: Optional per-field path config dict
 
         Returns:
             Interpolated Point2D
         """
         # Check for path function for this specific field
-        if self.path_resolver and segment_path_config is not None:
+        if self.path_resolver and segment_interpolation_config is not None:
             path_func = self.path_resolver.get_path_for_field(
-                field_name, segment_path_config
+                field_name, segment_interpolation_config
             )
             # Only use path if one was configured for this field
-            if segment_path_config.get(field_name) is not None:
+            if segment_interpolation_config.get(field_name) is not None:
                 scalar_t = self._extract_scalar_t(eased_t)
                 return path_func(start_value, end_value, scalar_t)
 

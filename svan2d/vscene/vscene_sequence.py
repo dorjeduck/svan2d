@@ -125,13 +125,6 @@ class VSceneSequence:
         if duration <= 0:
             raise ValueError(f"duration must be positive, got {duration}")
 
-        # Check for consecutive scenes without transition
-        if self._entries and isinstance(self._entries[-1], _SceneEntry):
-            raise ValueError(
-                "Cannot add consecutive scenes without a transition. "
-                "Use .transition() between scenes."
-            )
-
         new_entries = self._entries + [_SceneEntry(scene=scene, duration=duration)]
         return self._replace(entries=new_entries)
 

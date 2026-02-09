@@ -85,6 +85,8 @@ class PathState(ColorState):
 
     # General attributes
     opacity: float = 1.0
+    draw_progress: float = 1.0  # Fraction of path to draw by arc length (0.0–1.0)
+    draw_commands: float = 1.0  # Fraction of path commands to draw (0.0–1.0, parameter-based)
 
     # Morphing method
     morph_method: Optional[Union[MorphMethod, str]] = None

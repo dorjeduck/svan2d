@@ -21,6 +21,7 @@ class LineState(VertexState):
     length: float = 100  # Length of the line
     stroke_dasharray: str | None = None  # For dashed lines, e.g., "5,5"
     stroke_linecap: str = "round"  # "butt", "round", "square"
+    draw_progress: float = 1.0  # Fraction of polyline to draw (0.0–1.0)
     closed: bool = False
 
     def __post_init__(self):

@@ -43,7 +43,9 @@ def build_states(cfg):
     for i, item in enumerate(sequence):
         color = colors[i % len(colors)]
         if len(item) == 1:
-            state = font.get_state(item, height=font_cfg["digit_size"], fill_color=color)
+            state = font.get_state(
+                item, height=font_cfg["digit_size"], fill_color=color
+            )
         else:
             state = font.get_word(item, height=font_cfg["go_size"], fill_color=color)
         states.append(state)
@@ -135,6 +137,7 @@ def main():
         total_frames=export_cfg["total_frames"],
         framerate=export_cfg["framerate"],
         png_width_px=export_cfg["png_width_px"],
+        num_thumbnails=100,
     )
 
 

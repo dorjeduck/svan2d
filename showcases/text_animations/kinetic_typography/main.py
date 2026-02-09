@@ -115,7 +115,7 @@ def main():
 
     entrance_modes = style_cfg["entrance_modes"]
 
-    transition = Fade(duration=0.01)
+    # transition = Fade(duration=0.01)
 
     # Build one scene per entrance mode
     scenes = []
@@ -133,9 +133,9 @@ def main():
         scenes.append(sc)
 
     # Assemble sequence
-    sequence = VSceneSequence().scene(scenes[0], duration=1)
-    for i in range(1, len(scenes)):
-        sequence = sequence.transition(transition)
+    sequence = VSceneSequence()
+    for i in range(len(scenes)):
+        # sequence = sequence.transition(transition)
         sequence = sequence.scene(scenes[i], duration=1)
 
     exporter = VSceneExporter(

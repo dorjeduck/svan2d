@@ -186,6 +186,14 @@ class VertexRenderer(Renderer):
 
         # Render stroke
         if has_stroke:
+            # Apply draw_progress: limit vertices to a fraction of the polyline
+            draw_progress = getattr(state, "draw_progress", 1.0)
+            if draw_progress < 1.0:
+                n = max(int(draw_progress * len(vertices)), 1)
+                stroke_vertices = vertices[:n]
+            else:
+                stroke_vertices = vertices
+
             kwargs = {}
             if hasattr(state, "stroke_linecap") and state.stroke_linecap is not None:
                 kwargs["stroke_linecap"] = state.stroke_linecap
@@ -213,11 +221,11 @@ class VertexRenderer(Renderer):
                     **kwargs,
                 )
 
-            stroke_path.M(first_vertex.x, first_vertex.y)
-            for v in vertices[1:]:
+            stroke_path.M(stroke_vertices[0].x, stroke_vertices[0].y)
+            for v in stroke_vertices[1:]:
                 stroke_path.L(v.x, v.y)
 
-            if vertices_are_closed:
+            if vertices_are_closed and draw_progress >= 1.0:
                 stroke_path.Z()
 
             group.append(stroke_path)

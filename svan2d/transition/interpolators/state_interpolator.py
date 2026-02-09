@@ -83,6 +83,6 @@ class StateInterpolator:
             segment_easing_overrides=None,
             attribute_keystates_fields=set(),
             vertex_buffer=None,
-            segment_path_config=None,
+            segment_interpolation_config=None,
             morphing_config=morphing_config,
         )

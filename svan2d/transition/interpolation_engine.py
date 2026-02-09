@@ -119,9 +119,10 @@ class InterpolationEngine:
         segment_easing_overrides: Optional[Dict[str, Callable[[float], float]]],
         attribute_keystates_fields: set,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
-        segment_path_config: Optional[Dict[str, Callable]] = None,
+        segment_interpolation_config: Optional[Dict[str, Callable]] = None,
         morphing_config: Optional[Any] = None,
         changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]] = None,
+        linear_angle_interpolation: bool = False,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -133,9 +134,10 @@ class InterpolationEngine:
             segment_easing_overrides: Per-segment easing overrides
             attribute_keystates_fields: Attributes managed by field keystates
             vertex_buffer: Optional reusable buffer for vertex interpolation
-            segment_path_config: Optional per-field path config dict {field_name: path_func}
+            segment_interpolation_config: Optional per-field path config dict {field_name: path_func}
             morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
             changed_fields: Optional pre-computed (changed_field_names, field_values) tuple
+            linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
         """
         interpolated_values = {}
 
@@ -179,9 +181,10 @@ class InterpolationEngine:
                     end_value,
                     eased_t,
                     vertex_buffer,
-                    segment_path_config,
+                    segment_interpolation_config,
                     mapper=mapper,
                     vertex_aligner=vertex_aligner,
+                    linear_angle_interpolation=linear_angle_interpolation,
                 )
         else:
             # Fallback: iterate all fields (original behavior)
@@ -209,8 +212,11 @@ class InterpolationEngine:
 
                 end_value = getattr(end_state, field_name)
 
-                # No interpolation needed if values are identical
-                if start_value == end_value:
+                # No interpolation needed if values are identical AND no custom interpolation function
+                if start_value == end_value and (
+                    segment_interpolation_config is None
+                    or field_name not in segment_interpolation_config
+                ):
                     interpolated_values[field_name] = start_value
                     continue
 
@@ -229,9 +235,10 @@ class InterpolationEngine:
                     end_value,
                     eased_t,
                     vertex_buffer,
-                    segment_path_config,
+                    segment_interpolation_config,
                     mapper=mapper,
                     vertex_aligner=vertex_aligner,
+                    linear_angle_interpolation=linear_angle_interpolation,
                 )
 
         if t < 0.5:
@@ -248,9 +255,10 @@ class InterpolationEngine:
         end_value: Any,
         eased_t: EasedT,
         vertex_buffer: Optional[Tuple[List, List[List]]] = None,
-        segment_path_config: Optional[Dict[str, Callable]] = None,
+        segment_interpolation_config: Optional[Dict[str, Callable]] = None,
         mapper: Optional[Any] = None,
         vertex_aligner: Optional[Any] = None,
+        linear_angle_interpolation: bool = False,
     ) -> Any:
         """
         Interpolate a single value based on its type and context.
@@ -265,9 +273,10 @@ class InterpolationEngine:
             end_value: Ending value
             eased_t: Eased interpolation parameter (0.0 to 1.0)
             vertex_buffer: Optional reusable buffer for vertex interpolation
-            segment_path_config: Optional per-field path config dict
+            segment_interpolation_config: Optional per-field path config dict
             mapper: Optional mapper for M→N matching
             vertex_aligner: Optional vertex aligner for shape morphing
+            linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
 
         Returns:
             Interpolated value
@@ -339,7 +348,11 @@ class InterpolationEngine:
         # Point2D interpolation (can use full eased_t for 2D easing)
         if isinstance(start_value, Point2D) and isinstance(end_value, Point2D):
             return self._type_interpolators.interpolate_point2d(
-                start_value, end_value, eased_t, field_name, segment_path_config
+                start_value,
+                end_value,
+                eased_t,
+                field_name,
+                segment_interpolation_config,
             )
 
         # SVG Path interpolation
@@ -354,11 +367,24 @@ class InterpolationEngine:
                 start_value, end_value, eased_t
             )
 
-        # Angle interpolation (handles wraparound)
+        # Rotation interpolation function (custom rotation logic) - check BEFORE angle interpolation
+        if (
+            segment_interpolation_config is not None
+            and field_name in segment_interpolation_config
+            and self._type_interpolators.is_angle_field(start_state, field_name)
+            and isinstance(start_value, (int, float))
+            and isinstance(end_value, (int, float))
+        ):
+            rotation_func = segment_interpolation_config[field_name]
+            scalar_t = self._type_interpolators._extract_scalar_t(eased_t)
+            return rotation_func(start_value, end_value, scalar_t)
+
+        # Angle interpolation (handles wraparound unless linear_angle_interpolation is True)
         if (
             self._type_interpolators.is_angle_field(start_state, field_name)
             and isinstance(start_value, (int, float))
             and isinstance(end_value, (int, float))
+            and not linear_angle_interpolation
         ):
             return self._type_interpolators.interpolate_angle(
                 start_value, end_value, eased_t

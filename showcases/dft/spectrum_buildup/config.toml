@@ -1,0 +1,34 @@
+[scene]
+width = 400
+height = 400
+background = "#0a0a1a"
+
+[buildup]
+shapes = ["heart", "star", "infinity"]
+transition = "fade"
+transition_frames = 15
+num_samples = 200
+shape_scale = 120.0
+# Number of coefficients at each stage (each stage draws one full revolution)
+stages = [1, 2, 3, 5, 8 ,13, 20, 40]
+fade_rounds = 1
+num_trail_vertices = 400
+
+[style]
+# Trail color gradient from first stage to last (HSL hue interpolation)
+color_start = "#4ecdc4"
+color_end = "#ff6b6b"
+trail_width = 2.0
+tip_color = "#ffe66d"
+tip_radius = 3.0
+label_color = "#ffffff"
+label_font_size = 18.0
+label_y = -185.0
+
+[export]
+output_dir = "output/"
+filename = "spectrum_buildup"
+converter = "playwright_http"
+total_frames = 600
+framerate = 30
+png_width_px = 1024

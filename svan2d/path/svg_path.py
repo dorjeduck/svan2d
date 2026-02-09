@@ -226,6 +226,119 @@ class SVGPath:
 
         return SVGPath(absolute_commands)
 
+    def length(self, num_samples: int = 100) -> float:
+        """Calculate the total length of the path using adaptive sampling.
+
+        Args:
+            num_samples: Number of samples per curve segment for accurate length calculation
+
+        Returns:
+            Total path length in user units
+        """
+        import math
+
+        def bezier_point(t: float, points: list[Point2D]) -> Point2D:
+            """Evaluate bezier curve at parameter t using de Casteljau's algorithm."""
+            if len(points) == 1:
+                return points[0]
+            new_points = []
+            for i in range(len(points) - 1):
+                x = points[i].x + t * (points[i + 1].x - points[i].x)
+                y = points[i].y + t * (points[i + 1].y - points[i].y)
+                new_points.append(Point2D(x, y))
+            return bezier_point(t, new_points)
+
+        def curve_length(points: list[Point2D], samples: int) -> float:
+            """Calculate curve length by sampling."""
+            length = 0.0
+            prev = points[0]
+            for i in range(1, samples + 1):
+                t = i / samples
+                curr = bezier_point(t, points)
+                length += prev.distance_to(curr)
+                prev = curr
+            return length
+
+        total_length = 0.0
+        current_pos = Point2D(0.0, 0.0)
+        subpath_start = Point2D(0.0, 0.0)
+        prev_control = Point2D(0.0, 0.0)  # Track previous control point for smooth commands
+
+        # Convert to absolute for easier length calculation
+        abs_path = self.to_absolute()
+
+        for cmd in abs_path.commands:
+            if isinstance(cmd, MoveTo):
+                current_pos = cmd.pos
+                subpath_start = cmd.pos
+                prev_control = cmd.pos
+            elif isinstance(cmd, LineTo):
+                total_length += current_pos.distance_to(cmd.pos)
+                current_pos = cmd.pos
+                prev_control = cmd.pos
+            elif isinstance(cmd, HorizontalLine):
+                new_pos = Point2D(cmd.x, current_pos.y)
+                total_length += current_pos.distance_to(new_pos)
+                current_pos = new_pos
+                prev_control = new_pos
+            elif isinstance(cmd, VerticalLine):
+                new_pos = Point2D(current_pos.x, cmd.y)
+                total_length += current_pos.distance_to(new_pos)
+                current_pos = new_pos
+                prev_control = new_pos
+            elif isinstance(cmd, CubicBezier):
+                points = [current_pos, cmd.center1, cmd.center2, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center2
+            elif isinstance(cmd, QuadraticBezier):
+                points = [current_pos, cmd.center, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center
+            elif isinstance(cmd, SmoothCubicBezier):
+                # Reflect previous control point to get center1
+                reflected = Point2D(
+                    2 * current_pos.x - prev_control.x,
+                    2 * current_pos.y - prev_control.y,
+                )
+                points = [current_pos, reflected, cmd.center, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center
+            elif isinstance(cmd, SmoothQuadraticBezier):
+                # Reflect previous control point to get the quadratic control point
+                reflected = Point2D(
+                    2 * current_pos.x - prev_control.x,
+                    2 * current_pos.y - prev_control.y,
+                )
+                points = [current_pos, reflected, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = reflected
+            elif isinstance(cmd, Arc):
+                # Convert arc to cubic beziers and sum their lengths
+                bezier_cmds = arc_to_beziers(
+                    current_pos,
+                    cmd.rx,
+                    cmd.ry,
+                    cmd.x_axis_rotation,
+                    cmd.large_arc_flag,
+                    cmd.sweep_flag,
+                    cmd.pos,
+                )
+                for bez_cmd in bezier_cmds:
+                    points = [current_pos, bez_cmd.center1, bez_cmd.center2, bez_cmd.pos]
+                    total_length += curve_length(points, num_samples)
+                    prev_control = bez_cmd.center2
+                    current_pos = bez_cmd.pos
+            elif isinstance(cmd, ClosePath):
+                total_length += current_pos.distance_to(subpath_start)
+                current_pos = subpath_start
+                prev_control = subpath_start
+
+        return total_length
+
     def is_compatible_for_morphing(self, other: SVGPath) -> bool:
         """Check if two paths can be morphed
 

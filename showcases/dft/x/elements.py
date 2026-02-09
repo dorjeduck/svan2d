@@ -137,12 +137,14 @@ def create_epicycle_elements(
             )
             .keystate(end_state, at=1.0)
         )
+
         elements.append(element)
 
     # --- Arms (2 keystates each, rotation function + position curve) ---
     for i in range(num_epicycles):
+
         radius = coefficients[i].radius
-       
+
         # Calculate start state with actual rotation and length
         p1_start = positions_start[i]
         p2_start = positions_start[i + 1]
@@ -156,7 +158,7 @@ def create_epicycle_elements(
         vec_end = p2_end - p1_end
         rotation_end = math.degrees(math.atan2(vec_end.imag, vec_end.real))
         mid_end = (p1_end + p2_end) / 2
-        print(rotation_start,rotation_end)
+
         start_state = LineState(
             pos=Point2D(mid_start.real, mid_start.imag),
             rotation=rotation_start,
@@ -186,7 +188,6 @@ def create_epicycle_elements(
         )
         elements.append(element)
 
-   
     # --- Trail (precomputed shape + draw_progress) ---
     trail_element = _create_trail_element(
         coefficients=coefficients,
@@ -195,7 +196,7 @@ def create_epicycle_elements(
         trail_width=trail_width,
     )
     elements.append(trail_element)
-   
+
     # --- Tip dot (2 keystates, curve function for pos) ---
     start_tip = evaluate_tip(coefficients, 0.0)
     end_tip = evaluate_tip(coefficients, 1.0)

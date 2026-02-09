@@ -7,7 +7,7 @@ Defines how interpolation happens between two keystates, including:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 from svan2d.velement.morphing import MorphingConfig
 
@@ -23,7 +23,12 @@ InterpolationFunction = Union[CurveFunction, RotationFunction]  # Generic
 InterpolationConfig = Dict[str, InterpolationFunction]
 
 # Easing function can return float (1D) or Tuple[float, float] (2D for Point2D)
-EasingFunction = Callable[[float], Union[float, Tuple[float, float]]]
+# EasingFunction = Callable[[float], Union[float, Tuple[float, float]]]
+
+
+T = TypeVar("T")
+
+EasingFunction = Callable[[float], T]
 
 
 @dataclass

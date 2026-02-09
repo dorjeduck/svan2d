@@ -156,8 +156,21 @@ class InterpolationEngine:
         if changed_fields is not None:
             changed_names, field_values = changed_fields
 
-            for field_name in changed_names:
-                start_value, end_value = field_values[field_name]
+            # Include fields with custom interpolation functions even if values are equal
+            fields_to_process = set(changed_names)
+            if segment_interpolation_config is not None:
+                fields_to_process |= set(segment_interpolation_config.keys())
+
+            for field_name in fields_to_process:
+                # Get values from cache or directly from states
+                if field_name in field_values:
+                    start_value, end_value = field_values[field_name]
+                else:
+                    # Field has custom interpolation function but equal values
+                    start_value = getattr(start_state, field_name)
+                    if not hasattr(end_state, field_name):
+                        continue
+                    end_value = getattr(end_state, field_name)
 
                 # Non-interpolatable: step function
                 if field_name in start_state.NON_INTERPOLATABLE_FIELDS:

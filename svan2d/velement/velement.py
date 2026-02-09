@@ -218,7 +218,7 @@ class VElement(BaseVElement, KeystateBuilder):
             keystates=new_keystates,
             pending_transition=self._builder.pending_transition,
             default_transition=self._builder.default_transition,
-            curve_dict=self._builder.curve_dict,
+            interpolation_dict=self._builder.interpolation_dict,
         )
         return self._replace(builder=new_builder)
 

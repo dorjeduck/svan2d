@@ -61,7 +61,9 @@ def arc_swap_positions(
     path_func = arc_func(radius)
 
     # Build transition config
-    transition = TransitionConfig(easing_dict=easing, curve_dict={"pos": path_func})
+    transition = TransitionConfig(
+        easing_dict=easing, interpolation_dict={"pos": path_func}
+    )
 
     # Final states with swapped positions
     s1_final = replace(state_1, pos=state_2.pos)

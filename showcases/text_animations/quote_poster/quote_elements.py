@@ -18,7 +18,7 @@ def measure_char_widths(font_path: str, text: str, font_size: float) -> list[flo
     """Get pixel-space advance width for each character using the glyph cache."""
     cache = get_glyph_cache()
     font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm # type: ignore
+    units_per_em = font["head"].unitsPerEm  # type: ignore
     scale = font_size / units_per_em
 
     widths = []
@@ -123,12 +123,14 @@ def create_quote_elements(
                 "opacity": easing.out_cubic,
                 "rotation": easing.out_cubic,
             }
-            curve_dict = {"pos": curve.bezier([cp])}
+            interpolation_dict = {"pos": curve.bezier([cp])}
 
             element = (
                 VElement()
                 .keystate(hidden, at=appear_time)
-                .transition(easing_dict=easing_dict, curve_dict=curve_dict)
+                .transition(
+                    easing_dict=easing_dict, interpolation_dict=interpolation_dict
+                )
                 .keystate(visible, at=appear_end)
                 .keystate(visible, at=1.0)
             )

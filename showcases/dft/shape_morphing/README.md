@@ -5,7 +5,7 @@ Smoothly transitions between shapes by interpolating their Fourier coefficients 
 ## Run
 
 ```bash
-python showcases/fourier/shape_morphing/main.py
+python showcases/dft/shape_morphing/main.py
 ```
 
 ## Config

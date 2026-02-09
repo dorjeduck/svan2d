@@ -5,7 +5,7 @@ Shows how adding more Fourier coefficients sharpens a shape approximation. The a
 ## Run
 
 ```bash
-python showcases/fourier/spectrum_buildup/main.py
+python showcases/dft/spectrum_buildup/main.py
 ```
 
 ## Config

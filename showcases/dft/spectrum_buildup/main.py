@@ -129,6 +129,7 @@ def main():
         total_frames=total_frames,
         framerate=export_cfg["framerate"],
         png_width_px=export_cfg["png_width_px"],
+        num_thumbnails=100,
     )
 
 

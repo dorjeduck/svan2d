@@ -5,7 +5,7 @@ Draws a shape using rotating circles (epicycles) derived from the Discrete Fouri
 ## Run
 
 ```bash
-python showcases/fourier/epicycles/main.py
+python showcases/dft/epicycles/main.py
 ```
 
 ## Config

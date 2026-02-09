@@ -42,8 +42,8 @@ class TestHold:
         assert result[0].state == circle_state
         assert result[1].state == circle_state
         # Default at=0.5, duration=1/3, so times are ~0.33 and ~0.67
-        assert result[0].time == pytest.approx(0.5 - 1/6, abs=0.01)
-        assert result[1].time == pytest.approx(0.5 + 1/6, abs=0.01)
+        assert result[0].time == pytest.approx(0.5 - 1 / 6, abs=0.01)
+        assert result[1].time == pytest.approx(0.5 + 1 / 6, abs=0.01)
 
     def test_hold_single_state_custom_at(self, circle_state):
         """Single state with custom at time."""
@@ -93,7 +93,9 @@ class TestBounce:
 
     def test_bounce_basic(self, circle_state, circle_state_2):
         """Basic bounce between two states."""
-        result = bounce(circle_state, circle_state_2, t_start=0.0, t_end=1.0, num_transitions=2)
+        result = bounce(
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, num_transitions=2
+        )
         assert len(result) == 3  # s1 -> s2 -> s1
         assert result[0].state == circle_state
         assert result[1].state == circle_state_2
@@ -101,24 +103,30 @@ class TestBounce:
 
     def test_bounce_times(self, circle_state, circle_state_2):
         """Bounce times are evenly distributed."""
-        result = bounce(circle_state, circle_state_2, t_start=0.2, t_end=0.8, num_transitions=2)
+        result = bounce(
+            circle_state, circle_state_2, t_start=0.2, t_end=0.8, num_transitions=2
+        )
         assert result[0].time == 0.2
         assert result[2].time == 0.8
 
     def test_bounce_with_hold(self, circle_state, circle_state_2):
         """Bounce with hold duration creates extra keystates."""
         result = bounce(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
+            circle_state,
+            circle_state_2,
+            t_start=0.0,
+            t_end=1.0,
             num_transitions=2,
-            hold_duration=0.1
+            hold_duration=0.1,
         )
         # With hold, intermediate states get 2 keystates each
         assert len(result) > 3
 
     def test_bounce_num_transitions_3(self, circle_state, circle_state_2):
         """Three transitions: s1 -> s2 -> s1 -> s2."""
-        result = bounce(circle_state, circle_state_2, t_start=0.0, t_end=1.0, num_transitions=3)
+        result = bounce(
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, num_transitions=3
+        )
         assert len(result) == 4
         assert result[0].state == circle_state
         assert result[1].state == circle_state_2
@@ -129,10 +137,12 @@ class TestBounce:
         """Bounce with easing dict."""
         easing = {"pos": in_out}
         result = bounce(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
+            circle_state,
+            circle_state_2,
+            t_start=0.0,
+            t_end=1.0,
             num_transitions=2,
-            easing=easing
+            easing=easing,
         )
         assert result[0].transition_config is not None
 
@@ -140,10 +150,12 @@ class TestBounce:
         """Hold duration too large should raise."""
         with pytest.raises(ValueError, match="hold durations"):
             bounce(
-                circle_state, circle_state_2,
-                t_start=0.0, t_end=0.1,
+                circle_state,
+                circle_state_2,
+                t_start=0.0,
+                t_end=0.1,
                 num_transitions=2,
-                hold_duration=0.5  # Too large
+                hold_duration=0.5,  # Too large
             )
 
 
@@ -177,9 +189,7 @@ class TestCrossfade:
     def test_crossfade_with_delay(self, circle_state, rect_state):
         """Crossfade with delay offsets the in/out times."""
         ks_out, ks_in = crossfade(
-            circle_state, rect_state,
-            t_start=0.2, t_end=0.8,
-            delay=0.1
+            circle_state, rect_state, t_start=0.2, t_end=0.8, delay=0.1
         )
 
         # Out ends earlier, in starts later
@@ -225,9 +235,7 @@ class TestSwapPositions:
         """Swap with easing dict."""
         easing = {"pos": in_out}
         ks1, ks2 = swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
-            easing=easing
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, easing=easing
         )
 
         assert ks1[0].transition_config is not None
@@ -260,10 +268,7 @@ class TestFadeInOut:
     def test_fade_inout_custom_times(self, circle_state):
         """Custom center time and durations."""
         result = fade_inout(
-            circle_state,
-            center_t=0.5,
-            hold_duration=0.2,
-            fade_duration=0.1
+            circle_state, center_t=0.5, hold_duration=0.2, fade_duration=0.1
         )
         assert len(result) >= 2
 
@@ -278,7 +283,7 @@ class TestFadeInOut:
             [circle_state, rect_state],
             center_t=[0.25, 0.75],
             hold_duration=0.1,
-            fade_duration=0.05
+            fade_duration=0.05,
         )
         assert len(result) >= 4
 
@@ -299,10 +304,7 @@ class TestSlideHoldSlide:
     def test_slide_single_state(self, circle_state):
         """Single state slide in, hold, slide out."""
         result = slide_hold_slide(
-            circle_state,
-            t_start=0.0,
-            t_end=1.0,
-            slide_duration=0.1
+            circle_state, t_start=0.0, t_end=1.0, slide_duration=0.1
         )
         assert len(result) == 4  # entrance, hold start, hold end, exit
         assert result[0].time == 0.0
@@ -317,7 +319,7 @@ class TestSlideHoldSlide:
             t_start=0.0,
             t_end=1.0,
             entrance_point=entrance,
-            exit_point=exit_pt
+            exit_point=exit_pt,
         )
         # First state should be at entrance point
         assert result[0].state.pos == entrance
@@ -331,7 +333,7 @@ class TestSlideHoldSlide:
             t_start=0.0,
             t_end=1.0,
             entrance_effect=SlideEffect.FADE,
-            exit_effect=SlideEffect.FADE
+            exit_effect=SlideEffect.FADE,
         )
         # Entrance and exit states should have opacity=0
         assert result[0].state.opacity == 0
@@ -344,7 +346,7 @@ class TestSlideHoldSlide:
             t_start=0.0,
             t_end=1.0,
             entrance_effect=SlideEffect.SCALE,
-            exit_effect=SlideEffect.SCALE
+            exit_effect=SlideEffect.SCALE,
         )
         assert result[0].state.scale == 0
         assert result[-1].state.scale == 0
@@ -352,10 +354,7 @@ class TestSlideHoldSlide:
     def test_slide_multiple_states(self, circle_state, rect_state):
         """Multiple states slide in sequence."""
         result = slide_hold_slide(
-            [circle_state, rect_state],
-            t_start=0.0,
-            t_end=1.0,
-            slide_duration=0.1
+            [circle_state, rect_state], t_start=0.0, t_end=1.0, slide_duration=0.1
         )
         # Returns list of keystate lists
         assert len(result) == 2
@@ -369,8 +368,7 @@ class TestArcSwapPositions:
     def test_arc_swap_basic(self, circle_state, circle_state_2):
         """Basic arc swap."""
         ks1, ks2 = arc_swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0
         )
         assert len(ks1) == 2
         assert len(ks2) == 2
@@ -381,37 +379,30 @@ class TestArcSwapPositions:
     def test_arc_swap_has_curve(self, circle_state, circle_state_2):
         """Arc swap should have curve in transition config."""
         ks1, ks2 = arc_swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0
         )
         assert ks1[0].transition_config is not None
-        assert ks1[0].transition_config.curve_dict is not None
-        assert "pos" in ks1[0].transition_config.curve_dict
+        assert ks1[0].transition_config.interpolation_dict is not None
+        assert "pos" in ks1[0].transition_config.interpolation_dict
 
     def test_arc_swap_clockwise(self, circle_state, circle_state_2):
         """Clockwise arc swap."""
         ks1, _ = arc_swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
-            clockwise=True
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, clockwise=True
         )
         assert ks1[0].transition_config is not None
 
     def test_arc_swap_counterclockwise(self, circle_state, circle_state_2):
         """Counter-clockwise arc swap."""
         ks1, _ = arc_swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
-            clockwise=False
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, clockwise=False
         )
         assert ks1[0].transition_config is not None
 
     def test_arc_swap_custom_radius(self, circle_state, circle_state_2):
         """Arc swap with custom radius."""
         ks1, ks2 = arc_swap_positions(
-            circle_state, circle_state_2,
-            t_start=0.0, t_end=1.0,
-            arc_radius=200
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, arc_radius=200
         )
         assert len(ks1) == 2
         assert len(ks2) == 2

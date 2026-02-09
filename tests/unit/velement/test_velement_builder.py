@@ -135,7 +135,7 @@ class TestVElementBuilderPath:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(curve_dict={"pos": bezier([Point2D(0, 100)])})
+            .transition(interpolation_dict={"pos": bezier([Point2D(0, 100)])})
             .keystate(state2, at=1.0)
         )
 
@@ -144,7 +144,7 @@ class TestVElementBuilderPath:
 
         transition = element._keystates_list[0].transition_config
         assert transition is not None
-        assert "pos" in transition.curve_dict
+        assert "pos" in transition.interpolation_dict
 
     def test_path_merging_in_transitions(self):
         """Consecutive transitions should merge paths"""
@@ -156,7 +156,7 @@ class TestVElementBuilderPath:
             .keystate(state1, at=0.0)
             .transition(
                 easing_dict={"pos": easing.in_out},
-                curve_dict={"pos": bezier([Point2D(0, 100)])},
+                interpolation_dict={"pos": bezier([Point2D(0, 100)])},
             )
             .keystate(state2, at=1.0)
         )
@@ -167,7 +167,7 @@ class TestVElementBuilderPath:
         transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert "pos" in transition.easing_dict
-        assert "pos" in transition.curve_dict
+        assert "pos" in transition.interpolation_dict
 
 
 class TestVElementBuilderMorphing:
@@ -252,7 +252,7 @@ class TestVElementBuilderAttributes:
 
         element = (
             VElement()
-            .attributes(curve_dict={"pos": bezier([Point2D(50, 50)])})
+            .attributes(interpolation_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -262,7 +262,7 @@ class TestVElementBuilderAttributes:
 
         # Element-level path should be merged into each keystate's transition
         assert element._keystates_list[0].transition_config is not None
-        assert "pos" in element._keystates_list[0].transition_config.curve_dict
+        assert "pos" in element._keystates_list[0].transition_config.interpolation_dict
 
     def test_attributes_keystates(self):
         """Attributes should set attribute keystates"""
@@ -551,7 +551,7 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(curve_dict={"pos": bezier([Point2D(50, 50)])})
+            .default_transition(interpolation_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=0.5)
             .keystate(state3, at=1.0)
@@ -560,11 +560,11 @@ class TestVElementBuilderDefaultTransition:
         # Trigger build
         element.get_frame(0.0)
 
-        # Both segments should have the curve_dict
+        # Both segments should have the interpolation_dict
         assert element._keystates_list[0].transition_config is not None
-        assert "pos" in element._keystates_list[0].transition_config.curve_dict
+        assert "pos" in element._keystates_list[0].transition_config.interpolation_dict
         assert element._keystates_list[1].transition_config is not None
-        assert "pos" in element._keystates_list[1].transition_config.curve_dict
+        assert "pos" in element._keystates_list[1].transition_config.interpolation_dict
 
     def test_default_transition_before_first_keystate(self):
         """default_transition can be called before first keystate"""

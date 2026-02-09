@@ -18,7 +18,7 @@ def measure_char_widths(font_path: str, text: str, font_size: float) -> list[flo
     """Get pixel-space advance width for each character using the glyph cache."""
     cache = get_glyph_cache()
     font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm # type: ignore
+    units_per_em = font["head"].unitsPerEm  # type: ignore
     scale = font_size / units_per_em
 
     widths = []
@@ -140,7 +140,7 @@ def _build_char_element(
     # Entrance transition — curve + easing
     trans_kwargs: dict = {"easing_dict": enter_easing}
     if enter_curve:
-        trans_kwargs["curve_dict"] = enter_curve
+        trans_kwargs["interpolation_dict"] = enter_curve
     builder = builder.transition(**trans_kwargs)
 
     builder = builder.keystate(visible, at=appear_end)
@@ -151,7 +151,7 @@ def _build_char_element(
     # Exit transition
     exit_trans: dict = {"easing_dict": enter_easing}
     if exit_curve:
-        exit_trans["curve_dict"] = exit_curve
+        exit_trans["interpolation_dict"] = exit_curve
     builder = builder.transition(**exit_trans)
 
     builder = builder.keystate(exit_hidden, at=exit_end)
@@ -163,6 +163,7 @@ def _build_char_element(
 # Entrance strategies
 # ---------------------------------------------------------------------------
 
+
 def _entrance_state(
     visible: TextPathState,
     target: Point2D,
@@ -171,7 +172,7 @@ def _entrance_state(
     scatter_rotation: float,
     rng: random.Random,
 ) -> tuple[TextPathState, dict, dict | None]:
-    """Return (hidden_state, easing_dict, curve_dict | None)."""
+    """Return (hidden_state, easing_dict, interpolation_dict | None)."""
 
     if entrance == "scatter":
         return _entrance_scatter(visible, target, scatter_radius, scatter_rotation, rng)
@@ -189,8 +190,9 @@ def _entrance_scatter(visible, target, radius, max_rot, rng):
     """Characters fly in from random positions along bezier arcs."""
     angle = rng.uniform(0, 2 * math.pi)
     dist = rng.uniform(radius * 0.6, radius)
-    origin = Point2D(target.x + math.cos(angle) * dist,
-                     target.y + math.sin(angle) * dist)
+    origin = Point2D(
+        target.x + math.cos(angle) * dist, target.y + math.sin(angle) * dist
+    )
     rot = rng.uniform(-max_rot, max_rot)
 
     hidden = replace(visible, pos=origin, scale=0.0, opacity=0.0, rotation=rot)
@@ -207,9 +209,9 @@ def _entrance_scatter(visible, target, radius, max_rot, rng):
         "opacity": easing.out_cubic,
         "rotation": easing.out_cubic,
     }
-    curve_dict = {"pos": curve.bezier([cp])}
+    interpolation_dict = {"pos": curve.bezier([cp])}
 
-    return hidden, easing_dict, curve_dict
+    return hidden, easing_dict, interpolation_dict
 
 
 def _entrance_rain(visible, target, radius, rng):
@@ -247,8 +249,9 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
     base_angle = rng.uniform(0, 2 * math.pi)
     angle = base_angle + rng.uniform(-0.3, 0.3)
     dist = rng.uniform(radius * 0.9, radius * 1.2)
-    origin = Point2D(target.x + math.cos(angle) * dist,
-                     target.y + math.sin(angle) * dist)
+    origin = Point2D(
+        target.x + math.cos(angle) * dist, target.y + math.sin(angle) * dist
+    )
 
     # Consistent positive rotation for unified spin direction
     rot = rng.uniform(max_rot * 0.6, max_rot)
@@ -257,7 +260,7 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
 
     # Wide arc for a pronounced spiral trajectory
     arc_radius = dist * 1.8
-    curve_dict = {"pos": curve.arc_clockwise(arc_radius)}
+    interpolation_dict = {"pos": curve.arc_clockwise(arc_radius)}
 
     easing_dict = {
         "pos": easing2D(easing.out_cubic, easing.out_back),
@@ -265,12 +268,13 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
         "opacity": easing.out_cubic,
         "rotation": easing.out_cubic,
     }
-    return hidden, easing_dict, curve_dict
+    return hidden, easing_dict, interpolation_dict
 
 
 # ---------------------------------------------------------------------------
 # Exit helper
 # ---------------------------------------------------------------------------
+
 
 def _exit_state(hidden, enter_curve, _target, _rng):
     """Build exit hidden state and curve (mirror of entrance)."""

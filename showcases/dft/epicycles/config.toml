@@ -5,7 +5,7 @@ background = "#0a0a1a"
 
 [epicycles]
 shape = "heart" # heart, star, infinity
-num_coefficients = 4
+num_coefficients = 20
 num_samples = 200
 shape_scale = 150.0
 num_trail_vertices = 400
@@ -27,6 +27,6 @@ tip_radius = 4.0
 output_dir = "output/"
 filename = "fourier_epicycles"
 converter = "playwright_http"
-total_frames = 100
+total_frames = 600
 framerate = 30
-png_width_px = 1600
+png_width_px = 1024

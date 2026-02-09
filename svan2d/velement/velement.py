@@ -125,8 +125,11 @@ class VElement(BaseVElement, KeystateBuilder):
         attribute_easing: Optional[Dict[str, EasingFunction]] = None,
         attribute_keystates: Optional[AttributeKeyStatesDict] = None,
     ) -> "VElement":
-        """Return a new VElement with specified attributes replaced."""
-        # Use sentinel value for mask_element to distinguish None from "not provided"
+        """Return a new VElement with specified attributes replaced.
+
+        Uses ``...`` (Ellipsis) as sentinel for mask_element so that
+        explicit ``None`` (remove mask) is distinguishable from "not provided".
+        """
         new = VElement.__new__(VElement)
         new._renderer = renderer if renderer is not None else self._renderer
         new.clip_element = None
@@ -158,7 +161,7 @@ class VElement(BaseVElement, KeystateBuilder):
         )
 
     def _ensure_built(self) -> None:
-        """Convert builder state to final keystates if not already done."""
+        """Lazy-initialize the interpolation pipeline from builder state."""
         if self._builder is None:
             return
 
@@ -246,7 +249,8 @@ class VElement(BaseVElement, KeystateBuilder):
         if self.clip_element or self.mask_element or self.clip_elements:
             interpolated_state = self._apply_velement_clips(interpolated_state, t)
 
-        # Select renderer
+        # Select renderer — inbetween means mid-morph between vertex shapes,
+        # so force VertexRenderer regardless of the element's own renderer.
         if inbetween:
             renderer = VertexRenderer()
         elif self._renderer:
@@ -290,7 +294,7 @@ class VElement(BaseVElement, KeystateBuilder):
     # =========================================================================
 
     def _apply_velement_clips(self, state: State, t: float) -> State:
-        """Inject VElement-based clips into state."""
+        """Resolve VElement-level clip/mask references into state-level fields at time *t*."""
         mask_state_at_t = self.mask_element.get_frame(t) if self.mask_element else None
         clip_state_at_t = self.clip_element.get_frame(t) if self.clip_element else None
         clip_states_at_t = None
@@ -312,7 +316,7 @@ class VElement(BaseVElement, KeystateBuilder):
     def _get_vertex_buffer(
         self, num_verts: int, num_vertex_loops: int
     ) -> Tuple[Points2D, List[Points2D]]:
-        """Get or create reusable vertex buffer for interpolation."""
+        """Get or create reusable vertex buffer, keyed by (vertex_count, hole_count) to avoid per-frame allocation."""
         key = (num_verts, num_vertex_loops)
         if key not in self._vertex_buffer_cache:
             outer_buffer = [Point2D(0.0, 0.0) for _ in range(num_verts)]
@@ -331,7 +335,7 @@ class VElement(BaseVElement, KeystateBuilder):
         states1: List[State],
         states2: List[State],
     ) -> Tuple[List[State], List[State]]:
-        """Cache M→N shape matching for list attributes."""
+        """Cache M→N shape matching per (field, segment) so it's only computed once."""
         cache_key = (field_name, segment_idx)
 
         if cache_key in self._shape_list_cache:

@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import fields, replace
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from svan2d.component.effect.filter.base import Filter
 from svan2d.component.effect.gradient.base import Gradient
@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 
 # Type alias for easing result - can be scalar (normal) or tuple (2D easing)
 EasedT = Union[float, Tuple[float, float]]
+
+# Sentinel for "this helper didn't handle the value"
+_NOT_HANDLED = object()
 
 
 def _scalar_t(eased_t: EasedT) -> float:
@@ -111,6 +114,75 @@ class InterpolationEngine:
 
         return changed, field_values
 
+    @staticmethod
+    def _extract_morphing_config(
+        morphing_config: Optional[Any],
+    ) -> Tuple[Optional[Any], Optional[Any]]:
+        """Unpack mapper and vertex_aligner from morphing config."""
+        if morphing_config is None:
+            return None, None
+        if hasattr(morphing_config, "mapper"):
+            return morphing_config.mapper, morphing_config.vertex_aligner
+        if isinstance(morphing_config, dict):
+            return morphing_config.get("mapper"), morphing_config.get("vertex_aligner")
+        return None, None
+
+    @staticmethod
+    def _iter_fields_to_interpolate(
+        start_state: State,
+        end_state: State,
+        attribute_keystates_fields: set,
+        segment_interpolation_config: Optional[Dict[str, Callable]],
+        changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]],
+    ) -> Iterator[Tuple[str, Any, Any]]:
+        """Yield (field_name, start_value, end_value) for fields that need interpolation.
+
+        Handles both the fast path (pre-computed changed_fields) and the fallback
+        path (iterate all dataclass fields).
+        """
+        if changed_fields is not None:
+            # Fast path: only process changed fields + custom interpolation fields
+            changed_names, field_values = changed_fields
+
+            fields_to_process = set(changed_names)
+            if segment_interpolation_config is not None:
+                fields_to_process |= set(segment_interpolation_config.keys())
+
+            for field_name in fields_to_process:
+                if field_name in field_values:
+                    start_value, end_value = field_values[field_name]
+                else:
+                    # Field has custom interpolation function but equal values
+                    start_value = getattr(start_state, field_name)
+                    if not hasattr(end_state, field_name):
+                        continue
+                    end_value = getattr(end_state, field_name)
+
+                yield field_name, start_value, end_value
+        else:
+            # Fallback: iterate all fields
+            non_interp = start_state.NON_INTERPOLATABLE_FIELDS
+            for field in fields(start_state):
+                field_name = field.name
+
+                if field_name in attribute_keystates_fields:
+                    continue
+
+                start_value = getattr(start_state, field_name)
+
+                # Non-interpolatable fields use getattr with default (safe if end_state lacks field)
+                if field_name in non_interp:
+                    end_value = getattr(end_state, field_name, start_value)
+                    yield field_name, start_value, end_value
+                    continue
+
+                if not hasattr(end_state, field_name):
+                    continue
+
+                end_value = getattr(end_state, field_name)
+
+                yield field_name, start_value, end_value
+
     def create_eased_state(
         self,
         start_state: State,
@@ -140,124 +212,89 @@ class InterpolationEngine:
             linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
         """
         interpolated_values = {}
+        mapper, vertex_aligner = self._extract_morphing_config(morphing_config)
 
-        # Extract mapper/aligner once (not per-field)
-        mapper = None
-        vertex_aligner = None
-        if morphing_config is not None:
-            if hasattr(morphing_config, "mapper"):
-                mapper = morphing_config.mapper
-                vertex_aligner = morphing_config.vertex_aligner
-            elif isinstance(morphing_config, dict):
-                mapper = morphing_config.get("mapper")
-                vertex_aligner = morphing_config.get("vertex_aligner")
-
-        # Use pre-computed changed fields if available (lazy field interpolation)
-        if changed_fields is not None:
-            changed_names, field_values = changed_fields
-
-            # Include fields with custom interpolation functions even if values are equal
-            fields_to_process = set(changed_names)
-            if segment_interpolation_config is not None:
-                fields_to_process |= set(segment_interpolation_config.keys())
-
-            for field_name in fields_to_process:
-                # Get values from cache or directly from states
-                if field_name in field_values:
-                    start_value, end_value = field_values[field_name]
-                else:
-                    # Field has custom interpolation function but equal values
-                    start_value = getattr(start_state, field_name)
-                    if not hasattr(end_state, field_name):
-                        continue
-                    end_value = getattr(end_state, field_name)
-
-                # Non-interpolatable: step function
-                if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
-                    interpolated_values[field_name] = (
-                        start_value if t < 0.5 else end_value
-                    )
-                    continue
-
-                # Get easing function for this field
-                easing_func = self.easing_resolver.get_easing_for_field(
-                    start_state, field_name, segment_easing_overrides
+        for field_name, start_value, end_value in self._iter_fields_to_interpolate(
+            start_state,
+            end_state,
+            attribute_keystates_fields,
+            segment_interpolation_config,
+            changed_fields,
+        ):
+            # Non-interpolatable: step function
+            if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
+                interpolated_values[field_name] = (
+                    start_value if t < 0.5 else end_value
                 )
-                eased_t = easing_func(t) if easing_func else t
+                continue
 
-                # Interpolate the value
-                interpolated_values[field_name] = self.interpolate_value(
-                    start_state,
-                    end_state,
-                    field_name,
-                    start_value,
-                    end_value,
-                    eased_t,
-                    vertex_buffer,
-                    segment_interpolation_config,
-                    mapper=mapper,
-                    vertex_aligner=vertex_aligner,
-                    linear_angle_interpolation=linear_angle_interpolation,
-                )
-        else:
-            # Fallback: iterate all fields (original behavior)
-            for field in fields(start_state):
-                field_name = field.name
+            # Skip identical values unless a custom interpolation function exists
+            if start_value == end_value and (
+                segment_interpolation_config is None
+                or field_name not in segment_interpolation_config
+            ):
+                interpolated_values[field_name] = start_value
+                continue
 
-                # Skip attributes managed by attribute_keystates
-                if field_name in attribute_keystates_fields:
-                    continue
+            # Get easing function for this field
+            easing_func = self.easing_resolver.get_easing_for_field(
+                start_state, field_name, segment_easing_overrides
+            )
+            eased_t = easing_func(t) if easing_func else t
 
-                # Skip non-interpolatable attributes (structural/configuration attributes)
-                if field_name in start_state.NON_INTERPOLATABLE_FIELDS:
-                    start_value = getattr(start_state, field_name)
-                    interpolated_values[field_name] = (
-                        start_value
-                        if t < 0.5
-                        else getattr(end_state, field_name, start_value)
-                    )
-                    continue
-
-                start_value = getattr(start_state, field_name)
-
-                if not hasattr(end_state, field_name):
-                    continue
-
-                end_value = getattr(end_state, field_name)
-
-                # No interpolation needed if values are identical AND no custom interpolation function
-                if start_value == end_value and (
-                    segment_interpolation_config is None
-                    or field_name not in segment_interpolation_config
-                ):
-                    interpolated_values[field_name] = start_value
-                    continue
-
-                # Get easing function for this field
-                easing_func = self.easing_resolver.get_easing_for_field(
-                    start_state, field_name, segment_easing_overrides
-                )
-                eased_t = easing_func(t) if easing_func else t
-
-                # Interpolate the value
-                interpolated_values[field_name] = self.interpolate_value(
-                    start_state,
-                    end_state,
-                    field_name,
-                    start_value,
-                    end_value,
-                    eased_t,
-                    vertex_buffer,
-                    segment_interpolation_config,
-                    mapper=mapper,
-                    vertex_aligner=vertex_aligner,
-                    linear_angle_interpolation=linear_angle_interpolation,
-                )
+            # Interpolate the value
+            interpolated_values[field_name] = self.interpolate_value(
+                start_state,
+                end_state,
+                field_name,
+                start_value,
+                end_value,
+                eased_t,
+                vertex_buffer,
+                segment_interpolation_config,
+                mapper=mapper,
+                vertex_aligner=vertex_aligner,
+                linear_angle_interpolation=linear_angle_interpolation,
+            )
 
         if t < 0.5:
             return replace(start_state, **interpolated_values)
         else:
             return replace(end_state, **interpolated_values)
+
+    def _interpolate_effect(
+        self, start_value: Any, end_value: Any, scalar_t: float
+    ) -> Any:
+        """Handle Gradient, Pattern, and Filter interpolation.
+
+        Returns _NOT_HANDLED if the values aren't matching effect types.
+        """
+        if isinstance(start_value, Gradient) and isinstance(end_value, Gradient):
+            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
+        if isinstance(start_value, Pattern) and isinstance(end_value, Pattern):
+            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
+        if isinstance(start_value, Filter) and isinstance(end_value, Filter):
+            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
+        if isinstance(start_value, (Gradient, Pattern, Filter)):
+            return start_value  # Can't interpolate between different effect types
+        return _NOT_HANDLED
+
+    def _interpolate_state_fade(
+        self, start_value: Any, end_value: Any, scalar_t: float
+    ) -> Any:
+        """Handle State <-> None transitions (fade in/out).
+
+        Returns _NOT_HANDLED if the values aren't State/None pairs.
+        """
+        if isinstance(start_value, State) and end_value is None:
+            start_opacity = (
+                start_value.opacity if start_value.opacity is not None else 1.0
+            )
+            return replace(start_value, opacity=lerp(start_opacity, 0.0, scalar_t))
+        if start_value is None and isinstance(end_value, State):
+            end_opacity = end_value.opacity if end_value.opacity is not None else 1.0
+            return replace(end_value, opacity=lerp(0.0, end_opacity, scalar_t))
+        return _NOT_HANDLED
 
     def interpolate_value(
         self,
@@ -278,23 +315,14 @@ class InterpolationEngine:
 
         Dispatches to specialized interpolators based on value type.
 
-        Args:
-            start_state: Start state object for context
-            end_state: End state object
-            field_name: Name of the field being interpolated
-            start_value: Starting value
-            end_value: Ending value
-            eased_t: Eased interpolation parameter (0.0 to 1.0)
-            vertex_buffer: Optional reusable buffer for vertex interpolation
-            segment_interpolation_config: Optional per-field path config dict
-            mapper: Optional mapper for M→N matching
-            vertex_aligner: Optional vertex aligner for shape morphing
-            linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
-
-        Returns:
-            Interpolated value
+        Dispatch order matters:
+        - List[State] before State: lists contain States, must be caught first
+        - VertexContours before State: special field, would match State otherwise
+        - Effects and State<->None: specialized handling before generic types
+        - Custom rotation before standard angle: overrides wraparound behavior
+        - Angle before numeric: needs shortest-path wrapping
+        - Numeric and step: fallback for remaining types
         """
-        # Convert to scalar t for methods that don't support 2D easing
         scalar_t = _scalar_t(eased_t)
 
         # List[State] interpolation (clip_states, mask_states, etc.)
@@ -337,26 +365,14 @@ class InterpolationEngine:
             )
 
         # Effect interpolation (Gradient, Pattern, Filter)
-        if isinstance(start_value, Gradient) and isinstance(end_value, Gradient):
-            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
-        if isinstance(start_value, Pattern) and isinstance(end_value, Pattern):
-            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
-        if isinstance(start_value, Filter) and isinstance(end_value, Filter):
-            return start_value.interpolate(end_value, scalar_t)  # type: ignore[union-attr]
-        if isinstance(start_value, (Gradient, Pattern, Filter)):
-            return start_value  # Can't interpolate between different effect types
+        result = self._interpolate_effect(start_value, end_value, scalar_t)
+        if result is not _NOT_HANDLED:
+            return result
 
         # State ↔ None transitions (fade in/out)
-        if isinstance(start_value, State) and end_value is None:
-            assert isinstance(start_value, State)  # Help type checker
-            start_opacity = (
-                start_value.opacity if start_value.opacity is not None else 1.0
-            )
-            return replace(start_value, opacity=lerp(start_opacity, 0.0, scalar_t))
-        if start_value is None and isinstance(end_value, State):
-            assert isinstance(end_value, State)  # Help type checker
-            end_opacity = end_value.opacity if end_value.opacity is not None else 1.0
-            return replace(end_value, opacity=lerp(0.0, end_opacity, scalar_t))
+        result = self._interpolate_state_fade(start_value, end_value, scalar_t)
+        if result is not _NOT_HANDLED:
+            return result
 
         # Point2D interpolation (can use full eased_t for 2D easing)
         if isinstance(start_value, Point2D) and isinstance(end_value, Point2D):
@@ -380,28 +396,27 @@ class InterpolationEngine:
                 start_value, end_value, eased_t
             )
 
-        # Rotation interpolation function (custom rotation logic) - check BEFORE angle interpolation
-        if (
-            segment_interpolation_config is not None
-            and field_name in segment_interpolation_config
-            and self._type_interpolators.is_angle_field(start_state, field_name)
-            and isinstance(start_value, (int, float))
-            and isinstance(end_value, (int, float))
-        ):
-            rotation_func = segment_interpolation_config[field_name]
-            scalar_t = self._type_interpolators._extract_scalar_t(eased_t)
-            return rotation_func(start_value, end_value, scalar_t)
-
-        # Angle interpolation (handles wraparound unless linear_angle_interpolation is True)
+        # Angle interpolation (with optional custom rotation function or wraparound)
         if (
             self._type_interpolators.is_angle_field(start_state, field_name)
             and isinstance(start_value, (int, float))
             and isinstance(end_value, (int, float))
-            and not linear_angle_interpolation
         ):
-            return self._type_interpolators.interpolate_angle(
-                start_value, end_value, eased_t
-            )
+            # Custom rotation function overrides standard angle wrapping
+            if (
+                segment_interpolation_config is not None
+                and field_name in segment_interpolation_config
+            ):
+                rotation_func = segment_interpolation_config[field_name]
+                return rotation_func(
+                    start_value,
+                    end_value,
+                    self._type_interpolators._extract_scalar_t(eased_t),
+                )
+            if not linear_angle_interpolation:
+                return self._type_interpolators.interpolate_angle(
+                    start_value, end_value, eased_t
+                )
 
         # Numeric interpolation
         if isinstance(start_value, (int, float)) and isinstance(

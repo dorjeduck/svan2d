@@ -437,6 +437,7 @@ class KeystateBuilder:
             easing_dict=transition_config.easing_dict,
             morphing_config=transition_config.morphing_config,
             interpolation_dict=merged_path if merged_path else None,
+            linear_angle_interpolation=transition_config.linear_angle_interpolation,
         )
 
     def _finalize_build(self) -> Tuple[List[KeyState], Dict]:

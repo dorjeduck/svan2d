@@ -301,9 +301,8 @@ class VElement(BaseVElement, KeystateBuilder):
 
         if self.clip_elements:
             clip_states_at_t = [
-                elem.get_frame(t)
-                for elem in self.clip_elements
-                if elem.get_frame(t) is not None
+                frame for frame in (elem.get_frame(t) for elem in self.clip_elements)
+                if frame is not None
             ]
 
         return replace(

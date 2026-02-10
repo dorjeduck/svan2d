@@ -14,7 +14,7 @@ from svan2d.core.point2d import Point2D
 from svan2d.core.scalar_functions import lerp
 from svan2d.path import SVGPath
 from svan2d.transition.interpolators import (
-    StateInterpolator,
+    NestedStateInterpolator,
     VertexContoursInterpolator,
 )
 from svan2d.transition.path_morpher import PathMorpher
@@ -62,7 +62,7 @@ class InterpolationEngine:
         # Specialized interpolators
         self._shape_list_interpolator = StateListInterpolator(self)
         self._vertex_contours_interpolator = VertexContoursInterpolator()
-        self._state_interpolator = StateInterpolator(self)
+        self._state_interpolator = NestedStateInterpolator(self)
         self._path_morpher = PathMorpher()
         self._type_interpolators = TypeInterpolators(path_resolver)
 

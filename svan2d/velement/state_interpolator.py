@@ -105,29 +105,9 @@ class StateInterpolator:
                 base_state = ks.state
             return self.timeline_resolver.apply_field_timelines(base_state, t), False
 
-        # Check if t exactly matches any keystate time - return that keystate's state directly
-        # This is important for dual-state keystates: at exactly the keystate time,
-        # render based on render_index (0=incoming state, 1=outgoing state, None=don't render)
-        for ks in self.keystates:
-            if ks.time is not None and _times_equal(ks.time, t):
-                if ks.render_index is None:
-                    return None, False  # Don't render
-                if ks.render_index == 1:
-                    assert (
-                        ks.outgoing_state is not None
-                    )  # Guaranteed by KeyState validation
-                    rendered_state = ks.outgoing_state
-                else:
-                    rendered_state = ks.state
-                return (
-                    self.timeline_resolver.apply_field_timelines(rendered_state, t),
-                    False,
-                )
-
-        # Find the segment containing time t using binary search for many keystates
+        # Find the segment containing time t using binary search
         num_keystates = len(self.keystates)
 
-        # Binary search to find segment
         lo, hi = 0, num_keystates - 1
         segment_idx = None
         while lo < hi:
@@ -149,6 +129,27 @@ class StateInterpolator:
 
         if segment_idx is None:
             segment_idx = lo
+
+        # Check if t exactly matches a keystate at segment boundaries
+        # Important for dual-state keystates: render based on render_index
+        for idx in (segment_idx, segment_idx + 1):
+            if idx >= num_keystates:
+                continue
+            ks = self.keystates[idx]
+            if ks.time is not None and _times_equal(ks.time, t):
+                if ks.render_index is None:
+                    return None, False  # Don't render
+                if ks.render_index == 1:
+                    assert (
+                        ks.outgoing_state is not None
+                    )  # Guaranteed by KeyState validation
+                    rendered_state = ks.outgoing_state
+                else:
+                    rendered_state = ks.state
+                return (
+                    self.timeline_resolver.apply_field_timelines(rendered_state, t),
+                    False,
+                )
 
         # Process only the found segment
         for i in [segment_idx] if segment_idx < num_keystates - 1 else []:

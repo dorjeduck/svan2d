@@ -6,7 +6,7 @@ from typing import Any, Optional
 from svan2d.component.state.base import State
 
 
-class StateInterpolator:
+class NestedStateInterpolator:
     """Handles interpolation between State objects."""
 
     def __init__(self, engine: Any):

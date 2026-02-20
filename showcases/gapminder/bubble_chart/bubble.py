@@ -1,8 +1,7 @@
 """Bubble elements for Gapminder bubble chart.
 
 Creates animated bubble (CircleState) and label (TextState) VElements
-with log-scale GDP x-axis, linear life expectancy y-axis, and
-sqrt-proportional population radius.
+with sqrt-proportional population radius.
 """
 
 import math
@@ -17,6 +16,7 @@ from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
 from svan2d.velement.velement import VElement
 
+from coords import PlotConfig, gdp_to_x, life_exp_to_y
 from data_prep import CountryDataPoint
 
 
@@ -34,22 +34,8 @@ class BubbleState(CircleState):
 
 
 @dataclass
-class BubbleConfig:
+class BubbleConfig(PlotConfig):
     """Configuration for bubble layout and styling."""
-
-    # Plot area bounds (centered origin)
-    plot_left: float = -425.0
-    plot_right: float = 460.0
-    plot_top: float = -250.0
-    plot_bottom: float = 225.0
-
-    # GDP log scale range
-    gdp_min: float = 200.0
-    gdp_max: float = 120000.0
-
-    # Life expectancy linear range
-    life_exp_min: float = 20.0
-    life_exp_max: float = 90.0
 
     # Bubble radius range
     radius_min: float = 2.0
@@ -68,30 +54,6 @@ class BubbleConfig:
     label_font_weight: str = "normal"
     label_color: Color = Color("#333333")
     label_offset_y: float = -5.0
-
-    @property
-    def plot_width(self) -> float:
-        return self.plot_right - self.plot_left
-
-    @property
-    def plot_height(self) -> float:
-        return self.plot_bottom - self.plot_top
-
-
-def gdp_to_x(gdp: float, config: BubbleConfig) -> float:
-    """Map GDP per capita to X coordinate using log10 scale."""
-    log_min = math.log10(config.gdp_min)
-    log_max = math.log10(config.gdp_max)
-    log_gdp = math.log10(max(config.gdp_min, gdp))
-    t = (log_gdp - log_min) / (log_max - log_min)
-    return config.plot_left + t * config.plot_width
-
-
-def life_exp_to_y(life_exp: float, config: BubbleConfig) -> float:
-    """Map life expectancy to Y coordinate (higher life exp = up = lower Y in center origin)."""
-    t = (life_exp - config.life_exp_min) / (config.life_exp_max - config.life_exp_min)
-    # Invert: higher life_exp maps to plot_top (negative Y)
-    return config.plot_bottom - t * config.plot_height
 
 
 def population_to_radius(pop: float, config: BubbleConfig) -> float:

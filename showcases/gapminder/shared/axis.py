@@ -13,7 +13,7 @@ from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.velement.velement import VElement
 
-from bubble import BubbleConfig, gdp_to_x, life_exp_to_y
+from coords import PlotConfig, gdp_to_x, life_exp_to_y
 
 
 def _static(state) -> VElement:
@@ -69,7 +69,7 @@ def format_gdp_tick(value: float) -> str:
 
 
 def create_axis_elements(
-    bubble_config: BubbleConfig,
+    bubble_config: PlotConfig,
     axis_config: AxisConfig,
 ) -> list[VElement]:
     """Create all static axis VElements.

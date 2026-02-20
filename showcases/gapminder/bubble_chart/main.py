@@ -4,8 +4,12 @@ Hans Rosling-style animated bubble chart showing the relationship between
 GDP per capita, life expectancy, and population across countries over time.
 """
 
+import sys
 import tomllib
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from axis import create_axis_elements, AxisConfig
 from bubble import create_bubble_elements, BubbleConfig
@@ -54,9 +58,7 @@ def get_continent_colors(cfg: dict) -> dict[str, Color]:
     }
 
 
-def get_labeled_countries(
-    country_data: dict, cfg: dict
-) -> set[str]:
+def get_labeled_countries(country_data: dict, cfg: dict) -> set[str]:
     """Determine which countries get text labels.
 
     Uses top N by max population across all years.

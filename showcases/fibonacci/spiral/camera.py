@@ -35,9 +35,11 @@ def build_camera_scale(
     content_0 = max(b0[2] - b0[0], b0[3] - b0[1]) * padding
     scales.append(scene_min / max(content_0, 1))
 
+    n = len(arc_times)
     for i, (_, te) in enumerate(arc_times):
         ts.append(te)
-        b = bboxes[i]
+        # Use next arc's bbox so camera is one square ahead
+        b = bboxes[min(i + 1, n - 1)]
         extent = max(b[2] - b[0], b[3] - b[1]) * padding
         scales.append(scene_min / max(extent, 1))
 

@@ -43,7 +43,8 @@ def compute_timing(max_time: float) -> dict:
     return {
         "race_start": lead_in / total_duration,
         "results_start": (lead_in + max_time + hold_after) / total_duration,
-        "results_end": (lead_in + max_time + hold_after + results_transition) / total_duration,
+        "results_end": (lead_in + max_time + hold_after + results_transition)
+        / total_duration,
         "total_duration": total_duration,
         "max_time": max_time,
         "total_frames": math.ceil(total_duration * framerate),
@@ -89,9 +90,13 @@ def main():
     timing = compute_timing(max_time)
 
     print(f"Runners: {len(runners)}")
-    print(f"Fastest: {min(r.final_time for r in runners):.2f}s (#{next(r.placement for r in runners if r.placement == 1)})")
+    print(
+        f"Fastest: {min(r.final_time for r in runners):.2f}s (#{next(r.placement for r in runners if r.placement == 1)})"
+    )
     print(f"Slowest: {max_time:.2f}s")
-    print(f"Total video: {timing['total_duration']:.1f}s, frames: {timing['total_frames']}")
+    print(
+        f"Total video: {timing['total_duration']:.1f}s, frames: {timing['total_frames']}"
+    )
 
     scene = create_scene(runners, timing)
 
@@ -106,9 +111,7 @@ def main():
         total_frames=timing["total_frames"],
         framerate=cfg["export"]["framerate"],
         png_width_px=cfg["export"]["png_width_px"],
-        parallel_workers=(
-            4 if cfg["export"]["converter"] == "playwright_http" else 1
-        ),
+        parallel_workers=(4 if cfg["export"]["converter"] == "playwright_http" else 1),
     )
 
 

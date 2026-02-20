@@ -13,10 +13,10 @@ Side-view lane animations replaying the top 3 finishers from 5 Olympic 100m fina
 
 ```bash
 # From the project root
-python showcases/sprint_100m/main.py
+python showcases/sprint_100m/race/main.py
 ```
 
-Output: `showcases/sprint_100m/output/sprint_100m.mp4`
+Output: `output/sprint_100m.mp4`
 
 ## Files
 

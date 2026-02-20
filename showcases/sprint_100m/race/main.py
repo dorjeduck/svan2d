@@ -84,13 +84,12 @@ def main():
     max_time = get_max_race_time()
     timing = compute_timing(max_time)
 
-    print(f"Race duration: {max_time:.2f}s, total video: {timing['total_duration']:.1f}s, "
-          f"frames: {timing['total_frames']}")
+    print(
+        f"Race duration: {max_time:.2f}s, total video: {timing['total_duration']:.1f}s, "
+        f"frames: {timing['total_frames']}"
+    )
 
-    scenes: list[VScene] = [
-        create_race_scene(race, timing)
-        for race in races
-    ]
+    scenes: list[VScene] = [create_race_scene(race, timing) for race in races]
 
     composite = VSceneComposite(
         scenes=list(scenes),  # type: ignore[arg-type]
@@ -109,9 +108,7 @@ def main():
         total_frames=timing["total_frames"],
         framerate=cfg["export"]["framerate"],
         png_width_px=cfg["export"]["png_width_px"],
-        parallel_workers=(
-            4 if cfg["export"]["converter"] == "playwright_http" else 1
-        ),
+        parallel_workers=(4 if cfg["export"]["converter"] == "playwright_http" else 1),
     )
 
 

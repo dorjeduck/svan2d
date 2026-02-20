@@ -38,16 +38,18 @@ def main():
         timeline_easing=easing.in_quad,
     )
     scene = scene.add_elements(create_square_elements(data, cfg["style"], scale_fn))
-    scene = scene.add_element(create_spiral_element(data.spiral, cfg["style"], scale_fn))
+    scene = scene.add_element(
+        create_spiral_element(data.spiral, cfg["style"], scale_fn)
+    )
     scene = apply_camera(scene, data, scale_fn)
 
     # Export
-    output_dir = Path(__file__).parent / cfg["export"]["output_dir"]
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = cfg["export"]["output_dir"]
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     exporter = VSceneExporter(
         scene,
-        output_dir=str(output_dir),
+        output_dir=output_dir,
         converter=ConverterType(cfg["export"]["converter"]),
     )
     exporter.to_mp4(

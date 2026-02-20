@@ -81,5 +81,5 @@ hold_after = 2.0          # Seconds after last runner finishes
 output_dir = "output/"
 filename = "sprint_100m"
 converter = "playwright_http"
-framerate = 30
+framerate = 60
 png_width_px = 1920

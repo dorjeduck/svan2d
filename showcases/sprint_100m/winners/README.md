@@ -20,10 +20,10 @@ Fantasy race pitting all 10 Olympic 100m gold medalists against each other in a 
 ## Run
 
 ```bash
-python showcases/sprint_100m_winners/main.py
+python showcases/sprint_100m/winners/main.py
 ```
 
-Output: `showcases/sprint_100m_winners/output/sprint_100m_winners.mp4`
+Output: `output/sprint_100m_winners.mp4`
 
 ## Architecture
 

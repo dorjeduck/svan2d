@@ -4,11 +4,11 @@ height = 600
 background = "#1a1a2e"
 
 [fibonacci]
-count = 7
+count = 11
 
 [animation]
-total_frames = 300
-framerate = 30
+total_frames = 1200
+framerate = 60
 hold_end_ratio = 0.15
 
 [style]

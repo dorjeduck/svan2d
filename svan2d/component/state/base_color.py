@@ -28,6 +28,7 @@ class ColorState(State):
     stroke_width: float = 1
     stroke_gradient: Optional[Gradient] = None
     stroke_pattern: Optional[Pattern] = None
+    non_scaling_stroke: bool = False
 
     def __post_init__(self):
         super().__post_init__()

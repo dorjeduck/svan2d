@@ -1,0 +1,85 @@
+# 100m Sprint Race Replay Configuration
+
+[scene]
+width = 900
+height = 135
+background = "#1a1a2e"
+
+[composite]
+direction = "vertical"
+gap = 4
+
+[track]
+margin_left = 100         # Space for name labels left of start
+margin_right = 60         # Space for finish time labels
+margin_top = 32           # Space for title/clock row
+margin_bottom = 20        # Space for distance marker labels
+
+# Lane geometry
+lane_height = 24
+lane_gap = 4
+lane_colors = ["#2a2a4a", "#222244"]
+
+# Distance markers
+marker_distances = [0, 20, 40, 60, 80, 100]
+marker_color = "#555577"
+marker_width = 0.5
+marker_label_color = "#666688"
+marker_font_size = 7
+marker_font_family = "monospace"
+
+# Finish line
+finish_color = "#ffffff"
+finish_width = 2.0
+finish_opacity = 0.8
+
+[runner]
+radius = 7
+stroke_width = 1.0
+stroke_color = "#ffffff"
+
+[runner.colors]
+lane_1 = "#ffd700"
+lane_2 = "#c0c0c0"
+lane_3 = "#cd7f32"
+
+[runner.label]
+font_family = "Arial"
+font_size = 8
+font_weight = "bold"
+color = "#ccccdd"
+offset_x = -11            # Left of circle (negative = left)
+offset_y = 0
+
+[runner.finish_time]
+font_family = "monospace"
+font_size = 9
+font_weight = "bold"
+color = "#ffffff"
+offset_x = 10
+offset_y = 0
+
+[title]
+font_family = "Arial"
+font_size = 10
+font_weight = "bold"
+color = "#aaaacc"
+padding_above = 8
+
+[clock]
+font_family = "monospace"
+font_size = 10
+font_weight = "bold"
+color = "#88ff88"
+padding_above = 8
+
+[timing]
+lead_in = 1.0             # Seconds before race starts (runners at blocks)
+hold_after = 2.0          # Seconds after last runner finishes
+
+[export]
+output_dir = "output/"
+filename = "sprint_100m"
+converter = "playwright_http"
+framerate = 30
+png_width_px = 1920

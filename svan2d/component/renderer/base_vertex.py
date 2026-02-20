@@ -197,6 +197,8 @@ class VertexRenderer(Renderer):
             kwargs = {}
             if hasattr(state, "stroke_linecap") and state.stroke_linecap is not None:
                 kwargs["stroke_linecap"] = state.stroke_linecap
+            if getattr(state, "non_scaling_stroke", False):
+                kwargs["vector_effect"] = "non-scaling-stroke"
 
             if stroke_pattern:
                 stroke_path = dw.Path(
@@ -326,6 +328,8 @@ class VertexRenderer(Renderer):
             kwargs = {}
             if hasattr(state, "stroke_linecap") and state.stroke_linecap is not None:
                 kwargs["stroke_linecap"] = state.stroke_linecap
+            if getattr(state, "non_scaling_stroke", False):
+                kwargs["vector_effect"] = "non-scaling-stroke"
 
             # Outer stroke
             if stroke_pattern:

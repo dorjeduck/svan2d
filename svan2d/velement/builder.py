@@ -276,6 +276,7 @@ class KeystateBuilder:
         interpolation_dict: Optional[Dict[str, Any]] = None,
         morphing_config: Optional["MorphingConfig"] = None,
         linear_angle_interpolation: bool = False,
+        state_interpolation: Optional[Callable] = None,
     ) -> T:
         """Configure the transition between the previous and next keystate.
 
@@ -288,6 +289,8 @@ class KeystateBuilder:
                               - Rotation: (r1, r2, t) -> float
             morphing_config: Morphing configuration for vertex state transitions
             linear_angle_interpolation: If True, rotation interpolates linearly without angle wrapping
+            state_interpolation: Optional callable (start_state, end_state, t) -> State that
+                                bypasses all per-field interpolation. t is raw segment t (0→1).
 
         Returns:
             New instance with transition configured
@@ -305,6 +308,7 @@ class KeystateBuilder:
                 interpolation_dict=interpolation_dict,
                 morphing_config=morphing_config,
                 linear_angle_interpolation=linear_angle_interpolation,
+                state_interpolation=state_interpolation,
             )
         else:
             merged_easing = self._builder.pending_transition.easing_dict or {}
@@ -328,11 +332,19 @@ class KeystateBuilder:
                 else self._builder.pending_transition.linear_angle_interpolation
             )
 
+            # state_interpolation: new call overrides pending
+            merged_state_interpolation = (
+                state_interpolation
+                if state_interpolation is not None
+                else self._builder.pending_transition.state_interpolation
+            )
+
             new_transition = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
                 linear_angle_interpolation=merged_linear_angle_interpolation,
+                state_interpolation=merged_state_interpolation,
             )
 
         new_builder = self._builder.with_pending_transition(new_transition)
@@ -343,6 +355,7 @@ class KeystateBuilder:
         easing_dict: Optional[Dict[str, EasingFunction]] = None,
         interpolation_dict: Optional[Dict[str, Any]] = None,
         morphing: Optional["MorphingConfig"] = None,
+        state_interpolation: Optional[Callable] = None,
     ) -> T:
         """Set default transition parameters for all subsequent segments.
 
@@ -350,6 +363,8 @@ class KeystateBuilder:
             easing_dict: Per-field easing functions to use as default
             interpolation_dict: Per-field path functions to use as default
             morphing: Morphing configuration to use as default
+            state_interpolation: Optional callable (start_state, end_state, t) -> State that
+                                bypasses all per-field interpolation. t is raw segment t (0→1).
 
         Returns:
             New instance with default transition set
@@ -362,6 +377,7 @@ class KeystateBuilder:
                 easing_dict=easing_dict,
                 interpolation_dict=interpolation_dict,
                 morphing_config=morphing,
+                state_interpolation=state_interpolation,
             )
         else:
             merged_easing = self._builder.default_transition.easing_dict or {}
@@ -378,10 +394,18 @@ class KeystateBuilder:
                 else self._builder.default_transition.morphing_config
             )
 
+            # state_interpolation: new call overrides pending
+            merged_state_interpolation = (
+                state_interpolation
+                if state_interpolation is not None
+                else self._builder.default_transition.state_interpolation
+            )
+
             new_default = TransitionConfig(
                 easing_dict=merged_easing if merged_easing else None,
                 interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
+                state_interpolation=merged_state_interpolation,
             )
 
         new_builder = self._builder.with_default_transition(new_default)
@@ -438,6 +462,7 @@ class KeystateBuilder:
             morphing_config=transition_config.morphing_config,
             interpolation_dict=merged_path if merged_path else None,
             linear_angle_interpolation=transition_config.linear_angle_interpolation,
+            state_interpolation=transition_config.state_interpolation,
         )
 
     def _finalize_build(self) -> Tuple[List[KeyState], Dict]:

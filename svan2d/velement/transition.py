@@ -43,12 +43,15 @@ class TransitionConfig:
                            - Rotation field: (r1, r2, t) -> float (custom rotation)
         linear_angle_interpolation: If True, rotation interpolates linearly without angle wrapping
                          (enables multi-revolution rotation like 0° → 7200°)
+        state_interpolation: Optional callable (start_state, end_state, t) -> State that
+                            bypasses all per-field interpolation. t is raw segment t (0→1).
     """
 
     easing_dict: Optional[Dict[str, EasingFunction]] = None
     morphing_config: Optional[Union[MorphingConfig, Dict[str, Any]]] = None
     interpolation_dict: Optional[InterpolationConfig] = None
     linear_angle_interpolation: bool = False
+    state_interpolation: Optional[Callable] = None
 
     def __repr__(self):
         return (
@@ -56,6 +59,7 @@ class TransitionConfig:
             f"\teasing={self.easing_dict}, \n"
             f"\tmorphing={self.morphing_config}, \n"
             f"\tinterpolation={self.interpolation_dict}, \n"
-            f"\tlinear_angle_interpolation={self.linear_angle_interpolation}\n"
+            f"\tlinear_angle_interpolation={self.linear_angle_interpolation}, \n"
+            f"\tstate_interpolation={self.state_interpolation}\n"
             f")"
         )

@@ -48,23 +48,21 @@ def _scalar_t(eased_t: EasedT) -> float:
 class InterpolationEngine:
     """Handles interpolation of states and individual values."""
 
-    def __init__(self, easing_resolver, path_resolver=None):
+    def __init__(self, easing_resolver):
         """
         Initialize the interpolation engine.
 
         Args:
             easing_resolver: EasingResolver instance for determining easing functions
-            path_resolver: PathResolver instance for determining path functions (optional)
         """
         self.easing_resolver = easing_resolver
-        self.path_resolver = path_resolver
 
         # Specialized interpolators
         self._shape_list_interpolator = StateListInterpolator(self)
         self._vertex_contours_interpolator = VertexContoursInterpolator()
         self._state_interpolator = NestedStateInterpolator(self)
         self._path_morpher = PathMorpher()
-        self._type_interpolators = TypeInterpolators(path_resolver)
+        self._type_interpolators = TypeInterpolators()
 
     @staticmethod
     def compute_changed_fields(
@@ -195,6 +193,7 @@ class InterpolationEngine:
         morphing_config: Optional[Any] = None,
         changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]] = None,
         linear_angle_interpolation: bool = False,
+        state_interpolation: Optional[Callable] = None,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -210,7 +209,11 @@ class InterpolationEngine:
             morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
             changed_fields: Optional pre-computed (changed_field_names, field_values) tuple
             linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
+            state_interpolation: Optional callable (start, end, t) -> State that bypasses all field interpolation
         """
+        if state_interpolation is not None:
+            return state_interpolation(start_state, end_state, t)
+
         interpolated_values = {}
         mapper, vertex_aligner = self._extract_morphing_config(morphing_config)
 
@@ -364,6 +367,18 @@ class InterpolationEngine:
                 vertex_aligner=vertex_aligner,
             )
 
+        # Custom interpolation function override (for any leaf-value field type)
+        if (
+            segment_interpolation_config is not None
+            and field_name in segment_interpolation_config
+        ):
+            custom_func = segment_interpolation_config[field_name]
+            return custom_func(
+                start_value,
+                end_value,
+                self._type_interpolators._extract_scalar_t(eased_t),
+            )
+
         # Effect interpolation (Gradient, Pattern, Filter)
         result = self._interpolate_effect(start_value, end_value, scalar_t)
         if result is not _NOT_HANDLED:
@@ -380,8 +395,6 @@ class InterpolationEngine:
                 start_value,
                 end_value,
                 eased_t,
-                field_name,
-                segment_interpolation_config,
             )
 
         # SVG Path interpolation
@@ -396,23 +409,12 @@ class InterpolationEngine:
                 start_value, end_value, eased_t
             )
 
-        # Angle interpolation (with optional custom rotation function or wraparound)
+        # Angle interpolation (with wraparound handling)
         if (
             self._type_interpolators.is_angle_field(start_state, field_name)
             and isinstance(start_value, (int, float))
             and isinstance(end_value, (int, float))
         ):
-            # Custom rotation function overrides standard angle wrapping
-            if (
-                segment_interpolation_config is not None
-                and field_name in segment_interpolation_config
-            ):
-                rotation_func = segment_interpolation_config[field_name]
-                return rotation_func(
-                    start_value,
-                    end_value,
-                    self._type_interpolators._extract_scalar_t(eased_t),
-                )
             if not linear_angle_interpolation:
                 return self._type_interpolators.interpolate_angle(
                     start_value, end_value, eased_t

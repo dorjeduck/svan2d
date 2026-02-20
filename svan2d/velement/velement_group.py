@@ -151,11 +151,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
         from svan2d.transition.interpolation_engine import InterpolationEngine
-        from svan2d.transition.path_resolver import PathResolver
 
         easing_resolver = EasingResolver(self._attribute_easing)
-        path_resolver = PathResolver()
-        interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
+        interpolation_engine = InterpolationEngine(easing_resolver)
 
         # Store keystates and create interpolator (no vertex aligner for groups)
         self._keystates_list = keystates

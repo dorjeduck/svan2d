@@ -20,7 +20,16 @@ from .mutable_point2d import (
     get_pooled_point,
     reset_point_pool,
 )
-from .scalar_functions import angle, circular_midpoint, inbetween, lerp, step
+from .scalar_functions import (
+    angle,
+    circular_midpoint,
+    inbetween,
+    lerp,
+    log_lerp,
+    gaussian_smooth,
+    gaussian_smooth_2d,
+    step,
+)
 
 __all__ = [
     "Color",
@@ -38,8 +47,11 @@ __all__ = [
     "color_to_oklab",
     "oklab_to_color",
     "lerp",
+    "log_lerp",
     "angle",
     "step",
     "inbetween",
     "circular_midpoint",
+    "gaussian_smooth",
+    "gaussian_smooth_2d",
 ]

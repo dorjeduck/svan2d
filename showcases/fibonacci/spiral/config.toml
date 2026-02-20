@@ -1,0 +1,30 @@
+[scene]
+width = 800
+height = 600
+background = "#1a1a2e"
+
+[fibonacci]
+count = 7
+
+[animation]
+total_frames = 300
+framerate = 30
+hold_end_ratio = 0.15
+
+[style]
+colors = ["#e94560", "#f5a623", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7"]
+square_fill_opacity = 0.15
+square_stroke_opacity = 0.15
+square_stroke_width = 2
+square_stroke_color = "#ffffff"
+label_opacity = 0.15
+label_color = "#ffffff"
+spiral_color = "#ffffff"
+spiral_width = 2
+show_labels = true
+
+[export]
+output_dir = "output/"
+filename = "fibonacci_spiral"
+converter = "playwright_http"
+png_width_px = 1600

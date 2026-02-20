@@ -392,3 +392,7 @@ class Renderer(ABC):
             kwargs["stroke"] = stroke_color.to_rgb_string()
             kwargs["stroke_width"] = stroke_width
             kwargs["stroke_opacity"] = stroke_opacity
+
+        # Non-scaling stroke: width stays in screen pixels regardless of transforms
+        if getattr(state, "non_scaling_stroke", False):
+            kwargs["vector_effect"] = "non-scaling-stroke"

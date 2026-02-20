@@ -1,0 +1,107 @@
+# Gapminder Bubble Chart Configuration
+
+[scene]
+width = 960
+height = 540
+background = "#fafafa"
+
+[data]
+path = "showcases/gapminder/data/gapminder.csv"
+top_n = 40                        # Countries by max population across all years
+
+[data.columns]
+# Column name mapping (CSV column → internal name)
+country = "country"
+continent = "continent"
+year = "year"
+life_exp = "lifeExp"
+gdp_per_cap = "gdpPercap"
+population = "pop"
+
+[layout]
+margin_left = 55       # Space for Y axis labels
+margin_right = 20
+margin_top = 20
+margin_bottom = 45     # Space for X axis labels + title
+
+[bubbles]
+fill_opacity = 0.75
+stroke_color = "#ffffff"
+stroke_width = 0.5
+stroke_opacity = 0.8
+radius_min = 2.0
+radius_max = 40.0
+# Reference population for radius scaling (sqrt-proportional)
+radius_reference_pop = 1_400_000_000
+
+[bubbles.continent_colors]
+Asia = "#ff4040"
+Europe = "#4269d0"
+Africa = "#efb118"
+Americas = "#3ca951"
+Oceania = "#a463f2"
+
+[labels]
+mode = "top_n_population"     # "top_n_population" or "explicit"
+top_n = 12
+font_family = "Arial"
+font_size = 8
+font_weight = "normal"
+color = "#333333"
+offset_y = -5                 # Above bubble center
+
+[axes]
+# GDP (X axis) - log scale ticks
+gdp_ticks = [400, 1000, 4000, 16000, 64000]
+gdp_min = 200
+gdp_max = 120000
+# Life Expectancy (Y axis) - linear ticks
+life_exp_ticks = [30, 40, 50, 60, 70, 80, 90]
+life_exp_min = 20
+life_exp_max = 90
+# Gridline styling
+gridline_color = "#dddddd"
+gridline_width = 0.5
+gridline_opacity = 0.6
+# Border styling
+border_color = "#999999"
+border_width = 0.8
+# Tick label styling
+font_family = "Arial"
+font_size = 9
+label_color = "#666666"
+# Axis title styling
+title_font_family = "Arial"
+title_font_size = 11
+title_font_weight = "normal"
+title_color = "#333333"
+x_title = "GDP per capita (PPP $, log scale)"
+y_title = "Life Expectancy (years)"
+
+[year]
+font_family = "Arial"
+font_size = 80
+font_weight = "bold"
+color = "#000033"
+opacity = 0.08
+offset_right = 30
+offset_bottom = 20
+
+[legend]
+# Position offsets from top-right corner of plot area
+offset_right = 10
+offset_top = 5
+swatch_radius = 5
+swatch_gap = 14          # Vertical gap between legend items
+label_offset_x = 10      # Horizontal offset from swatch center to label
+font_family = "Arial"
+font_size = 9
+font_color = "#333333"
+
+[export]
+output_dir = "output/"
+filename = "gapminder"
+converter = "playwright_http"
+total_frames = 3300
+framerate = 60
+png_width_px = 2048

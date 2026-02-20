@@ -2,6 +2,8 @@
 attribute keystates, dual-state keystates, skip-identical optimization, and
 the changed-fields cache."""
 
+from dataclasses import replace
+
 import pytest
 
 from svan2d.component.state.circle import CircleState
@@ -201,6 +203,152 @@ class TestCustomInterpolationFunctions:
 
         result = elem.get_frame(0.5)
         assert result.pos.x == pytest.approx(77)
+
+    def test_custom_radius_function(self):
+        """A custom function for radius should override default lerp."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=10)
+        s2 = CircleState(pos=Point2D(0, 0), radius=100)
+
+        def double_lerp(v1, v2, t):
+            """Lerp but at double speed, clamped."""
+            return v1 + (v2 - v1) * min(t * 2, 1.0)
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(interpolation_dict={"radius": double_lerp})
+            .keystate(s2, at=1.0)
+        )
+
+        # At t=0.25, double_lerp gives lerp at t=0.5 → 55
+        result = elem.get_frame(0.25)
+        assert result.radius == pytest.approx(55)
+
+        # At t=0.5, double_lerp gives lerp at t=1.0 → 100
+        result = elem.get_frame(0.5)
+        assert result.radius == pytest.approx(100)
+
+    def test_custom_opacity_function(self):
+        """A custom function for opacity should override default lerp."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=50, opacity=0.0)
+        s2 = CircleState(pos=Point2D(0, 0), radius=50, opacity=1.0)
+
+        def step_opacity(v1, v2, t):
+            return v2 if t >= 0.5 else v1
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(interpolation_dict={"opacity": step_opacity})
+            .keystate(s2, at=1.0)
+        )
+
+        assert elem.get_frame(0.25).opacity == pytest.approx(0.0)
+        assert elem.get_frame(0.75).opacity == pytest.approx(1.0)
+
+    def test_custom_function_for_stroke_width(self):
+        """A custom function for stroke_width should override default lerp."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=50, stroke_width=1.0)
+        s2 = CircleState(pos=Point2D(0, 0), radius=50, stroke_width=10.0)
+
+        def constant_five(v1, v2, t):
+            return 5.0
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(interpolation_dict={"stroke_width": constant_five})
+            .keystate(s2, at=1.0)
+        )
+
+        result = elem.get_frame(0.5)
+        assert result.stroke_width == pytest.approx(5.0)
+
+    def test_custom_numeric_function_with_easing(self):
+        """Easing should apply before the custom function receives t."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=0)
+        s2 = CircleState(pos=Point2D(0, 0), radius=100)
+
+        received_t = []
+
+        def tracking_func(v1, v2, t):
+            received_t.append(t)
+            return v1 + (v2 - v1) * t
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(
+                interpolation_dict={"radius": tracking_func},
+                easing_dict={"radius": easing.step},
+            )
+            .keystate(s2, at=1.0)
+        )
+
+        # step easing: t=0.25 → eased_t=0.0, t=0.75 → eased_t=1.0
+        elem.get_frame(0.25)
+        assert received_t[-1] == pytest.approx(0.0)
+
+        elem.get_frame(0.75)
+        assert received_t[-1] == pytest.approx(1.0)
+
+    def test_custom_radius_function_engine_level(self, engine):
+        """Direct InterpolationEngine test for generic custom function dispatch."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=10)
+        s2 = CircleState(pos=Point2D(0, 0), radius=100)
+
+        def custom_radius(v1, v2, t):
+            return 42.0
+
+        result = engine.create_eased_state(
+            s1, s2, t=0.5,
+            segment_easing_overrides=None,
+            attribute_keystates_fields=set(),
+            segment_interpolation_config={"radius": custom_radius},
+        )
+
+        assert result.radius == pytest.approx(42.0)
+
+    def test_custom_color_function(self):
+        """A custom function for fill_color should override default Color interpolation."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=50, fill_color=Color("#FF0000"))
+        s2 = CircleState(pos=Point2D(0, 0), radius=50, fill_color=Color("#0000FF"))
+
+        def always_green(c1, c2, t):
+            return Color("#00FF00")
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(interpolation_dict={"fill_color": always_green})
+            .keystate(s2, at=1.0)
+        )
+
+        result = elem.get_frame(0.5)
+        assert result.fill_color.r == pytest.approx(0)
+        assert result.fill_color.g == pytest.approx(255)
+        assert result.fill_color.b == pytest.approx(0)
+
+    def test_custom_color_function_engine_level(self, engine):
+        """Direct InterpolationEngine test for custom Color function dispatch."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=50, fill_color=Color("#FF0000"))
+        s2 = CircleState(pos=Point2D(0, 0), radius=50, fill_color=Color("#0000FF"))
+
+        call_log = []
+
+        def custom_color(c1, c2, t):
+            call_log.append((c1, c2, t))
+            return Color("#00FF00")
+
+        result = engine.create_eased_state(
+            s1, s2, t=0.5,
+            segment_easing_overrides=None,
+            attribute_keystates_fields=set(),
+            segment_interpolation_config={"fill_color": custom_color},
+        )
+
+        assert len(call_log) == 1
+        assert result.fill_color.g == pytest.approx(255)
 
 
 # ---------------------------------------------------------------------------
@@ -672,3 +820,127 @@ class TestDefaultTransition:
 
         # Segment 1: step → at t=0.6 (segment_t=0.2), radius should still be 100
         assert elem.get_frame(0.6).radius == pytest.approx(100, abs=0.1)
+
+
+# ---------------------------------------------------------------------------
+# 13. state_interpolation (full-state override)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.unit
+class TestStateInterpolation:
+    """Verify that state_interpolation bypasses all per-field interpolation."""
+
+    def test_state_interpolation_basic(self):
+        """Custom state_interpolation should return its result directly."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=10)
+        s2 = CircleState(pos=Point2D(100, 0), radius=100)
+
+        fixed = CircleState(pos=Point2D(42, 42), radius=42)
+
+        def my_interp(start, end, t):
+            return fixed
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(state_interpolation=my_interp)
+            .keystate(s2, at=1.0)
+        )
+
+        result = elem.get_frame(0.5)
+        assert result.pos.x == pytest.approx(42)
+        assert result.pos.y == pytest.approx(42)
+        assert result.radius == pytest.approx(42)
+
+    def test_state_interpolation_receives_raw_t(self):
+        """state_interpolation should receive raw segment t, not eased t."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=0)
+        s2 = CircleState(pos=Point2D(0, 0), radius=100)
+
+        received_t = []
+
+        def capture_t(start, end, t):
+            received_t.append(t)
+            return replace(start, radius=t * 100)
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(
+                state_interpolation=capture_t,
+                easing_dict={"radius": easing.step},  # should be ignored
+            )
+            .keystate(s2, at=1.0)
+        )
+
+        elem.get_frame(0.25)
+        # Raw t should be 0.25, NOT eased (step would give 0.0)
+        assert received_t[-1] == pytest.approx(0.25)
+
+    def test_state_interpolation_skips_field_interpolation(self):
+        """When state_interpolation is set, interpolation_dict should be ignored."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=10)
+        s2 = CircleState(pos=Point2D(100, 0), radius=100)
+
+        field_func_called = []
+
+        def field_func(p1, p2, t):
+            field_func_called.append(True)
+            return Point2D(-1, -1)
+
+        def my_interp(start, end, t):
+            return replace(start, radius=50)
+
+        elem = (
+            VElement()
+            .keystate(s1, at=0.0)
+            .transition(
+                state_interpolation=my_interp,
+                interpolation_dict={"pos": field_func},
+            )
+            .keystate(s2, at=1.0)
+        )
+
+        result = elem.get_frame(0.5)
+        assert result.radius == pytest.approx(50)
+        assert len(field_func_called) == 0  # field func should never be called
+
+    def test_state_interpolation_via_default_transition(self):
+        """state_interpolation set via default_transition should apply to all segments."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=0)
+        s2 = CircleState(pos=Point2D(0, 0), radius=50)
+        s3 = CircleState(pos=Point2D(0, 0), radius=100)
+
+        def always_start(start, end, t):
+            return start
+
+        elem = (
+            VElement()
+            .default_transition(state_interpolation=always_start)
+            .keystate(s1, at=0.0)
+            .keystate(s2, at=0.5)
+            .keystate(s3, at=1.0)
+        )
+
+        # Both segments should return start state
+        assert elem.get_frame(0.25).radius == pytest.approx(0)
+        assert elem.get_frame(0.75).radius == pytest.approx(50)
+
+    def test_state_interpolation_engine_level(self, engine):
+        """Direct InterpolationEngine test for state_interpolation short-circuit."""
+        s1 = CircleState(pos=Point2D(0, 0), radius=10)
+        s2 = CircleState(pos=Point2D(100, 0), radius=100)
+
+        def my_interp(start, end, t):
+            return replace(start, radius=77)
+
+        result = engine.create_eased_state(
+            s1, s2, t=0.5,
+            segment_easing_overrides=None,
+            attribute_keystates_fields=set(),
+            state_interpolation=my_interp,
+        )
+
+        assert result.radius == pytest.approx(77)
+        # pos should be from start (since my_interp returns modified start)
+        assert result.pos.x == pytest.approx(0)

@@ -251,6 +251,11 @@ class StateInterpolator:
                         if ks1.transition_config
                         else False
                     ),
+                    state_interpolation=(
+                        ks1.transition_config.state_interpolation
+                        if ks1.transition_config
+                        else None
+                    ),
                 )
 
                 # Determine if this is an "inbetween" frame (different state types morphing)

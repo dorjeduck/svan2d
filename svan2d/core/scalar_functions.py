@@ -6,10 +6,12 @@ This module consolidates simple scalar operations:
 - step: Discrete step interpolation
 - inbetween: Generate intermediate values
 - circular_midpoint: Vector-averaged circular midpoint
+- gaussian_smooth / gaussian_smooth_2d: Gaussian-smoothed function tracking
 """
 
+import bisect
 import math
-from typing import List, Optional, TypeVar, Union
+from typing import Callable, List, Optional, TypeVar, Union
 
 Number = Union[int, float]
 T = TypeVar("T")
@@ -163,6 +165,20 @@ def inbetween(start: Number, end: Number, num: int) -> List[float]:
     return [start + step_size * (i + 1) for i in range(num)]
 
 
+def log_lerp(start: float, end: float, t: float) -> float:
+    """Geometric (logarithmic) interpolation between two positive values.
+
+    Equivalent to exp(lerp(log(start), log(end), t)). Produces smooth
+    interpolation for values that change multiplicatively — such as
+    stroke_width compensating for camera zoom, or scale factors.
+
+    Falls back to linear interpolation if either value is <= 0.
+    """
+    if start <= 0 or end <= 0:
+        return start + (end - start) * t
+    return math.exp(math.log(start) * (1 - t) + math.log(end) * t)
+
+
 def circular_midpoint(a1: float, a2: float) -> float:
     """Calculate the midpoint between two angles on a circle.
 
@@ -205,3 +221,105 @@ def circular_midpoint(a1: float, a2: float) -> float:
     mid_deg = math.degrees(mid_rad) % 360
 
     return mid_deg
+
+
+def _gaussian_smooth(values: list[float], sigma_samples: float) -> list[float]:
+    """Apply Gaussian smoothing to a list of sampled values."""
+    n = len(values)
+    if sigma_samples <= 0:
+        return list(values)
+    radius = int(math.ceil(3 * sigma_samples))
+    kernel = [math.exp(-0.5 * (i / sigma_samples) ** 2) for i in range(-radius, radius + 1)]
+    k_sum = sum(kernel)
+    kernel = [k / k_sum for k in kernel]
+
+    smoothed = []
+    for i in range(n):
+        val = 0.0
+        for j, k in enumerate(kernel):
+            idx = i + j - radius
+            idx = max(0, min(n - 1, idx))
+            val += values[idx] * k
+        smoothed.append(val)
+    return smoothed
+
+
+def gaussian_smooth(
+    func: Callable[[float], float],
+    smoothness: float = 0.5,
+    samples: int = 256,
+    t_range: tuple[float, float] = (0.0, 1.0),
+) -> Callable[[float], float]:
+    """Gaussian-smooth a scalar function.
+
+    Samples the function, applies Gaussian convolution, returns a callable
+    that interpolates the smoothed values.
+
+    Args:
+        func: Target function to smooth.
+        smoothness: 0.0 = no smoothing (original), 1.0 = heavy smoothing.
+                    Controls Gaussian kernel width relative to t_range.
+        samples: Number of sample points (higher = more accurate).
+        t_range: Domain to sample over.
+    """
+    t_start, t_end = t_range
+    dt = (t_end - t_start) / (samples - 1) if samples > 1 else 0.0
+    ts = [t_start + i * dt for i in range(samples)]
+    raw = [func(t) for t in ts]
+
+    sigma_samples = smoothness * samples * 0.1
+    smoothed = _gaussian_smooth(raw, sigma_samples)
+
+    def interpolated(t: float) -> float:
+        if t <= t_start:
+            return smoothed[0]
+        if t >= t_end:
+            return smoothed[-1]
+        idx = bisect.bisect_right(ts, t) - 1
+        idx = max(0, min(samples - 2, idx))
+        frac = (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        return smoothed[idx] + (smoothed[idx + 1] - smoothed[idx]) * frac
+
+    return interpolated
+
+
+def gaussian_smooth_2d(
+    func: Callable[[float], tuple[float, float]],
+    smoothness: float = 0.5,
+    samples: int = 256,
+    t_range: tuple[float, float] = (0.0, 1.0),
+) -> Callable[[float], tuple[float, float]]:
+    """Gaussian-smooth a 2D function. Same as gaussian_smooth but for (x, y).
+
+    Smooths x and y channels independently.
+
+    Args:
+        func: Target function returning (x, y) to smooth.
+        smoothness: 0.0 = no smoothing (original), 1.0 = heavy smoothing.
+        samples: Number of sample points (higher = more accurate).
+        t_range: Domain to sample over.
+    """
+    t_start, t_end = t_range
+    dt = (t_end - t_start) / (samples - 1) if samples > 1 else 0.0
+    ts = [t_start + i * dt for i in range(samples)]
+    raw = [func(t) for t in ts]
+    xs = [p[0] for p in raw]
+    ys = [p[1] for p in raw]
+
+    sigma_samples = smoothness * samples * 0.1
+    sx = _gaussian_smooth(xs, sigma_samples)
+    sy = _gaussian_smooth(ys, sigma_samples)
+
+    def interpolated(t: float) -> tuple[float, float]:
+        if t <= t_start:
+            return (sx[0], sy[0])
+        if t >= t_end:
+            return (sx[-1], sy[-1])
+        idx = bisect.bisect_right(ts, t) - 1
+        idx = max(0, min(samples - 2, idx))
+        frac = (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        x = sx[idx] + (sx[idx + 1] - sx[idx]) * frac
+        y = sy[idx] + (sy[idx + 1] - sy[idx]) * frac
+        return (x, y)
+
+    return interpolated

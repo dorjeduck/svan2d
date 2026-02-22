@@ -1,0 +1,44 @@
+[scene]
+width = 1600
+height = 1600
+background = "#0a0a1a"
+
+[planets]
+show = ["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"]
+
+[planets.size]
+equal_radius_px = 25.0
+max_radius_px = 130.0
+
+[planets.labels]
+show = true
+font_family = "Arial"
+font_size = 40
+font_color = "#cccccc"
+offset_y = 20
+line_spacing = 40
+
+[sun]
+radius_px = 400
+color = "#ffdd44"
+padding_top = 90
+gap_to_planets = 320
+
+[layout]
+min_gap_1 = 60
+min_gap_2 = 100
+min_gap_3 = 120
+
+[animation]
+phase1_start = 0.10
+phase1_end = 0.45
+phase2_start = 0.55
+phase2_end = 0.90
+
+[export]
+output_dir = "output/"
+filename = "planet_scale_comparison"
+converter = "playwright_http"
+total_frames = 450
+framerate = 30
+png_width_px = 2800

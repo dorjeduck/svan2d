@@ -517,6 +517,18 @@ class KeystateBuilder:
             #    raise ValueError(f"Duplicate keystate time {t} detected.")
             seen.add(t)
 
+        # Auto-expand: single keystate with implicit time → duplicate to span [0, 1].
+        # VElement(state=s) should persist across entire timeline, not just t=0.
+        # Explicit at= is preserved (user intentionally pinned to one time point).
+        if len(self._builder.keystates) == 1 and self._builder.keystates[0][2] is None:
+            ks = self._builder.keystates[0]
+            self._builder = BuilderState(
+                keystates=(ks, ks),
+                pending_transition=self._builder.pending_transition,
+                default_transition=self._builder.default_transition,
+                interpolation_dict=self._builder.interpolation_dict,
+            )
+
         # Convert internal keystates to KeyState objects
         keystates: List[KeyState] = []
         for (

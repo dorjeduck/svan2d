@@ -11,11 +11,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from axis import create_axis_elements, AxisConfig
-from bubble import create_bubble_elements, BubbleConfig
+from axis_element import create_axis_elements, AxisConfig
+from bubble_element import create_bubble_elements, BubbleConfig
 from data_prep import get_country_data
-from legend import create_legend_elements, LegendConfig
-from year import create_year_element
+from legend_element import create_legend_elements, LegendConfig
+from year_element import create_year_element
 
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.color import Color

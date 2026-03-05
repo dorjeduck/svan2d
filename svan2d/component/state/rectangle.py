@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.rectangle import RectangleRenderer
@@ -21,9 +20,9 @@ class RectangleState(VertexState):
 
     width: float = 100
     height: float = 60
-    fill_color: Optional[Color] = Color(0, 0, 255)
+    fill_color: Color | None = Color(0, 0, 255)
     fill_opacity: float = 1
-    stroke_color: Optional[Color] = Color.NONE
+    stroke_color: Color | None = Color.NONE
     stroke_opacity: float = 1
     corner_radius: float = 0
 

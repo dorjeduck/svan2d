@@ -1,7 +1,9 @@
 """RadialSegmentsRenderer: draws radial line segments from a center point."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional, Tuple
+from typing import Callable
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.radial_segments import RadialSegmentsRenderer
@@ -19,5 +21,5 @@ class RadialSegmentsState(ColorState):
     # segments can be:
     # - Points2D: shared by all angles
     # - List[Points2D]: per angle
-    angles: Optional[List[float]] = None  # Optional custom angles in degrees
-    segments_fn: Optional[Callable] = None
+    angles: list[float] | None = None  # Optional custom angles in degrees
+    segments_fn: Callable | None = None

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import tempfile
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import cairosvg
 
@@ -12,15 +12,13 @@ if TYPE_CHECKING:
 
 
 class CairoSvgConverter(SVGConverter):
-    """
-    SVGConverter implementation using cairosvg for conversions.
-    """
+    """SVGConverter implementation using cairosvg for conversions."""
 
     def _convert_to_pdf(
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         inch_width: int | None = None,
         inch_height: int | None = None,
     ) -> dict:
@@ -37,7 +35,7 @@ class CairoSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         width_px: int | None = None,
         height_px: int | None = None,
     ) -> dict:

@@ -4,7 +4,7 @@ Specifies strategies for M→N shape matching and vertex alignment during morphi
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 @dataclass
@@ -36,10 +36,10 @@ class MorphingConfig:
         ... )
     """
 
-    mapper: Optional[Any] = None  # Mapper type (avoid circular import)
-    vertex_aligner: Optional[Any] = None  # VertexAligner type (avoid circular import)
+    mapper: Any | None = None  # Mapper type (avoid circular import)
+    vertex_aligner: Any | None = None  # VertexAligner type (avoid circular import)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dict format for internal processing"""
         result = {}
         if self.mapper is not None:

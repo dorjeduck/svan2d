@@ -1,7 +1,7 @@
 """Circular arc path interpolation"""
 
 import math
-from typing import Callable, Optional
+from typing import Callable
 
 from svan2d.core.point2d import Point2D
 

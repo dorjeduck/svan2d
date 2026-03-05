@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -16,9 +16,8 @@ class TextRenderer(Renderer):
     """Renderer class for rendering text elements"""
 
     def _render_core(
-        self, state: "TextState", drawing: Optional[dw.Drawing] = None
+        self, state: "TextState", drawing: dw.Drawing | None = None
     ) -> dw.Text:
-        fill_color = state.fill_color.to_rgb_string()
         text_kwargs = {
             "text": state.text,
             "x": 0,

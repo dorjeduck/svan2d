@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -11,23 +11,13 @@ if TYPE_CHECKING:
 
 
 class CircleTextRenderer(Renderer):
-    """Renderer class for rendering text elements"""
+    """Renderer for text laid out along a circular path."""
 
-    def __init__(
-        self,
-    ) -> None:
-        """Initialize text renderer
-
-        Args:
-            text: The text content to display - either single string or list of strings
-            text_facing_inward: Whether text faces inward (True, default) or outward (False)
-            angles: Optional list of specific angles in degrees for each text element.
-                   If provided, overrides automatic even distribution.
-                   List length should match text length for multi-text.
-        """
+    def __init__(self) -> None:
+        pass
 
     def _render_core(
-        self, state: "CircleTextState", drawing: Optional[dw.Drawing] = None
+        self, state: "CircleTextState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render the circular text with the given state (core geometry only)"""
 
@@ -80,14 +70,14 @@ class CircleTextRenderer(Renderer):
         radius: float,
         path_id: str = "circlepath",
     ) -> dw.Path:
-        """Create a circular path for text to follow
+        """Create a circular path for text to follow.
+
+        Goes around twice so text is never cut off.
 
         Args:
-            radius: Radius of the circle
-            path_id: ID for the path element
-
-        Returns:
-            drawsvg Path object representing a circle (goes around twice)
+            text_facing_inward: If True, text faces inward; outward otherwise.
+            radius: Radius of the circle.
+            path_id: ID for the path element.
         """
         # Create circular path that goes around twice: 6→12→6→12→6
         # Start at bottom (6 o'clock), go up to top (12 o'clock), back down, up again, back down
@@ -109,18 +99,16 @@ class CircleTextRenderer(Renderer):
         offset: float,
         circle_path: dw.Path,
         state: "CircleTextState",
-        drawing: Optional[dw.Drawing],
+        drawing: dw.Drawing | None,
     ) -> dw.Text:
-        """Create a single text element at the specified offset
+        """Create a single text element at the specified offset.
 
         Args:
-            text_content: The text to display
-            offset: Position offset (0-1 range)
-            circle_path: The circular path for text to follow
-            state: State containing text attributes
-
-        Returns:
-            drawsvg Text element
+            text_content: The text to display.
+            offset: Position offset (0–1 range).
+            circle_path: The circular path for text to follow.
+            state: State containing text attributes.
+            drawing: Optional drawing context for gradient/pattern resolution.
         """
 
         # Map offset to path coordinates
@@ -132,7 +120,6 @@ class CircleTextRenderer(Renderer):
             "font_size": state.font_size,
             "font_weight": state.font_weight,
             "letter_spacing": state.letter_spacing,
-            "text_anchor": state.text_align,
             "path": circle_path,
             "start_offset": f"{mapped_offset*100}%",
             "text_anchor": state.text_anchor,

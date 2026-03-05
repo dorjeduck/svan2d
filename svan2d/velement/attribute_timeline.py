@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 from svan2d.component.state.base import State
 from svan2d.core.scalar_functions import lerp
@@ -23,7 +23,7 @@ class AttributeTimelineResolver:
 
     def __init__(
         self,
-        attribute_keystates: Dict[str, List],
+        attribute_keystates: dict[str, list],
         keystates: "KeyStates",
         easing_resolver: "EasingResolver",
         interpolation_engine: "InterpolationEngine",

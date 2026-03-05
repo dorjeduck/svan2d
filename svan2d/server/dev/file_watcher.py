@@ -7,7 +7,7 @@ Monitors Python animation files and triggers reloads on changes.
 import asyncio
 import time
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from watchdog.events import FileModifiedEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -40,7 +40,7 @@ class DebouncedFileHandler(FileSystemEventHandler):
         self.on_change_callback = on_change_callback
         self.debounce_seconds = debounce_ms / 1000.0
         self.last_modified_time = 0.0
-        self.pending_task: Optional[asyncio.Task] = None
+        self.pending_task: asyncio.Task | None = None
 
     def on_modified(self, event):
         """

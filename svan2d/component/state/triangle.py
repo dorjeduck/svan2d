@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
-
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.triangle import TriangleRenderer
 from svan2d.component.vertex import VertexContours
-from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
 from .base_vertex import VertexState

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
@@ -110,7 +109,7 @@ class VertexLoop:
 
         return area * 0.5
 
-    def bounds(self) -> Tuple[float, float, float, float]:
+    def bounds(self) -> tuple[float, float, float, float]:
         """Calculate bounding box (min_x, min_y, max_x, max_y)"""
         if not self._vertices:
             return (0.0, 0.0, 0.0, 0.0)
@@ -129,53 +128,32 @@ class VertexLoop:
         return VertexLoop(list(reversed(self._vertices)), self._closed)
 
     def translate(self, dx: float, dy: float) -> VertexLoop:
-        """Translate vertices in-place by (dx, dy)
-
-        Returns self for method chaining.
-        """
-        for v in self._vertices:
-            v += Point2D(dx, dy)
+        """Translate all vertices by (dx, dy). Returns self for chaining."""
+        self._vertices = [v + Point2D(dx, dy) for v in self._vertices]
         return self
 
     def scale(self, sx: float, sy: float | None = None) -> VertexLoop:
-        """Scale vertices in-place by (sx, sy)
-
-        If sy is None, uses sx for both dimensions (uniform scaling).
-        Returns self for method chaining.
-        """
+        """Scale all vertices by (sx, sy). If sy is None, uses sx for both axes. Returns self for chaining."""
         if sy is None:
             sy = sx
-
-        for v in self._vertices:
-            v += Point2D(sx, sy)
-
+        self._vertices = [Point2D(v.x * sx, v.y * sy) for v in self._vertices]
         return self
 
     def rotate(self, angle_degrees: float, center: Point2D | None = None) -> VertexLoop:
-        """Rotate vertices in-place by angle_degrees around center
-
-        Args:
-            angle_degrees: Rotation angle in degrees (positive = counter-clockwise)
-            center: Center of rotation (default is origin)
-
-        Returns self for method chaining.
-        """
+        """Rotate all vertices by angle_degrees around center (default: origin). Returns self for chaining."""
         rot_center: Point2D = center if center is not None else Point2D(0.0, 0.0)
 
         angle_rad = math.radians(angle_degrees)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
 
+        new_vertices = []
         for v in self._vertices:
-            # Translate to origin
             x_rel = v.x - rot_center.x
             y_rel = v.y - rot_center.y
-
-            # Rotate
             x_new = x_rel * cos_a - y_rel * sin_a
             y_new = x_rel * sin_a + y_rel * cos_a
+            new_vertices.append(Point2D(x_new, y_new) + rot_center)
 
-            # Translate back
-            v = Point2D(x_new, y_new) + rot_center
-
+        self._vertices = new_vertices
         return self

@@ -20,13 +20,13 @@ Usage:
                 return FancyCircleRenderer
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Type
 
 # Maps state classes → renderer classes
-_renderer_registry: Dict[Type, Type] = {}
+_renderer_registry: dict[Type, Type] = {}
 
 # Singleton cache for stateless renderer instances
-_renderer_cache: Dict[Type, Any] = {}
+_renderer_cache: dict[Type, Any] = {}
 
 
 def renderer(renderer_class):
@@ -49,8 +49,6 @@ def renderer(renderer_class):
     def decorator(state_class: Type):
         # Prevent accidentally assigning multiple renderers to one state
         if state_class in _renderer_registry:
-            # For error message, try to get name without importing
-            prev_renderer = _renderer_registry[state_class]
             raise RuntimeError(
                 f"State '{state_class.__name__}' is already registered with a renderer. "
                 f"Cannot register multiple renderers for the same state."
@@ -64,13 +62,10 @@ def renderer(renderer_class):
     return decorator
 
 
-def get_renderer_class_for_state(state: Any) -> Optional[Type]:
-    """
-    Resolve the renderer class for the given state instance.
-    State subclasses may override `get_renderer_class()` manually.
+def get_renderer_class_for_state(state: Any) -> Type | None:
+    """Resolve the renderer class for the given state instance.
 
-    Returns:
-        Renderer class or None
+    State subclasses may override ``get_renderer_class()`` to bypass the registry.
     """
     cls = state.__class__
 

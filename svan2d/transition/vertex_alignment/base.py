@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 from svan2d.core.point2d import Points2D
 
@@ -44,7 +43,7 @@ class VertexAligner(ABC):
         verts2: Points2D,
         context: AlignmentContext,
         rotation_target: float | None = None,
-    ) -> Tuple[Points2D, Points2D]:
+    ) -> tuple[Points2D, Points2D]:
         """Align two vertex lists for optimal morphing
 
         Args:
@@ -61,7 +60,7 @@ class VertexAligner(ABC):
         pass
 
 
-def get_aligner(closed1: bool, closed2: bool, norm: Optional[str] = None) -> VertexAligner:
+def get_aligner(closed1: bool, closed2: bool, norm: str | None = None) -> VertexAligner:
     """Factory function to select appropriate aligner based on shape closure
 
     Args:

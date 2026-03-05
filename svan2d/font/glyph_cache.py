@@ -7,7 +7,6 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
 
 from .glyph_extractor import extract_glyph_outline, load_font
 from .glyph_to_svg_path import glyph_outline_to_svg_path
@@ -35,8 +34,8 @@ class GlyphCache:
     CACHE_VERSION = 1
 
     def __init__(self):
-        self._memory_cache: Dict[str, Dict[str, CachedGlyph]] = {}
-        self._font_hashes: Dict[str, str] = {}
+        self._memory_cache: dict[str, dict[str, CachedGlyph]] = {}
+        self._font_hashes: dict[str, str] = {}
         self._ensure_cache_dir()
 
     def _ensure_cache_dir(self) -> None:
@@ -65,7 +64,7 @@ class GlyphCache:
         font_name = Path(font_path).stem.replace(" ", "_")
         return self.CACHE_DIR / f"{font_name}_{font_hash}.json"
 
-    def _load_disk_cache(self, font_path: str) -> Optional[Dict[str, CachedGlyph]]:
+    def _load_disk_cache(self, font_path: str) -> dict[str, CachedGlyph] | None:
         """Load cache from disk if it exists and is valid."""
         cache_path = self._get_cache_path(font_path)
 
@@ -98,7 +97,7 @@ class GlyphCache:
             # Invalid cache file - will be regenerated
             return None
 
-    def _save_disk_cache(self, font_path: str, glyphs: Dict[str, CachedGlyph]) -> None:
+    def _save_disk_cache(self, font_path: str, glyphs: dict[str, CachedGlyph]) -> None:
         """Save cache to disk."""
         cache_path = self._get_cache_path(font_path)
 
@@ -123,7 +122,7 @@ class GlyphCache:
             # Cache write failed - not critical
             pass
 
-    def _get_font_cache(self, font_path: str) -> Dict[str, CachedGlyph]:
+    def _get_font_cache(self, font_path: str) -> dict[str, CachedGlyph]:
         """Get or create the glyph cache for a font."""
         if font_path not in self._memory_cache:
             # Try loading from disk
@@ -139,7 +138,7 @@ class GlyphCache:
         self,
         font_path: str,
         char: str,
-        font: Optional[object] = None,
+        font: object | None = None,
     ) -> CachedGlyph:
         """Get glyph SVG path, using cache if available.
 
@@ -195,7 +194,7 @@ class GlyphCache:
         self._memory_cache.clear()
         self._font_hashes.clear()
 
-    def clear_disk_cache(self, font_path: Optional[str] = None) -> None:
+    def clear_disk_cache(self, font_path: str | None = None) -> None:
         """Clear disk cache.
 
         Args:
@@ -216,7 +215,7 @@ class GlyphCache:
 
 
 # Global cache instance
-_glyph_cache: Optional[GlyphCache] = None
+_glyph_cache: GlyphCache | None = None
 
 
 def get_glyph_cache() -> GlyphCache:

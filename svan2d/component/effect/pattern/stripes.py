@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -42,7 +42,7 @@ class StripesPattern(Pattern):
         if self.stripe_width <= 0:
             raise ValueError(f"stripe_width must be > 0, got {self.stripe_width}")
 
-    def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
+    def to_drawsvg(self, drawing: dw.Drawing | None = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
         import uuid
 

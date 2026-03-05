@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .base import Renderer
 
@@ -15,7 +14,7 @@ class RawSvgRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "RawSvgState", drawing: Optional[dw.Drawing] = None
+        self, state: "RawSvgState", drawing: dw.Drawing | None = None
     ) -> dw.Raw:
         # Render the raw SVG data as a drawsvg element
         return dw.Raw(state.svg_data)

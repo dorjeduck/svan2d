@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -32,7 +32,7 @@ class DropShadowFilter(Filter):
     dx: float = 2.0
     dy: float = 2.0
     std_deviation: float = 2.0
-    color: Optional[Color] = None
+    color: Color | None = None
     opacity: float = 1.0
 
     def __post_init__(self):

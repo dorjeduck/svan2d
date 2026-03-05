@@ -1,8 +1,8 @@
-"""Rectangle renderer implementation using new architecture"""
+"""Polygon renderer implementation."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -12,21 +12,16 @@ if TYPE_CHECKING:
     from ..state.polygon import PolygonState
 
 
-
-
 class PolygonRenderer(Renderer):
-    """Renderer class for rendering rectangle elements"""
+    """Renderer for polygon elements."""
 
     def _render_core(
-        self, state: "PolygonState", drawing: Optional[dw.Drawing] = None
+        self, state: "PolygonState", drawing: dw.Drawing | None = None
     ) -> dw.Lines:
-        """Render regular polygon using SVG primitive
+        """Render regular polygon as a closed SVG Lines element.
 
         Args:
-            state (MorphPolygonState): The state of the polygon
-
-        Returns:
-            dw.Lines: The drawsvg lines object forming a closed polygon
+            state: PolygonState to render
         """
         import math
 
@@ -41,6 +36,5 @@ class PolygonRenderer(Renderer):
         # Build kwargs
         lines_kwargs = {"close": True}
         self._set_fill_and_stroke_kwargs(state, lines_kwargs, drawing)
-
 
         return dw.Lines(*corners, **lines_kwargs)

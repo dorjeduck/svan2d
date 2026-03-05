@@ -1,13 +1,13 @@
 """Bezier curve path interpolation"""
 
 import math
-from typing import Callable, List
+from typing import Callable
 
 from svan2d.core.point2d import Point2D
 
 
 def bezier(
-    control_points: List[Point2D],
+    control_points: list[Point2D],
 ) -> Callable[[Point2D, Point2D, float], Point2D]:
     """Create a bezier curve path function with given control points
 

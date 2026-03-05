@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -23,7 +23,7 @@ class TextPathRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "TextPathState", drawing: Optional[dw.Drawing] = None
+        self, state: "TextPathState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render text as a group of path elements."""
         from svan2d.font.glyph_cache import get_glyph_cache

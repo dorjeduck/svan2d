@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.line import LineRenderer
@@ -73,7 +72,7 @@ class LineState(VertexState):
 
 def line_endpoints_to_center_rotation_length(
     x1: float, y1: float, x2: float, y2: float
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     center_x = (x1 + x2) / 2
     center_y = (y1 + y2) / 2
     rotation = math.atan2(y2 - y1, x2 - x1)
@@ -83,7 +82,7 @@ def line_endpoints_to_center_rotation_length(
 
 def line_center_rotation_length_to_endpoints(
     center: Point2D, rotation: float, length: float
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     # Calculate the endpoints based on the center, rotation, and length
     # take rotation into account
 

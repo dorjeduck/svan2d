@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 import drawsvg as dw
 
@@ -58,15 +58,15 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
     def __init__(
         self,
-        elements: Optional[List[VElement]] = None,
-        group_easing: Optional[Callable[[float], float]] = None,
+        elements: list[VElement] | None = None,
+        group_easing: Callable[[float], float] | None = None,
         *,
         # Private params for _replace - don't use directly
-        _builder: Optional[BuilderState] = None,
-        _clip_elements: Optional[List[VElement]] = None,
-        _mask_element: Optional[VElement] = None,
-        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        _builder: BuilderState | None = None,
+        _clip_elements: list[VElement] | None = None,
+        _mask_element: VElement | None = None,
+        _attribute_easing: dict[str, EasingFunction] | None = None,
+        _attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> None:
         """Initialize an element group with builder pattern.
 
@@ -74,20 +74,20 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             elements: Optional initial list of child elements
             group_easing: Optional easing function applied to the group's animation time
         """
-        self.elements: List[VElement] = list(elements) if elements else []
+        self.elements: list[VElement] = list(elements) if elements else []
         self.group_easing = group_easing
 
         # Clip/mask elements
-        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
-        self.mask_element: Optional[VElement] = _mask_element
+        self.clip_elements: list[VElement] = _clip_elements if _clip_elements is not None else []
+        self.mask_element: VElement | None = _mask_element
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
-        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
+        self._builder: BuilderState | None = _builder if _builder is not None else BuilderState()
+        self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
+        self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
         # Interpolator (created on first render)
-        self._interpolator: Optional[StateInterpolator] = None
+        self._interpolator: StateInterpolator | None = None
 
         # Cache last frame time for render_state (set by get_frame)
         self._last_frame_time: float = 0.0
@@ -95,13 +95,13 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     def _replace(
         self,
         *,
-        elements: Optional[List[VElement]] = None,
-        group_easing: Optional[Callable[[float], float]] = ...,  # type: ignore[assignment]
-        clip_elements: Optional[List[VElement]] = None,
-        mask_element: Optional[VElement] = ...,  # type: ignore[assignment]
-        builder: Optional[BuilderState] = None,
-        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        elements: list[VElement] | None = None,
+        group_easing: Callable[[float], float] | None = ...,  # type: ignore[assignment]
+        clip_elements: list[VElement] | None = None,
+        mask_element: VElement | None = ...,  # type: ignore[assignment]
+        builder: BuilderState | None = None,
+        attribute_easing: dict[str, EasingFunction] | None = None,
+        attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> "VElementGroup":
         """Return a new VElementGroup with specified attributes replaced."""
         new = VElementGroup.__new__(VElementGroup)
@@ -123,8 +123,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     def _replace_attributes(
         self,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> "VElementGroup":
         """Return a new VElementGroup with updated builder and attribute settings."""
         return self._replace(
@@ -188,7 +188,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         """Add a child element to the group. Returns new VElementGroup."""
         return self._replace(elements=self.elements + [child])
 
-    def add_elements(self, elements: List["VElement"]) -> "VElementGroup":
+    def add_elements(self, elements: list["VElement"]) -> "VElementGroup":
         """Add multiple child elements to the group. Returns new VElementGroup."""
         return self._replace(elements=self.elements + list(elements))
 
@@ -202,7 +202,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         """Remove all child elements from the group. Returns new VElementGroup."""
         return self._replace(elements=[])
 
-    def get_elements(self) -> List["VElement"]:
+    def get_elements(self) -> list["VElement"]:
         """Get the list of child elements."""
         return self.elements.copy()
 
@@ -214,13 +214,13 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     # Rendering
     # =========================================================================
 
-    def render(self) -> Optional[dw.Group]:
+    def render(self) -> dw.Group | None:
         """Render the element group in its initial state."""
         return self.render_at_frame_time(0.0)
 
     def render_at_frame_time(
-        self, t: float, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.Group]:
+        self, t: float, drawing: dw.Drawing | None = None
+    ) -> dw.Group | None:
         """Render the element transform group at a specific animation time."""
         self._ensure_built()
         assert self._interpolator is not None
@@ -271,7 +271,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         return group
 
-    def get_frame(self, t: float) -> Optional[VElementGroupState]:
+    def get_frame(self, t: float) -> VElementGroupState | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
         assert self._interpolator is not None
@@ -284,8 +284,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         return cast(VElementGroupState, state) if state is not None else None
 
     def render_state(
-        self, state: VElementGroupState, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.Group]:
+        self, state: VElementGroupState, drawing: dw.Drawing | None = None
+    ) -> dw.Group | None:
         """Render a pre-computed state directly (avoids re-interpolation).
 
         Uses _last_frame_time (set by get_frame) to render children at the correct time.

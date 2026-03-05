@@ -12,7 +12,7 @@ Available functions:
 - easing2D: Create 2D easing with independent x/y control
 """
 
-from typing import Callable, Tuple
+from typing import Callable
 
 from .in_back import in_back
 from .in_bounce import in_bounce
@@ -55,18 +55,15 @@ from .step import step
 def easing2D(
     easing_x: Callable[[float], float],
     easing_y: Callable[[float], float],
-) -> Callable[[float], Tuple[float, float]]:
+) -> Callable[[float], tuple[float, float]]:
     """Create a 2D easing function with independent easing per dimension.
 
     Returns an easing function that applies different easing functions to x and y,
     enabling independent control over horizontal and vertical motion timing.
 
     Args:
-        easing_x: Easing function for x dimension
-        easing_y: Easing function for y dimension
-
-    Returns:
-        Callable that takes t (0.0-1.0) and returns (eased_tx, eased_ty)
+        easing_x: Easing function for x dimension.
+        easing_y: Easing function for y dimension.
 
     Example:
         from svan2d.transition.easing import in_quad, out_bounce, easing2D
@@ -78,7 +75,7 @@ def easing2D(
         ... )
     """
 
-    def combined(t: float) -> Tuple[float, float]:
+    def combined(t: float) -> tuple[float, float]:
         return (easing_x(t), easing_y(t))
 
     return combined

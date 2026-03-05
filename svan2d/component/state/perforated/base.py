@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours, VertexLoop
@@ -44,12 +44,12 @@ class PerforatedVertexState(VertexState):
         )
     """
 
-    holes: List[Shape] = field(default_factory=list)
+    holes: list[Shape] = field(default_factory=list)
 
-    holes_fill_color: Optional[Color] = Color.NONE
-    holes_fill_opacity: Optional[float] = 0
+    holes_fill_color: Color | None = Color.NONE
+    holes_fill_opacity: float | None = 0
 
-    holes_stroke_color: Optional[Color] = Color.NONE
+    holes_stroke_color: Color | None = Color.NONE
     holes_stroke_opacity: float | None = None
     holes_stroke_width: float | None = None
 

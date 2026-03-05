@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional
+from typing import Callable
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -21,7 +21,7 @@ def wave(
     rotation: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    distances: Optional[List[float]] = None,
+    distances: list[float] | None = None,
 ) -> States:
     """Arrange elements along a sine wave.
 
@@ -49,19 +49,16 @@ def wave(
                   If provided, overrides automatic spacing calculation.
                   List length should match states length.
 
-    Returns:
-        New list of states with wave positions
-
     Examples:
         # Basic horizontal wave
         states = [CircleState(), CircleState(), CircleState()]
-        wave_layout(states, amplitude=30, wavelength=200)
+        wave(states, amplitude=30, wavelength=200)
 
         # Diagonal wave with custom spacing
-        wave_layout(states, rotation=45, spacing=40, amplitude=20)
+        wave(states, rotation=45, spacing=40, amplitude=20)
 
         # Wave with custom distances
-        wave_layout(states, distances=[-100, -50, 0, 50, 100])
+        wave(states, distances=[-100, -50, 0, 50, 100])
     """
     if not states:
         return []
@@ -145,8 +142,8 @@ def wave_between_points(
     phase: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    distances: Optional[List[float]] = None,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    distances: list[float] | None = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states along a sine wave from point A to point B.
@@ -171,10 +168,6 @@ def wave_between_points(
         distances: Optional list of specific distances from center for each element.
                   If provided, overrides automatic distribution.
         element_rotation_offset_fn: Optional function to calculate rotation offset dynamically.
-                                    Not used currently, reserved for future compatibility.
-
-    Returns:
-        New list of states with wave positions
 
     Raises:
         ValueError: If start and end points are identical (zero-length base line)

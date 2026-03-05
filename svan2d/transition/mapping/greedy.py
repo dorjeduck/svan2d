@@ -6,7 +6,7 @@ Each item morphs to its nearest available neighbor.
 
 from __future__ import annotations
 
-from typing import Callable, List, Set, TypeVar
+from typing import Callable, TypeVar
 
 from svan2d.core.point2d import Point2D
 
@@ -36,10 +36,10 @@ class GreedyMapper(Mapper):
 
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Map items using greedy nearest-neighbor matching."""
         if not start_items and not end_items:
             return []
@@ -62,13 +62,13 @@ class GreedyMapper(Mapper):
 
     def _match_equal(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Match equal-sized lists 1:1 using greedy assignment."""
         matches = []
-        used_end: Set[int] = set()
+        used_end: set[int] = set()
 
         for start in start_items:
             start_pos = get_position(start)
@@ -91,13 +91,13 @@ class GreedyMapper(Mapper):
 
     def _match_fewer_start(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Match when there are fewer start items than end items."""
         matches = []
-        used_end: Set[int] = set()
+        used_end: set[int] = set()
 
         for start in start_items:
             start_pos = get_position(start)
@@ -124,13 +124,13 @@ class GreedyMapper(Mapper):
 
     def _match_fewer_end(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Match when there are fewer end items than start items."""
         matches = []
-        used_start: Set[int] = set()
+        used_start: set[int] = set()
 
         for end in end_items:
             end_pos = get_position(end)

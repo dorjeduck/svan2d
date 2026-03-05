@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.transition.curve.arc import arc_clockwise, arc_counterclockwise
@@ -17,8 +17,8 @@ def arc_swap_positions(
     t_end: float,
     clockwise: bool = True,
     arc_radius: float | None = None,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Tuple[List[KeyState], List[KeyState]]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> tuple[list[KeyState], list[KeyState]]:
     """Swaps the positions of two elements along arc paths.
 
     Both elements travel along parallel arcs in the same direction to avoid

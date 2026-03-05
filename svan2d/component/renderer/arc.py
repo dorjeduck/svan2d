@@ -1,8 +1,8 @@
-"""Circle renderer implementation using new architecture"""
+"""Arc renderer implementation."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class ArcRenderer(Renderer):
 
     def _render_core(
-        self, state: ArcState, drawing: Optional[dw.Drawing] = None
+        self, state: ArcState, drawing: dw.Drawing | None = None
     ) -> dw.Path:
         """Render arc using SVG path primitive"""
         import math

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -26,7 +26,7 @@ class PolyRingRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "PolyRingState", drawing: Optional[dw.Drawing] = None
+        self, state: "PolyRingState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render polygon ring using SVG path primitives with evenodd fill-rule"""
 

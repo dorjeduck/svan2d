@@ -113,9 +113,10 @@ def list_cache():
 
     Shows all fonts currently in the cache with their glyph counts.
     """
+    import json
+
     try:
         from svan2d.font.glyph_cache import get_glyph_cache
-        import json
     except ImportError:
         click.echo("✗ fonttools is required. Install with: pip install svan2d[font]", err=True)
         raise click.Abort()

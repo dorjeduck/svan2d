@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
@@ -21,7 +20,7 @@ class VertexPolygon(VertexLoop):
         vertices: Points2D,
         closed: bool = True,
         auto_close: bool = True,
-        num_vertices: Optional[int] = None
+        num_vertices: int | None = None
     ):
         """Create a polygon from arbitrary vertices
 

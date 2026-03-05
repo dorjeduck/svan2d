@@ -7,7 +7,7 @@ for custom distance functions used in vertex alignment strategies.
 from enum import Enum
 
 # Avoid circular import by using TYPE_CHECKING
-from typing import TYPE_CHECKING, Callable, List, Union
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from svan2d.core.point2d import Points2D
@@ -29,11 +29,11 @@ class AlignmentNorm(Enum):
 
 # Type alias for angular distance functions
 # Signature: (angles1, angles2, offset) -> total_distance
-AngularDistanceFn = Callable[[List[float], List[float], int], float]
+AngularDistanceFn = Callable[[list[float], list[float], int], float]
 
 # Type alias for Euclidean distance functions
 # Signature: (verts1, verts2, offset) -> total_distance
 EuclideanDistanceFn = Callable[["Points2D", "Points2D", int], float]
 
 # Union type for norm specification (flexible input)
-NormSpec = Union[str, AlignmentNorm, Callable]
+NormSpec = str | AlignmentNorm | Callable

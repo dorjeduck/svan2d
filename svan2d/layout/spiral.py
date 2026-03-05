@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Optional
+from typing import Callable
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -19,7 +19,7 @@ def spiral(
     angle_step: float = 30,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in a spiral formation (Archimedean spiral).
@@ -30,8 +30,7 @@ def spiral(
 
     Args:
         states: List of states to arrange
-        cx: X coordinate of spiral center
-        cy: Y coordinate of spiral center
+        center: Center point of the spiral
         start_radius: Initial radius from center for first element
         radius_step: Amount to increase radius for each subsequent element
         start_angle: Initial angle in degrees for first element
@@ -42,9 +41,6 @@ def spiral(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
                            If provided, this overrides element_rotation_offset parameter.
-
-    Returns:
-        New list of states with spiral positions
     """
     if not states:
         return []
@@ -90,7 +86,7 @@ def spiral_between_radii(
     clockwise: bool = False,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in a spiral from start radius to end radius.
@@ -101,18 +97,14 @@ def spiral_between_radii(
 
     Args:
         states: List of states to arrange
-        cx: X coordinate of spiral center
-        cy: Y coordinate of spiral center
+        center: Center point of the spiral
         start_radius: Radius for first element
         end_radius: Radius for last element
         rotation: Base rotation offset in degrees
         clockwise: If True, spiral clockwise; if False, counterclockwise
         alignment: How to align each element
         element_rotation_offset: Additional rotation offset
-        element_rotation_offset_fn: Function(angle) -> rotation offset
-
-    Returns:
-        New list of states with spiral positions
+        element_rotation_offset_fn: Function(angle) -> rotation offset.
 
     Examples:
         # Spiral outward from 50 to 200

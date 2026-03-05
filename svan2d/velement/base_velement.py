@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -23,14 +23,14 @@ class BaseVElement(ABC):
     """
 
     @abstractmethod
-    def render(self) -> Optional[dw.DrawingElement]:
+    def render(self) -> dw.DrawingElement | None:
         """Render the element in its initial state (static rendering)."""
         pass
 
     @abstractmethod
     def render_at_frame_time(
-        self, t: float, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.DrawingElement]:
+        self, t: float, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement | None:
         """Render the element at a specific animation time."""
         pass
 
@@ -40,6 +40,6 @@ class BaseVElement(ABC):
         pass
 
     @abstractmethod
-    def get_frame(self, t: float) -> Optional["State"]:
+    def get_frame(self, t: float) -> "State | None":
         """Get the interpolated state at a specific time."""
         pass

@@ -8,13 +8,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
-    Optional,
     Sequence,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 from svan2d.component.state.base import State
@@ -32,8 +27,8 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound="KeystateBuilder")
 
 # Type alias for keystate tuple
-KeystateTuple = Tuple[
-    State, Optional[State], Optional[float], Optional[TransitionConfig], int | None
+KeystateTuple = tuple[
+    State, State | None, float | None, TransitionConfig | None, int | None
 ]
 
 
@@ -42,10 +37,10 @@ class BuilderState:
     """Internal state for chainable builder methods (immutable)."""
 
     # Tuple: (state, outgoing_state, time, transition_config, render_index)
-    keystates: Tuple[KeystateTuple, ...] = field(default_factory=tuple)
-    pending_transition: Optional[TransitionConfig] = None
-    default_transition: Optional[TransitionConfig] = None
-    interpolation_dict: Optional[Dict[str, Any]] = None
+    keystates: tuple[KeystateTuple, ...] = field(default_factory=tuple)
+    pending_transition: TransitionConfig | None = None
+    default_transition: TransitionConfig | None = None
+    interpolation_dict: dict[str, Any] | None = None
 
     def with_keystate(self, keystate: KeystateTuple) -> "BuilderState":
         """Return new BuilderState with keystate added."""
@@ -75,7 +70,7 @@ class BuilderState:
         )
 
     def with_interpolation_dict(
-        self, interpolation_dict: Dict[str, Any]
+        self, interpolation_dict: dict[str, Any]
     ) -> "BuilderState":
         """Return new BuilderState with interpolation_dict set."""
         return BuilderState(
@@ -86,7 +81,7 @@ class BuilderState:
         )
 
     def with_last_keystate_updated(
-        self, transition: Optional[TransitionConfig]
+        self, transition: TransitionConfig | None
     ) -> "BuilderState":
         """Return new BuilderState with last keystate's transition updated."""
         if not self.keystates:
@@ -119,9 +114,9 @@ class KeystateBuilder:
     - Call _finalize_build() to convert builder state to final keystates
     """
 
-    _builder: Optional[BuilderState]
-    _attribute_easing: Optional[Dict[str, EasingFunction]]
-    _attribute_keystates: Optional[AttributeKeyStatesDict]
+    _builder: BuilderState | None
+    _attribute_easing: dict[str, EasingFunction] | None
+    _attribute_keystates: AttributeKeyStatesDict | None
 
     @abstractmethod
     def _replace_builder(self: T, new_builder: BuilderState) -> T:
@@ -135,8 +130,8 @@ class KeystateBuilder:
     def _replace_attributes(
         self: T,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> T:
         """Return a new instance with updated builder and attribute settings.
 
@@ -218,9 +213,9 @@ class KeystateBuilder:
     def keystates(
         self: T,
         states: Sequence[State],
-        between: Optional[List[float]] = None,
+        between: list[float] | None = None,
         extend: bool = False,
-        at: Optional[List[float]] = None,
+        at: list[float] | None = None,
     ) -> T:
         """Add multiple keystates with automatic timing.
 
@@ -272,11 +267,11 @@ class KeystateBuilder:
 
     def transition(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        interpolation_dict: Optional[Dict[str, Any]] = None,
-        morphing_config: Optional["MorphingConfig"] = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        morphing_config: "MorphingConfig | None" = None,
         linear_angle_interpolation: bool = False,
-        state_interpolation: Optional[Callable] = None,
+        state_interpolation: Callable | None = None,
     ) -> T:
         """Configure the transition between the previous and next keystate.
 
@@ -352,10 +347,10 @@ class KeystateBuilder:
 
     def default_transition(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        interpolation_dict: Optional[Dict[str, Any]] = None,
-        morphing: Optional["MorphingConfig"] = None,
-        state_interpolation: Optional[Callable] = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        morphing: "MorphingConfig | None" = None,
+        state_interpolation: Callable | None = None,
     ) -> T:
         """Set default transition parameters for all subsequent segments.
 
@@ -413,9 +408,9 @@ class KeystateBuilder:
 
     def attributes(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        interpolation_dict: Optional[Dict[str, Any]] = None,
-        keystates_dict: Optional[AttributeKeyStatesDict] = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        keystates_dict: AttributeKeyStatesDict | None = None,
     ) -> T:
         """Set element-level attribute configuration.
 
@@ -444,8 +439,8 @@ class KeystateBuilder:
         return self._replace_attributes(new_builder, new_easing, new_keystates)
 
     def _merge_element_path_into_transition(
-        self, transition_config: Optional[TransitionConfig]
-    ) -> Optional[TransitionConfig]:
+        self, transition_config: TransitionConfig | None
+    ) -> TransitionConfig | None:
         """Merge element-level path config into segment transition."""
         if self._builder is None or self._builder.interpolation_dict is None:
             return transition_config
@@ -465,7 +460,7 @@ class KeystateBuilder:
             state_interpolation=transition_config.state_interpolation,
         )
 
-    def _finalize_build(self) -> Tuple[List[KeyState], Dict]:
+    def _finalize_build(self) -> tuple[list[KeyState], dict]:
         """Convert builder state to final keystates and attribute_keystates.
 
         Returns:
@@ -509,14 +504,6 @@ class KeystateBuilder:
                 "Remove the trailing transition() call."
             )
 
-        # Check for duplicate keystate times
-        times = [ks[2] for ks in self._builder.keystates if ks[2] is not None]
-        seen = set()
-        for t in times:
-            # if t in seen:
-            #    raise ValueError(f"Duplicate keystate time {t} detected.")
-            seen.add(t)
-
         # Auto-expand: single keystate with implicit time → duplicate to span [0, 1].
         # VElement(state=s) should persist across entire timeline, not just t=0.
         # Explicit at= is preserved (user intentionally pinned to one time point).
@@ -530,7 +517,7 @@ class KeystateBuilder:
             )
 
         # Convert internal keystates to KeyState objects
-        keystates: List[KeyState] = []
+        keystates: list[KeyState] = []
         for (
             state,
             outgoing_state,

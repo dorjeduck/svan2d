@@ -8,7 +8,7 @@ import importlib.util
 import sys
 import traceback
 from pathlib import Path
-from typing import Callable, Optional, Tuple
+from typing import Callable
 
 from svan2d.vscene import VScene
 
@@ -31,7 +31,7 @@ def animation(func: Callable) -> Callable:
     return func
 
 
-def extract_scene(module) -> Tuple[Optional[VScene], Optional[str]]:
+def extract_scene(module) -> tuple[VScene | None, str | None]:
     """
     Extract VScene from a module using priority order.
 
@@ -137,7 +137,7 @@ def file_path_to_module_name(file_path: Path) -> str:
     return module_name
 
 
-def safe_reload_module(file_path: Path) -> Tuple[Optional[VScene], Optional[str]]:
+def safe_reload_module(file_path: Path) -> tuple[VScene | None, str | None]:
     """
     Safely reload a Python animation module.
 

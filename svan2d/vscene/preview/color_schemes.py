@@ -1,7 +1,6 @@
 """Color schemes for preview animation controls (Jupyter & dev server)"""
 
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 from svan2d.config import ConfigKey, get_config
 
@@ -21,7 +20,7 @@ class ColorScheme:
 
 
 # Define all available color schemes
-COLOR_SCHEMES: Dict[str, ColorScheme] = {
+COLOR_SCHEMES: dict[str, ColorScheme] = {
     "svan2d": ColorScheme(
         name="Svan2D",
         background="#000017",  # Container background

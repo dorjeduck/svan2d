@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -16,7 +16,7 @@ class CircleRenderer(Renderer):
     """Renderer class for rendering circle elements"""
 
     def _render_core(
-        self, state: "CircleState", drawing: Optional[dw.Drawing] = None
+        self, state: "CircleState", drawing: dw.Drawing | None = None
     ) -> dw.Circle:
         """Render the core circle geometry centered at origin (0,0)"""
         circle_kwargs = {

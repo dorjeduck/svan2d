@@ -1,12 +1,8 @@
-# ============================================================================
-# svan2d/components/path_text.py
-# ============================================================================
-"""PathText component - Text that follows any SVG path with morphing support"""
+"""PathText component - Text that follows any SVG path with morphing support."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Union
+from dataclasses import dataclass
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_text import PathTextRenderer
@@ -23,11 +19,11 @@ class PathTextState(TextState):
     Supports text morphing by animating the path field.
     """
 
-    data: Union[str, SVGPath] = "M 0,0 L 10,10 L 0,20 Z"  # Default straight line path
+    data: str | SVGPath = "M 0,0 L 10,10 L 0,20 Z"  # Default straight line path
     offset: float = 0.5  # Position along path (0.0 to 1.0)
-    offsets: Optional[List[float]] = None  # For multiple texts
+    offsets: list[float] | None = None  # For multiple texts
 
-    text: Union[str, List[str]] = "Text"
+    text: str | list[str] = "Text"
 
     # Path rendering options
     flip_text: bool = False  # Flip text upside down (for bottom of curves)

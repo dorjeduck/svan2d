@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import List, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
@@ -14,13 +13,10 @@ def sample_quadratic_bezier(
     """Sample a quadratic bezier curve at equal t intervals.
 
     Args:
-        p0: Start point
-        p1: Control point
-        p2: End point
-        num_samples: Number of samples (including start, excluding end)
-
-    Returns:
-        List of Point2D samples along the curve
+        p0: Start point.
+        p1: Control point.
+        p2: End point.
+        num_samples: Number of samples (including start, excluding end).
     """
     points = []
     for i in range(num_samples):
@@ -39,14 +35,11 @@ def sample_cubic_bezier(
     """Sample a cubic bezier curve at equal t intervals.
 
     Args:
-        p0: Start point
-        p1: First control point
-        p2: Second control point
-        p3: End point
-        num_samples: Number of samples (including start, excluding end)
-
-    Returns:
-        List of Point2D samples along the curve
+        p0: Start point.
+        p1: First control point.
+        p2: Second control point.
+        p3: End point.
+        num_samples: Number of samples (including start, excluding end).
     """
     points = []
     for i in range(num_samples):
@@ -228,11 +221,8 @@ def resample_to_vertex_count(points: Points2D, target_count: int) -> Points2D:
     """Resample a list of points to a specific vertex count using arc-length interpolation.
 
     Args:
-        points: Input points (assumed to form a closed loop if first == last)
-        target_count: Desired number of output vertices
-
-    Returns:
-        List of target_count Point2D vertices evenly spaced by arc length
+        points: Input points (assumed to form a closed loop if first == last).
+        target_count: Desired number of output vertices.
     """
     if len(points) < 2:
         return [points[0]] * target_count if points else [Point2D(0, 0)] * target_count

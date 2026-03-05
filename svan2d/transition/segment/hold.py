@@ -1,6 +1,6 @@
 """Hold segment function."""
 
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -10,30 +10,28 @@ from . import linspace
 
 
 def hold(
-    states: Union[State, List[State]],
-    at: Optional[Union[float, List[float]]] = None,
+    states: State | list[State],
+    at: float | list[float] | None = None,
     hold_duration: float | None = None,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> List[KeyState]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState]:
     """Hold at state(s) for a duration, centered at 'at'.
 
     Creates two identical keystates bracketing each hold period.
 
     Args:
-        states: State to hold, or list of states
-        at: Center time of the hold, or list of times (same length as states)
-        duration: Total duration of each hold
-
-    Returns:
-        List of KeyState objects
+        states: State to hold, or list of states.
+        at: Center time of the hold, or list of times (same length as states).
+        hold_duration: Total duration of each hold.
+        easing: Optional easing dict for transitions.
 
     Example:
         # Single state hold
-        .segment(hold(s, at=0.5, duration=0.1))
+        .segment(hold(s, at=0.5, hold_duration=0.1))
         # Expands to keystates at t=0.45 and t=0.55
 
         # Multiple states with different times
-        .segment(hold([s1, s2, s3], at=[0.2, 0.5, 0.8], duration=0.1))
+        .segment(hold([s1, s2, s3], at=[0.2, 0.5, 0.8], hold_duration=0.1))
         # Expands to 6 keystates (2 per state)
     """
     # Handle single state case

@@ -10,7 +10,6 @@ from __future__ import annotations
 import inspect
 import logging
 import math
-from typing import List, Optional, Tuple, Union
 
 from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
 from svan2d.core.point2d import Point2D, Points2D
@@ -41,7 +40,7 @@ class EuclideanAligner(VertexAligner):
     """
 
     def __init__(
-        self, norm: Union[str, AlignmentNorm, EuclideanDistanceFn] = AlignmentNorm.L1
+        self, norm: str | AlignmentNorm | EuclideanDistanceFn = AlignmentNorm.L1
     ):
         """
         Initialize Euclidean aligner with distance norm.
@@ -73,7 +72,7 @@ class EuclideanAligner(VertexAligner):
             )
 
     def _resolve_distance_function(
-        self, norm: Union[str, AlignmentNorm]
+        self, norm: str | AlignmentNorm
     ) -> EuclideanDistanceFn:
         """Convert norm spec to actual distance function"""
         # Normalize string to enum
@@ -122,7 +121,7 @@ class EuclideanAligner(VertexAligner):
         verts2: Points2D,
         context: AlignmentContext,
         rotation_target: float | None = None,
-    ) -> Tuple[Points2D, Points2D]:
+    ) -> tuple[Points2D, Points2D]:
         if len(verts1) != len(verts2):
             raise ValueError(
                 f"Vertex lists must have same length: {len(verts1)} != {len(verts2)}"

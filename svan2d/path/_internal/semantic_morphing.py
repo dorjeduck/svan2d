@@ -1,6 +1,3 @@
-# ============================================================================
-# svan2d/paths/semantic_morphing.py
-# ============================================================================
 """
 Semantic-aware path morphing that considers shape structure and meaning.
 
@@ -14,7 +11,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 from svan2d.core.point2d import Point2D
 from svan2d.path.commands import ClosePath, CubicBezier, LineTo, MoveTo, PathCommand
@@ -32,7 +28,7 @@ class ShapeFeature:
     angle: float  # Direction or curvature at this point
 
 
-def analyze_shape_features(path: SVGPath) -> List[ShapeFeature]:
+def analyze_shape_features(path: SVGPath) -> list[ShapeFeature]:
     """Find semantically important features in a shape"""
     features = []
     commands = path.commands
@@ -91,7 +87,7 @@ class ExtremePoint:
     extreme_type: str  # "top", "bottom", "left", "right"
 
 
-def find_extreme_points(path: SVGPath) -> List[ExtremePoint]:
+def find_extreme_points(path: SVGPath) -> list[ExtremePoint]:
     """Find extreme points (corners, peaks) in a path for alignment"""
     extremes = []
     current_pos = Point2D(0, 0)
@@ -117,7 +113,7 @@ def find_extreme_points(path: SVGPath) -> List[ExtremePoint]:
     return extremes
 
 
-def find_centroid_alignment(path1: SVGPath, path2: SVGPath) -> Tuple[int, int]:
+def find_centroid_alignment(path1: SVGPath, path2: SVGPath) -> tuple[int, int]:
     """Find alignment based on shape centroids and closest points"""
     # Calculate centroids
     centroid1 = calculate_centroid(path1)
@@ -174,7 +170,7 @@ def find_closest_point_to_target(path: SVGPath, target: Point2D) -> int:
     return closest_idx
 
 
-def find_optimal_alignment(path1: SVGPath, path2: SVGPath) -> Tuple[int, int]:
+def find_optimal_alignment(path1: SVGPath, path2: SVGPath) -> tuple[int, int]:
     """Find the best starting points for morphing between two paths
 
     Uses geometric analysis to find corresponding points that should align.
@@ -221,8 +217,8 @@ def find_optimal_alignment(path1: SVGPath, path2: SVGPath) -> Tuple[int, int]:
 
 
 def rotate_path_commands(
-    commands: List[PathCommand], start_index: int
-) -> List[PathCommand]:
+    commands: list[PathCommand], start_index: int
+) -> list[PathCommand]:
     """Rotate the command list to start from a different index
 
     This helps align shapes optimally for morphing.
@@ -286,8 +282,6 @@ def semantic_morph(path1: SVGPath, path2: SVGPath, t: float) -> SVGPath:
     # Step 1: Find optimal alignment
     offset1, offset2 = find_optimal_alignment(path1, path2)
 
-    print(f"🎯 Semantic alignment: path1 offset={offset1}, path2 offset={offset2}")
-
     # Step 2: Rotate paths for better correspondence
     aligned_commands1 = rotate_path_commands(path1.commands, offset1)
     aligned_commands2 = rotate_path_commands(path2.commands, offset2)
@@ -295,13 +289,6 @@ def semantic_morph(path1: SVGPath, path2: SVGPath, t: float) -> SVGPath:
     # Step 3: Create aligned paths
     aligned_path1 = SVGPath(aligned_commands1)
     aligned_path2 = SVGPath(aligned_commands2)
-
-    print(
-        f"📐 After alignment: path1 starts at {aligned_commands1[0] if aligned_commands1 else 'empty'}"
-    )
-    print(
-        f"📐 After alignment: path2 starts at {aligned_commands2[0] if aligned_commands2 else 'empty'}"
-    )
 
     # Step 4: Use feature-preserving normalization instead of naive subdivision
     normalized_path1, normalized_path2 = feature_preserving_normalize(
@@ -314,7 +301,7 @@ def semantic_morph(path1: SVGPath, path2: SVGPath, t: float) -> SVGPath:
 
 def feature_preserving_normalize(
     path1: SVGPath, path2: SVGPath
-) -> Tuple[SVGPath, SVGPath]:
+) -> tuple[SVGPath, SVGPath]:
     """Normalize two paths while preserving important features
 
     This is smarter than naive subdivision - it tries to preserve corners,
@@ -325,10 +312,6 @@ def feature_preserving_normalize(
     # For now, use the existing normalization but with better alignment
     # TODO: Implement feature-preserving subdivision algorithm
     normalized1, normalized2 = normalize_paths_for_morphing(path1, path2)
-
-    print(f"🔄 Feature-preserving normalization complete")
-    print(f"   Path1: {len(normalized1.commands)} commands")
-    print(f"   Path2: {len(normalized2.commands)} commands")
 
     return normalized1, normalized2
 

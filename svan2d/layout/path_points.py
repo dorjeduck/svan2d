@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D, Points2D
@@ -15,7 +15,7 @@ def path_points(
     points: Points2D,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
     smooth: bool = True,
 ) -> States:
     """
@@ -32,9 +32,6 @@ def path_points(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position t (0-1) and returns rotation offset.
         smooth: If True, use Catmull-Rom spline interpolation for smoother curves.
-
-    Returns:
-        New list of states with positions along the path
     """
     if not states or not points or len(points) < 2:
         return []
@@ -161,7 +158,7 @@ def path_points(
         return math.degrees(math.atan2(dy, dx))
 
     # --- ARC-LENGTH PARAMETERIZATION IMPLEMENTATION ---
-    def resample_path(samples: int = 1000) -> Tuple[List[float], List[float]]:
+    def resample_path(samples: int = 1000) -> tuple[list[float], list[float]]:
         """
         Pre-calculate a map (distance_t_map, t_map) for arc-length parameterization.
         """

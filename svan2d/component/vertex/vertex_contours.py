@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
@@ -20,7 +19,7 @@ class VertexContours:
     vertex loops should have clockwise winding (negative area).
     """
 
-    def __init__(self, outer: VertexLoop, holes: Optional[List[VertexLoop]] = None):
+    def __init__(self, outer: VertexLoop, holes: list[VertexLoop] | None = None):
         """Initialize vertex contours
 
         Args:
@@ -44,7 +43,7 @@ class VertexContours:
         return self._outer
 
     @property
-    def holes(self) -> List[VertexLoop]:
+    def holes(self) -> list[VertexLoop]:
         """Get the list of holes"""
         return self._holes.copy()
 
@@ -57,7 +56,7 @@ class VertexContours:
         """Get the number of holes"""
         return len(self._holes)
 
-    def all_loops(self) -> List[VertexLoop]:
+    def all_loops(self) -> list[VertexLoop]:
         """Get all loops (outer + holes) as a list"""
         return [self._outer] + self._holes
 
@@ -65,7 +64,7 @@ class VertexContours:
         """Get total number of vertices across all contours"""
         return sum(len(loop) for loop in self.all_loops())
 
-    def bounds(self) -> Tuple[float, float, float, float]:
+    def bounds(self) -> tuple[float, float, float, float]:
         """Calculate bounding box of the entire shape (min_x, min_y, max_x, max_y)"""
         return self._outer.bounds()
 
@@ -123,7 +122,7 @@ class VertexContours:
 
     @classmethod
     def from_vertices_lists(
-        cls, outer_vertices: Points2D, holes_vertices: Optional[List[Points2D]] = None
+        cls, outer_vertices: Points2D, holes_vertices: list[Points2D] | None = None
     ) -> VertexContours:
         """Create VertexContours from lists of vertex tuples
 

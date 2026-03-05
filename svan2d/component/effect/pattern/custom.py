@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any
 
 import drawsvg as dw
 
@@ -13,8 +13,6 @@ from .base import Pattern
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color
-
-from typing import Any
 
 
 @dataclass(frozen=True)
@@ -56,7 +54,7 @@ class CustomPattern(Pattern):
         if not self.content:
             raise ValueError("Pattern must have at least one content item")
 
-    def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
+    def to_drawsvg(self, drawing: dw.Drawing | None = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
         import uuid
 

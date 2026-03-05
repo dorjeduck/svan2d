@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 import traceback
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from playwright.sync_api import sync_playwright
 
@@ -16,16 +16,14 @@ logger = get_logger()
 
 
 class PlaywrightSvgConverter(SVGConverter):
-    """
-    SVGConverter implementation using Playwright for conversions.
-    """
+    """SVGConverter implementation using Playwright for conversions."""
 
     def _convert(
         self,
         scene: VScene,
         output: dict,
-        frame_time: Optional[float] = 0.0,
-        formats: Optional[list] = ["png", "pdf"],
+        frame_time: float | None = 0.0,
+        formats: list | None = None,
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,

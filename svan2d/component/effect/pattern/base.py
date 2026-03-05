@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 import drawsvg as dw
 
@@ -18,7 +17,7 @@ class Pattern(ABC):
     """
 
     @abstractmethod
-    def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
+    def to_drawsvg(self, drawing: dw.Drawing | None = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object
 
         Args:

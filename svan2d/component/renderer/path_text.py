@@ -1,11 +1,8 @@
-# ============================================================================
-# svan2d/components/path_text.py
-# ============================================================================
-"""PathText component - Text that follows any SVG path with morphing support"""
+"""PathText renderer - Text that follows any SVG path with morphing support."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -16,44 +13,13 @@ if TYPE_CHECKING:
 
 
 class PathTextRenderer(Renderer):
-    """Renderer for text along any SVG path with morphing support
-
-    Features:
-    - Text follows any SVG path (lines, curves, beziers, etc.)
-    - Smooth path morphing between different paths
-    - Single or multiple texts along path
-    - Custom positioning via offset/offsets
-
-    Examples:
-        from svan2d.paths import line, quadratic_curve
-        from svan2d.components.path_text import PathTextState, PathTextRenderer
-        >>>
-        # Static text on curved path
-        state = PathTextState(
-        ...     text="Curved Text",
-        ...     path=quadratic_curve(0, 100, 100, 0, 200, 100)
-        ... )
-        element = VElement(PathTextRenderer(), state=state)
-        >>>
-        # Morphing path animation
-        path1 = line(0, 0, 200, 0)
-        path2 = quadratic_curve(0, 0, 100, -50, 200, 0)
-        element = VElement(
-        ...     renderer=PathTextRenderer(),
-        ...     keystates=[
-        ...         (0.0, PathTextState(text="Morphing", path=path1)),
-        ...         (1.0, PathTextState(text="Morphing", path=path2))
-        ...     ]
-        ... )
-        # Path smoothly morphs from straight to curved!
-    """
+    """Renderer for text that follows any SVG path, with smooth path morphing support."""
 
     def __init__(self) -> None:
-        """Initialize path text renderer"""
         pass
 
     def _render_core(
-        self, state: "PathTextState", drawing: Optional[dw.Drawing] = None
+        self, state: "PathTextState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render text along the path with the given state (core geometry only)"""
 
@@ -110,18 +76,16 @@ class PathTextRenderer(Renderer):
         offset: float,
         text_path: dw.Path,
         state: "PathTextState",
-        drawing: Optional[dw.Drawing],
+        drawing: dw.Drawing | None,
     ) -> dw.Text:
-        """Create a single text element at the specified offset along the path
+        """Create a single text element at the specified offset along the path.
 
         Args:
-            text_content: The text to display
-            offset: Position along path (0.0 to 1.0)
-            text_path: The path for text to follow
-            state: State containing text attributes
-
-        Returns:
-            drawsvg Text element
+            text_content: The text to display.
+            offset: Position along path (0.0 to 1.0).
+            text_path: The path for text to follow.
+            state: State containing text attributes.
+            drawing: Optional drawing context for gradient/pattern resolution.
         """
 
         text_kwargs = {

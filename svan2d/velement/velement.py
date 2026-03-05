@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable
 
 import drawsvg as dw
 
@@ -69,40 +69,40 @@ class VElement(BaseVElement, KeystateBuilder):
 
     def __init__(
         self,
-        renderer: Optional[Renderer] = None,
+        renderer: Renderer | None = None,
         state: State | None = None,
         *,
         # Private params for _replace - don't use directly
-        _builder: Optional[BuilderState] = None,
-        _clip_elements: Optional[List["VElement"]] = None,
-        _mask_element: Optional["VElement"] = None,
-        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        _builder: BuilderState | None = None,
+        _clip_elements: list["VElement"] | None = None,
+        _mask_element: "VElement | None" = None,
+        _attribute_easing: dict[str, EasingFunction] | None = None,
+        _attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> None:
         self._renderer = renderer
 
         # Clip/mask elements
-        self.clip_element: Optional[VElement] = None
-        self.mask_element: Optional[VElement] = _mask_element
-        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
+        self.clip_element: VElement | None = None
+        self.mask_element: VElement | None = _mask_element
+        self.clip_elements: list[VElement] = _clip_elements if _clip_elements is not None else []
 
         # Vertex buffer cache for optimized interpolation
-        self._vertex_buffer_cache: Dict[
-            Tuple[int, int], Tuple[Points2D, List[Points2D]]
+        self._vertex_buffer_cache: dict[
+            tuple[int, int], tuple[Points2D, list[Points2D]]
         ] = {}
 
         # Shape list matching cache for multi-shape morphing
-        self._shape_list_cache: Dict[
-            Tuple[str, int], Tuple[List[State], List[State]]
+        self._shape_list_cache: dict[
+            tuple[str, int], tuple[list[State], list[State]]
         ] = {}
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
-        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
+        self._builder: BuilderState | None = _builder if _builder is not None else BuilderState()
+        self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
+        self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
         # Interpolator (created on first render)
-        self._interpolator: Optional[StateInterpolator] = None
+        self._interpolator: StateInterpolator | None = None
 
         # Handle static state convenience parameter
         if state is not None:
@@ -118,12 +118,12 @@ class VElement(BaseVElement, KeystateBuilder):
     def _replace(
         self,
         *,
-        renderer: Optional[Renderer] = None,
-        clip_elements: Optional[List["VElement"]] = None,
-        mask_element: Optional["VElement"] = ...,  # type: ignore[assignment]
-        builder: Optional[BuilderState] = None,
-        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        renderer: Renderer | None = None,
+        clip_elements: list["VElement"] | None = None,
+        mask_element: "VElement | None" = ...,  # type: ignore[assignment]
+        builder: BuilderState | None = None,
+        attribute_easing: dict[str, EasingFunction] | None = None,
+        attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> "VElement":
         """Return a new VElement with specified attributes replaced.
 
@@ -150,8 +150,8 @@ class VElement(BaseVElement, KeystateBuilder):
     def _replace_attributes(
         self,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> "VElement":
         """Return a new VElement with updated builder and attribute settings."""
         return self._replace(
@@ -205,7 +205,7 @@ class VElement(BaseVElement, KeystateBuilder):
         """Set the mask element. Returns new VElement."""
         return self._replace(mask_element=velement)
 
-    def segment(self, segment_result: List[KeyState]) -> "VElement":
+    def segment(self, segment_result: list[KeyState]) -> "VElement":
         """Add keystates from a segment function result. Returns new VElement."""
         if self._builder is None:
             raise RuntimeError("Cannot modify VElement after rendering has begun.")
@@ -227,13 +227,13 @@ class VElement(BaseVElement, KeystateBuilder):
     # Rendering
     # =========================================================================
 
-    def render(self) -> Optional[dw.DrawingElement]:
+    def render(self) -> dw.DrawingElement | None:
         """Render the element in its initial state."""
         return self.render_at_frame_time(0.0)
 
     def render_at_frame_time(
-        self, t: float, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.DrawingElement]:
+        self, t: float, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement | None:
         """Render the element at a specific animation time."""
         self._ensure_built()
         assert self._interpolator is not None
@@ -258,7 +258,7 @@ class VElement(BaseVElement, KeystateBuilder):
 
         return renderer.render(interpolated_state, drawing=drawing)
 
-    def get_frame(self, t: float) -> Optional[State]:
+    def get_frame(self, t: float) -> State | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
         assert self._interpolator is not None
@@ -266,8 +266,8 @@ class VElement(BaseVElement, KeystateBuilder):
         return state
 
     def render_state(
-        self, state: State, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.DrawingElement]:
+        self, state: State, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement | None:
         """Render a pre-computed state directly (avoids re-interpolation)."""
         if state is None:
             return None
@@ -312,7 +312,7 @@ class VElement(BaseVElement, KeystateBuilder):
 
     def _get_vertex_buffer(
         self, num_verts: int, num_vertex_loops: int
-    ) -> Tuple[Points2D, List[Points2D]]:
+    ) -> tuple[Points2D, list[Points2D]]:
         """Get or create reusable vertex buffer, keyed by (vertex_count, hole_count) to avoid per-frame allocation."""
         key = (num_verts, num_vertex_loops)
         if key not in self._vertex_buffer_cache:
@@ -329,9 +329,9 @@ class VElement(BaseVElement, KeystateBuilder):
         self,
         field_name: str,
         segment_idx: int,
-        states1: List[State],
-        states2: List[State],
-    ) -> Tuple[List[State], List[State]]:
+        states1: list[State],
+        states2: list[State],
+    ) -> tuple[list[State], list[State]]:
         """Cache M→N shape matching per (field, segment) so it's only computed once."""
         cache_key = (field_name, segment_idx)
 

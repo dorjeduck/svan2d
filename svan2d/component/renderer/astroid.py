@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -28,7 +28,7 @@ class AstroidRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "AstroidState", drawing: Optional[dw.Drawing] = None
+        self, state: "AstroidState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render astroid using SVG path primitives with quadratic Bezier curves"""
 

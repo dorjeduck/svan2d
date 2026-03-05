@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -29,7 +29,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         self,
         host: str = "localhost",
         port: int = 4000,
-        auto_start: Optional[bool] = None,
+        auto_start: bool | None = None,
     ):
         super().__init__()
         config = get_config()
@@ -49,8 +49,8 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output: dict,
-        frame_time: Optional[float] = 0.0,
-        formats: Optional[list] = ["png", "pdf"],
+        frame_time: float | None = 0.0,
+        formats: list | None = ["png", "pdf"],
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,

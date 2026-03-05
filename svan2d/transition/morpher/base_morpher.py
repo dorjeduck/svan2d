@@ -5,7 +5,7 @@ Provides abstract base class with built-in LRU caching for interpolation results
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from svan2d.path.svg_path import SVGPath
 
@@ -40,9 +40,9 @@ class BaseMorpher(abc.ABC):
         """
         self.path1 = path1
         self.path2 = path2
-        self._cache: Dict[float, SVGPath] = {}
+        self._cache: dict[float, SVGPath] = {}
         self._max_cache_size = max_cache_size
-        self._cache_order: List[float] = []  # Track access order for LRU
+        self._cache_order: list[float] = []  # Track access order for LRU
         self._cache_hits = 0
         self._cache_misses = 0
 
@@ -140,7 +140,7 @@ class BaseMorpher(abc.ABC):
         self._cache_order.clear()
         logger.debug("Cleared t-value cache")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """
         Get statistics about the t-value cache performance.
 

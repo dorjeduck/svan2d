@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 """RadialSegmentsRenderer: draws radial line segments from a center point."""
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class RadialSegmentsRenderer(Renderer):
 
     def _render_core(
-        self, state: "RadialSegmentsState", drawing: Optional[dw.Drawing] = None
+        self, state: "RadialSegmentsState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """
         Render radial line segments centered at origin (0,0).

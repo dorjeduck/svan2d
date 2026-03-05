@@ -6,7 +6,7 @@ Ideal for morphing the same word between fonts where glyph correspondence is kno
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Sequence, Tuple, TypeVar
+from typing import Callable, Sequence, TypeVar
 
 from svan2d.core.point2d import Point2D
 
@@ -32,7 +32,7 @@ class ExplicitMapper(Mapper):
         ExplicitMapper(pairs=[(0, 2), (1, 0), (2, 1)])
     """
 
-    def __init__(self, pairs: Optional[Sequence[Tuple[int, int]]] = None):
+    def __init__(self, pairs: Sequence[tuple[int, int]] | None = None):
         """
         Args:
             pairs: Optional list of (start_index, end_index) tuples.
@@ -42,20 +42,20 @@ class ExplicitMapper(Mapper):
 
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D],
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Map items by index order or explicit pairs."""
         if self._pairs is not None:
             return self._map_explicit(start_items, end_items)
         return self._map_sequential(start_items, end_items)
 
     def _map_sequential(
-        self, start_items: List[T], end_items: List[T]
-    ) -> List[Match[T]]:
+        self, start_items: list[T], end_items: list[T]
+    ) -> list[Match[T]]:
         """Map by index: start[i] → end[i]. Extras become creation/destruction."""
-        matches: List[Match[T]] = []
+        matches: list[Match[T]] = []
         n_common = min(len(start_items), len(end_items))
 
         for i in range(n_common):
@@ -70,11 +70,11 @@ class ExplicitMapper(Mapper):
         return matches
 
     def _map_explicit(
-        self, start_items: List[T], end_items: List[T]
-    ) -> List[Match[T]]:
+        self, start_items: list[T], end_items: list[T]
+    ) -> list[Match[T]]:
         """Map by user-specified (start_index, end_index) pairs."""
         assert self._pairs is not None
-        matches: List[Match[T]] = []
+        matches: list[Match[T]] = []
         used_start: set[int] = set()
         used_end: set[int] = set()
 

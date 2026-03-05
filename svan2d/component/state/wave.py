@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Optional
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.wave import WaveRenderer
@@ -27,13 +26,12 @@ class WaveState(VertexState):
         x1:float,y1:float,x2:float,y2:float,
         amplitude:float,
         frequency:float,
-        scale:Optional[float]=None,
-        opacity:Optional[float]=None,
+        scale:float|None=None,
+        opacity:float|None=None,
     )-> WaveState:
         cx, cy, calc_rotation, length =  line_endpoints_to_center_rotation_length(x1,y1,x2,y2)
         return WaveState(
-            x=cx,
-            y=cy,
+            pos=Point2D(cx, cy),
             rotation=calc_rotation,
             length=length,
             amplitude=amplitude,

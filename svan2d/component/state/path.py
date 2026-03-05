@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Optional, Union
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path import PathRenderer
@@ -72,16 +73,16 @@ class FillRule(StrEnum):
 class PathState(ColorState):
     """State for SVG path rendering and morphing"""
 
-    data: Union[str, SVGPath] = "M 0,0 L 10,10 L 0,20 Z"  # Default path data
+    data: str | SVGPath = "M 0,0 L 10,10 L 0,20 Z"  # Default path data
 
     # Stroke attributes
 
-    stroke_linecap: Union[StrokeLinecap, str] = StrokeLinecap.BUTT
-    stroke_linejoin: Union[StrokeLinejoin, str] = StrokeLinejoin.MITER
+    stroke_linecap: StrokeLinecap | str = StrokeLinecap.BUTT
+    stroke_linejoin: StrokeLinejoin | str = StrokeLinejoin.MITER
     stroke_dasharray: str | None = None
 
     # Fill attributes
-    fill_rule: Union[str, FillRule] = FillRule.EVENODD  # nonzero, evenodd
+    fill_rule: str | FillRule = FillRule.EVENODD  # nonzero, evenodd
 
     # General attributes
     opacity: float = 1.0
@@ -89,7 +90,7 @@ class PathState(ColorState):
     draw_commands: float = 1.0  # Fraction of path commands to draw (0.0–1.0, parameter-based)
 
     # Morphing method
-    morph_method: Optional[Union[MorphMethod, str]] = None
+    morph_method: MorphMethod | str | None = None
 
     def __post_init__(self):
         super().__post_init__()

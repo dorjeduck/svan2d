@@ -6,21 +6,20 @@ Used for StateCollectionState and general List[State] attributes.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from svan2d.component.state.base import State
 
 import logging
 from dataclasses import replace
-from typing import Any, List, Optional
 
 from svan2d.transition.mapping import GreedyMapper, Mapper, Match
 
 logger = logging.getLogger(__name__)
 
 
-def _normalize_to_state_list(value: Any) -> Optional[List[State]]:
+def _normalize_to_state_list(value: Any) -> list[State] | None:
     """Normalize convenience attributes to List[State]
 
     - None → []
@@ -52,12 +51,12 @@ class StateListInterpolator:
 
     def interpolate_state_list(
         self,
-        start_states: List[State],
-        end_states: List[State],
+        start_states: list[State],
+        end_states: list[State],
         eased_t: float,
-        mapper: Optional[Mapper] = None,
-        vertex_aligner: Optional[Any] = None,
-    ) -> List[State]:
+        mapper: Mapper | None = None,
+        vertex_aligner: Any | None = None,
+    ) -> list[State]:
         """Interpolate between lists of states using Mapper
 
         Args:
@@ -77,7 +76,7 @@ class StateListInterpolator:
             mapper = GreedyMapper()
 
         # Map states using position extractor
-        matches: List[Match] = mapper.map(start_states, end_states, lambda s: s.pos)  # type: ignore[arg-type]
+        matches: list[Match] = mapper.map(start_states, end_states, lambda s: s.pos)  # type: ignore[arg-type]
 
         # Process each match
         interpolated_states = []
@@ -94,9 +93,9 @@ class StateListInterpolator:
         self,
         match: Match,
         eased_t: float,
-        mapper: Optional[Mapper],
-        vertex_aligner: Optional[Any],
-    ) -> Optional[State]:
+        mapper: Mapper | None,
+        vertex_aligner: Any | None,
+    ) -> State | None:
         """Interpolate a single Match
 
         Args:
@@ -124,7 +123,7 @@ class StateListInterpolator:
 
     def _interpolate_creation(
         self, end_state: State, eased_t: float
-    ) -> Optional[State]:
+    ) -> State | None:
         """Interpolate creation: fade in at end position
 
         Shape stays fixed, only opacity changes from 0 to target.
@@ -139,7 +138,7 @@ class StateListInterpolator:
 
     def _interpolate_destruction(
         self, start_state: State, eased_t: float
-    ) -> Optional[State]:
+    ) -> State | None:
         """Interpolate destruction: fade out at start position
 
         Shape stays fixed, only opacity changes from target to 0.
@@ -157,8 +156,8 @@ class StateListInterpolator:
         start_state: State,
         end_state: State,
         eased_t: float,
-        mapper: Optional[Mapper],
-        vertex_aligner: Optional[Any],
+        mapper: Mapper | None,
+        vertex_aligner: Any | None,
     ) -> State:
         """Interpolate morphing between two states"""
         if eased_t <= 0.0:
@@ -175,8 +174,8 @@ class StateListInterpolator:
         s1: State,
         s2: State,
         eased_t: float,
-        mapper: Optional[Mapper],
-        vertex_aligner: Optional[Any],
+        mapper: Mapper | None,
+        vertex_aligner: Any | None,
     ) -> State:
         """Perform actual interpolation between two states"""
         s1_clean = replace(

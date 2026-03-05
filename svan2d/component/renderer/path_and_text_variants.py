@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 import drawsvg as dw
 
@@ -27,9 +27,9 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
     """
 
     # Subclasses must define this
-    PATH_VARIANTS: Dict[str, Dict[str, Any]] = {}
+    PATH_VARIANTS: dict[str, dict[str, Any]] = {}
 
-    def __init__(self, variant: Optional[str] = None) -> None:
+    def __init__(self, variant: str | None = None) -> None:
         """Initialize multi-path text renderer
 
         Args:
@@ -50,7 +50,7 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
         self.data = self.PATH_VARIANTS[variant]
 
     def _render_core(
-        self, state: "PathAndTextVariantsState", drawing: Optional[dw.Drawing] = None
+        self, state: "PathAndTextVariantsState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render the renderer geometry only (no transforms or positioning)
 

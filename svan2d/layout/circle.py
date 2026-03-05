@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional
+from typing import Callable
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -16,13 +16,33 @@ def circle(
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
     clockwise: bool = True,
-    angles: Optional[List[float]] = None,
+    angles: list[float] | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
-    radius_fn: Optional[Callable[[int, float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
+    radius_fn: Callable[[int, float], float] | None = None,
 ) -> States:
+    """
+    Arrange states in a circular formation.
 
+    Positions elements evenly around a circle, or at specific angles if provided.
+
+    Args:
+        states: List of states to arrange.
+        radius: Radius of the circle.
+        rotation: Rotation offset in degrees (0° = top).
+        center: Center point of the circle.
+        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        angles: Optional list of specific angles in degrees for each element.
+               If provided, overrides automatic distribution and clockwise parameter.
+        alignment: How to align each element relative to the circle.
+                  PRESERVE keeps original rotation, LAYOUT aligns radially,
+                  UPRIGHT starts from vertical position.
+        element_rotation_offset: Additional rotation in degrees added to the alignment base.
+        element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
+                           If provided, overrides element_rotation_offset.
+        radius_fn: Function that takes (index, default_radius) and returns custom radius.
+    """
     if not states:
         return []
 
@@ -92,9 +112,9 @@ def circle_between_points(
     clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    angles: Optional[List[float]] = None,
-    radius_fn: Optional[Callable[[int, float], float]] = None,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    angles: list[float] | None = None,
+    radius_fn: Callable[[int, float], float] | None = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in a circular formation with diameter defined by two points.
@@ -104,19 +124,16 @@ def circle_between_points(
     be half the distance between them.
 
     Args:
-        states: List of states to arrange
-        p1: point 1
-        p2: point 2
-        rotation: Rotation offset in degrees
-        clockwise: If True, arrange clockwise; if False, counterclockwise
-        alignment: How to align each element relative to the circle
-        element_rotation_offset: Additional rotation in degrees added to the alignment base
-        angles: Optional list of specific angles in degrees for each element
-        radius_fn: Function that takes (index, default_radius) and returns custom radius
-        element_rotation_offset_fn: Function that takes position angle and returns rotation offset
-
-    Returns:
-        New list of states with circular positions
+        states: List of states to arrange.
+        p1: First diameter endpoint.
+        p2: Second diameter endpoint. Center is at their midpoint, radius = distance / 2.
+        rotation: Rotation offset in degrees.
+        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        alignment: How to align each element relative to the circle.
+        element_rotation_offset: Additional rotation in degrees added to the alignment base.
+        angles: Optional list of specific angles in degrees for each element.
+        radius_fn: Function that takes (index, default_radius) and returns custom radius.
+        element_rotation_offset_fn: Function that takes position angle and returns rotation offset.
 
     Raises:
         ValueError: If points are identical (zero diameter)
@@ -173,9 +190,9 @@ def circle_through_points(
     clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    angles: Optional[List[float]] = None,
-    radius_fn: Optional[Callable[[int, float], float]] = None,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    angles: list[float] | None = None,
+    radius_fn: Callable[[int, float], float] | None = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in a circular formation passing through three given points.
@@ -185,20 +202,17 @@ def circle_through_points(
     pass through rather than its center and radius.
 
     Args:
-        states: List of states to arrange
-        p1 : Point 1
-        p2 : Point 2
-        p3 : Point 3
-        rotation: Rotation offset in degrees
-        clockwise: If True, arrange clockwise; if False, counterclockwise
-        alignment: How to align each element relative to the circle
-        element_rotation_offset: Additional rotation in degrees added to the alignment base
-        angles: Optional list of specific angles in degrees for each element
-        radius_fn: Function that takes (index, default_radius) and returns custom radius
-        element_rotation_offset_fn: Function that takes position angle and returns rotation offset
-
-    Returns:
-        New list of states with circular positions
+        states: List of states to arrange.
+        p1: First point on the circumcircle.
+        p2: Second point on the circumcircle.
+        p3: Third point on the circumcircle.
+        rotation: Rotation offset in degrees.
+        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        alignment: How to align each element relative to the circle.
+        element_rotation_offset: Additional rotation in degrees added to the alignment base.
+        angles: Optional list of specific angles in degrees for each element.
+        radius_fn: Function that takes (index, default_radius) and returns custom radius.
+        element_rotation_offset_fn: Function that takes position angle and returns rotation offset.
 
     Raises:
         ValueError: If the three points are collinear (no unique circle)

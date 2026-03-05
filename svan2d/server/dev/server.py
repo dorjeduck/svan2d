@@ -4,11 +4,10 @@ FastAPI development server for live animation preview.
 Provides live browser preview with hot-reload for Svan2D animations.
 """
 
-from __future__ import annotations
-
 import asyncio
+import re
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -79,7 +78,7 @@ class DevServer:
         self.port = port
 
         # Current scene state
-        self.current_scene: Optional[VScene] = None
+        self.current_scene: VScene | None = None
         self.current_error: str | None = None
 
         # WebSocket manager
@@ -91,21 +90,16 @@ class DevServer:
         )
 
         # File watcher (will be initialized in start())
-        self.file_watcher: Optional[FileWatcher] = None
+        self.file_watcher: FileWatcher | None = None
 
         # Event loop (will be set when server starts)
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self.loop: asyncio.AbstractEventLoop | None = None
 
         # Create FastAPI app
         self.app = self._create_app()
 
     def _create_app(self) -> FastAPI:
-        """
-        Create and configure the FastAPI application.
-
-        Returns:
-            Configured FastAPI app
-        """
+        """Create and configure the FastAPI application."""
         app = FastAPI(
             title="Svan2D Dev Server",
             description="Development server for live animation preview",
@@ -115,7 +109,7 @@ class DevServer:
         # Store event loop on startup
         @app.on_event("startup")
         async def startup_event():
-            self.loop = asyncio.get_event_loop()
+            self.loop = asyncio.get_running_loop()
 
         # Setup template directory
         templates_dir = Path(__file__).parent / "templates"
@@ -334,8 +328,6 @@ class DevServer:
         # Clean any html/body/head wrapper tags if present
         # (in case IPython.display.HTML added document wrappers)
         # Only clean if we detect wrapper tags to preserve content integrity
-        import re
-
         if any(
             tag in html_content.lower()
             for tag in ["<!doctype", "<html", "<body", "<head"]
@@ -367,7 +359,7 @@ class DevServer:
         elif self.current_scene:
             try:
                 # Run blocking preview generation in thread pool to avoid blocking event loop
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 html = await loop.run_in_executor(
                     None, self._generate_preview_html, self.current_scene
                 )
@@ -378,7 +370,7 @@ class DevServer:
                 await self.connection_manager.send_error(error_msg)
 
     async def _run_mp4_export(
-        self, job_id: str, total_frames: int, fps: int, width_px: Optional[int]
+        self, job_id: str, total_frames: int, fps: int, width_px: int | None
     ):
         """Run MP4 export in background."""
         try:
@@ -416,7 +408,7 @@ class DevServer:
             self.export_manager.update_job(job_id, error=str(e))
 
     async def _run_gif_export(
-        self, job_id: str, total_frames: int, fps: int, width_px: Optional[int]
+        self, job_id: str, total_frames: int, fps: int, width_px: int | None
     ):
         """Run GIF export in background."""
         try:
@@ -484,13 +476,21 @@ class DevServer:
 
     async def _run_batch_export(
         self,
-        formats: list[tuple[str, str]],  # [(format_name, job_id), ...]
+        formats: list[tuple[str, str]],
         total_frames: int,
         fps: int,
-        width_px: Optional[int],
+        width_px: int | None,
         html_interactive: bool = True,
     ):
-        """Run batch export with frame reuse optimization."""
+        """Run batch export with frame reuse optimization.
+
+        Args:
+            formats: List of (format_name, job_id) tuples to export.
+            total_frames: Total number of frames to render.
+            fps: Frames per second.
+            width_px: Optional output width in pixels.
+            html_interactive: Whether to generate interactive HTML export.
+        """
         import tempfile
         from datetime import datetime
 
@@ -541,7 +541,7 @@ class DevServer:
                         )
 
                 # Generate frames
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 await loop.run_in_executor(
                     None,
                     self._generate_frames_for_batch,
@@ -553,7 +553,7 @@ class DevServer:
                     progress_callback,
                 )
             else:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
 
             # Create each format from the shared frames
             for idx, (format_name, job_id) in enumerate(formats):
@@ -623,7 +623,7 @@ class DevServer:
         frames_dir: Path,
         total_frames: int,
         fps: int,
-        width_px: Optional[int],
+        width_px: int | None,
         progress_callback: Callable,
     ):
         """Generate PNG frames for batch export (runs in thread pool)."""
@@ -649,7 +649,6 @@ class DevServer:
         progress_end: float,
     ):
         """Create MP4 from existing PNG frames."""
-        import subprocess
         from datetime import datetime
 
         self.export_manager.update_job(
@@ -658,7 +657,7 @@ class DevServer:
 
         output_path = self.export_manager.output_dir / f"animation_{timestamp}.mp4"
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._encode_mp4, frames_dir, output_path, fps)
 
         self.export_manager.update_job(
@@ -711,7 +710,7 @@ class DevServer:
 
         output_path = self.export_manager.output_dir / f"animation_{timestamp}.gif"
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(
             None, self._encode_gif, frames_dir, output_path, total_frames, fps
         )

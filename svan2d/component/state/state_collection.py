@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 from svan2d.component.registry import renderer
 from svan2d.component.state.base import State
@@ -39,4 +38,4 @@ class StateCollectionState(State):
         elem = VElement(keystates=[state1, state2])
     """
 
-    states: List[State] | None = None
+    states: list[State] | None = None

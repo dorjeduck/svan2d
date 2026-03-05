@@ -24,8 +24,7 @@ class VertexSquare(VertexRectangle):
         """Create a square as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            cy: Center y coordinate
+            center: Center point
             size: Side length of the square
             num_vertices: Number of vertices distributed along perimeter (important for morphing!)
         """

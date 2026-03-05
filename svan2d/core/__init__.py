@@ -1,10 +1,11 @@
 """Core utilities for svan2d.
 
 Provides fundamental types and utilities:
-- Color: Color representation with interpolation support
-- Point2D: 2D point with vector operations
+- Color: Immutable RGB color with interpolation and format conversion
+- Point2D / MutablePoint2D: 2D point types (immutable and pooled-mutable)
 - Logging: Configurable logging system
-- Scalar functions: lerp, angle, step, inbetween, circular_midpoint
+- Scalar functions: lerp, log_lerp, angle, step, inbetween, circular_midpoint,
+  gaussian_smooth, gaussian_smooth_2d
 """
 
 from .color import Color, ColorSpace, ColorTuple, color_to_oklab, oklab_to_color

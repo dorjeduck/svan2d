@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
-
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_and_text_variants import PathAndTextVariantsRenderer
 from svan2d.component.state.base_color import ColorState
@@ -24,7 +22,7 @@ class PathAndTextVariantsState(ColorState):
     font_family: str = "Comfortaa"
     text_align: str = "left"
     font_weight: str = "normal"
-    text_color: Optional[Color] = Color.NONE
+    text_color: Color | None = Color.NONE
 
     def __post_init__(self):
         super().__post_init__()

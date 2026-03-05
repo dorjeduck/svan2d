@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
 
 from svan2d.component.registry import renderer
 from svan2d.component.state.base_vertex import VertexState
@@ -113,7 +112,7 @@ class GlyphState(VertexState):
     GlyphState holds pre-computed VertexContours from font extraction.
     """
 
-    _contours: Optional[VertexContours] = None
+    _contours: VertexContours | None = None
 
     def need_morph(self, state) -> bool:
         """Always morph between glyphs since they have different contours."""
@@ -155,15 +154,12 @@ class FontGlyphs:
         # Cache glyph metrics for layout
         self._units_per_em = self._font["head"].unitsPerEm
 
-    def _resolve_scale(self, height: Optional[float], scale: Optional[float]) -> float:
+    def _resolve_scale(self, height: float | None, scale: float | None) -> float:
         """Resolve scale from height or scale parameter.
 
         Args:
-            height: Desired height in scene units (takes precedence)
-            scale: Direct scale factor
-
-        Returns:
-            Scale factor to use
+            height: Desired height in scene units (takes precedence).
+            scale: Direct scale factor.
         """
         if height is not None:
             # Calculate scale from desired height
@@ -182,8 +178,8 @@ class FontGlyphs:
         height: float | None = None,
         scale: float | None = None,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
         _center: bool = True,
         _cursor_x: float = 0.0,
@@ -272,8 +268,8 @@ class FontGlyphs:
         scale: float | None = None,
         letter_spacing: float = 1.0,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
     ) -> StateCollectionState:
         """Get a StateCollectionState for a word.
@@ -398,8 +394,8 @@ class FontGlyphs:
         scale: float | None = None,
         letter_spacing: float = 1.0,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
     ) -> list[StateCollectionState]:
         """Get individually-animatable letter states with shared baseline alignment.

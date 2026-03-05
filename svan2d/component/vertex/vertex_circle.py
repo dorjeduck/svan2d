@@ -27,8 +27,7 @@ class VertexCircle(VertexLoop):
         """Create a circle as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            center.y: Center y coordinate
+            center: Center point
             radius: Circle radius
             num_vertices: Number of vertices to generate (important for morphing!)
             start_angle: Starting angle in degrees (0 = top/north, clockwise)

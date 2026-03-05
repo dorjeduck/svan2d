@@ -23,8 +23,7 @@ class VertexTriangle(VertexLoop):
         """Create an equilateral triangle as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            cy: Center y coordinate
+            center: Center point
             size: Distance from center to vertices
             num_vertices: Number of vertices distributed along perimeter (important for morphing!)
         """

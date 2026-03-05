@@ -35,7 +35,7 @@ class PerforatedSquareState(PerforatedVertexState):
     size: float = 160
 
     def _generate_outer_contour(self) -> VertexLoop:
-        """Generate rectangular outer contour"""
+        """Generate square outer contour."""
         assert self._num_vertices is not None
         return VertexSquare(
             center=Point2D(), size=self.size, num_vertices=self._num_vertices

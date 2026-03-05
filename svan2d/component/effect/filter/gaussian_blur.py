@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+
 
 import drawsvg as dw
 
@@ -20,9 +20,9 @@ class GaussianBlurFilter(Filter):
         std_deviation_y: Optional separate y-axis blur (overrides std_deviation)
 
     Example:
-        blur = BlurFilter(std_deviation=5.0)
+        blur = GaussianBlurFilter(std_deviation=5.0)
         # Separate x/y blur:
-        blur_directional = BlurFilter(std_deviation_x=10.0, std_deviation_y=2.0)
+        blur_directional = GaussianBlurFilter(std_deviation_x=10.0, std_deviation_y=2.0)
     """
 
     std_deviation: float = 0.0
@@ -63,7 +63,7 @@ class GaussianBlurFilter(Filter):
         )
 
     def interpolate(self, other: Filter, t: float):
-        """Interpolate between two BlurFilter instances"""
+        """Interpolate between two GaussianBlurFilter instances."""
         if not isinstance(other, GaussianBlurFilter):
             return self if t < 0.5 else other
 

@@ -30,7 +30,6 @@ __all__ = [
     "state",
     "vertex",
     # Registry functions
-    "renderer",
     "get_renderer_class_for_state",
     "is_renderer_registered_for_state",
     "get_all_registered_state_renderer_pairs",

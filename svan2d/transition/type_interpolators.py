@@ -1,7 +1,7 @@
 """Type-specific interpolation handlers for primitive and common types."""
 
 from dataclasses import fields
-from typing import Any, Tuple, Union
+from typing import Any
 
 from svan2d.component.state.base import State
 from svan2d.core.color import Color
@@ -9,7 +9,7 @@ from svan2d.core.point2d import Point2D
 from svan2d.core.scalar_functions import angle, lerp, step
 
 # Type alias for easing result - can be scalar (normal) or tuple (2D easing)
-EasedT = Union[float, Tuple[float, float]]
+EasedT = float | tuple[float, float]
 
 
 class TypeInterpolators:
@@ -97,8 +97,8 @@ class TypeInterpolators:
 
     def interpolate_numeric(
         self,
-        start_value: Union[int, float],
-        end_value: Union[int, float],
+        start_value: int | float,
+        end_value: int | float,
         eased_t: EasedT,
     ) -> float:
         """

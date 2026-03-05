@@ -1,7 +1,7 @@
 """Swap positions segment function (multi-element)."""
 
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -13,8 +13,8 @@ def swap_positions(
     state_2: State,
     t_start: float,
     t_end: float,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Tuple[List[KeyState], List[KeyState]]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> tuple[list[KeyState], list[KeyState]]:
     """Swaps the positions of two elements with linear interpolation.
 
     Returns two keystate lists for two separate VElements. This function assumes

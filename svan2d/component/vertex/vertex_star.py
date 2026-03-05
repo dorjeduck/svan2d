@@ -28,8 +28,7 @@ class VertexStar(VertexLoop):
         """Create a star as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            cy: Center y coordinate
+            center: Center point
             outer_radius: Distance from center to outer points (tips)
             inner_radius: Distance from center to inner points (valleys)
             num_points: Number of star points (minimum 3)

@@ -7,7 +7,7 @@ such as fades, wipes, slides, and more.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -42,14 +42,14 @@ class _TimeSegment:
 
     start: float  # Global start time (0.0-1.0)
     end: float  # Global end time (0.0-1.0)
-    scene: Optional["VScene"] = None
-    scene_out: Optional["VScene"] = None
-    scene_in: Optional["VScene"] = None
-    transition: Optional[SceneTransition] = None
+    scene: "VScene | None" = None
+    scene_out: "VScene | None" = None
+    scene_in: "VScene | None" = None
+    transition: SceneTransition | None = None
     is_transition: bool = False
     # For overlapping transitions: store scene time ranges for continuous mapping
-    scene_out_range: Optional[tuple[float, float]] = None
-    scene_in_range: Optional[tuple[float, float]] = None
+    scene_out_range: tuple[float, float] | None = None
+    scene_in_range: tuple[float, float] | None = None
 
 
 class VSceneSequence:
@@ -74,12 +74,12 @@ class VSceneSequence:
 
     def __init__(
         self,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
-        origin: Optional[Origin] = None,
+        width: float | None = None,
+        height: float | None = None,
+        origin: Origin | None = None,
         *,
         # Private param for _replace - don't use directly
-        _entries: Optional[List[Union[_SceneEntry, _TransitionEntry]]] = None,
+        _entries: list[_SceneEntry | _TransitionEntry] | None = None,
     ) -> None:
         """Initialize an empty scene sequence.
 
@@ -88,8 +88,8 @@ class VSceneSequence:
             height: Override height (default: use first scene's height)
             origin: Override origin mode (default: use first scene's origin)
         """
-        self._entries: List[Union[_SceneEntry, _TransitionEntry]] = _entries if _entries is not None else []
-        self._segments: Optional[List[_TimeSegment]] = None
+        self._entries: list[_SceneEntry | _TransitionEntry] = _entries if _entries is not None else []
+        self._segments: list[_TimeSegment] | None = None
         self._width = width
         self._height = height
         self._origin = origin
@@ -97,7 +97,7 @@ class VSceneSequence:
     def _replace(
         self,
         *,
-        entries: Optional[List[Union[_SceneEntry, _TransitionEntry]]] = None,
+        entries: list[_SceneEntry | _TransitionEntry] | None = None,
     ) -> "VSceneSequence":
         """Return a new VSceneSequence with specified attributes replaced."""
         new = VSceneSequence.__new__(VSceneSequence)
@@ -184,7 +184,7 @@ class VSceneSequence:
                 return Origin(entry.scene.origin)
         return Origin.CENTER  # Default fallback
 
-    def _compute_segments(self) -> List[_TimeSegment]:
+    def _compute_segments(self) -> list[_TimeSegment]:
         """Compute time segments for all scenes and transitions.
 
         Timeline model:
@@ -205,8 +205,8 @@ class VSceneSequence:
             return self._segments
 
         # Collect scenes and transitions
-        scenes: List[_SceneEntry] = []
-        transitions: List[Optional[SceneTransition]] = []
+        scenes: list[_SceneEntry] = []
+        transitions: list[SceneTransition | None] = []
 
         for entry in self._entries:
             if isinstance(entry, _SceneEntry):
@@ -238,7 +238,7 @@ class VSceneSequence:
         scale = 1.0 / total if total > 0 else 1.0
 
         # First pass: compute scene ranges
-        scene_ranges: List[tuple[float, float]] = []
+        scene_ranges: list[tuple[float, float]] = []
         current_time = 0.0
 
         for i, scene_entry in enumerate(scenes):
@@ -257,7 +257,7 @@ class VSceneSequence:
                 current_time += transition_duration
 
         # Second pass: build segments
-        segments: List[_TimeSegment] = []
+        segments: list[_TimeSegment] = []
         current_time = 0.0
 
         for i, scene_entry in enumerate(scenes):
@@ -311,7 +311,7 @@ class VSceneSequence:
         self._segments = segments
         return self._segments
 
-    def _get_segment_at_time(self, frame_time: float) -> Optional[_TimeSegment]:
+    def _get_segment_at_time(self, frame_time: float) -> _TimeSegment | None:
         """Find the appropriate segment for a given frame time.
 
         For transition periods, returns the transition segment.
@@ -366,8 +366,8 @@ class VSceneSequence:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
+        width: float | None = None,
+        height: float | None = None,
     ) -> dw.Drawing:
         """Render the sequence at a specific time point.
 
@@ -465,9 +465,9 @@ class VSceneSequence:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
-        filename: Optional[str] = None,
+        width: float | None = None,
+        height: float | None = None,
+        filename: str | None = None,
         log: bool = True,
     ) -> str:
         """Render the sequence to SVG at a specific time point.

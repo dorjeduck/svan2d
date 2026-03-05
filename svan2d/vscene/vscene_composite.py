@@ -6,7 +6,7 @@ scaling. Composites are nestable and work seamlessly with VSceneSequence.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 import drawsvg as dw
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 logger = get_logger()
 
 # Type alias for composable scene types
-ComposableScene = Union["VScene", "VSceneSequence", "VSceneComposite"]
+ComposableScene: TypeAlias = "VScene | VSceneSequence | VSceneComposite"
 
 
 class VSceneComposite:
@@ -48,11 +48,11 @@ class VSceneComposite:
 
     def __init__(
         self,
-        scenes: List[ComposableScene],
+        scenes: list[ComposableScene],
         direction: Literal["horizontal", "vertical"] = "horizontal",
         gap: float = 0.0,
-        origin: Optional[Origin] = None,
-        background: Optional[Color] = None,
+        origin: Origin | None = None,
+        background: Color | None = None,
     ) -> None:
         """Initialize a composite of scenes.
 
@@ -81,13 +81,13 @@ class VSceneComposite:
 
         # Use provided background or try to get from first scene
         if background is not None:
-            self._background: Optional[Color] = background
+            self._background: Color | None = background
         else:
             first_scene = self._scenes[0]
             self._background = getattr(first_scene, "background", None)
 
         # Compute scales and dimensions
-        self._scales: List[float] = []
+        self._scales: list[float] = []
         self._total_width: float = 0.0
         self._total_height: float = 0.0
         self._compute_layout()
@@ -159,12 +159,12 @@ class VSceneComposite:
         return self._gap
 
     @property
-    def scenes(self) -> List[ComposableScene]:
+    def scenes(self) -> list[ComposableScene]:
         """Get the list of composed scenes."""
         return list(self._scenes)
 
     @property
-    def background(self) -> Optional[Color]:
+    def background(self) -> Color | None:
         """Get the composite background color."""
         return self._background
 
@@ -172,19 +172,16 @@ class VSceneComposite:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
+        width: float | None = None,
+        height: float | None = None,
     ) -> dw.Drawing:
         """Render the composite at a specific time point.
 
         Args:
-            frame_time: Time point to render (0.0 to 1.0)
-            render_scale: Scale factor for rendering
-            width: Unused, for VSceneExporter compatibility
-            height: Unused, for VSceneExporter compatibility
-
-        Returns:
-            A drawsvg Drawing
+            frame_time: Time point to render (0.0 to 1.0).
+            render_scale: Scale factor for rendering. Applied when width/height not provided.
+            width: Override output width. Defaults to total_width * render_scale.
+            height: Override output height. Defaults to total_height * render_scale.
 
         Raises:
             ValueError: If frame_time is outside [0.0, 1.0]
@@ -274,23 +271,20 @@ class VSceneComposite:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
-        filename: Optional[str] = None,
+        width: float | None = None,
+        height: float | None = None,
+        filename: str | None = None,
         log: bool = True,
     ) -> str:
         """Render the composite to SVG at a specific time point.
 
         Args:
-            frame_time: Time point to render (0.0 to 1.0)
-            render_scale: Scale factor for rendering
-            width: Target width for the drawing
-            height: Target height for the drawing
-            filename: Optional filename to save SVG to
-            log: Whether to log the save operation
-
-        Returns:
-            SVG string
+            frame_time: Time point to render (0.0 to 1.0).
+            render_scale: Scale factor for rendering.
+            width: Override output width.
+            height: Override output height.
+            filename: Optional filename to save SVG to.
+            log: Whether to log the save operation.
         """
         drawing = self.to_drawing(
             frame_time=frame_time, render_scale=render_scale, width=width, height=height

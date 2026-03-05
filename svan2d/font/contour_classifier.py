@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 from svan2d.component.vertex.vertex_contours import VertexContours
 from svan2d.component.vertex.vertex_loop import VertexLoop
@@ -11,13 +10,12 @@ from svan2d.core.point2d import Point2D, Points2D
 
 from .bezier_sampler import (
     estimate_cubic_arc_length,
-    estimate_line_arc_length,
     estimate_quadratic_arc_length,
     resample_to_vertex_count,
     sample_cubic_arc_length,
     sample_quadratic_arc_length,
 )
-from .glyph_extractor import BezierSegment, GlyphContour, GlyphOutline
+from .glyph_extractor import GlyphContour, GlyphOutline
 
 
 @dataclass
@@ -26,20 +24,17 @@ class ClassifiedContour:
 
     vertices: Points2D
     area: float  # Signed area (positive = CCW, negative = CW)
-    bounds: Tuple[float, float, float, float]  # xMin, yMin, xMax, yMax
+    bounds: tuple[float, float, float, float]  # xMin, yMin, xMax, yMax
     is_hole: bool  # True if this is a hole (inside another contour)
-    parent_index: Optional[int]  # Index of containing contour, if hole
+    parent_index: int | None  # Index of containing contour, if hole
 
 
 def contour_to_vertices(contour: GlyphContour, samples_per_segment: int = 10) -> Points2D:
     """Convert a GlyphContour to vertices by sampling bezier segments.
 
     Args:
-        contour: GlyphContour with bezier segments
-        samples_per_segment: Base samples per bezier segment
-
-    Returns:
-        List of Point2D vertices
+        contour: GlyphContour with bezier segments.
+        samples_per_segment: Base samples per bezier segment.
     """
     if contour.is_empty():
         return []
@@ -116,7 +111,7 @@ def calculate_signed_area(vertices: Points2D) -> float:
     return area / 2.0
 
 
-def calculate_bounds(vertices: Points2D) -> Tuple[float, float, float, float]:
+def calculate_bounds(vertices: Points2D) -> tuple[float, float, float, float]:
     """Calculate bounding box of vertices."""
     if not vertices:
         return (0, 0, 0, 0)
@@ -147,7 +142,7 @@ def point_in_polygon(point: Point2D, polygon: Points2D) -> bool:
     return inside
 
 
-def bounds_contains(outer: Tuple[float, float, float, float], inner: Tuple[float, float, float, float]) -> bool:
+def bounds_contains(outer: tuple[float, float, float, float], inner: tuple[float, float, float, float]) -> bool:
     """Check if outer bounds fully contain inner bounds."""
     return (
         outer[0] <= inner[0]
@@ -157,19 +152,15 @@ def bounds_contains(outer: Tuple[float, float, float, float], inner: Tuple[float
     )
 
 
-def classify_contours(outline: GlyphOutline, num_vertices: int) -> List[VertexContours]:
+def classify_contours(outline: GlyphOutline, num_vertices: int) -> list[VertexContours]:
     """Classify contours and build VertexContours objects.
 
-    This identifies which contours are outer boundaries vs holes,
-    and groups them appropriately. Disconnected components become
+    Identifies outer boundaries vs holes; disconnected components become
     separate VertexContours objects.
 
     Args:
-        outline: GlyphOutline from glyph extraction
-        num_vertices: Target vertex count per contour
-
-    Returns:
-        List of VertexContours (one per disconnected component)
+        outline: GlyphOutline from glyph extraction.
+        num_vertices: Target vertex count per contour.
     """
     if outline.is_empty():
         return []

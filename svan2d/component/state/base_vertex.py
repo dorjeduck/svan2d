@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 from svan2d.component.state.base_color import ColorState
 from svan2d.component.vertex import VertexContours
@@ -35,10 +34,10 @@ class VertexState(ColorState):
 
     closed: bool = True  # Whether shape is closed
 
-    _num_vertices: Optional[int] = (
+    _num_vertices: int | None = (
         None  # Vertex resolution (from config if not specified)
     )
-    _aligned_contours: Optional[VertexContours] = None  # Internal use only
+    _aligned_contours: VertexContours | None = None  # Internal use only
 
     def __post_init__(self):
         super().__post_init__()

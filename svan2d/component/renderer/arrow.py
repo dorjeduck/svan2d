@@ -1,8 +1,8 @@
-"""Circle renderer implementation using new architecture"""
+"""Arrow renderer implementation."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 
 
 class ArrowRenderer(Renderer):
-    """Renderer class for rendering circle elements"""
+    """Renderer for arrow elements."""
 
     def _render_core(
-        self, state: ArrowState, drawing: Optional[dw.Drawing] = None
+        self, state: ArrowState, drawing: dw.Drawing | None = None
     ) -> dw.Lines:
         """Render arrow using SVG polygon primitive"""
         hw = state.head_width / 2

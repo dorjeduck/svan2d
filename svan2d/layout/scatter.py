@@ -2,7 +2,6 @@
 
 import random
 from dataclasses import replace
-from typing import Optional, Tuple
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -12,8 +11,8 @@ from .enums import ElementAlignment
 
 def scatter(
     states: States,
-    x_range: Tuple[float, float] = (-100, 100),
-    y_range: Tuple[float, float] = (-100, 100),
+    x_range: tuple[float, float] = (-100, 100),
+    y_range: tuple[float, float] = (-100, 100),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     seed: int | None = None,
@@ -35,8 +34,6 @@ def scatter(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         seed: Optional random seed for reproducibility
 
-    Returns:
-        New list of states with random positions
     """
     if not states:
         return []
@@ -89,9 +86,6 @@ def scatter_in_bbox(
         seed: Optional random seed for reproducibility
         alignment: How to align each element relative to the layout
         element_rotation_offset: Additional rotation in degrees added to the alignment base
-
-    Returns:
-        New list of states with random positions
 
     Raises:
         ValueError: If width or height is zero or negative

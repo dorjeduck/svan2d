@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -19,7 +19,7 @@ class StarRenderer(Renderer):
     """Renderer class for rendering star elements"""
 
     def _render_core(
-        self, state: "StarState", drawing: Optional[dw.Drawing] = None
+        self, state: "StarState", drawing: dw.Drawing | None = None
     ) -> dw.Lines:
         """Render the star renderer (geometry only) with the given state
 
@@ -29,8 +29,6 @@ class StarRenderer(Renderer):
         Returns:
             drawsvg Lines object for the star renderer geometry.
         """
-
-        fill_color = state.fill_color.to_rgb_string()
 
         # Calculate star points
         coords = []

@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional
+from typing import Callable
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -18,7 +18,7 @@ def polygon(
     center: Point2D = Point2D(0, 0),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states evenly distributed around a regular polygon.
@@ -29,8 +29,7 @@ def polygon(
         sides: Number of sides (vertices) of the polygon
         radius: Distance from center to each vertex
         rotation: Rotation in degrees (0° = top)
-        cx: X coordinate of polygon center
-        cy: Y coordinate of polygon center
+        center: Center point of the polygon
         alignment: How to align each element relative to the polygon.
                   PRESERVE keeps original rotation,
                   LAYOUT aligns to edge angle (or perpendicular at vertices),
@@ -38,9 +37,6 @@ def polygon(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
                            If provided, this overrides element_rotation_offset parameter.
-
-    Returns:
-        New list of states with polygon positions
     """
     if not states or sides < 3:
         return []
@@ -129,7 +125,7 @@ def polygon_in_bbox(
     rotation: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states around a regular polygon inscribed in a bounding box.
@@ -148,10 +144,7 @@ def polygon_in_bbox(
         rotation: Rotation offset in degrees
         alignment: How to align each element
         element_rotation_offset: Additional rotation offset
-        element_rotation_offset_fn: Function(edge_angle) -> rotation offset
-
-    Returns:
-        New list of states with polygon positions
+        element_rotation_offset_fn: Function(edge_angle) -> rotation offset.
 
     Raises:
         ValueError: If sides < 3

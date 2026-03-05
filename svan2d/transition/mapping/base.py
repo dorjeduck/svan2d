@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Generic, List, Optional, TypeVar
+from typing import Callable, Generic, TypeVar
 
 from svan2d.core.point2d import Point2D
 
@@ -38,8 +38,8 @@ class Match(Generic[T]):
         - start=None, end=B: Item B fades in at its position
         - start=None, end=None: Invalid (not allowed)
     """
-    start: Optional[T]
-    end: Optional[T]
+    start: T | None
+    end: T | None
 
     def __post_init__(self):
         if self.start is None and self.end is None:
@@ -85,10 +85,10 @@ class Mapper(ABC):
     @abstractmethod
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Map items for M→N morphing.
 
         Args:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -36,7 +36,7 @@ class DotsPattern(Pattern):
     spacing: float
     dot_radius: float
     dot_color: Color
-    background: Optional[Color] = None
+    background: Color | None = None
 
     def __post_init__(self):
         if self.spacing <= 0:
@@ -44,7 +44,7 @@ class DotsPattern(Pattern):
         if self.dot_radius <= 0:
             raise ValueError(f"dot_radius must be > 0, got {self.dot_radius}")
 
-    def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
+    def to_drawsvg(self, drawing: dw.Drawing | None = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
         import uuid
 

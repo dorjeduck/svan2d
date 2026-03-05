@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable
 
 from svan2d.component import State, VertexState
 from svan2d.velement.attribute_timeline import AttributeTimelineResolver
@@ -33,13 +33,11 @@ class StateInterpolator:
     def __init__(
         self,
         keystates: "KeyStates",
-        attribute_keystates: Dict[str, List],
+        attribute_keystates: dict[str, list],
         easing_resolver: "EasingResolver",
         interpolation_engine: "InterpolationEngine",
-        vertex_aligner: Optional[VertexAligner] = None,
-        get_vertex_buffer: Optional[
-            Callable[[int, int], Tuple["Points2D", List["Points2D"]]]
-        ] = None,
+        vertex_aligner: VertexAligner | None = None,
+        get_vertex_buffer: Callable[[int, int], tuple["Points2D", list["Points2D"]]] | None = None,
     ) -> None:
         """Initialize the state interpolator.
 
@@ -65,9 +63,9 @@ class StateInterpolator:
 
         # Cache for pre-computed changed fields per segment
         # Key: segment_idx, Value: (changed_field_names, field_values)
-        self._changed_fields_cache: Dict[int, tuple] = {}
+        self._changed_fields_cache: dict[int, tuple] = {}
 
-    def get_state_at_time(self, t: float) -> Tuple[Optional[State], bool]:
+    def get_state_at_time(self, t: float) -> tuple[State | None, bool]:
         """Get the interpolated state at a specific time.
 
         Returns None if t is outside the element's keystate timeline range.

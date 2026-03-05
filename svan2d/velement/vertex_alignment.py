@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from svan2d.component import State, VertexState
 from svan2d.transition.align_vertices import get_aligned_vertices
@@ -122,7 +122,7 @@ class VertexAligner:
 
     def get_dynamically_aligned_states(
         self, state1: State, state2: State, segment_t: float
-    ) -> Tuple[State, State]:
+    ) -> tuple[State, State]:
         """Get states with dynamic alignment based on current interpolated rotation.
 
         Only applies to rotating morphs (rotation changes during morph).

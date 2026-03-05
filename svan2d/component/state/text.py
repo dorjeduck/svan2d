@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.text import TextRenderer
@@ -29,7 +28,7 @@ class TextState(ColorState):
 
     letter_spacing: float = 0  # Additional spacing between letters
 
-    text: Union[str, List[str]] = ""
+    text: str | list[str] = ""
     font_family: str = "Arial"
     font_weight: str = "normal"
     text_anchor: str = "middle"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -24,7 +24,7 @@ class RingRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "RingState", drawing: Optional[dw.Drawing] = None
+        self, state: "RingState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render ring using SVG arc primitives with evenodd fill-rule"""
         group = dw.Group()

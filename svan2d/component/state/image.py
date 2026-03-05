@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Optional, Tuple
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.image import ImageRenderer
@@ -43,7 +42,7 @@ class ImageState(State):
     width: float | None = None  # Image width (None = use original image width)
     height: float | None = None  # Image height (None = use original image height)
     opacity: float = 1.0  # Image opacity (0.0 to 1.0)
-    stroke_color: Optional[Color] = None  # Border color
+    stroke_color: Color | None = None  # Border color
     stroke_opacity: float = 1
     stroke_width: float = 0  # Border width
     fit_mode: ImageFitMode = ImageFitMode.FIT  # How to fit the image

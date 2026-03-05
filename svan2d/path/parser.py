@@ -1,5 +1,4 @@
 import re
-from typing import List, Tuple, Union
 
 # Regex to match a command letter or a number (including signs, decimals, and exponents)
 # This handles the complex, comma-less, space-optional SVG syntax like M100-20L10,30
@@ -8,7 +7,7 @@ COMMAND_OR_COORD_RE = re.compile(
 )
 
 
-def tokenize_path(path_string: str) -> List[str]:
+def tokenize_path(path_string: str) -> list[str]:
     """
     Tokenizes an SVG path string into a list of command letters and coordinate values (as strings).
 
@@ -31,8 +30,8 @@ def tokenize_path(path_string: str) -> List[str]:
 
 
 def parse_coordinates(
-    tokens: List[str], num_args: int
-) -> Tuple[List[float], List[str]]:
+    tokens: list[str], num_args: int
+) -> tuple[list[float], list[str]]:
     """
     Extracts a specified number of coordinates from the beginning of a token list.
 

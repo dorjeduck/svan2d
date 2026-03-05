@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -14,7 +14,7 @@ class CrossRenderer(Renderer):
     """Renderer class for rendering cross elements"""
 
     def _render_core(
-        self, state: "CrossState", drawing: Optional[dw.Drawing] = None
+        self, state: "CrossState", drawing: dw.Drawing | None = None
     ) -> dw.Lines:
         """Render cross using SVG polygon primitive"""
         hw = state.width / 2

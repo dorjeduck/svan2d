@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -16,7 +16,7 @@ class EllipseRenderer(Renderer):
     """Renderer class for rendering ellipse elements"""
 
     def _render_core(
-        self, state: "EllipseState", drawing: Optional[dw.Drawing] = None
+        self, state: "EllipseState", drawing: dw.Drawing | None = None
     ) -> dw.Ellipse:
         """Render the ellipse renderer (geometry only) with the given state
 

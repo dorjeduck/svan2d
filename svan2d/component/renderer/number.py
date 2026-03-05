@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -32,8 +32,8 @@ class NumberRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "NumberState", drawing: Optional[dw.Drawing] = None
-    ) -> Union[dw.Text, dw.Group]:
+        self, state: "NumberState", drawing: dw.Drawing | None = None
+    ) -> dw.Text | dw.Group:
         """Render the formatted number as text
 
         Args:
@@ -51,7 +51,7 @@ class NumberRenderer(Renderer):
             return self._render_standard(state, drawing)
 
     def _render_standard(
-        self, state: "NumberState", drawing: Optional[dw.Drawing] = None
+        self, state: "NumberState", drawing: dw.Drawing | None = None
     ) -> dw.Text:
         """Render as single text element (standard mode)"""
         text_kwargs = {
@@ -70,7 +70,7 @@ class NumberRenderer(Renderer):
         return dw.Text(**text_kwargs)  # type: ignore[return-value]
 
     def _render_aligned(
-        self, state: "NumberState", drawing: Optional[dw.Drawing] = None
+        self, state: "NumberState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render with aligned decimal point (two text elements)
 

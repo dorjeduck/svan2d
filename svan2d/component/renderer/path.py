@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -18,7 +18,7 @@ class PathRenderer(Renderer):
     """Renderer class for rendering custom SVG path elements"""
 
     def _render_core(
-        self, state: "PathState", drawing: Optional[dw.Drawing] = None
+        self, state: "PathState", drawing: dw.Drawing | None = None
     ) -> dw.Path:
         """Render the renderer's geometry with the given state
 

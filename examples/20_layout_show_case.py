@@ -3,7 +3,6 @@ Comprehensive showcase of all svan2d layout functions
 Demonstrates each layout's unique characteristics with animated transitions
 """
 
-from typing import List
 from svan2d.component import TextRenderer, TextState
 from svan2d.converter.converter_type import ConverterType
 from svan2d import layout

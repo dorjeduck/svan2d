@@ -31,8 +31,7 @@ class VertexAstroid(VertexLoop):
         """Create an astroid as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            cy: Center y coordinate
+            center: Center point
             radius: Distance from center to cusp points
             num_cusps: Number of cusps (points) - 4 for classic astroid
             curvature: Controls arc depth (0-1). Higher = deeper inward curves
@@ -102,7 +101,7 @@ class VertexAstroid(VertexLoop):
                 mid = start_cusp.center_to(end_cusp)
 
                 # Pull control point toward center based on curvature
-                control_x = mid.x + (center.y - mid.x) * curvature
+                control_x = mid.x + (center.x - mid.x) * curvature
                 control_y = mid.y + (center.y - mid.y) * curvature
 
                 # Quadratic Bezier curve

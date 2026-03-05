@@ -1,14 +1,12 @@
 """Export job management for development server."""
 
-from __future__ import annotations
-
 import asyncio
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Dict, Optional
+from typing import Callable
 
 from svan2d.core.logger import get_logger
 
@@ -58,10 +56,10 @@ class ExportJob:
     status: ExportStatus = ExportStatus.QUEUED
     progress: float = 0.0  # 0.0 to 1.0
     message: str = ""
-    output_file: Optional[Path] = None
+    output_file: Path | None = None
     error: str | None = None
     created_at: datetime = field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization"""
@@ -92,7 +90,7 @@ class ExportJobManager:
         """
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.jobs: Dict[str, ExportJob] = {}
+        self.jobs: dict[str, ExportJob] = {}
 
     def create_job(self, format: ExportFormat) -> ExportJob:
         """
@@ -110,7 +108,7 @@ class ExportJobManager:
         logger.info(f"Created export job {job_id} for format {format.value}")
         return job
 
-    def get_job(self, job_id: str) -> Optional[ExportJob]:
+    def get_job(self, job_id: str) -> ExportJob | None:
         """
         Get job by ID.
 
@@ -125,10 +123,10 @@ class ExportJobManager:
     def update_job(
         self,
         job_id: str,
-        status: Optional[ExportStatus] = None,
+        status: ExportStatus | None = None,
         progress: float | None = None,
         message: str | None = None,
-        output_file: Optional[Path] = None,
+        output_file: Path | None = None,
         error: str | None = None,
     ):
         """
@@ -192,7 +190,7 @@ class ExportJobManager:
             )
 
             # Run export function in thread pool to avoid blocking
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             output_file = await loop.run_in_executor(None, export_func, *args, **kwargs)
 
             self.update_job(

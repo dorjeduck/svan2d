@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
-
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.path_variants import PathVariantsRenderer
 from svan2d.component.state.base_color import ColorState

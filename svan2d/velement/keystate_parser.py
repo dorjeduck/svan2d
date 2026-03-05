@@ -11,33 +11,33 @@ If you need easing or alignment overrides, use the KeyState class (not complex t
 The (time, state) tuple is kept as a convenience for the common case of explicit timing.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable
 
 from svan2d.component.state.base import State
 
 from .keystate import KeyState
 
 # Type definitions
-AttributeKeyframeTuple = Tuple[float, Any, Optional[Callable[[float], float]]]
+AttributeKeyframeTuple = tuple[float, Any, Callable[[float], float] | None]
 
 # Flexible input type for attribute keystates - accepts:
 # - Bare values (auto-distributed in timeline)
 # - (time, value) tuples for explicit timing
 # - (value, easing) tuples for auto-timed with custom easing
 # - Full (time, value, easing) tuples
-AttributeKeyStatesDict = Dict[str, List[Any]]
+AttributeKeyStatesDict = dict[str, list[Any]]
 
 # Flexible input accepts three formats
-FlexibleKeystateInput = Union[
-    KeyState,  # KeyState class (for advanced features: easing, alignment)
-    State,  # Bare state (auto-timed)
-    Tuple[float, State],  # (time, state) - simple explicit timing
-]
+FlexibleKeystateInput = (
+    KeyState  # KeyState class (for advanced features: easing, alignment)
+    | State  # Bare state (auto-timed)
+    | tuple[float, State]  # (time, state) - simple explicit timing
+)
 
 
 def parse_element_keystates(
-    flexible_list: List[FlexibleKeystateInput],
-) -> List["KeyState"]:
+    flexible_list: list[FlexibleKeystateInput],
+) -> list["KeyState"]:
     """
     Parse element-level keystates with flexible time anchoring.
 
@@ -72,8 +72,8 @@ def parse_element_keystates(
 
 
 def parse_attribute_keystates(
-    flexible_list: List[Union[Any, AttributeKeyframeTuple]],
-) -> List[AttributeKeyframeTuple]:
+    flexible_list: list[Any | AttributeKeyframeTuple],
+) -> list[AttributeKeyframeTuple]:
     """
     Parse field -level keystates with mandatory full timeline coverage.
 
@@ -100,7 +100,7 @@ def parse_attribute_keystates(
     for item in flexible_list:
         t: float | None = None
         val: Any
-        easing: Optional[Callable] = None
+        easing: Callable | None = None
 
         # Handle bare values (not tuples)
         if not isinstance(item, tuple):
@@ -175,8 +175,8 @@ def parse_attribute_keystates(
 
 
 def _normalize_keystates(
-    flexible_list: List[FlexibleKeystateInput],
-) -> Tuple[List["KeyState"], bool]:
+    flexible_list: list[FlexibleKeystateInput],
+) -> tuple[list["KeyState"], bool]:
     """
     Normalize flexible input into KeyState objects.
     Returns (normalized_list, has_explicit_times)
@@ -239,8 +239,8 @@ def _normalize_keystates(
 
 
 def _apply_full_timeline_boundaries(
-    normalized: List["KeyState"],
-) -> List["KeyState"]:
+    normalized: list["KeyState"],
+) -> list["KeyState"]:
     """Apply 0.0 and 1.0 boundaries when no explicit times provided"""
     if not normalized:
         return normalized
@@ -257,8 +257,8 @@ def _apply_full_timeline_boundaries(
 
 
 def _distribute_implicit_times(
-    normalized: List["KeyState"],
-) -> List["KeyState"]:
+    normalized: list["KeyState"],
+) -> list["KeyState"]:
     """Distribute implicit times evenly between explicit time anchors"""
     if not normalized:
         return []
@@ -300,8 +300,8 @@ def _distribute_implicit_times(
 
 
 def _distribute_implicit_times_field(
-    normalized: List[Tuple[Optional[float], Any, Optional[Callable]]],
-) -> List[AttributeKeyframeTuple]:
+    normalized: list[tuple[float | None, Any, Callable | None]],
+) -> list[AttributeKeyframeTuple]:
     """Distribute implicit times for field keystates"""
     if not normalized:
         return []
@@ -343,8 +343,8 @@ def _distribute_implicit_times_field(
 
 
 def _finalize_keystates(
-    keystates: List["KeyState"],
-) -> List["KeyState"]:
+    keystates: list["KeyState"],
+) -> list["KeyState"]:
     """Sort and deduplicate keystates"""
     keystates.sort(key=lambda ks: ks.time if ks.time is not None else 0.0)
 
@@ -362,8 +362,8 @@ def _finalize_keystates(
 
 
 def _finalize_attribute_keystates(
-    keystates: List[AttributeKeyframeTuple],
-) -> List[AttributeKeyframeTuple]:
+    keystates: list[AttributeKeyframeTuple],
+) -> list[AttributeKeyframeTuple]:
     """Sort and deduplicate field keystates"""
     keystates.sort(key=lambda x: x[0])
 

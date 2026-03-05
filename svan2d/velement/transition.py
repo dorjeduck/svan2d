@@ -7,7 +7,7 @@ Defines how interpolation happens between two keystates, including:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from svan2d.velement.morphing import MorphingConfig
 
@@ -17,14 +17,10 @@ if TYPE_CHECKING:
 # Interpolation function types
 CurveFunction = Callable[["Point2D", "Point2D", float], "Point2D"]  # For Point2D fields
 RotationFunction = Callable[[float, float, float], float]  # For rotation field
-InterpolationFunction = Union[CurveFunction, RotationFunction]  # Generic
+InterpolationFunction = CurveFunction | RotationFunction  # Generic
 
 # Per-field interpolation configuration: {field_name: interpolation_function}
-InterpolationConfig = Dict[str, InterpolationFunction]
-
-# Easing function can return float (1D) or Tuple[float, float] (2D for Point2D)
-# EasingFunction = Callable[[float], Union[float, Tuple[float, float]]]
-
+InterpolationConfig = dict[str, InterpolationFunction]
 
 T = TypeVar("T")
 
@@ -47,11 +43,11 @@ class TransitionConfig:
                             bypasses all per-field interpolation. t is raw segment t (0→1).
     """
 
-    easing_dict: Optional[Dict[str, EasingFunction]] = None
-    morphing_config: Optional[Union[MorphingConfig, Dict[str, Any]]] = None
-    interpolation_dict: Optional[InterpolationConfig] = None
+    easing_dict: dict[str, EasingFunction] | None = None
+    morphing_config: MorphingConfig | dict[str, Any] | None = None
+    interpolation_dict: InterpolationConfig | None = None
     linear_angle_interpolation: bool = False
-    state_interpolation: Optional[Callable] = None
+    state_interpolation: Callable | None = None
 
     def __repr__(self):
         return (

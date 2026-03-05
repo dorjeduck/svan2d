@@ -1,7 +1,7 @@
 """Fade in/out segment function."""
 
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -11,24 +11,20 @@ from . import linspace
 
 
 def fade_inout(
-    states: Union[State, List[State]],
-    center_t: Optional[Union[float, List[float]]] = None,
+    states: State | list[State],
+    center_t: float | list[float] | None = None,
     hold_duration: float | None = None,
     fade_duration: float | None = None,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> List[KeyState]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState]:
     """Fade in, hold, then fade out.
 
     Args:
-        states: State to fade, or list of states
-        center_t: Center time of the hold, or list of times
-        hold_duration: Duration of the hold period
-        fade_duration: Duration of each fade (in and out)
-        easing: Optional easing dict for transitions
-
-
-    Returns:
-        List of KeyState objects
+        states: State to fade, or list of states.
+        center_t: Center time of the hold, or list of times.
+        hold_duration: Duration of the hold period.
+        fade_duration: Duration of each fade (in and out).
+        easing: Optional easing dict for transitions.
     """
 
     def get_keystates(state, t, hold_dur, fade_dur, easing):
@@ -72,7 +68,7 @@ def fade_inout(
             fade_duration = 1.0 / 9
 
         if isinstance(center_t, list):
-            raise ValueError("'at' must be float when 'states' is a single State")
+            raise ValueError("'center_t' must be float when 'states' is a single State")
 
         return get_keystates(states, center_t, hold_duration, fade_duration, easing)
 
@@ -85,10 +81,10 @@ def fade_inout(
         fade_duration = 1.0 / (9 * len(states))
 
     if not isinstance(center_t, list):
-        raise ValueError("'at' must be a list when 'states' is a list of States")
+        raise ValueError("'center_t' must be a list when 'states' is a list of States")
     if len(states) != len(center_t):
         raise ValueError(
-            f"Length of 'states' ({len(states)}) must match length of 'at' ({len(center_t)})"
+            f"Length of 'states' ({len(states)}) must match length of 'center_t' ({len(center_t)})"
         )
 
     result = []

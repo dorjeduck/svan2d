@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -21,7 +21,7 @@ class StateCollectionRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "StateCollectionState", drawing: Optional[dw.Drawing] = None
+        self, state: "StateCollectionState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render each shape in the collection
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -41,7 +41,7 @@ class PerforatedPrimitiveRenderer(Renderer):
     """
 
     def _render_core(  # type: ignore[override]
-        self, state: "PerforatedVertexState", drawing: Optional[dw.Drawing] = None
+        self, state: "PerforatedVertexState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render perforated shape using SVG path primitives with evenodd fill-rule"""
 
@@ -148,7 +148,7 @@ class PerforatedPrimitiveRenderer(Renderer):
 
         Args:
             path: The path to add vertices to
-            vertices: List of (x, y) tuples
+            vertices: List of Point2D objects
             clockwise: If True, draw clockwise; if False, reverse order
         """
         if not vertices or len(vertices) < 2:

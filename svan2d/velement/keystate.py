@@ -7,7 +7,6 @@ All tuple formats are converted to KeyState objects internally.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from svan2d.component.state.base import State
 from svan2d.velement.morphing import MorphingConfig
@@ -19,8 +18,8 @@ class KeyState:
 
     state: State
     time: float | None = None
-    transition_config: Optional[TransitionConfig] = None
-    outgoing_state: Optional[State] = None
+    transition_config: TransitionConfig | None = None
+    outgoing_state: State | None = None
     render_index: int | None = 0
 
     def __post_init__(self):

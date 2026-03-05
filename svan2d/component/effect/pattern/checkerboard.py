@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -40,7 +40,7 @@ class CheckerboardPattern(Pattern):
         if self.square_size <= 0:
             raise ValueError(f"square_size must be > 0, got {self.square_size}")
 
-    def to_drawsvg(self, drawing: Optional[dw.Drawing] = None) -> dw.Pattern:
+    def to_drawsvg(self, drawing: dw.Drawing | None = None) -> dw.Pattern:
         """Convert to drawsvg Pattern object"""
         from svan2d.component import RectangleRenderer, RectangleState
 

@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.core.point2d import Point2D
@@ -11,7 +11,7 @@ from . import linspace
 
 
 def slide_hold_slide(
-    states: Union[State, List[State]],
+    states: State | list[State],
     *,
     t_start: float,
     t_end: float,
@@ -20,9 +20,9 @@ def slide_hold_slide(
     exit_point: Point2D = Point2D(-50.0, 0.0),
     entrance_effect: SlideEffect = SlideEffect.NONE,
     exit_effect: SlideEffect = SlideEffect.NONE,
-    entrance_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
-    exit_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Union[List[KeyState], List[List[KeyState]]]:
+    entrance_easing_dict: dict[str, Callable[[float], float]] | None = None,
+    exit_easing_dict: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState] | list[list[KeyState]]:
 
     num_states = 1 if isinstance(states, State) else len(states)
 
@@ -40,7 +40,7 @@ def slide_hold_slide(
     def slid(state: State, newpos: Point2D) -> State:
         return replace(state, pos=newpos)
 
-    def make_keystates(state: State, t: float) -> List[KeyState]:
+    def make_keystates(state: State, t: float) -> list[KeyState]:
         entrance_transition = (
             TransitionConfig(easing_dict=entrance_easing_dict)
             if entrance_easing_dict
@@ -92,7 +92,7 @@ def slide_hold_slide(
     if isinstance(states, State):
         return make_keystates(states, t_start)
 
-    result: List[List[KeyState]] = []
+    result: list[list[KeyState]] = []
     for i, s in enumerate(states):
         t = t_start + i * (slide_duration + hold_duration)
 

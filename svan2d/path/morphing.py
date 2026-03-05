@@ -1,6 +1,3 @@
-# ============================================================================
-# svan2d/paths/morphing.py
-# ============================================================================
 """
 Polymorph-style path morphing implementation
 
@@ -17,8 +14,7 @@ not as geometric primitives. This makes interpolation trivial.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, replace
-from typing import List, Tuple
+from dataclasses import dataclass
 
 from svan2d.core.point2d import Point2D
 from svan2d.path.commands import (
@@ -45,7 +41,7 @@ class PolyBezier:
     Starting point comes from previous curve's end point (or initial move)
     """
 
-    def __init__(self, data: List[Point2D]):
+    def __init__(self, data: list[Point2D]):
         self.data = data
 
     def __len__(self) -> int:
@@ -59,7 +55,7 @@ class PolyBezier:
         """Get the starting point of the path"""
         return self.data[0]
 
-    def get_curves(self) -> List[Tuple[Point2D, Point2D, Point2D, Point2D]]:
+    def get_curves(self) -> list[tuple[Point2D, Point2D, Point2D, Point2D]]:
         """Get all curves as (start, c1, c2, end) tuples"""
         curves = []
         if len(self.data) < 4:  # Need at least start + one curve
@@ -86,7 +82,7 @@ class PolyBezier:
         if len(self.data) < 1:
             return SVGPath([])
 
-        commands: List[PathCommand] = [MoveTo(self.data[0])]
+        commands: list[PathCommand] = [MoveTo(self.data[0])]
 
         for i in range(1, len(self.data), 3):
             if i + 2 >= len(self.data):
@@ -121,7 +117,7 @@ def convert_to_poly_bezier(path: SVGPath) -> PolyBezier:
     if not path.commands:
         return PolyBezier([])
 
-    data: List[Point2D] = []
+    data: list[Point2D] = []
     current_pos = Point2D(0, 0)
     start_pos = Point2D(0, 0)
 
@@ -130,12 +126,12 @@ def convert_to_poly_bezier(path: SVGPath) -> PolyBezier:
 
         if isinstance(abs_cmd, MoveTo):
             # Start a new subpath
-            current_pos = replace(abs_cmd.pos)
+            current_pos = abs_cmd.pos
             start_pos = current_pos
 
             # If this is the first command, set the starting point
             if len(data) == 0:
-                data.extend([replace(abs_cmd.pos)])
+                data.append(abs_cmd.pos)
 
         elif isinstance(abs_cmd, LineTo):
             # Convert line to flat cubic curve
@@ -213,7 +209,7 @@ def normalize_poly_bezier_start(
 
     # Rotate the curve data to start from the best position
     # This involves reconstructing the data array with a new starting point
-    new_data: List[Point2D] = []
+    new_data: list[Point2D] = []
 
     # New starting point is the end of the best curve
     best_end = curves[best_index][3]
@@ -301,7 +297,7 @@ def interpolate_poly_beziers(
     filled_poly2 = fill_poly_bezier_to_length(poly2, max_length)
 
     # Linear interpolation of all points
-    result_data: List[Point2D] = []
+    result_data: list[Point2D] = []
     for i in range(max_length):
         if i < len(filled_poly1.data) and i < len(filled_poly2.data):
             pt1 = filled_poly1.data[i]
@@ -335,11 +331,8 @@ def polymorph_interpolate(
     Args:
         path1: First path
         path2: Second path
-        t: Interpolation parameter (0.0 to 1.0)
-        origin: Origin point for normalization
-
-    Returns:
-        Interpolated SVGPath
+        t: Interpolation parameter (0.0 to 1.0).
+        origin: Origin point for normalization.
     """
 
     # Step 1: Convert to poly-bezier format

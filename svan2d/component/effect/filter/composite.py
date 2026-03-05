@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+
 
 import drawsvg as dw
 
@@ -18,7 +18,7 @@ class CompositeFilter(Filter):
         filters: Tuple of filters to apply in sequence
 
     Example:
-        blur = BlurFilter(std_deviation=3.0)
+        blur = GaussianBlurFilter(std_deviation=3.0)
         shadow = DropShadowFilter(dx=5, dy=5, std_deviation=2)
         composite = CompositeFilter(filters=(blur, shadow))
     """
@@ -30,16 +30,11 @@ class CompositeFilter(Filter):
             raise ValueError("CompositeFilter must have at least one filter")
 
     def to_drawsvg(self) -> dw.FilterItem:
-        """Convert to drawsvg FilterItem object
+        """Return the first filter's FilterItem.
 
-        Note: Returns a composite of all filters. For multiple filters,
-        drawsvg will chain them together.
+        Full composition (all filters) is handled at the renderer level,
+        which iterates ``self.filters`` directly.
         """
-        # For composite filters, we return the first filter's FilterItem
-        # The actual composition happens at the renderer level by adding
-        # multiple filter items to a single filter
-        # This is a simplified implementation - for full support, we'd need
-        # to modify how filters are applied in the renderer
         return self.filters[0].to_drawsvg()
 
     def interpolate(self, other: Filter, t: float):

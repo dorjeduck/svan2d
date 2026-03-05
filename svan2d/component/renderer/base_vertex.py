@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -31,7 +31,7 @@ class VertexRenderer(Renderer):
     """
 
     def _render_core(  # type: ignore[override]
-        self, state: VertexState, drawing: Optional[dw.Drawing] = None
+        self, state: VertexState, drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render the vertex-based shape
 
@@ -61,9 +61,9 @@ class VertexRenderer(Renderer):
         stroke_gradient = getattr(state, "stroke_gradient", None)
         stroke_pattern = getattr(state, "stroke_pattern", None)
 
-        holes_stroke_color = getattr(state, " holes_stroke_color", stroke_color)
-        holes_stroke_opacity = getattr(state, " holes_stroke_opacity", stroke_opacity)
-        holes_stroke_width = getattr(state, " holes_stroke_width", stroke_width)
+        holes_stroke_color = getattr(state, "holes_stroke_color", stroke_color)
+        holes_stroke_opacity = getattr(state, "holes_stroke_opacity", stroke_opacity)
+        holes_stroke_width = getattr(state, "holes_stroke_width", stroke_width)
 
         # Determine rendering strategy
         has_fill = (
@@ -251,7 +251,7 @@ class VertexRenderer(Renderer):
         holes_stroke_opacity,
         holes_stroke_width,
         state,
-        drawing: Optional[dw.Drawing],
+        drawing: dw.Drawing | None,
     ):
         """Render a shape with vertex loops using SVG masks
 

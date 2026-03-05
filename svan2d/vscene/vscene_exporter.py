@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import get_logger
@@ -56,17 +56,17 @@ class VSceneExporter:
     def __init__(
         self,
         scene,
-        output_dir: Optional[str] = ".",
+        output_dir: str | None = ".",
         converter: ConverterType = ConverterType.PLAYWRIGHT,
         timestamp_files: bool = False,
     ) -> None:
         """Initialize exporter
 
         Args:
-            scene: The VScene to export
-            output_dir: Directory to save exported files
-            converter: ConverterType enum for PNG/PDF conversion
-            timestamp_files: Whether to prefix filenames with timestamps
+            scene: The VScene to export.
+            output_dir: Directory to save exported files.
+            converter: ConverterType enum for PNG/PDF conversion.
+            timestamp_files: Whether to prefix filenames with timestamps.
         """
         self.scene = scene
         if output_dir is None:
@@ -130,10 +130,10 @@ class VSceneExporter:
 
     def _validate_dimensions(
         self,
-        png_width_px: Optional[int],
-        png_height_px: Optional[int],
-        pdf_inch_width: Optional[float],
-        pdf_inch_height: Optional[float],
+        png_width_px: int | None,
+        png_height_px: int | None,
+        pdf_inch_width: float | None,
+        pdf_inch_height: float | None,
     ) -> None:
         """Validate dimension parameters"""
         if png_width_px is not None and png_width_px < 1:
@@ -231,7 +231,7 @@ class VSceneExporter:
         self,
         filename: str,
         frame_time: float = 0.0,
-        formats: Optional[list[str]] = None,
+        formats: list[str] | None = None,
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         png_thumbnail_width_px: int | None = None,
@@ -397,7 +397,7 @@ class VSceneExporter:
         loop: int = 0,
         optimize: bool = True,
         cleanup_intermediate_files: bool = True,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """Export scene as animated GIF file.
 
@@ -698,7 +698,7 @@ class VSceneExporter:
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         cleanup_svg_after_png_conversion: bool = True,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
     ):
         """Export animation as frame sequence.
@@ -712,7 +712,7 @@ class VSceneExporter:
             png_height_px: Height for PNG frames
             cleanup_svg_after_png_conversion: If format is PNG, whether to delete intermediate SVG files
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
-            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, only supported with PlaywrightHttpSvgConverter)
 
         Yields:
             Tuple of (frame_num, frame_time) for progress tracking
@@ -831,7 +831,7 @@ class VSceneExporter:
         png_width_px: int | None,
         png_height_px: int | None,
         parallel_workers: int,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ):
         """Generate PNG frames with parallel conversion using temp files.
 
@@ -981,7 +981,7 @@ class VSceneExporter:
         cleanup_intermediate_files: bool = True,
         codec: str = DEFAULT_CODEC,
         num_thumbnails: int = 0,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
     ) -> str:
         """Export scene as MP4 video file, with optional thumbnail generation.
@@ -996,7 +996,7 @@ class VSceneExporter:
             codec: Video codec (default: libx264 for MP4)
             num_thumbnails: Number of thumbnails to generate (0 = none, 1 = middle, 2 = start/end, etc.)
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
-            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, only supported with PlaywrightHttpSvgConverter)
 
         Returns:
             Path to the exported video file

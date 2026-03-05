@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import fields, replace
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterator
 
 from svan2d.component.effect.filter.base import Filter
 from svan2d.component.effect.gradient.base import Gradient
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 # Type alias for easing result - can be scalar (normal) or tuple (2D easing)
-EasedT = Union[float, Tuple[float, float]]
+EasedT = float | tuple[float, float]
 
 # Sentinel for "this helper didn't handle the value"
 _NOT_HANDLED = object()
@@ -69,7 +69,7 @@ class InterpolationEngine:
         start_state: State,
         end_state: State,
         attribute_keystates_fields: set,
-    ) -> Tuple[set, Dict[str, Tuple[Any, Any]]]:
+    ) -> tuple[set, dict[str, tuple[Any, Any]]]:
         """Pre-compute which fields differ between two states.
 
         Returns:
@@ -114,8 +114,8 @@ class InterpolationEngine:
 
     @staticmethod
     def _extract_morphing_config(
-        morphing_config: Optional[Any],
-    ) -> Tuple[Optional[Any], Optional[Any]]:
+        morphing_config: Any | None,
+    ) -> tuple[Any | None, Any | None]:
         """Unpack mapper and vertex_aligner from morphing config."""
         if morphing_config is None:
             return None, None
@@ -130,9 +130,9 @@ class InterpolationEngine:
         start_state: State,
         end_state: State,
         attribute_keystates_fields: set,
-        segment_interpolation_config: Optional[Dict[str, Callable]],
-        changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]],
-    ) -> Iterator[Tuple[str, Any, Any]]:
+        segment_interpolation_config: dict[str, Callable] | None,
+        changed_fields: tuple[set, dict[str, tuple[Any, Any]]] | None,
+    ) -> Iterator[tuple[str, Any, Any]]:
         """Yield (field_name, start_value, end_value) for fields that need interpolation.
 
         Handles both the fast path (pre-computed changed_fields) and the fallback
@@ -186,14 +186,14 @@ class InterpolationEngine:
         start_state: State,
         end_state: State,
         t: float,
-        segment_easing_overrides: Optional[Dict[str, Callable[[float], float]]],
+        segment_easing_overrides: dict[str, Callable[[float], float]] | None,
         attribute_keystates_fields: set,
-        vertex_buffer: Optional[Tuple[List, List[List]]] = None,
-        segment_interpolation_config: Optional[Dict[str, Callable]] = None,
-        morphing_config: Optional[Any] = None,
-        changed_fields: Optional[Tuple[set, Dict[str, Tuple[Any, Any]]]] = None,
+        vertex_buffer: tuple[list, list[list]] | None = None,
+        segment_interpolation_config: dict[str, Callable] | None = None,
+        morphing_config: Any | None = None,
+        changed_fields: tuple[set, dict[str, tuple[Any, Any]]] | None = None,
         linear_angle_interpolation: bool = False,
-        state_interpolation: Optional[Callable] = None,
+        state_interpolation: Callable | None = None,
     ) -> State:
         """
         Create an interpolated state between two keystates.
@@ -307,10 +307,10 @@ class InterpolationEngine:
         start_value: Any,
         end_value: Any,
         eased_t: EasedT,
-        vertex_buffer: Optional[Tuple[List, List[List]]] = None,
-        segment_interpolation_config: Optional[Dict[str, Callable]] = None,
-        mapper: Optional[Any] = None,
-        vertex_aligner: Optional[Any] = None,
+        vertex_buffer: tuple[list, list[list]] | None = None,
+        segment_interpolation_config: dict[str, Callable] | None = None,
+        mapper: Any | None = None,
+        vertex_aligner: Any | None = None,
         linear_angle_interpolation: bool = False,
     ) -> Any:
         """

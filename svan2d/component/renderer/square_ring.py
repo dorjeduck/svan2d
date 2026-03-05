@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -25,7 +25,7 @@ class SquareRingRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "SquareRingState", drawing: Optional[dw.Drawing] = None
+        self, state: "SquareRingState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render square ring using SVG path primitives with evenodd fill-rule"""
         import math

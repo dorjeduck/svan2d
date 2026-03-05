@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Tuple
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.polygon import PolygonRenderer

@@ -1,6 +1,3 @@
-# ============================================================================
-# svan2d/paths/subdivision.py
-# ============================================================================
 """
 Robust path subdivision for morphing
 
@@ -13,7 +10,6 @@ Implements proper curve subdivision with full tracking of:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Tuple
 
 from svan2d.core.point2d import Point2D
 from svan2d.path.commands import (
@@ -57,7 +53,7 @@ def lerp_point(p1: Point2D, p2: Point2D, t: float) -> Point2D:
 
 def subdivide_line(
     start: Point2D, end: Point2D, t: float = 0.5
-) -> Tuple[Point2D, Point2D, Point2D]:
+) -> tuple[Point2D, Point2D, Point2D]:
     """Subdivide a line segment at parameter t
 
     Args:
@@ -75,7 +71,7 @@ def subdivide_line(
 
 def subdivide_quadratic(
     start: Point2D, control: Point2D, end: Point2D, t: float = 0.5
-) -> Tuple[Point2D, Point2D, Point2D, Point2D, Point2D]:
+) -> tuple[Point2D, Point2D, Point2D, Point2D, Point2D]:
     """Subdivide a quadratic Bezier curve at parameter t
 
     Uses De Casteljau's algorithm.
@@ -108,7 +104,7 @@ def subdivide_cubic(
     control2: Point2D,
     end: Point2D,
     t: float = 0.5,
-) -> Tuple[Point2D, Point2D, Point2D, Point2D, Point2D]:
+) -> tuple[Point2D, Point2D, Point2D, Point2D, Point2D]:
     """Subdivide a cubic Bezier curve at parameter t
 
     Uses De Casteljau's algorithm.
@@ -148,7 +144,7 @@ def subdivide_cubic(
 
 def subdivide_command(
     cmd: PathCommand, context: PathContext, t: float = 0.5
-) -> Tuple[List[PathCommand], PathContext]:
+) -> tuple[list[PathCommand], PathContext]:
     """Subdivide a single path command at parameter t
 
     Args:
@@ -262,10 +258,7 @@ def estimate_cubic_length(
 
     Args:
         start, c1, c2, end: Control points
-        num_samples: Number of samples for approximation
-
-    Returns:
-        Approximate length of curve
+        num_samples: Number of samples for approximation.
     """
 
     def cubic_point(t: float) -> Point2D:
@@ -297,11 +290,8 @@ def estimate_command_length(cmd: PathCommand, context: PathContext) -> float:
     """Estimate the visual length of a path command
 
     Args:
-        cmd: Command to measure
-        context: Current path context
-
-    Returns:
-        Approximate length
+        cmd: Command to measure.
+        context: Current path context.
     """
     abs_cmd = cmd.to_absolute(context.current_pos)
 
@@ -356,7 +346,7 @@ class CurveInfo:
     start_context: PathContext
 
 
-def analyze_path_curves(commands: List[PathCommand]) -> List[CurveInfo]:
+def analyze_path_curves(commands: list[PathCommand]) -> list[CurveInfo]:
     """Analyze all curves in a path
 
     Args:
@@ -408,18 +398,15 @@ def analyze_path_curves(commands: List[PathCommand]) -> List[CurveInfo]:
 
 
 def subdivide_path_to_count(
-    commands: List[PathCommand], target_curve_count: int
-) -> List[PathCommand]:
+    commands: list[PathCommand], target_curve_count: int
+) -> list[PathCommand]:
     """Subdivide curves in a path until reaching target count
 
     Strategy: Repeatedly subdivide the longest curve for even distribution.
 
     Args:
-        commands: Original path commands
-        target_curve_count: Desired number of curve segments
-
-    Returns:
-        New list of commands with subdivided curves
+        commands: Original path commands.
+        target_curve_count: Desired number of curve segments.
     """
     if target_curve_count <= 0:
         return commands
@@ -464,17 +451,14 @@ def subdivide_path_to_count(
 
 
 def _rebuild_with_subdivision(
-    commands: List[PathCommand], command_index: int, new_commands: List[PathCommand]
-) -> List[PathCommand]:
+    commands: list[PathCommand], command_index: int, new_commands: list[PathCommand]
+) -> list[PathCommand]:
     """Rebuild command list with a subdivided curve
 
     Args:
-        commands: Original commands
-        command_index: Index of command to replace (in original list)
-        new_commands: Subdivision result (usually 2 commands)
-
-    Returns:
-        New command list
+        commands: Original commands.
+        command_index: Index of command to replace (in original list).
+        new_commands: Subdivision result (usually 2 commands).
     """
     # Replace the command at command_index with new_commands
     result = []

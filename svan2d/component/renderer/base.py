@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any, List, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from svan2d.component.state.base import State
@@ -33,20 +33,18 @@ class Renderer(ABC):
 
     @abstractmethod
     def _render_core(
-        self, state: State, drawing: Optional[dw.Drawing] = None
+        self, state: State, drawing: dw.Drawing | None = None
     ) -> dw.DrawingElement:
-        """Render the shape itself (without transforms)
+        """Render the shape itself (without transforms).
 
         Args:
             state: State to render
-            drawing: Optional Drawing object for accessing defs section
-
-        Subclasses must implement this method.
+            drawing: Optional Drawing for accessing defs
         """
         pass
 
     def render(
-        self, state: State, drawing: Optional[dw.Drawing] = None
+        self, state: State, drawing: dw.Drawing | None = None
     ) -> dw.DrawingElement:
         elem = self._render_core(state, drawing=drawing)
 
@@ -65,9 +63,9 @@ class Renderer(ABC):
             transforms.append(f"rotate({state.rotation})")
         if state.scale != 1.0:
             transforms.append(f"scale({state.scale})")
-        if state.skew_x and state.skew_x != 1.0:
+        if state.skew_x:
             transforms.append(f"skewX({state.skew_x})")
-        if state.skew_y and state.skew_y != 1.0:
+        if state.skew_y:
             transforms.append(f"skewY({state.skew_y})")
 
         if transforms:
@@ -132,16 +130,13 @@ class Renderer(ABC):
         return result
 
     def _create_clip_path_def(
-        self, clip_states: List[State], drawing: dw.Drawing
+        self, clip_states: list[State], drawing: dw.Drawing
     ) -> str:
         """Create ClipPath def from a state and add to drawing
 
         Args:
-            clip_states:  List of states defining the clip shape
+            clip_states: List of states defining the clip shape
             drawing: Drawing to add def to
-
-        Returns:
-            ID of the created ClipPath def
         """
         import uuid
 
@@ -187,9 +182,9 @@ class Renderer(ABC):
                 transforms.append(f"rotate({clip_state.rotation})")
             if clip_state.scale != 1.0:
                 transforms.append(f"scale({clip_state.scale})")
-            if clip_state.skew_x != 1.0:
+            if clip_state.skew_x:
                 transforms.append(f"skewX({clip_state.skew_x})")
-            if clip_state.skew_y != 1.0:
+            if clip_state.skew_y:
                 transforms.append(f"skewY({clip_state.skew_y})")
             # Extract paths from group if needed (VertexRenderer returns a group)
             if isinstance(clip_elem, dw.Group) and hasattr(clip_elem, "children"):
@@ -216,9 +211,6 @@ class Renderer(ABC):
         Args:
             mask_state: State defining the mask shape
             drawing: Drawing to add def to
-
-        Returns:
-            ID of the created Mask def
         """
         import uuid
 
@@ -294,9 +286,6 @@ class Renderer(ABC):
             elem: The rendered element to filter
             state: State containing filter definition
             drawing: Drawing for adding defs
-
-        Returns:
-            Element with filter applied (if filter is specified)
         """
         if state.filter is None:
             return elem
@@ -315,9 +304,6 @@ class Renderer(ABC):
         Args:
             filter_obj: Filter object defining the filter effect
             drawing: Drawing to add def to
-
-        Returns:
-            ID of the created Filter def
         """
         import uuid
 
@@ -345,7 +331,7 @@ class Renderer(ABC):
         return filter_id
 
     def _set_fill_and_stroke_kwargs(
-        self, state: State, kwargs: dict, drawing: Optional[dw.Drawing] = None
+        self, state: State, kwargs: dict, drawing: dw.Drawing | None = None
     ) -> None:
         """Helper to set fill and stroke attributes in kwargs dict
 

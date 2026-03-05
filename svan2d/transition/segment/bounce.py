@@ -1,6 +1,6 @@
 """Bounce segment function."""
 
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -14,8 +14,8 @@ def bounce(
     t_end: float,
     hold_duration: float = 0,
     num_transitions: int = 2,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> List[KeyState]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState]:
     """Bounce between two states.
 
     Args:
@@ -23,14 +23,11 @@ def bounce(
         s2: Second state (peaks)
         t_start: Start time
         t_end: End time
-        hold_duration: Optional[float]: how long to hold the state in the in between stages
+        hold_duration: float | None — how long to hold the state in the in-between stages.
         num_transitions: Number of transitions
             (3 = s1->s2->s1->s2)
             (4 = s1->s2->s1->s2->s1)
-        easing: Optional easing dict for transitions
-
-    Returns:
-        List of KeyState objects
+        easing: Optional easing dict for transitions.
 
     """
     result = []

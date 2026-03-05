@@ -2,7 +2,6 @@
 
 import math
 from dataclasses import replace
-from typing import List, Optional
 
 from svan2d.component.state.base import States
 from svan2d.core.point2d import Point2D
@@ -15,7 +14,7 @@ def line(
     spacing: float = 100,
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
-    distances: Optional[List[float]] = None,
+    distances: list[float] | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
 ) -> States:
@@ -32,8 +31,7 @@ def line(
         states: List of states to arrange
         spacing: Distance between adjacent elements. Only used when distances is None.
         rotation: Angle of the line in degrees (0° = horizontal right, 90° = vertical down)
-        cx: X coordinate of line center
-        cy: Y coordinate of line center
+        center: Center point of the line
         distances: Optional list of specific distances from center for each element.
                   If provided, overrides automatic distribution and spacing parameter.
                   Positive values = forward along line, negative = backward along line.
@@ -43,30 +41,15 @@ def line(
                   UPRIGHT starts from vertical position.
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
 
-    Returns:
-        New list of states with line positions
-
     Examples:
         # Even spacing (automatic distribution)
-        line_layout(states, spacing=50, rotation=0)
+        line(states, spacing=50, rotation=0)
 
         # Explicit distances from center
-        line_layout(states, distances=[-100, -20, 50, 150])
-
-        # Mixed: some bunched together, others spread out
-        line_layout(states, distances=[-50, -45, 0, 100, 200])
+        line(states, distances=[-100, -20, 50, 150])
 
         # Elements aligned with line direction
-        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN)
-
-        # Elements kept upright regardless of line rotation
-        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.UPRIGHT)
-
-        # Elements upside down (useful for text hanging from a line)
-        line_layout(states, element_rotation_offset=ElementRotation.HEADS_DOWN)
-
-        # Elements aligned opposite to line direction (pointing backward)
-        line_layout(states, rotation=45, element_rotation_offset=ElementRotation.ALIGN_REVERSE)
+        line(states, rotation=45, alignment=ElementAlignment.LAYOUT)
     """
     if not states:
         return []

@@ -7,12 +7,11 @@ Linux, macOS, and Windows using PID files and psutil for process control.
 from __future__ import annotations
 
 import os
-import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
 
@@ -26,8 +25,8 @@ class ProcessManager:
 
     def __init__(
         self,
-        pid_file: Optional[Path] = None,
-        log_file: Optional[Path] = None,
+        pid_file: Path | None = None,
+        log_file: Path | None = None,
         host: str = "localhost",
         port: int = 4000,
         max_pages: int = 4,
@@ -196,7 +195,7 @@ class ProcessManager:
         time.sleep(1)
         return self.start()
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get detailed server status
 
         Returns:
@@ -256,7 +255,7 @@ class ProcessManager:
         except Exception as e:
             return f"Error reading log file: {e}"
 
-    def _read_pid(self) -> Optional[int]:
+    def _read_pid(self) -> int | None:
         """Read PID from PID file
 
         Returns:

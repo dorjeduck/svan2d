@@ -1,9 +1,9 @@
-# abstract base class for converting SVG to other formats
+"""Abstract base class for converting SVG to other formats (PNG, PDF)."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from svan2d.core.logger import get_logger
 
@@ -14,16 +14,14 @@ logger = get_logger()
 
 
 class SVGConverter(ABC):
-    """
-    Abstract base class for converting SVG files to other formats like PNG and PDF.
-    """
+    """Abstract base class for converting SVG files to other formats like PNG and PDF."""
 
     def convert(
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
-        formats: Optional[list[str]] = None,
+        frame_time: float | None = 0.0,
+        formats: list[str] | None = None,
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         png_thumb_width_px: int | None = None,
@@ -91,8 +89,8 @@ class SVGConverter(ABC):
         self,
         scene: VScene,
         output: dict,
-        frame_time: Optional[float] = 0.0,
-        formats: Optional[list] = ["png", "pdf"],
+        frame_time: float | None = 0.0,
+        formats: list | None = None,
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,
@@ -121,7 +119,7 @@ class SVGConverter(ABC):
             success = success and _pdf["success"]
             if _pdf["success"]:
                 logger.debug(
-                    f"PNG exported to {_pdf['output']} ({self.__class__.__name__})"
+                    f"PDF exported to {_pdf['output']} ({self.__class__.__name__})"
                 )
                 ret["pdf"] = _pdf["output"]
 
@@ -148,8 +146,8 @@ class SVGConverter(ABC):
         if success:
             return {
                 "success": True,
-                "png": ret.get("png_output"),
-                "pdf": ret.get("pdf_output"),
+                "png": ret.get("png"),
+                "pdf": ret.get("pdf"),
             }
         else:
             errors = ""
@@ -167,7 +165,7 @@ class SVGConverter(ABC):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         width_px: int | None = None,
         height_px: int | None = None,
     ) -> dict:
@@ -178,7 +176,7 @@ class SVGConverter(ABC):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         inch_width: int | None = None,
         inch_height: int | None = None,
     ) -> dict:
@@ -258,17 +256,13 @@ class SVGConverter(ABC):
     ) -> bool:
         """Render SVG content directly to PNG file.
 
-        This method is used for parallel rendering where SVG content
-        is pre-generated and conversion happens concurrently.
+        Used for parallel rendering where SVG content is pre-generated.
 
         Args:
-            svg_content: SVG string to render
-            output_path: Output PNG file path
-            width: Output width in pixels
-            height: Output height in pixels
-
-        Returns:
-            True if successful, False otherwise
+            svg_content: SVG string to render.
+            output_path: Output PNG file path.
+            width: Output width in pixels.
+            height: Output height in pixels.
         """
         # Default implementation - subclasses should override for efficiency
         raise NotImplementedError(
@@ -284,16 +278,7 @@ class SVGConverter(ABC):
         filename: str | None = None,
         log: bool = True,
     ):
-        """
-        Generate scaled SVG content that fits within the target dimensions.
-
-        Uses 'min' instead of 'max' to ensure content fits within bounds
-        without overflow, maintaining aspect ratio.
-
-        The scale factor is calculated as the minimum ratio needed to fit
-        the scene within the target dimensions. This prevents content from
-        being cut off or overflowing the viewport.
-        """
+        """Generate scaled SVG content fitting within the target dimensions (aspect-ratio preserved)."""
         # Use MIN to fit content within bounds (not MAX which causes overflow)
         scale = min(
             width / scene.width,

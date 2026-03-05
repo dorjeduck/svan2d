@@ -11,7 +11,7 @@ This is the main entry point - uses pluggable strategies from:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours, VertexLoop
@@ -51,10 +51,10 @@ def _get_mapper_from_config() -> Mapper:
 def get_aligned_vertices(
     state1: VertexState,
     state2: VertexState,
-    vertex_aligner: Optional[VertexAligner] = None,
-    mapper: Optional[Mapper] = None,
+    vertex_aligner: VertexAligner | None = None,
+    mapper: Mapper | None = None,
     rotation_target: float | None = None,
-) -> Tuple[VertexContours, VertexContours]:
+) -> tuple[VertexContours, VertexContours]:
     """Align vertex contours and return aligned contours
 
     This is called once per segment during keystate preprocessing.

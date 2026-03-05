@@ -7,7 +7,7 @@ Spatially close items are grouped together for morphing.
 from __future__ import annotations
 
 import random
-from typing import Callable, List, TypeVar
+from typing import Callable, TypeVar
 
 from svan2d.core.point2d import Point2D
 
@@ -40,10 +40,10 @@ class ClusteringMapper(Mapper):
 
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Map items using k-means clustering."""
         if not start_items and not end_items:
             return []
@@ -66,10 +66,10 @@ class ClusteringMapper(Mapper):
 
     def _match_merge(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Match when merging (more start items than end items)."""
         n_clusters = len(end_items)
         positions = [get_position(item) for item in start_items]
@@ -116,10 +116,10 @@ class ClusteringMapper(Mapper):
 
     def _match_split(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Match when splitting (more end items than start items)."""
         n_clusters = len(start_items)
         positions = [get_position(item) for item in end_items]
@@ -164,7 +164,7 @@ class ClusteringMapper(Mapper):
 
         return matches
 
-    def _kmeans(self, positions: List[Point2D], k: int) -> List[int]:
+    def _kmeans(self, positions: list[Point2D], k: int) -> list[int]:
         """Run k-means clustering on positions."""
         if k <= 0 or not positions:
             return []
@@ -204,7 +204,7 @@ class ClusteringMapper(Mapper):
 
         return assignments
 
-    def _compute_centroid(self, positions: List[Point2D]) -> Point2D:
+    def _compute_centroid(self, positions: list[Point2D]) -> Point2D:
         """Compute centroid of a list of positions."""
         if not positions:
             return Point2D(0, 0)

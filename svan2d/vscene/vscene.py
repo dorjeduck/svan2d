@@ -5,12 +5,8 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
-    List,
-    Optional,
     Sequence,
     TypeAlias,
-    Union,
 )
 
 # Type alias for easing function
@@ -35,7 +31,7 @@ if TYPE_CHECKING:
 
 
 # Type alias for any renderable element
-RenderableElement = Union["VElement", "VElementGroup"]
+RenderableElement: TypeAlias = "VElement | VElementGroup"
 
 logger = get_logger()
 
@@ -57,16 +53,16 @@ class VScene:
         height: float | None = None,
         background: Color | None = None,
         background_opacity: float | None = None,
-        origin: Optional[Origin] = None,
+        origin: Origin | None = None,
         offset_x: float = 0.0,
         offset_y: float = 0.0,
         scale: float = 1.0,
         rotation: float = 0.0,
         # Scene-level clipping/masking
-        clip_state: Optional["State"] = None,
-        mask_state: Optional["State"] = None,
+        clip_state: "State | None" = None,
+        mask_state: "State | None" = None,
         # Timeline easing
-        timeline_easing: Optional[EasingFunc] = None,
+        timeline_easing: EasingFunc | None = None,
     ) -> None:
         """Initialize a new scene with given dimensions and styling
 
@@ -148,30 +144,28 @@ class VScene:
         self.timeline_easing = timeline_easing
 
         # Elements list
-        self.elements: List[RenderableElement] = []
+        self.elements: list[RenderableElement] = []
 
         # Camera animation state
-        self._camera_keystates: List[tuple[CameraState, float, Optional[Dict]]] = []
-        self._camera_pending_easing: Optional[Dict[str, Callable[[float], float]]] = (
-            None
-        )
+        self._camera_keystates: list[tuple[CameraState, float, dict | None]] = []
+        self._camera_pending_easing: dict[str, Callable[[float], float]] | None = None
 
         # Camera animation functions (for function-based animate_camera)
-        self._camera_scale_func: Optional[ScaleFunc] = None
-        self._camera_offset_func: Optional[OffsetFunc] = None
-        self._camera_rotation_func: Optional[RotationFunc] = None
-        self._camera_func_easing: Optional[EasingFunc] = None
+        self._camera_scale_func: ScaleFunc | None = None
+        self._camera_offset_func: OffsetFunc | None = None
+        self._camera_rotation_func: RotationFunc | None = None
+        self._camera_func_easing: EasingFunc | None = None
 
     def _replace(
         self,
         *,
-        elements: Optional[List[RenderableElement]] = None,
-        camera_keystates: Optional[List[tuple[CameraState, float, Optional[Dict]]]] = None,
-        camera_pending_easing: Optional[Dict[str, Callable[[float], float]]] = ...,  # type: ignore[assignment]
-        camera_scale_func: Optional[ScaleFunc] = ...,  # type: ignore[assignment]
-        camera_offset_func: Optional[OffsetFunc] = ...,  # type: ignore[assignment]
-        camera_rotation_func: Optional[RotationFunc] = ...,  # type: ignore[assignment]
-        camera_func_easing: Optional[EasingFunc] = ...,  # type: ignore[assignment]
+        elements: list[RenderableElement] | None = None,
+        camera_keystates: list[tuple[CameraState, float, dict | None]] | None = None,
+        camera_pending_easing: dict[str, Callable[[float], float]] | None = ...,  # type: ignore[assignment]
+        camera_scale_func: ScaleFunc | None = ...,  # type: ignore[assignment]
+        camera_offset_func: OffsetFunc | None = ...,  # type: ignore[assignment]
+        camera_rotation_func: RotationFunc | None = ...,  # type: ignore[assignment]
+        camera_func_easing: EasingFunc | None = ...,  # type: ignore[assignment]
     ) -> "VScene":
         """Return a new VScene with specified attributes replaced."""
         new = VScene.__new__(VScene)
@@ -281,7 +275,7 @@ class VScene:
 
     def camera_transition(
         self,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: dict[str, Callable[[float], float]] | None = None,
     ) -> "VScene":
         """Configure the transition between the previous and next camera keystate.
         Returns new VScene.
@@ -308,13 +302,11 @@ class VScene:
 
     def animate_camera(
         self,
-        scale: Optional[Union[tuple[float, float], ScaleFunc]] = None,
-        offset: Optional[
-            Union[tuple[tuple[float, float], tuple[float, float]], OffsetFunc]
-        ] = None,
-        rotation: Optional[Union[tuple[float, float], RotationFunc]] = None,
-        pivot: Optional[tuple[float, float]] = None,
-        easing: Optional[Callable[[float], float]] = None,
+        scale: tuple[float, float] | ScaleFunc | None = None,
+        offset: tuple[tuple[float, float], tuple[float, float]] | OffsetFunc | None = None,
+        rotation: tuple[float, float] | RotationFunc | None = None,
+        pivot: tuple[float, float] | None = None,
+        easing: Callable[[float], float] | None = None,
     ) -> "VScene":
         """Convenience method for simple 2-point camera animation. Returns new VScene.
 
@@ -917,7 +909,7 @@ class VScene:
         if not self.elements:
             return (0.0, 1.0)
 
-        times: List[float] = []
+        times: list[float] = []
         for element in self.elements:
             keystates = getattr(element, "_keystates_list", None)
             if keystates and isinstance(keystates, list) and len(keystates) > 0:

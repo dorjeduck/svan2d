@@ -1,6 +1,5 @@
 """Preview rendering utilities for VScene (Jupyter notebooks and dev server)"""
 
-from typing import List
 
 from svan2d.config import ConfigKey, get_config
 from svan2d.vscene.vscene import VScene
@@ -118,7 +117,7 @@ class PreviewRenderer:
         times = [i / (num_frames - 1) for i in range(num_frames)]
         return self._render_navigator(times, play_interval_ms)
 
-    def _render_grid(self, times: List[float], scale: float = 1.0):
+    def _render_grid(self, times: list[float], scale: float = 1.0):
         """Display all frames in a grid layout
 
         Args:
@@ -159,7 +158,7 @@ class PreviewRenderer:
         html_parts.append("</div>")
         return HTML("".join(html_parts))
 
-    def _render_navigator(self, times: List[float], play_interval_ms: int):
+    def _render_navigator(self, times: list[float], play_interval_ms: int):
         """Display one frame at a time with navigation controls (prev/next, slider, play)
 
         Args:

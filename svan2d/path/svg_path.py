@@ -1,30 +1,24 @@
-# ============================================================================
-# svan2d/paths/svg_path.py
-# ============================================================================
 """SVG Path Class with Morphing Support"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 from svan2d.core.point2d import Point2D
 
-from .arc_to_bezier import (
-    arc_to_beziers,
-)  # New: Function to convert Arc to Cubic Beziers
+from .arc_to_bezier import arc_to_beziers
 from .commands import (
-    Arc,  # New
+    Arc,
     ClosePath,
     CubicBezier,
-    HorizontalLine,  # New
+    HorizontalLine,
     LineTo,
     MoveTo,
     PathCommand,
     QuadraticBezier,
-    SmoothCubicBezier,  # New
-    SmoothQuadraticBezier,  # New
-    VerticalLine,  # New
+    SmoothCubicBezier,
+    SmoothQuadraticBezier,
+    VerticalLine,
 )
 from .parser import parse_coordinates, tokenize_path
 
@@ -37,7 +31,7 @@ class SVGPath:
     than a string, enabling smooth interpolation between paths.
     """
 
-    commands: List[PathCommand]
+    commands: list[PathCommand]
     path_string: str | None = None
 
     @staticmethod
@@ -50,9 +44,6 @@ class SVGPath:
         Args:
             path_string: The raw SVG path data string.
 
-        Returns:
-            A new SVGPath instance.
-
         Raises:
             ValueError: If parsing encounters an unexpected command or missing coordinates.
         """
@@ -63,7 +54,7 @@ class SVGPath:
         if not tokens:
             return SVGPath([])
 
-        parsed_commands: List[PathCommand] = []
+        parsed_commands: list[PathCommand] = []
         # The current command letter for sequential commands (e.g., L 10 20 30 40)
         current_command_type: str = ""
 
@@ -187,28 +178,19 @@ class SVGPath:
         return SVGPath(parsed_commands, path_string)
 
     def to_string(self) -> str:
-        """Convert to SVG path data string
-
-        Returns:
-            SVG path data string (e.g., "M 0,0 L 100,100")
-        """
-        ## print types of all self.commands
+        """Convert to SVG path data string (e.g., "M 0,0 L 100,100")"""
         if self.path_string is None:
             self.path_string = " ".join(cmd.to_string() for cmd in self.commands)
         return self.path_string
 
     def to_absolute(self) -> SVGPath:
-        """Convert all commands to absolute coordinates
-
-        Returns:
-            New SVGPath with all absolute commands
-        """
+        """Convert all commands to absolute coordinates."""
         absolute_commands = []
-        current_pos = (0.0, 0.0)
+        current_pos = Point2D(0.0, 0.0)
 
         # We need to track the MoveTo position for Z commands
         # and the last control point for S and T commands
-        subpath_start_pos = (0.0, 0.0)
+        subpath_start_pos = Point2D(0.0, 0.0)
 
         for cmd in self.commands:
             abs_cmd = cmd.to_absolute(current_pos)
@@ -340,17 +322,13 @@ class SVGPath:
         return total_length
 
     def is_compatible_for_morphing(self, other: SVGPath) -> bool:
-        """Check if two paths can be morphed
+        """Check if two paths can be morphed.
 
-        Paths are compatible if they have:
-        - Same number of commands
-        - Same command types in same order
+        Paths are compatible if they have the same number of commands and the same
+        command types in the same order.
 
         Args:
-            other: Path to check compatibility with
-
-        Returns:
-            True if paths can be morphed
+            other: Path to check compatibility with.
         """
         if len(self.commands) != len(other.commands):
             return False
@@ -379,7 +357,7 @@ class SVGPath:
             # 1. Ensure command is absolute for easy calculation
             abs_cmd = cmd.to_absolute(current_pos)
 
-            new_commands: List[PathCommand] = [abs_cmd]  # Default is the command itself
+            new_commands: list[PathCommand] = [abs_cmd]  # Default is the command itself
 
             # 2. Handle Conversion
             if isinstance(abs_cmd, MoveTo):
@@ -562,45 +540,13 @@ class SVGPath:
         """Interpolate between two paths with automatic normalization
 
         Args:
-            path1: Starting path
-            path2: Ending path
-            t: Interpolation factor (0.0 to 1.0)
-            auto_normalize: If True, automatically normalize paths for morphing
-
-        Returns:
-            Interpolated path at time t
+            path1: Starting path.
+            path2: Ending path.
+            t: Interpolation factor (0.0 to 1.0).
+            auto_normalize: If True, automatically normalize paths for morphing.
 
         Raises:
             ValueError: If paths are incompatible and auto_normalize fails
-        """
-
-        """
-        if auto_normalize:
-            # NOTE: We are removing the external dependency on 'svan2d.paths.normalization'
-            # and using the local normalize_for_morphing() method.
-            try:
-                norm_path1, norm_path2 = path1.normalize_for_morphing(path2)
-            except ValueError as e:
-                raise ValueError(f"Cannot normalize paths for morphing: {e}")
-        else:
-            norm_path1 = path1.to_absolute()
-            norm_path2 = path2.to_absolute()
-
-        # Verify compatibility
-        if not norm_path1.is_compatible_for_morphing(norm_path2):
-            raise ValueError(
-                f"Paths are not compatible for morphing. "
-                f"Path 1 has {len(norm_path1.commands)} commands, "
-                f"Path 2 has {len(norm_path2.commands)} commands. "
-                f"Command types must match."
-            )
-
-        # Interpolate each command
-        interpolated_commands = []
-        for cmd1, cmd2 in zip(norm_path1.commands, norm_path2.commands):
-            interpolated_commands.append(cmd1.interpolate(cmd2, t))
-
-        return SVGPath(interpolated_commands)
         """
 
         from svan2d.path.morphing import polymorph_interpolate

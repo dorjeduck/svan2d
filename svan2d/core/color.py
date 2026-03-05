@@ -1,27 +1,21 @@
-# ============================================================================
-# svan2d/core/color.py
-# ============================================================================
-"""Immutable Color class with RGBA support, format conversions and interpolation"""
+"""Immutable Color class with RGBA support, format conversions and interpolation."""
 
 import colorsys
 import math
 from enum import StrEnum
-from typing import Any, ClassVar, Optional, Tuple, Union
+from typing import Any, ClassVar
 
 # Type aliases
-ColorTuple = Tuple[int, int, int]
-ColorInput = Union["Color", ColorTuple, str]
+ColorTuple = tuple[int, int, int]
 
 
 class ColorSpace(StrEnum):
-    """
-    Color space options for interpolation.
+    """Color space for ``Color.interpolate``.
 
-    Members:
-        RGB: Fast interpolation in RGB space, but may appear muddy.
-        HSV: Good for hue shifts and rainbow effects.
-        LAB: Most perceptually uniform; recommended for smooth transitions.
-        LCH: LAB in cylindrical coordinates, giving smooth hue transitions.
+    - ``RGB``: Fast, but can look muddy.
+    - ``HSV``: Good for rainbow/hue-shift effects.
+    - ``LAB``: Most perceptually uniform (default).
+    - ``LCH``: LAB in cylindrical form; smooth hue transitions.
     """
 
     RGB = "rgb"
@@ -31,28 +25,26 @@ class ColorSpace(StrEnum):
 
 
 class Color:
-    """Immutable RGBA color with conversion utilities and interpolation
+    """Immutable RGB color with conversion utilities and interpolation.
 
-    Use Color.NONE as a sentinel for "no color" (transparent/none).
+    Use ``Color.NONE`` as a sentinel for "no color" (transparent/none).
 
-    Initialization can now take any supported format directly:
-    Examples:
-        red = Color(255, 0, 0)
-        blue_hex = Color("#0000FF")
-        blue_short = Color("#00F")  # 3-char hex codes supported
-        white = Color("#FFF")       # Expanded to #FFFFFF
-        green_name = Color("green")
-        existing_color = Color(blue_hex)  # Returns copy
+    Accepted constructor forms::
+
+        Color(255, 0, 0)          # r, g, b ints
+        Color("#FF0000")          # 6-char hex
+        Color("#F00")             # 3-char hex (expanded to 6)
+        Color("red")              # CSS color name
+        Color(other_color)        # copy
+        Color((255, 0, 0))        # RGB tuple
     """
 
     NONE: ClassVar["Color"]
 
     # Define slots to make the class immutable and memory-efficient
-    __slots__ = ["r", "g", "b", "a", "_is_none_sentinel", "_hash"]
+    __slots__ = ["r", "g", "b", "_is_none_sentinel", "_hash"]
 
     def __init__(self, *args, **kwargs):
-        """Flexible initializer to create Color from various formats."""
-
         # Internal sentinel creation (used only by Color.NONE constant)
         if kwargs.get("_is_none_sentinel"):
             self.r = 0
@@ -63,11 +55,10 @@ class Color:
             return
 
         result_r, result_g, result_b = 0, 0, 0
-        result_a = 255  # Default fully opaque
         input_value = None
 
         if len(args) == 3 and all(isinstance(a, int) for a in args):
-            # Case 1b: Color(r, g, b)
+            # Case 1: Color(r, g, b)
             result_r, result_g, result_b = args
         elif len(args) == 1:
             input_value = args[0]
@@ -78,7 +69,7 @@ class Color:
                 return
 
             elif isinstance(input_value, tuple):
-                # Case 3: Color((r, g, b)) or Color((r, g, b, a))
+                # Case 3: Color((r, g, b))
                 if len(input_value) == 3:
                     if not all(isinstance(v, int) for v in input_value):
                         raise ValueError(
@@ -88,7 +79,7 @@ class Color:
 
                 else:
                     raise ValueError(
-                        f"Tuple must contain 3  integers (r, g, b), got {input_value}"
+                        f"Tuple must contain 3 integers (r, g, b), got {input_value}"
                     )
 
             elif isinstance(input_value, str):
@@ -108,7 +99,7 @@ class Color:
                 raise ValueError(f"Cannot initialize Color from {type(input_value)}")
         else:
             raise ValueError(
-                "Color must be initialized with Color(r, g, b[, a]), Color(hex_str), Color(name), or Color(tuple)."
+                "Color must be initialized with Color(r, g, b), Color(hex_str), Color(name), or Color(tuple)."
             )
 
         # --- Final Assignment and Validation ---
@@ -131,7 +122,6 @@ class Color:
         return self._is_none_sentinel
 
     def __eq__(self, other: Any) -> bool:
-        """Equality check for comparison and set/dict use"""
         if not isinstance(other, Color):
             return NotImplemented
         return (self.r, self.g, self.b, self._is_none_sentinel) == (
@@ -142,7 +132,6 @@ class Color:
         )
 
     def __hash__(self) -> int:
-        """Return pre-calculated hash (necessary for immutability)"""
         return self._hash
 
     # ========================================================================
@@ -198,24 +187,24 @@ class Color:
 
     @classmethod
     def from_tuple(cls, rgb: ColorTuple) -> "Color":
-        """Create from RGB or RGBA tuple"""
+        """Create from an RGB tuple — equivalent to ``Color(rgb)``."""
         return cls(rgb)
 
     @classmethod
     def from_hex(cls, hex_str: str) -> "Color":
-        """Create from hex string"""
+        """Create from a hex string — equivalent to ``Color(hex_str)``."""
         return cls(hex_str)
 
     @classmethod
     def from_name(cls, name: str) -> "Color":
-        """Create from CSS color name"""
+        """Create from a CSS color name — equivalent to ``Color(name)``."""
         return cls(name)
 
     # ========================================================================
     # Conversion methods
     # ========================================================================
 
-    def to_tuple(self) -> Optional[ColorTuple]:
+    def to_tuple(self) -> ColorTuple | None:
         """Convert to RGB tuple (without alpha) for rendering"""
         if self.is_none():
             return None
@@ -228,7 +217,7 @@ class Color:
         return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
 
     def to_rgb_string(self) -> str:
-        """Convert to CSS rgb() or rgba() string for drawsvg or 'none'"""
+        """Convert to CSS ``rgb(r,g,b)`` string, or ``'none'`` for Color.NONE."""
         if self.is_none():
             return "none"
 
@@ -241,7 +230,7 @@ class Color:
     def interpolate(
         self, other: "Color", t: float, space: ColorSpace = ColorSpace.LAB
     ) -> "Color":
-        """Interpolate to another color (including alpha channel)"""
+        """Interpolate toward ``other`` at ``t`` in the given color space."""
         # Handle NONE colors - step transition
         if self.is_none():
             return other
@@ -256,13 +245,11 @@ class Color:
             rgb = _interpolate_lab(self, other, t)
         elif space == ColorSpace.LCH:
             rgb = _interpolate_lch(self, other, t)
-        else:
-            rgb = _interpolate_rgb(self, other, t)
 
         return Color(rgb[0], rgb[1], rgb[2])
 
     def darken(self, amount: int) -> "Color":
-        """Create darker version of this color (preserves alpha)"""
+        """Return a darker version by subtracting ``amount`` from each channel (clamped to 0)."""
         return Color(
             max(0, self.r - amount),
             max(0, self.g - amount),
@@ -270,7 +257,7 @@ class Color:
         )
 
     def lighten(self, amount: int) -> "Color":
-        """Create lighter version of this color (preserves alpha)"""
+        """Return a lighter version by adding ``amount`` to each channel (clamped to 255)."""
         return Color(
             min(255, self.r + amount),
             min(255, self.g + amount),
@@ -336,14 +323,14 @@ def _interpolate_hsv(start: Color, end: Color, t: float) -> ColorTuple:
     return _hsv_to_rgb((h, s, v))
 
 
-def _rgb_to_hsv(color: Color) -> Tuple[float, float, float]:
+def _rgb_to_hsv(color: Color) -> tuple[float, float, float]:
     """Convert RGB (0-255) to HSV (0-360, 0-100, 0-100)"""
     r, g, b = color.r / 255, color.g / 255, color.b / 255
     h, s, v = colorsys.rgb_to_hsv(r, g, b)
     return (h * 360, s * 100, v * 100)
 
 
-def _hsv_to_rgb(hsv: Tuple[float, float, float]) -> ColorTuple:
+def _hsv_to_rgb(hsv: tuple[float, float, float]) -> ColorTuple:
     """Convert HSV (0-360, 0-100, 0-100) to RGB (0-255)"""
     h, s, v = hsv[0] / 360, hsv[1] / 100, hsv[2] / 100
     r, g, b = colorsys.hsv_to_rgb(h, s, v)
@@ -366,7 +353,7 @@ def _interpolate_lab(start: Color, end: Color, t: float) -> ColorTuple:
     return _lab_to_rgb((L, A, B))
 
 
-def _rgb_to_lab(color: Color) -> Tuple[float, float, float]:
+def _rgb_to_lab(color: Color) -> tuple[float, float, float]:
     """Convert RGB (0-255) to LAB color space"""
     # Normalize RGB to [0, 1]
     r, g, b = color.r / 255, color.g / 255, color.b / 255
@@ -398,7 +385,7 @@ def _rgb_to_lab(color: Color) -> Tuple[float, float, float]:
     return (L, A, B)
 
 
-def _lab_to_rgb(lab: Tuple[float, float, float]) -> ColorTuple:
+def _lab_to_rgb(lab: tuple[float, float, float]) -> ColorTuple:
     """Convert LAB to RGB (0-255)"""
     L, A, B = lab
 
@@ -450,7 +437,7 @@ def _interpolate_lch(start: Color, end: Color, t: float) -> ColorTuple:
     return _lch_to_rgb((L, C, H))
 
 
-def _rgb_to_lch(color: Color) -> Tuple[float, float, float]:
+def _rgb_to_lch(color: Color) -> tuple[float, float, float]:
     """Convert RGB to LCH (Lightness, Chroma, Hue)"""
     L, A, B = _rgb_to_lab(color)
 
@@ -462,7 +449,7 @@ def _rgb_to_lch(color: Color) -> Tuple[float, float, float]:
     return (L, C, H)
 
 
-def _lch_to_rgb(lch: Tuple[float, float, float]) -> ColorTuple:
+def _lch_to_rgb(lch: tuple[float, float, float]) -> ColorTuple:
     """Convert LCH to RGB"""
     L, C, H = lch
 
@@ -473,19 +460,20 @@ def _lch_to_rgb(lch: Tuple[float, float, float]) -> ColorTuple:
     return _lab_to_rgb((L, A, B))
 
 
-def srgb_to_linear(c: int) -> float:
+def _srgb_to_linear(c: int) -> float:
     c_ = c / 255
     return c_ / 12.92 if c_ <= 0.04045 else ((c_ + 0.055) / 1.055) ** 2.4
 
 
-def linear_to_srgb(c: float) -> float:
+def _linear_to_srgb(c: float) -> float:
     return 12.92 * c if c <= 0.0031308 else 1.055 * (c ** (1 / 2.4)) - 0.055
 
 
-def color_to_oklab(color: Color):
-    r = srgb_to_linear(color.r)
-    g = srgb_to_linear(color.g)
-    b = srgb_to_linear(color.b)
+def color_to_oklab(color: Color) -> tuple[float, float, float]:
+    """Convert a Color to Oklab color space (L, a, b)."""
+    r = _srgb_to_linear(color.r)
+    g = _srgb_to_linear(color.g)
+    b = _srgb_to_linear(color.b)
 
     l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
     m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
@@ -500,7 +488,8 @@ def color_to_oklab(color: Color):
     )
 
 
-def oklab_to_color(lab) -> Color:
+def oklab_to_color(lab: tuple[float, float, float]) -> Color:
+    """Convert Oklab (L, a, b) to a Color."""
     L, a, b = lab
 
     l_ = L + 0.3963377774 * a + 0.2158037573 * b
@@ -514,7 +503,7 @@ def oklab_to_color(lab) -> Color:
     b = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
 
     def clamp(c):
-        c = linear_to_srgb(c)
+        c = _linear_to_srgb(c)
         return max(0, min(255, int(round(c * 255))))
 
     return Color((clamp(r), clamp(g), clamp(b)))

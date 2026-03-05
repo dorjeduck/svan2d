@@ -1,6 +1,6 @@
 """Path function resolution with 2-level priority system"""
 
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from svan2d.core.point2d import Point2D
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 PathFunction = Callable[["Point2D", "Point2D", float], "Point2D"]
 
 # Per-field path configuration
-PathConfig = Dict[str, PathFunction]
+PathConfig = dict[str, PathFunction]
 
 
 class PathResolver:
@@ -30,7 +30,7 @@ class PathResolver:
     def get_path_for_field(
         self,
         field_name: str,
-        segment_interpolation_config: Optional[PathConfig] = None,
+        segment_interpolation_config: PathConfig | None = None,
     ) -> PathFunction:
         """
         Get the path function for a specific field following the 2-level priority.
@@ -38,10 +38,7 @@ class PathResolver:
         Args:
             field_name: Name of the Point2D field (e.g., "pos", "anchor")
             segment_interpolation_config: Optional segment-level path config dict
-                                 {field_name: path_function}
-
-        Returns:
-            Path function to apply for Point2D interpolation of this field
+                                 {field_name: path_function}.
         """
         # Level 1: Segment-level path for this field (highest priority)
         if segment_interpolation_config is not None and field_name in segment_interpolation_config:
@@ -53,7 +50,7 @@ class PathResolver:
 
     def get_path(
         self,
-        segment_path: Optional[PathFunction] = None,
+        segment_path: PathFunction | None = None,
     ) -> PathFunction:
         """
         Get the path function following the 2-level priority.
@@ -61,10 +58,7 @@ class PathResolver:
         DEPRECATED: Use get_path_for_field() instead for per-field path support.
 
         Args:
-            segment_path: Optional segment-level path function
-
-        Returns:
-            Path function to apply for Point2D interpolation
+            segment_path: Optional segment-level path function.
         """
         # Level 1: Segment-level path (highest priority)
         if segment_path is not None:

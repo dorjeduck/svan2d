@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 # Single logger instance for the entire package
 _logger = logging.getLogger("svan2d")
@@ -82,11 +81,7 @@ def configure_logging(
 
 
 def get_logger() -> logging.Logger:
-    """Get the svan2d logger instance.
-
-    Returns:
-        The configured logger for the svan2d package
-    """
+    """Return the svan2d logger, initializing a NullHandler if not yet configured."""
     # Ensure logger has at least a NullHandler if never configured
     if not _logger.handlers:
         _logger.addHandler(logging.NullHandler())

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import Field, dataclass, replace
-from typing import Any, List
+from typing import Any
 
 from svan2d.component.effect.filter import Filter
 from svan2d.core.color import Color
@@ -36,8 +36,8 @@ class State(ABC):
     # Clipping and masking support
     clip_state: State | None = None
     mask_state: State | None = None
-    clip_states: List[State] | None = None
-    mask_states: List[State] | None = None
+    clip_states: list[State] | None = None
+    mask_states: list[State] | None = None
 
     # Filter support
     filter: Filter | None = None
@@ -45,8 +45,8 @@ class State(ABC):
     # Attributes that should not be interpolated (structural/configuration attributes)
     NON_INTERPOLATABLE_FIELDS: frozenset[str] = frozenset(["NON_INTERPOLATABLE_FIELDS"])
 
-    # can be overridden by subclasses to add further angle attributes
-    # used in interpolation (shortest angle distance)
+    # Subclasses can override is_angle() to mark additional fields as angles,
+    # which enables shortest-path interpolation for those fields.
 
     def __post_init__(self):
         """Apply configuration defaults for common attributes if not explicitly set"""

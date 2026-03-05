@@ -1,3 +1,5 @@
+"""SVG path builder functions for common shapes"""
+
 from svan2d.core.point2d import Point2D
 
 from .commands import (

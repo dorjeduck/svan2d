@@ -10,7 +10,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
@@ -40,8 +40,8 @@ class BrowserPool:
 
     def __init__(self, max_pages: int = 4):
         self.max_pages = max_pages
-        self._playwright: Optional[Playwright] = None
-        self._browser: Optional[Browser] = None
+        self._playwright: Playwright | None = None
+        self._browser: Browser | None = None
         self._page_pool: asyncio.Queue[Page] = asyncio.Queue()
         self._pages_created = 0
         self._lock = asyncio.Lock()

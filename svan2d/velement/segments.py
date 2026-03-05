@@ -8,13 +8,13 @@ sequences of KeyState objects. Use with VElement.segment():
     element = (
         VElement()
         .keystate(s1, at=0.0)
-        .segment(hold(s2, at=0.3, dur=0.1))
+        .segment(hold(s2, at=0.3, duration=0.1))
         .keystate(s3, at=1.0)
     )
 """
 
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -28,36 +28,33 @@ def linspace(n):
 
 
 def hold(
-    states: Union[State, List[State]],
-    at: Optional[Union[float, List[float]]] = None,
+    states: State | list[State],
+    at: float | list[float] | None = None,
     duration: float | None = None,
-) -> List[KeyState]:
+) -> list[KeyState]:
     """Hold at state(s) for a duration, centered at 'at'.
 
     Creates two identical keystates bracketing each hold period.
 
     Args:
-        state: State to hold, or list of states
-        at: Center time of the hold, or list of times (same length as states)
-        dur: Total duration of each hold
-
-    Returns:
-        List of KeyState objects
+        states: State to hold, or list of states.
+        at: Center time of the hold, or list of times (same length as states).
+        duration: Total duration of each hold.
 
     Example:
         # Single state hold
-        .segment(hold(s, at=0.5, dur=0.1))
+        .segment(hold(s, at=0.5, duration=0.1))
         # Expands to keystates at t=0.45 and t=0.55
 
         # Multiple states with different times
-        .segment(hold([s1, s2, s3], at=[0.2, 0.5, 0.8], dur=0.1))
+        .segment(hold([s1, s2, s3], at=[0.2, 0.5, 0.8], duration=0.1))
         # Expands to 6 keystates (2 per state)
     """
     # Handle single state case
     if isinstance(states, State):
-        if at == None:
+        if at is None:
             at = 0.5
-        if duration == None:
+        if duration is None:
             duration = 1.0 / 3
         half = duration / 2
         if isinstance(at, list):
@@ -68,9 +65,9 @@ def hold(
             KeyState(state=states, time=min(1, at + half)),
         ]
 
-    if at == None:
+    if at is None:
         at = linspace(len(states))
-    if duration == None:
+    if duration is None:
         duration = 1.0 / (3 * len(states))
     half = duration / 2
 
@@ -90,11 +87,19 @@ def hold(
 
 
 def fade_inout(
-    states: Union[State, List[State]],
-    at: Optional[Union[float, List[float]]] = None,
+    states: State | list[State],
+    at: float | list[float] | None = None,
     hold_duration: float | None = None,
     fade_duration: float | None = None,
-) -> List[KeyState]:
+) -> list[KeyState]:
+    """Fade in, hold, then fade out.
+
+    Args:
+        states: State to fade, or list of states.
+        at: Center time of the hold, or list of times (same length as states).
+        hold_duration: Duration of the hold period.
+        fade_duration: Duration of each fade (in and out).
+    """
 
     def get_keystates(state, t, hold_dur, fade_dur):
 
@@ -115,11 +120,11 @@ def fade_inout(
     # Handle single state case
     if isinstance(states, State):
 
-        if at == None:
+        if at is None:
             at = 0.5
-        if hold_duration == None:
+        if hold_duration is None:
             hold_duration = 1.0 / 3
-        if fade_duration == None:
+        if fade_duration is None:
             fade_duration = 1.0 / 9
 
         if isinstance(at, list):
@@ -127,11 +132,11 @@ def fade_inout(
 
         return get_keystates(states, at, hold_duration, fade_duration)
 
-    if at == None:
+    if at is None:
         at = linspace(len(states))
-    if hold_duration == None:
+    if hold_duration is None:
         hold_duration = 1.0 / (3 * len(states))
-    if fade_duration == None:
+    if fade_duration is None:
         fade_duration = 1.0 / (9 * len(states))
 
     if not isinstance(at, list):
@@ -154,8 +159,8 @@ def bounce(
     at: float,
     dur: float,
     times: int = 2,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> List[KeyState]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState]:
     """Bounce between two states.
 
     Args:
@@ -164,10 +169,7 @@ def bounce(
         at: Start time
         dur: Total duration
         times: Number of bounces (2 = s1->s2->s1->s2->s1)
-        easing: Optional easing dict for transitions
-
-    Returns:
-        List of KeyState objects
+        easing: Optional easing dict for transitions.
 
     Example:
         # Bounce twice between s1 and s2 over 0.2 duration
@@ -191,8 +193,8 @@ def crossfade(
     s_in: State,
     at: float,
     dur: float,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Tuple[List[KeyState], List[KeyState]]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> tuple[list[KeyState], list[KeyState]]:
     """Crossfade between two elements (one fading out, one fading in).
 
     Returns two keystate lists for two separate VElements.

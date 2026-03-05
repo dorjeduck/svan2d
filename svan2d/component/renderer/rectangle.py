@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -18,7 +18,7 @@ class RectangleRenderer(Renderer):
     """Renderer class for rendering rectangle elements"""
 
     def _render_core(
-        self, state: "RectangleState", drawing: Optional[dw.Drawing] = None
+        self, state: "RectangleState", drawing: dw.Drawing | None = None
     ) -> dw.Rectangle:
         """Render the rectangle renderer (geometry only, no transforms)
 

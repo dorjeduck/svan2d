@@ -17,11 +17,13 @@ class MutablePoint2D:
     y: float = 0.0
 
     def to_point2d(self) -> "Point2D":
+        """Convert to an immutable Point2D."""
         from .point2d import Point2D
 
         return Point2D(self.x, self.y)
 
     def set(self, x: float, y: float) -> "MutablePoint2D":
+        """Set coordinates in-place and return self."""
         self.x = x
         self.y = y
         return self

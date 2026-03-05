@@ -9,7 +9,7 @@ from __future__ import annotations
 import tomllib
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from svan2d.core.color import Color
 
@@ -27,7 +27,7 @@ class Svan2DConfig:
     2. System defaults (defaults.toml)
     """
 
-    def __init__(self, config_dict: Optional[dict] = None):
+    def __init__(self, config_dict: dict | None = None):
         """Initialize configuration
 
         Args:
@@ -37,11 +37,7 @@ class Svan2DConfig:
 
     @classmethod
     def load_defaults(cls) -> Svan2DConfig:
-        """Load system default configuration
-
-        Returns:
-            Svan2DConfig instance with system defaults
-        """
+        """Load and return the system default configuration."""
         defaults_path = Path(__file__).parent / "defaults.toml"
         with open(defaults_path, "rb") as f:
             config_dict = tomllib.load(f)
@@ -53,9 +49,6 @@ class Svan2DConfig:
 
         Args:
             path: Path to TOML configuration file
-
-        Returns:
-            Svan2DConfig instance
 
         Raises:
             FileNotFoundError: If config file doesn't exist
@@ -72,7 +65,7 @@ class Svan2DConfig:
 
     @classmethod
     def load_with_overrides(
-        cls, user_config_path: Optional[Path | str] = None
+        cls, user_config_path: Path | str | None = None
     ) -> Svan2DConfig:
         """Load defaults and override with user config if provided
 
@@ -83,9 +76,6 @@ class Svan2DConfig:
 
         Args:
             user_config_path: Optional path to user config file
-
-        Returns:
-            Svan2DConfig with defaults and user overrides applied
         """
         # Load defaults
         config = cls.load_defaults()
@@ -106,12 +96,8 @@ class Svan2DConfig:
         return config
 
     @staticmethod
-    def _find_user_config() -> Optional[Path]:
-        """Search for user config file in standard locations
-
-        Returns:
-            Path to first found config file, or None
-        """
+    def _find_user_config() -> Path | None:
+        """Search standard locations for a user config file; return path or None."""
         search_paths = [
             Path.cwd() / "svan2d.toml",
             Path.home() / ".config" / "svan2d" / "config.toml",
@@ -134,15 +120,7 @@ class Svan2DConfig:
 
     @staticmethod
     def _deep_merge(base: dict, override: dict) -> dict:
-        """Deep merge two dictionaries
-
-        Args:
-            base: Base dictionary
-            override: Dictionary with values to override
-
-        Returns:
-            Merged dictionary
-        """
+        """Recursively merge ``override`` into ``base``, returning a new dict."""
         result = deepcopy(base)
 
         for key, value in override.items():
@@ -196,7 +174,7 @@ class Svan2DConfig:
 
         return current
 
-    def _normalize_color(self, value: Any) -> Optional[Color]:
+    def _normalize_color(self, value: Any) -> Color | None:
         """Normalize a color value to a Color object
 
         Args:
@@ -263,9 +241,5 @@ class Svan2DConfig:
         current[parts[-1]] = value
 
     def to_dict(self) -> dict:
-        """Get the entire configuration as a dictionary
-
-        Returns:
-            Deep copy of configuration dictionary
-        """
+        """Return a deep copy of the entire configuration dictionary."""
         return deepcopy(self._config)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 import drawsvg as dw
 
@@ -25,9 +25,9 @@ class PathVariantsRenderer(Renderer, ABC):
     """
 
     # Subclasses must define this
-    PATH_VARIANTS: Dict[str, Dict[str, Any]] = {}
+    PATH_VARIANTS: dict[str, dict[str, Any]] = {}
 
-    def __init__(self, variant: Optional[str] = None) -> None:
+    def __init__(self, variant: str | None = None) -> None:
         """Initialize multi-path renderer
 
         Args:
@@ -48,25 +48,20 @@ class PathVariantsRenderer(Renderer, ABC):
         self.data = self.PATH_VARIANTS[variant]
 
     def _render_core(
-        self, state: "PathVariantsState", drawing: Optional[dw.Drawing] = None
+        self, state: "PathVariantsState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render the renderer geometry centered at (0,0), no scaling or transforms"""
-        fill_color = state.fill_color.to_rgb_string()
         data = self.data["path"]
-
         cx, cy = self.data["center"]
 
-        viewbox_size = self.data["viewbox"]
-        scale_factor = state.size / viewbox_size
-        group = dw.Group(transform=f"scale({scale_factor}) translate({-cx},{-cy})")
+        group = dw.Group(transform=f"translate({-cx},{-cy})")
 
         paths = data if isinstance(data, list) else [data]
         for path_string in paths:
             path_kwargs = {"d": path_string}
             self._set_fill_and_stroke_kwargs(state, path_kwargs, drawing)
-
             group.append(dw.Path(**path_kwargs))
-        group.transform = f"translate({-cx},{-cy})"  # type: ignore[attr-defined]
+
         return group
 
     @classmethod

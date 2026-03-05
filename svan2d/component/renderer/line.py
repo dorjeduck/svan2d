@@ -1,9 +1,8 @@
-"""Line renderer implementation using new architecture"""
+"""Line renderer implementation."""
 
 from __future__ import annotations
 
-import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -16,22 +15,18 @@ if TYPE_CHECKING:
 
 
 class LineRenderer(Renderer):
+    """Renderer for line elements."""
+
     @staticmethod
     def from_endpoints(start: Point2D, end: Point2D):
-        """
-        Given two endpoints, return center (x, y), length, and rotation (degrees).
-        Returns:
-            (cx, cy, length, rotation)
-        """
+        """Return (center, length, rotation) for the line between two endpoints."""
         center = start.center_to(end)
         length = start.distance_to(end)
         rotation = start.rotation_to(end)
         return center, length, rotation
 
-    """Renderer class for rendering line elements"""
-
     def _render_core(
-        self, state: "LineState", drawing: Optional[dw.Drawing] = None
+        self, state: "LineState", drawing: dw.Drawing | None = None
     ) -> dw.Line:
         """Render the line renderer (geometry only, no transforms)
 

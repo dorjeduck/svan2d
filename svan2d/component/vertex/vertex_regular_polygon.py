@@ -29,8 +29,7 @@ class VertexRegularPolygon(VertexLoop):
         """Create a regular polygon as a vertex loop
 
         Args:
-            cx: Center x coordinate
-            cy: Center y coordinate
+            center: Center point
             size: Distance from center to vertices (circumradius)
             num_sides: Number of polygon sides (3=triangle, 4=square, etc.)
             num_vertices: Number of vertices distributed along perimeter (important for morphing!)

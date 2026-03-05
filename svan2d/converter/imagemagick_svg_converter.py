@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import subprocess
 import tempfile
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from svan2d.converter.svg_converter import SVGConverter
-from svan2d.vscene.vscene import VScene
 
 if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
@@ -34,7 +33,7 @@ class ImageMagickSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         inch_width: int | None = None,
         inch_height: int | None = None,
     ) -> dict:
@@ -51,7 +50,7 @@ class ImageMagickSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output_file: str,
-        frame_time: Optional[float] = 0.0,
+        frame_time: float | None = 0.0,
         width_px: int | None = None,
         height_px: int | None = None,
     ) -> dict:
@@ -119,7 +118,7 @@ class ImageMagickSvgConverter(SVGConverter):
                 cmd.append(output_file)
 
                 # Execute ImageMagick
-                result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+                subprocess.run(cmd, check=True, capture_output=True, text=True)
 
             return {"success": True, "output": output_file}
 

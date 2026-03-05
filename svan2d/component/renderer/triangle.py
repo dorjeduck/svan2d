@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 
@@ -20,7 +20,7 @@ class TriangleRenderer(Renderer):
     """
 
     def _render_core(
-        self, state: "TriangleState", drawing: Optional[dw.Drawing] = None
+        self, state: "TriangleState", drawing: dw.Drawing | None = None
     ) -> dw.Lines:
         """Render the triangle renderer (geometry only)
 
@@ -30,8 +30,6 @@ class TriangleRenderer(Renderer):
         Returns:
             drawsvg Lines object for the triangle renderer
         """
-        fill_color = state.fill_color.to_rgb_string()
-
         # Calculate equilateral triangle points with scaling
 
         height_offset = state.size

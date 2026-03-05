@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable
 
 from svan2d import transition
 from svan2d.component.state.base import State
@@ -12,7 +12,7 @@ from . import linspace
 
 
 def just_slide(
-    states: Union[State, List[State]],
+    states: State | list[State],
     *,
     t_start: float,
     t_end: float,
@@ -20,9 +20,9 @@ def just_slide(
     exit_point: Point2D = Point2D(-50.0, 0.0),
     entrance_effect: SlideEffect = SlideEffect.NONE,
     exit_effect: SlideEffect = SlideEffect.NONE,
-    entrance_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
-    exit_easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Union[List[KeyState], List[List[KeyState]]]:
+    entrance_easing_dict: dict[str, Callable[[float], float]] | None = None,
+    exit_easing_dict: dict[str, Callable[[float], float]] | None = None,
+) -> list[KeyState] | list[list[KeyState]]:
 
     num_states = 1 if isinstance(states, State) else len(states)
     slide_duration = (t_end - t_start) / (num_states + 1)
@@ -42,7 +42,7 @@ def just_slide(
 
     def get_transition_config(easing_dict):
         if easing_dict:
-            if not "pos" in easing_dict:
+            if "pos" not in easing_dict:
                 easing_dict["pos"] = transition.easing.linear
         else:
             easing_dict = {"pos": transition.easing.linear}
@@ -51,7 +51,7 @@ def just_slide(
 
     def make_keystates(
         state: State, t: float, entrance_easing_dict, exit_easing_dict
-    ) -> List[KeyState]:
+    ) -> list[KeyState]:
 
         entrance_transition_config = get_transition_config(entrance_easing_dict)
         exit_transition_config = get_transition_config(exit_easing_dict)
@@ -92,7 +92,7 @@ def just_slide(
     if isinstance(states, State):
         return make_keystates(states, t_start, entrance_easing_dict, exit_easing_dict)
 
-    result: List[List[KeyState]] = []
+    result: list[list[KeyState]] = []
     for i, s in enumerate(states):
         t = t_start + i * slide_duration
 

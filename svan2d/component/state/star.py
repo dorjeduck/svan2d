@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
-
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.star import StarRenderer
 from svan2d.component.state.base_vertex import VertexState
 from svan2d.component.vertex import VertexContours, VertexStar
-from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
 

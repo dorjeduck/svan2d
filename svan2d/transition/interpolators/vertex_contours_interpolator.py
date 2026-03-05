@@ -1,7 +1,6 @@
 """Interpolator for VertexContours (aligned vertices for morphing)."""
 
 import logging
-from typing import List, Optional, Tuple
 
 from svan2d.component.state.base import State
 from svan2d.component.vertex.vertex_contours import VertexContours
@@ -21,7 +20,7 @@ class VertexContoursInterpolator:
         start_value: VertexContours,
         end_value: VertexContours,
         eased_t: float,
-        vertex_buffer: Optional[Tuple[List, List[List]]] = None,
+        vertex_buffer: tuple[list, list[list]] | None = None,
     ) -> VertexContours:
         """
         Interpolate between two VertexContours.
@@ -86,11 +85,11 @@ class VertexContoursInterpolator:
 
     def _interpolate_holes(
         self,
-        start_holes: Optional[List[VertexLoop]],
-        end_holes: Optional[List[VertexLoop]],
+        start_holes: list[VertexLoop] | None,
+        end_holes: list[VertexLoop] | None,
         eased_t: float,
-        vertex_buffer: Optional[Tuple[List, List[List]]] = None,
-    ) -> List[VertexLoop]:
+        vertex_buffer: tuple[list, list[list]] | None = None,
+    ) -> list[VertexLoop]:
         """Interpolate hole vertex loops."""
         interpolated_vertex_loops = []
         start_vertex_loops = start_holes or []
@@ -142,7 +141,7 @@ class VertexContoursInterpolator:
         vertices1: Points2D,
         vertices2: Points2D,
         eased_t: float,
-        buffer: Optional[Points2D] = None,
+        buffer: Points2D | None = None,
         ensure_closure: bool = False,
     ) -> Points2D:
         """Interpolate between two vertex lists with optional buffer optimization.

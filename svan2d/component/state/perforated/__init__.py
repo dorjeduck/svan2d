@@ -1,4 +1,4 @@
-"""Perforated shapes submodule - shapes with  vertex_loops"""
+"""Perforated shapes submodule - shapes with vertex_loops."""
 
 from .base import (
     Astroid,
@@ -26,6 +26,7 @@ __all__ = [
     "Circle",
     "Ellipse",
     "Rectangle",
+    "Square",
     "Polygon",
     "Star",
     "Astroid",

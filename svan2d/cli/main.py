@@ -1,6 +1,6 @@
-"""Main CLI entry point for Svan2D
+"""Main CLI entry point for Svan2D.
 
-Provides commands for managing the Playwright render server and other utilities.
+Commands: serve (dev server), playwright-server (render server), font (glyph cache).
 """
 
 import click

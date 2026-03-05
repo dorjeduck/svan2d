@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import List, Union
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.text_path import TextPathRenderer
@@ -43,7 +42,7 @@ class TextPathState(ColorState):
         # state = TextState(text="Hello", font_family="Arial", font_size=24)
     """
 
-    text: Union[str, List[str]] = ""
+    text: str | list[str] = ""
     font_path: str = ""
     font_size: float = 16
 

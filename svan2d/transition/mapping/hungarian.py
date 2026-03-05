@@ -8,7 +8,7 @@ Requires scipy for the linear_sum_assignment implementation.
 
 from __future__ import annotations
 
-from typing import Callable, List, TypeVar
+from typing import Callable, TypeVar
 
 from svan2d.core.point2d import Point2D
 
@@ -55,10 +55,10 @@ class HungarianMapper(Mapper):
 
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Map items using Hungarian algorithm for optimal assignment."""
         if not SCIPY_AVAILABLE:
             raise ImportError(
@@ -89,10 +89,10 @@ class HungarianMapper(Mapper):
 
     def _match_equal(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Hungarian matching for equal counts (N=M)."""
         positions1 = [get_position(item) for item in start_items]
         positions2 = [get_position(item) for item in end_items]
@@ -115,10 +115,10 @@ class HungarianMapper(Mapper):
 
     def _match_split(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Hungarian matching when splitting (N < M).
 
         Each start item may morph to multiple end items.
@@ -157,10 +157,10 @@ class HungarianMapper(Mapper):
 
     def _match_merge(
         self,
-        start_items: List[T],
-        end_items: List[T],
+        start_items: list[T],
+        end_items: list[T],
         get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+    ) -> list[Match[T]]:
         """Hungarian matching when merging (N > M).
 
         Multiple start items may morph to the same end item.

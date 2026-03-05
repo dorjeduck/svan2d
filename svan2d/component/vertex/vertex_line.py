@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Tuple
-
 from svan2d.core.point2d import Point2D
 
 from .vertex_loop import VertexLoop

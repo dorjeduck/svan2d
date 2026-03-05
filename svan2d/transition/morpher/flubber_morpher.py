@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import subprocess
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from svan2d.path import SVGPath
 from svan2d.transition.morpher.base_morpher import BaseMorpher
@@ -48,7 +48,7 @@ class FlubberNodeBridge:
         self.process = None
         self._start_process()
 
-    def _find_node_modules(self) -> Optional[str]:
+    def _find_node_modules(self) -> str | None:
         """Find node_modules directory."""
         if self.node_modules_path:
             if not os.path.isdir(self.node_modules_path):
@@ -277,8 +277,8 @@ class FlubberMorpher(BaseMorpher):
     """
 
     # --- Global Class Attributes ---
-    _morpher_cache: Dict[Tuple[str, str, str], "FlubberMorpher"] = {}
-    _reference_counts: Dict[Tuple[str, str, str], int] = {}
+    _morpher_cache: dict[tuple[str, str, str], "FlubberMorpher"] = {}
+    _reference_counts: dict[tuple[str, str, str], int] = {}
 
     @classmethod
     def for_paths(
@@ -293,10 +293,7 @@ class FlubberMorpher(BaseMorpher):
         Args:
             path1: Start shape
             path2: End shape
-            **kwargs: Options passed to FlubberNodeBridge (e.g., flubber_path)
-
-        Returns:
-            FlubberMorpher instance (possibly cached)
+            **kwargs: Options passed to FlubberNodeBridge (e.g., flubber_path).
         """
         key1 = _hash_shape(path1.to_string())
         key2 = _hash_shape(path2.to_string())
@@ -320,7 +317,7 @@ class FlubberMorpher(BaseMorpher):
         self,
         path1: SVGPath,
         path2: SVGPath,
-        cache_key: Tuple[str, str, str],
+        cache_key: tuple[str, str, str],
         max_cache_size: int | None = None,
         **kwargs: Any,
     ):
@@ -330,10 +327,11 @@ class FlubberMorpher(BaseMorpher):
         Note: This should only be called via for_paths(), not directly.
 
         Args:
-            path1: Start shape
-            path2: End shape
-            cache_key: Tuple used for cache lookup
-            **kwargs: Options for FlubberNodeBridge
+            path1: Start shape.
+            path2: End shape.
+            cache_key: Tuple used for cache lookup.
+            max_cache_size: Maximum number of interpolated paths to cache.
+            **kwargs: Options for FlubberNodeBridge.
         """
         # Initialize base class (sets self.path1, self.path2, self._cache)
         super().__init__(path1, path2, **kwargs)
@@ -444,7 +442,7 @@ class FlubberMorpher(BaseMorpher):
             self.close()
 
     @classmethod
-    def cache_stats(cls) -> Dict[str, Any]:
+    def cache_stats(cls) -> dict[str, Any]:
         """
         Get statistics about the global morpher cache.
 

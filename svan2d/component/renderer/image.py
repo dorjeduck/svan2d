@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import logging
 import random
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import drawsvg as dw
 from PIL import Image
@@ -47,7 +47,7 @@ class ImageRenderer(Renderer):
 
     def _random_crop_image(
         self, href: str, target_width: int, target_height: int
-    ) -> Tuple[bytes, str]:
+    ) -> tuple[bytes, str]:
         """Randomly crop and transform an image to fit target dimensions
 
         Args:
@@ -106,7 +106,7 @@ class ImageRenderer(Renderer):
         original_width: int,
         original_height: int,
         fit_mode: ImageFitMode,
-    ) -> Tuple[float, float, bool]:
+    ) -> tuple[float, float, bool]:
         """Calculate final image dimensions based on fit mode
 
         Args:
@@ -118,8 +118,6 @@ class ImageRenderer(Renderer):
         Returns:
             Tuple of (final_width, final_height, needs_clipping)
         """
-        import logging
-
         if fit_mode == ImageFitMode.FIT:
             # Scale to fit entirely within bounds (preserve aspect ratio)
             scale_x = target_width / original_width
@@ -170,7 +168,7 @@ class ImageRenderer(Renderer):
             return (original_width * scale, original_height * scale, False)
 
     def _render_core(
-        self, state: "ImageState", drawing: Optional[dw.Drawing] = None
+        self, state: "ImageState", drawing: dw.Drawing | None = None
     ) -> dw.Group:
         """Render the image renderer without transforms
 
@@ -192,11 +190,10 @@ class ImageRenderer(Renderer):
             try:
                 with Image.open(state.href) as img:
                     original_width, original_height = img.size
-            except ImportError:
+            except Exception:
                 logging.warning(
-                    "PIL (Pillow) not available. Cannot determine original image size."
+                    "Could not determine original image size from '%s'. Using defaults.", state.href
                 )
-                # If no PIL and no dimensions specified, use reasonable defaults
                 original_width, original_height = 100, 100
 
             # Use original dimensions if width/height not specified in state

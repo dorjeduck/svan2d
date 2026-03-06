@@ -7,7 +7,7 @@ Monitors Python animation files and triggers reloads on changes.
 import asyncio
 import time
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 
 from watchdog.events import FileModifiedEvent, FileSystemEventHandler
 from watchdog.observers import Observer

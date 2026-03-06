@@ -6,7 +6,8 @@ Ideal for morphing the same word between fonts where glyph correspondence is kno
 
 from __future__ import annotations
 
-from typing import Callable, Sequence, TypeVar
+from collections.abc import Callable
+from typing import Sequence, TypeVar
 
 from svan2d.core.point2d import Point2D
 

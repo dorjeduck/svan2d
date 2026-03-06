@@ -128,19 +128,19 @@ class VertexLoop:
         return VertexLoop(list(reversed(self._vertices)), self._closed)
 
     def translate(self, dx: float, dy: float) -> VertexLoop:
-        """Translate all vertices by (dx, dy). Returns self for chaining."""
-        self._vertices = [v + Point2D(dx, dy) for v in self._vertices]
-        return self
+        """Returns a new VertexLoop with all vertices translated by (dx, dy)."""
+        new_vertices = [v + Point2D(dx, dy) for v in self._vertices]
+        return VertexLoop(new_vertices, self._closed)
 
     def scale(self, sx: float, sy: float | None = None) -> VertexLoop:
-        """Scale all vertices by (sx, sy). If sy is None, uses sx for both axes. Returns self for chaining."""
+        """Returns a new VertexLoop with all vertices scaled by (sx, sy). If sy is None, uses sx for both axes."""
         if sy is None:
             sy = sx
-        self._vertices = [Point2D(v.x * sx, v.y * sy) for v in self._vertices]
-        return self
+        new_vertices = [Point2D(v.x * sx, v.y * sy) for v in self._vertices]
+        return VertexLoop(new_vertices, self._closed)
 
     def rotate(self, angle_degrees: float, center: Point2D | None = None) -> VertexLoop:
-        """Rotate all vertices by angle_degrees around center (default: origin). Returns self for chaining."""
+        """Returns a new VertexLoop with all vertices rotated by angle_degrees around center (default: origin)."""
         rot_center: Point2D = center if center is not None else Point2D(0.0, 0.0)
 
         angle_rad = math.radians(angle_degrees)
@@ -155,5 +155,4 @@ class VertexLoop:
             y_new = x_rel * sin_a + y_rel * cos_a
             new_vertices.append(Point2D(x_new, y_new) + rot_center)
 
-        self._vertices = new_vertices
-        return self
+        return VertexLoop(new_vertices, self._closed)

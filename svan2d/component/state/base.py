@@ -49,25 +49,25 @@ class State(ABC):
     # which enables shortest-path interpolation for those fields.
 
     def __post_init__(self):
-        """Apply configuration defaults for common attributes if not explicitly set"""
+        """Apply configuration defaults for common attributes if not explicitly set."""
         from svan2d.config import ConfigKey, get_config
 
         config = get_config()
 
-        # Apply config defaults for common attributes if they are None
         if self.pos is None:
             self._set_field("pos", Point2D(0, 0))
 
-        if self.scale is None:
-            self._set_field("scale", config.get(ConfigKey.STATE_SCALE, 1.0))
-        if self.opacity is None:
-            self._set_field("opacity", config.get(ConfigKey.STATE_OPACITY, 1.0))
-        if self.rotation is None:
-            self._set_field("rotation", config.get(ConfigKey.STATE_ROTATION, 0.0))
-        if self.skew_x is None:
-            self._set_field("skew_x", config.get(ConfigKey.STATE_SKEW_X, 0.0))
-        if self.skew_y is None:
-            self._set_field("skew_y", config.get(ConfigKey.STATE_SKEW_Y, 0.0))
+        # (field_name, config_key, fallback_default)
+        _config_defaults = (
+            ("scale", ConfigKey.STATE_SCALE, 1.0),
+            ("opacity", ConfigKey.STATE_OPACITY, 1.0),
+            ("rotation", ConfigKey.STATE_ROTATION, 0.0),
+            ("skew_x", ConfigKey.STATE_SKEW_X, 0.0),
+            ("skew_y", ConfigKey.STATE_SKEW_Y, 0.0),
+        )
+        for field_name, config_key, default in _config_defaults:
+            if getattr(self, field_name) is None:
+                self._set_field(field_name, config.get(config_key, default))
 
     @property
     def x(self) -> float:

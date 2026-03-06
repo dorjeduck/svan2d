@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.component.registry import renderer
 from svan2d.component.renderer.radial_segments import RadialSegmentsRenderer

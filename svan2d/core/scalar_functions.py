@@ -2,7 +2,8 @@
 
 import bisect
 import math
-from typing import Callable, TypeVar
+from typing import TypeVar
+from collections.abc import Callable
 
 Number = int | float
 T = TypeVar("T")
@@ -106,7 +107,9 @@ def _gaussian_smooth(values: list[float], sigma_samples: float) -> list[float]:
     if sigma_samples <= 0:
         return list(values)
     radius = int(math.ceil(3 * sigma_samples))
-    kernel = [math.exp(-0.5 * (i / sigma_samples) ** 2) for i in range(-radius, radius + 1)]
+    kernel = [
+        math.exp(-0.5 * (i / sigma_samples) ** 2) for i in range(-radius, radius + 1)
+    ]
     k_sum = sum(kernel)
     kernel = [k / k_sum for k in kernel]
 
@@ -154,7 +157,9 @@ def gaussian_smooth(
             return smoothed[-1]
         idx = bisect.bisect_right(ts, t) - 1
         idx = max(0, min(samples - 2, idx))
-        frac = (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        frac = (
+            (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        )
         return smoothed[idx] + (smoothed[idx + 1] - smoothed[idx]) * frac
 
     return interpolated
@@ -194,7 +199,9 @@ def gaussian_smooth_2d(
             return (sx[-1], sy[-1])
         idx = bisect.bisect_right(ts, t) - 1
         idx = max(0, min(samples - 2, idx))
-        frac = (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        frac = (
+            (t - ts[idx]) / (ts[idx + 1] - ts[idx]) if ts[idx + 1] != ts[idx] else 0.0
+        )
         x = sx[idx] + (sx[idx + 1] - sx[idx]) * frac
         y = sy[idx] + (sy[idx + 1] - sy[idx]) * frac
         return (x, y)

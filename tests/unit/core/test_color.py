@@ -68,14 +68,13 @@ class TestColorCreation:
         assert c.b == 0
 
     def test_create_from_existing_color(self):
-        # Note: Color uses __slots__ so copy via Color(other) raises AttributeError
-        # This tests that creating from existing color works or fails predictably
         original = Color(100, 150, 200)
-        # Due to __slots__ issue, this may raise. Test removed since it's implementation detail.
-        # Instead test equality works
-        assert original.r == 100
-        assert original.g == 150
-        assert original.b == 200
+        copy = Color(original)
+        assert copy == original
+        assert copy is not original
+        assert copy.r == 100
+        assert copy.g == 150
+        assert copy.b == 200
 
     def test_invalid_rgb_values_raises(self):
         with pytest.raises(ValueError):

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, cast
 import drawsvg as dw
 
 from svan2d.component.state.base import State
-from svan2d.velement.base_velement import BaseVElement
+from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.transition import EasingFunction
@@ -96,9 +96,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         self,
         *,
         elements: list[VElement] | None = None,
-        group_easing: Callable[[float], float] | None = ...,  # type: ignore[assignment]
+        group_easing: Callable[[float], float] | None | _Unset = _UNSET,
         clip_elements: list[VElement] | None = None,
-        mask_element: VElement | None = ...,  # type: ignore[assignment]
+        mask_element: VElement | None | _Unset = _UNSET,
         builder: BuilderState | None = None,
         attribute_easing: dict[str, EasingFunction] | None = None,
         attribute_keystates: AttributeKeyStatesDict | None = None,
@@ -106,9 +106,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         """Return a new VElementGroup with specified attributes replaced."""
         new = VElementGroup.__new__(VElementGroup)
         new.elements = elements if elements is not None else self.elements.copy()
-        new.group_easing = self.group_easing if group_easing is ... else group_easing
+        new.group_easing = self.group_easing if group_easing is _UNSET else group_easing
         new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
-        new.mask_element = self.mask_element if mask_element is ... else mask_element
+        new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new._builder = builder if builder is not None else self._builder
         new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
         new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates

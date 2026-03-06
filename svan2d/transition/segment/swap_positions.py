@@ -1,7 +1,7 @@
 """Swap positions segment function (multi-element)."""
 
 from dataclasses import replace
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState

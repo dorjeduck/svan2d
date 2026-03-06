@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from svan2d.component.registry import renderer
@@ -15,86 +16,59 @@ from .contour_classifier import classify_contours
 from .glyph_extractor import FONTTOOLS_AVAILABLE, extract_glyph_outline, load_font
 
 
+def _map_contour_vertices(
+    contours: VertexContours,
+    func: Callable[[Point2D], Point2D],
+) -> VertexContours:
+    """Apply a vertex transform function to all contours (outer + holes)."""
+    from svan2d.component.vertex.vertex_loop import VertexLoop
+
+    new_outer = VertexLoop(
+        [func(v) for v in contours.outer.vertices],
+        closed=contours.outer.closed,
+    )
+    new_holes = None
+    if contours.has_holes:
+        new_holes = [
+            VertexLoop([func(v) for v in hole.vertices], closed=hole.closed)
+            for hole in contours.holes
+        ]
+    return VertexContours(new_outer, new_holes)
+
+
 def _transform_contours(
     contours: VertexContours, scale: float, center: bool = True, cursor_x: float = 0.0
 ) -> VertexContours:
-    """Transform contours: scale and optionally center.
+    """Scale contours and optionally center at origin.
 
-    Creates new VertexContours with transformed vertices (Point2D is immutable).
-    Position is NOT baked in - that's handled by the state's pos field during rendering.
+    Y is flipped (font coords have Y up, SVG has Y down).
 
     Args:
         contours: Source contours
         scale: Scale factor
-        center: If True, center glyph at origin. If False, position at cursor_x for text layout.
+        center: If True, center glyph at origin. If False, position at cursor_x.
         cursor_x: X position for text layout (only used when center=False)
     """
-    from svan2d.component.vertex.vertex_loop import VertexLoop
-
     if center:
-        # Center at origin (for single letters)
         centroid = contours.centroid()
-        offset_x = -centroid.x
-        offset_y = -centroid.y
+        ox, oy = -centroid.x, -centroid.y
+
+        def xform(v: Point2D) -> Point2D:
+            return Point2D((v.x + ox) * scale, -(v.y + oy) * scale)
     else:
-        # Text layout: position glyph at cursor_x, baseline at y=0
-        offset_x = 0
-        offset_y = 0
+        def xform(v: Point2D) -> Point2D:
+            return Point2D(v.x * scale + cursor_x, -v.y * scale)
 
-    def transform_vertices(vertices):
-        """Scale vertices and translate.
-
-        Note: Y is flipped because font coordinates have Y pointing up,
-        while SVG/screen coordinates have Y pointing down.
-        """
-        result = []
-        for v in vertices:
-            if center:
-                new_x = (v.x + offset_x) * scale
-                new_y = -(v.y + offset_y) * scale
-            else:
-                # For text: glyph origin at cursor_x, scale from there
-                new_x = v.x * scale + cursor_x
-                new_y = -v.y * scale  # Flip Y, baseline at y=0
-            result.append(Point2D(new_x, new_y))
-        return result
-
-    # Transform outer contour
-    new_outer_vertices = transform_vertices(contours.outer.vertices)
-    new_outer = VertexLoop(new_outer_vertices, closed=contours.outer.closed)
-
-    # Transform holes
-    new_holes = None
-    if contours.has_holes:
-        new_holes = []
-        for hole in contours.holes:
-            new_hole_vertices = transform_vertices(hole.vertices)
-            new_holes.append(VertexLoop(new_hole_vertices, closed=hole.closed))
-
-    return VertexContours(new_outer, new_holes)
+    return _map_contour_vertices(contours, xform)
 
 
 def _offset_contours(
     contours: VertexContours, offset_x: float, offset_y: float
 ) -> VertexContours:
     """Offset all vertices in contours by (offset_x, offset_y)."""
-    from svan2d.component.vertex.vertex_loop import VertexLoop
-
-    new_outer_vertices = [
-        Point2D(v.x + offset_x, v.y + offset_y) for v in contours.outer.vertices
-    ]
-    new_outer = VertexLoop(new_outer_vertices, closed=contours.outer.closed)
-
-    new_holes = None
-    if contours.has_holes:
-        new_holes = []
-        for hole in contours.holes:
-            new_hole_vertices = [
-                Point2D(v.x + offset_x, v.y + offset_y) for v in hole.vertices
-            ]
-            new_holes.append(VertexLoop(new_hole_vertices, closed=hole.closed))
-
-    return VertexContours(new_outer, new_holes)
+    return _map_contour_vertices(
+        contours, lambda v: Point2D(v.x + offset_x, v.y + offset_y)
+    )
 
 
 def _get_glyph_renderer():

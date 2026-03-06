@@ -8,17 +8,19 @@ Requires scipy for the linear_sum_assignment implementation.
 
 from __future__ import annotations
 
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from svan2d.core.point2d import Point2D
 
 from .base import Mapper, Match
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 # Try to import scipy
 try:
     from scipy.optimize import linear_sum_assignment
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -57,7 +59,7 @@ class HungarianMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Map items using Hungarian algorithm for optimal assignment."""
         if not SCIPY_AVAILABLE:
@@ -91,7 +93,7 @@ class HungarianMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Hungarian matching for equal counts (N=M)."""
         positions1 = [get_position(item) for item in start_items]
@@ -117,7 +119,7 @@ class HungarianMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Hungarian matching when splitting (N < M).
 
@@ -159,7 +161,7 @@ class HungarianMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Hungarian matching when merging (N > M).
 

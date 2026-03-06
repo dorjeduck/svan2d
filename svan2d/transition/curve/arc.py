@@ -1,135 +1,83 @@
-"""Circular arc path interpolation"""
+"""Circular arc path interpolation."""
 
 import math
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.core.point2d import Point2D
 
 
-def arc(radius: float | None = None) -> Callable[[Point2D, Point2D, float], Point2D]:
-    """Create a circular arc path function (counterclockwise by default)
+def _make_arc_path(
+    radius: float | None,
+    clockwise: bool,
+) -> Callable[[Point2D, Point2D, float], Point2D]:
+    """Create an arc path function with the given direction.
 
     Args:
-        radius: Arc radius. If None, uses distance between points (semicircle)
-
-    Returns:
-        Path function that interpolates along circular arc
-
-    Example:
-        path_func = arc(150)
-        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        radius: Arc radius. If None, uses distance between points (semicircle).
+        clockwise: If True, arc curves right; if False, curves left.
     """
-    return arc_counterclockwise(radius)
+    # The center calculation flag is inverted relative to the visual direction
+    center_clockwise = not clockwise
+
+    def arc_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:
+        distance = p1.distance_to(p2)
+        if distance == 0:
+            return p1
+
+        r = radius if radius is not None else distance
+        if r < distance / 2:
+            r = distance / 2
+
+        center, start_angle, end_angle = _calculate_arc_center(
+            p1, p2, r, clockwise=center_clockwise
+        )
+
+        angle_diff = end_angle - start_angle
+        if angle_diff < 0:
+            angle_diff += 2 * math.pi
+
+        angle = start_angle + angle_diff * t
+        return Point2D(
+            center.x + r * math.cos(angle),
+            center.y + r * math.sin(angle),
+        )
+
+    return arc_path
+
+
+def arc(radius: float | None = None) -> Callable[[Point2D, Point2D, float], Point2D]:
+    """Create a circular arc path function (counterclockwise by default).
+
+    Args:
+        radius: Arc radius. If None, uses distance between points (semicircle).
+    """
+    return _make_arc_path(radius, clockwise=False)
 
 
 def arc_counterclockwise(
     radius: float | None = None,
 ) -> Callable[[Point2D, Point2D, float], Point2D]:
-    """Create a counterclockwise circular arc path function
+    """Create a counterclockwise circular arc path function.
 
     The arc curves to the left when moving from p1 to p2.
 
     Args:
-        radius: Arc radius. If None, uses distance between points (semicircle)
-
-    Returns:
-        Path function that interpolates along counterclockwise arc
-
-    Example:
-        path_func = arc_counterclockwise(150)
-        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        radius: Arc radius. If None, uses distance between points (semicircle).
     """
-
-    def arc_ccw_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:
-
-        distance = p1.distance_to(p2)
-
-        if distance == 0:
-            return p1
-
-        # Use provided radius or default to distance (semicircle)
-        r = radius if radius is not None else distance
-
-        # If radius is too small, clamp to minimum (semicircle)
-        if r < distance / 2:
-            r = distance / 2
-
-        # Calculate arc (use clockwise=True to get center on correct side)
-        center, start_angle, end_angle = _calculate_arc_center(
-            p1, p2, r, clockwise=True
-        )
-
-        # Normalize angle difference to take shorter arc
-        angle_diff = end_angle - start_angle
-        if angle_diff < 0:
-            angle_diff += 2 * math.pi
-
-        # Interpolate angle
-        angle = start_angle + angle_diff * t
-
-        # Calculate point on arc
-        x = center.x + r * math.cos(angle)
-        y = center.y + r * math.sin(angle)
-
-        return Point2D(x, y)
-
-    return arc_ccw_path
+    return _make_arc_path(radius, clockwise=False)
 
 
 def arc_clockwise(
     radius: float | None = None,
 ) -> Callable[[Point2D, Point2D, float], Point2D]:
-    """Create a clockwise circular arc path function
+    """Create a clockwise circular arc path function.
 
     The arc curves to the right when moving from p1 to p2.
 
     Args:
-        radius: Arc radius. If None, uses distance between points (semicircle)
-
-    Returns:
-        Path function that interpolates along clockwise arc
-
-    Example:
-        path_func = arc_clockwise(150)
-        path_func(Point2D(0, 0), Point2D(200, 0), 0.5)
+        radius: Arc radius. If None, uses distance between points (semicircle).
     """
-
-    def arc_cw_path(p1: Point2D, p2: Point2D, t: float) -> Point2D:
-        # Calculate distance
-        dx = p2.x - p1.x
-        dy = p2.y - p1.y
-        distance = math.sqrt(dx * dx + dy * dy)
-
-        if distance == 0:
-            return p1
-
-        # Use provided radius or default to distance (semicircle)
-        r = radius if radius is not None else distance
-
-        # If radius is too small, clamp to minimum (semicircle)
-        if r < distance / 2:
-            r = distance / 2
-
-        # Calculate arc (use clockwise=False to get center on correct side)
-        center, start_angle, end_angle = _calculate_arc_center(
-            p1, p2, r, clockwise=False
-        )
-
-        # Normalize angle difference to take shorter arc
-        angle_diff = end_angle - start_angle
-        if angle_diff < 0:
-            angle_diff += 2 * math.pi
-
-        # Interpolate angle
-        angle = start_angle + angle_diff * t
-
-        # Calculate point on arc
-        x = center.x + r * math.cos(angle)
-        y = center.y + r * math.sin(angle)
-
-        return Point2D(x, y)
-
-    return arc_cw_path
+    return _make_arc_path(radius, clockwise=True)
 
 
 def _calculate_arc_center(
@@ -157,8 +105,7 @@ def _calculate_arc_center(
         return p1, 0.0, 0.0
 
     if distance > 2 * radius:
-        # Radius too small - fall back to straight line
-        # (caller should handle this)
+        # Defensive: callers clamp radius >= distance/2, so this shouldn't be reached
         return Point2D((p1.x + p2.x) / 2, (p1.y + p2.y) / 2), 0.0, 0.0
 
     # Midpoint between p1 and p2

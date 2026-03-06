@@ -8,7 +8,7 @@ import importlib.util
 import sys
 import traceback
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.vscene import VScene
 

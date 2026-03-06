@@ -12,7 +12,7 @@ Available functions:
 - easing2D: Create 2D easing with independent x/y control
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 from .in_back import in_back
 from .in_bounce import in_bounce

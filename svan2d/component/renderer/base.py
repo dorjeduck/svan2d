@@ -31,6 +31,47 @@ class Renderer(ABC):
     The base render method applies transforms and opacity.
     """
 
+    @staticmethod
+    def _build_transform_string(state: State) -> str | None:
+        """Build SVG transform attribute string from state fields.
+
+        Returns None if no transforms are needed.
+        """
+        transforms = []
+        if state.x != 0 or state.y != 0:
+            transforms.append(f"translate({state.x},{state.y})")
+        if state.rotation != 0:
+            transforms.append(f"rotate({state.rotation})")
+        if state.scale != 1.0:
+            transforms.append(f"scale({state.scale})")
+        if state.skew_x:
+            transforms.append(f"skewX({state.skew_x})")
+        if state.skew_y:
+            transforms.append(f"skewY({state.skew_y})")
+        return " ".join(transforms) if transforms else None
+
+    @staticmethod
+    def _render_state_element(
+        state: State, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement:
+        """Render a state's core element, handling morph detection.
+
+        If state has _aligned_contours, uses VertexRenderer for morphing.
+        Otherwise uses the registered renderer for the state type.
+        """
+        from svan2d.component import get_renderer_instance_for_state
+        from svan2d.component.renderer.base_vertex import VertexRenderer
+
+        aligned_contours = getattr(state, "_aligned_contours", None)
+        if aligned_contours is not None:
+            renderer: Renderer = VertexRenderer()
+            return renderer._render_core(
+                cast("VertexState", state), drawing=drawing
+            )
+        else:
+            renderer = get_renderer_instance_for_state(state)
+            return renderer._render_core(state, drawing=drawing)
+
     @abstractmethod
     def _render_core(
         self, state: State, drawing: dw.Drawing | None = None
@@ -55,21 +96,9 @@ class Renderer(ABC):
             # Apply filter if specified
             elem = self._apply_filter(elem, state, drawing)
 
-        transforms = []
-        # SVG applies transforms right-to-left, so order is: translate, rotate, scale
-        if state.x != 0 or state.y != 0:
-            transforms.append(f"translate({state.x},{state.y})")
-        if state.rotation != 0:
-            transforms.append(f"rotate({state.rotation})")
-        if state.scale != 1.0:
-            transforms.append(f"scale({state.scale})")
-        if state.skew_x:
-            transforms.append(f"skewX({state.skew_x})")
-        if state.skew_y:
-            transforms.append(f"skewY({state.skew_y})")
-
-        if transforms:
-            _set_elem_attr(elem, "transform", " ".join(transforms))
+        transform = self._build_transform_string(state)
+        if transform:
+            _set_elem_attr(elem, "transform", transform)
 
         _set_elem_attr(elem, "opacity", str(state.opacity))
 
@@ -140,9 +169,6 @@ class Renderer(ABC):
         """
         import uuid
 
-        from svan2d.component import get_renderer_instance_for_state
-        from svan2d.component.renderer.base_vertex import VertexRenderer
-
         # Generate unique ID
         clip_id = f"clip-{uuid.uuid4().hex[:8]}"
 
@@ -157,44 +183,18 @@ class Renderer(ABC):
             if fill_color is None or fill_color == Color.NONE:
                 clip_state = replace(clip_state, fill_color=Color("#000000"))
 
-            # Check if this is a morph state (has _aligned_contours from interpolation)
-            aligned_contours = getattr(clip_state, "_aligned_contours", None)
-            if aligned_contours is not None:
-                # This is an interpolated state between different shape types
-                # Use VertexRenderer for morphing (state has been prepared with vertex data)
-                renderer: Renderer = VertexRenderer()
-                # Cast to VertexState since aligned_contours indicates vertex-based state
-                clip_elem = renderer._render_core(
-                    cast("VertexState", clip_state), drawing=drawing
-                )
-            else:
-                # Normal state - use its registered renderer
-                renderer = get_renderer_instance_for_state(clip_state)
-                # Use _render_core to get just the shape without wrapper group
-                # (clipPaths can't have <g> elements in Chrome)
-                clip_elem = renderer._render_core(clip_state, drawing=drawing)
+            clip_elem = self._render_state_element(clip_state, drawing=drawing)
 
-            # Apply transforms directly to the clip element if needed
-            transforms = []
-            if clip_state.x != 0 or clip_state.y != 0:
-                transforms.append(f"translate({clip_state.x},{clip_state.y})")
-            if clip_state.rotation != 0:
-                transforms.append(f"rotate({clip_state.rotation})")
-            if clip_state.scale != 1.0:
-                transforms.append(f"scale({clip_state.scale})")
-            if clip_state.skew_x:
-                transforms.append(f"skewX({clip_state.skew_x})")
-            if clip_state.skew_y:
-                transforms.append(f"skewY({clip_state.skew_y})")
+            transform = self._build_transform_string(clip_state)
             # Extract paths from group if needed (VertexRenderer returns a group)
             if isinstance(clip_elem, dw.Group) and hasattr(clip_elem, "children"):
                 for child in clip_elem.children:
-                    if transforms:
-                        _set_elem_attr(child, "transform", " ".join(transforms))
+                    if transform:
+                        _set_elem_attr(child, "transform", transform)
                     clip_path.append(child)
             else:
-                if transforms:
-                    _set_elem_attr(clip_elem, "transform", " ".join(transforms))
+                if transform:
+                    _set_elem_attr(clip_elem, "transform", transform)
                 clip_path.append(clip_elem)
 
         # Add to drawing's defs
@@ -214,9 +214,6 @@ class Renderer(ABC):
         """
         import uuid
 
-        from svan2d.component import get_renderer_instance_for_state
-        from svan2d.component.renderer.base_vertex import VertexRenderer
-
         # Generate unique ID
         mask_id = f"mask-{uuid.uuid4().hex[:8]}"
 
@@ -230,21 +227,7 @@ class Renderer(ABC):
         if fill_color is None or fill_color == Color.NONE:
             mask_state = replace(mask_state, fill_color=Color("#FFFFFF"))
 
-        # Check if this is a morph state (has _aligned_contours from interpolation)
-        aligned_contours = getattr(mask_state, "_aligned_contours", None)
-        if aligned_contours is not None:
-            # This is an interpolated state between different shape types
-            # Use VertexRenderer for morphing (state has been prepared with vertex data)
-            renderer: Renderer = VertexRenderer()
-            # Cast to VertexState since aligned_contours indicates vertex-based state
-            mask_elem = renderer._render_core(
-                cast("VertexState", mask_state), drawing=drawing
-            )
-        else:
-            # Normal state - use its registered renderer
-            renderer = get_renderer_instance_for_state(mask_state)
-            # Use _render_core to get just the shape
-            mask_elem = renderer._render_core(mask_state, drawing=drawing)
+        mask_elem = self._render_state_element(mask_state, drawing=drawing)
 
         # Extract paths from group if needed (VertexRenderer returns a group)
         if isinstance(mask_elem, dw.Group) and hasattr(mask_elem, "children"):
@@ -253,18 +236,12 @@ class Renderer(ABC):
             elements = [mask_elem]
 
         # Apply transforms and opacity directly
-        transforms = []
-        if mask_state.x != 0 or mask_state.y != 0:
-            transforms.append(f"translate({mask_state.x},{mask_state.y})")
-        if mask_state.rotation != 0:
-            transforms.append(f"rotate({mask_state.rotation})")
-        if mask_state.scale != 1.0:
-            transforms.append(f"scale({mask_state.scale})")
+        transform = self._build_transform_string(mask_state)
 
-        if transforms or mask_state.opacity != 1.0:
+        if transform or mask_state.opacity != 1.0:
             mask_group = dw.Group(opacity=mask_state.opacity)
-            if transforms:
-                _set_elem_attr(mask_group, "transform", " ".join(transforms))
+            if transform:
+                _set_elem_attr(mask_group, "transform", transform)
             for elem in elements:
                 mask_group.append(elem)
             mask.append(mask_group)

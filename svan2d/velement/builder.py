@@ -8,6 +8,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    NamedTuple,
     Sequence,
     TypeVar,
 )
@@ -26,17 +27,18 @@ if TYPE_CHECKING:
 
 T = TypeVar("T", bound="KeystateBuilder")
 
-# Type alias for keystate tuple
-KeystateTuple = tuple[
-    State, State | None, float | None, TransitionConfig | None, int | None
-]
+class KeystateTuple(NamedTuple):
+    state: State
+    outgoing_state: State | None
+    time: float | None
+    transition_config: TransitionConfig | None
+    render_index: int | None
 
 
 @dataclass(frozen=True)
 class BuilderState:
     """Internal state for chainable builder methods (immutable)."""
 
-    # Tuple: (state, outgoing_state, time, transition_config, render_index)
     keystates: tuple[KeystateTuple, ...] = field(default_factory=tuple)
     pending_transition: TransitionConfig | None = None
     default_transition: TransitionConfig | None = None
@@ -87,13 +89,13 @@ class BuilderState:
         if not self.keystates:
             return self
 
-        prev_state, prev_outgoing, prev_time, _, prev_render_index = self.keystates[-1]
-        updated_keystate = (
-            prev_state,
-            prev_outgoing,
-            prev_time,
+        prev = self.keystates[-1]
+        updated_keystate = KeystateTuple(
+            prev.state,
+            prev.outgoing_state,
+            prev.time,
             transition,
-            prev_render_index,
+            prev.render_index,
         )
         return BuilderState(
             keystates=self.keystates[:-1] + (updated_keystate,),
@@ -199,7 +201,7 @@ class KeystateBuilder:
                 )
 
         # Add new keystate
-        new_keystate: KeystateTuple = (
+        new_keystate = KeystateTuple(
             incoming_state,
             outgoing_state,
             at,
@@ -482,8 +484,8 @@ class KeystateBuilder:
         from svan2d.component.state.state_collection import StateCollectionState
 
         for i in range(len(self._builder.keystates) - 1):
-            state1 = self._builder.keystates[i][0]
-            state2 = self._builder.keystates[i + 1][0]
+            state1 = self._builder.keystates[i].state
+            state2 = self._builder.keystates[i + 1].state
             is_collection1 = isinstance(state1, StateCollectionState)
             is_collection2 = isinstance(state2, StateCollectionState)
 
@@ -507,7 +509,7 @@ class KeystateBuilder:
         # Auto-expand: single keystate with implicit time → duplicate to span [0, 1].
         # VElement(state=s) should persist across entire timeline, not just t=0.
         # Explicit at= is preserved (user intentionally pinned to one time point).
-        if len(self._builder.keystates) == 1 and self._builder.keystates[0][2] is None:
+        if len(self._builder.keystates) == 1 and self._builder.keystates[0].time is None:
             ks = self._builder.keystates[0]
             self._builder = BuilderState(
                 keystates=(ks, ks),

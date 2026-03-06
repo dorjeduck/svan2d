@@ -1,4 +1,4 @@
-"""Clustering-based mapping strategy
+"""Clustering-based mapping strategy.
 
 Uses k-means clustering for balanced grouping when item counts differ.
 Spatially close items are grouped together for morphing.
@@ -7,14 +7,18 @@ Spatially close items are grouped together for morphing.
 from __future__ import annotations
 
 import random
-from typing import Callable, TypeVar
+from typing import TypeVar
+from collections.abc import Callable
 
+from svan2d.core.logger import get_logger
 from svan2d.core.point2d import Point2D
 
 from .base import Mapper, Match
 from .greedy import GreedyMapper
 
-T = TypeVar('T')
+logger = get_logger()
+
+T = TypeVar("T")
 
 
 class ClusteringMapper(Mapper):
@@ -42,7 +46,7 @@ class ClusteringMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Map items using k-means clustering."""
         if not start_items and not end_items:
@@ -58,6 +62,10 @@ class ClusteringMapper(Mapper):
         n_end = len(end_items)
 
         if n_start == n_end:
+            logger.debug(
+                "ClusteringMapper: equal counts (%d), delegating to GreedyMapper",
+                n_start,
+            )
             return self._greedy.map(start_items, end_items, get_position)
         elif n_start > n_end:
             return self._match_merge(start_items, end_items, get_position)
@@ -68,7 +76,7 @@ class ClusteringMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Match when merging (more start items than end items)."""
         n_clusters = len(end_items)
@@ -91,7 +99,7 @@ class ClusteringMapper(Mapper):
             )
 
             best_end_idx = -1
-            best_dist = float('inf')
+            best_dist = float("inf")
             for i, end in enumerate(end_items):
                 if i in used_end:
                     continue
@@ -118,7 +126,7 @@ class ClusteringMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Match when splitting (more end items than start items)."""
         n_clusters = len(start_items)
@@ -141,7 +149,7 @@ class ClusteringMapper(Mapper):
             )
 
             best_start_idx = -1
-            best_dist = float('inf')
+            best_dist = float("inf")
             for i, start in enumerate(start_items):
                 if i in used_start:
                     continue
@@ -183,7 +191,7 @@ class ClusteringMapper(Mapper):
             new_assignments = []
             for pos in positions:
                 best_cluster = 0
-                best_dist = float('inf')
+                best_dist = float("inf")
                 for c, centroid in enumerate(centroids):
                     dist = pos.distance_to(centroid)
                     if dist < best_dist:

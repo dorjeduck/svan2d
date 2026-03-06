@@ -53,14 +53,19 @@ def parse_coordinates(
     coords = []
     remaining_tokens = tokens[:]
 
-    for _ in range(num_args):
-        try:
-            # We assume the tokens are already clean strings representing numbers
-            coords.append(float(remaining_tokens.pop(0)))
-        except (IndexError, ValueError):
-            # If the token is not a number, or the list runs out, something is wrong
+    for i in range(num_args):
+        if not remaining_tokens:
             raise ValueError(
-                f"Invalid path data: Expected numeric coordinate, got '{remaining_tokens[0] if remaining_tokens else 'END'}'"
+                f"Unexpected end of path data: expected coordinate "
+                f"{i + 1} of {num_args}"
+            )
+        token = remaining_tokens.pop(0)
+        try:
+            coords.append(float(token))
+        except ValueError:
+            raise ValueError(
+                f"Invalid path data: expected numeric coordinate "
+                f"{i + 1} of {num_args}, got command '{token}'"
             )
 
     return coords, remaining_tokens

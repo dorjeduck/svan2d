@@ -20,6 +20,7 @@ RotationFunc: TypeAlias = Callable[[float], float]  # t -> degrees
 import drawsvg as dw
 
 from svan2d.config import ConfigKey, get_config
+from svan2d.velement.base_velement import _UNSET, _Unset
 from svan2d.core import Color, get_logger
 from svan2d.core.enums import Origin
 from svan2d.core.point2d import Point2D
@@ -34,6 +35,15 @@ if TYPE_CHECKING:
 RenderableElement: TypeAlias = "VElement | VElementGroup"
 
 logger = get_logger()
+
+
+def _lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
+
+
+def _eased_t(easing_dict: dict | None, field: str, local_t: float, linear: Callable[[float], float]) -> float:
+    fn = easing_dict.get(field, linear) if easing_dict else linear
+    return fn(local_t)
 
 
 class VScene:
@@ -161,11 +171,11 @@ class VScene:
         *,
         elements: list[RenderableElement] | None = None,
         camera_keystates: list[tuple[CameraState, float, dict | None]] | None = None,
-        camera_pending_easing: dict[str, Callable[[float], float]] | None = ...,  # type: ignore[assignment]
-        camera_scale_func: ScaleFunc | None = ...,  # type: ignore[assignment]
-        camera_offset_func: OffsetFunc | None = ...,  # type: ignore[assignment]
-        camera_rotation_func: RotationFunc | None = ...,  # type: ignore[assignment]
-        camera_func_easing: EasingFunc | None = ...,  # type: ignore[assignment]
+        camera_pending_easing: dict[str, Callable[[float], float]] | None | _Unset = _UNSET,
+        camera_scale_func: ScaleFunc | None | _Unset = _UNSET,
+        camera_offset_func: OffsetFunc | None | _Unset = _UNSET,
+        camera_rotation_func: RotationFunc | None | _Unset = _UNSET,
+        camera_func_easing: EasingFunc | None | _Unset = _UNSET,
     ) -> "VScene":
         """Return a new VScene with specified attributes replaced."""
         new = VScene.__new__(VScene)
@@ -186,11 +196,11 @@ class VScene:
         # Replace specified attributes
         new.elements = elements if elements is not None else self.elements.copy()
         new._camera_keystates = camera_keystates if camera_keystates is not None else self._camera_keystates.copy()
-        new._camera_pending_easing = self._camera_pending_easing if camera_pending_easing is ... else camera_pending_easing
-        new._camera_scale_func = self._camera_scale_func if camera_scale_func is ... else camera_scale_func
-        new._camera_offset_func = self._camera_offset_func if camera_offset_func is ... else camera_offset_func
-        new._camera_rotation_func = self._camera_rotation_func if camera_rotation_func is ... else camera_rotation_func
-        new._camera_func_easing = self._camera_func_easing if camera_func_easing is ... else camera_func_easing
+        new._camera_pending_easing = self._camera_pending_easing if camera_pending_easing is _UNSET else camera_pending_easing
+        new._camera_scale_func = self._camera_scale_func if camera_scale_func is _UNSET else camera_scale_func
+        new._camera_offset_func = self._camera_offset_func if camera_offset_func is _UNSET else camera_offset_func
+        new._camera_rotation_func = self._camera_rotation_func if camera_rotation_func is _UNSET else camera_rotation_func
+        new._camera_func_easing = self._camera_func_easing if camera_func_easing is _UNSET else camera_func_easing
         return new
 
     # ========================================================================
@@ -400,6 +410,13 @@ class VScene:
             camera_func_easing=easing,
         )
 
+    def _has_camera_funcs(self) -> bool:
+        return (
+            self._camera_scale_func is not None
+            or self._camera_offset_func is not None
+            or self._camera_rotation_func is not None
+        )
+
     def _get_camera_state_at_time(self, frame_time: float) -> CameraState:
         """Get interpolated camera state with visually linear panning.
 
@@ -422,26 +439,16 @@ class VScene:
         keystates = self._camera_keystates
 
         # Handle boundary cases
-        # If functions are set, apply them even at boundaries
-        has_funcs = (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
-        )
-
+        boundary_state = None
         if frame_time <= keystates[0][1]:
-            if not has_funcs:
-                return keystates[0][0]
-            # Apply functions at boundary
-            base_state = keystates[0][0]
-            return self._apply_camera_functions(base_state, frame_time)
+            boundary_state = keystates[0][0]
+        elif frame_time >= keystates[-1][1]:
+            boundary_state = keystates[-1][0]
 
-        if frame_time >= keystates[-1][1]:
-            if not has_funcs:
-                return keystates[-1][0]
-            # Apply functions at boundary
-            base_state = keystates[-1][0]
-            return self._apply_camera_functions(base_state, frame_time)
+        if boundary_state is not None:
+            if self._has_camera_funcs():
+                return self._apply_camera_functions(boundary_state, frame_time)
+            return boundary_state
 
         # Find segment
         start_state, start_time, easing_dict = keystates[0]
@@ -459,27 +466,11 @@ class VScene:
         else:
             local_t = (frame_time - start_time) / (end_time - start_time)
 
-        # Get easing functions
-        scale_easing = (
-            easing_dict.get("scale", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-        pos_easing = (
-            easing_dict.get("pos", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-        rotation_easing = (
-            easing_dict.get("rotation", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-
         # Apply easing
-        scale_t = scale_easing(local_t)
-        pos_t = pos_easing(local_t)
-        rotation_t = rotation_easing(local_t)
+        linear = easing_module.linear
+        scale_t = _eased_t(easing_dict, "scale", local_t, linear)
+        pos_t = _eased_t(easing_dict, "pos", local_t, linear)
+        rotation_t = _eased_t(easing_dict, "rotation", local_t, linear)
 
         # CameraState fields are guaranteed non-None after __post_init__
         assert start_state.scale is not None and end_state.scale is not None
@@ -531,33 +522,16 @@ class VScene:
             start_state.opacity + (end_state.opacity - start_state.opacity) * local_t
         )
 
-        # Override with function-based values if functions are set
-        if (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
-        ):
-            # Apply function easing to frame_time (not local_t)
-            func_easing = self._camera_func_easing or easing_module.linear
-            eased_frame_time = func_easing(frame_time)
-
-            if self._camera_scale_func is not None:
-                interp_scale = self._camera_scale_func(eased_frame_time)
-
-            if self._camera_rotation_func is not None:
-                interp_rotation = self._camera_rotation_func(eased_frame_time)
-
-            if self._camera_offset_func is not None:
-                ox, oy = self._camera_offset_func(eased_frame_time)
-                interp_pos = Point2D(ox, oy)
-
-        return CameraState(
+        result = CameraState(
             scale=interp_scale,
             rotation=interp_rotation,
             pos=interp_pos,
             pivot=interp_pivot,
             opacity=interp_opacity,
         )
+        if has_funcs:
+            return self._apply_camera_functions(result, frame_time)
+        return result
 
     def _apply_camera_functions(
         self, base_state: CameraState, frame_time: float

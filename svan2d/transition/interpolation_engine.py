@@ -37,11 +37,11 @@ _NOT_HANDLED = object()
 def _scalar_t(eased_t: EasedT) -> float:
     """Extract scalar t value from EasedT.
 
-    For 2D easing (tuple), uses the first component.
+    For 2D easing (tuple), uses the average of both components.
     For scalar easing, returns the value directly.
     """
     if isinstance(eased_t, tuple):
-        return eased_t[0]
+        return (eased_t[0] + eased_t[1]) / 2
     return eased_t
 
 

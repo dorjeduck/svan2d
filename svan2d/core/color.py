@@ -3,7 +3,7 @@
 import colorsys
 import math
 from enum import StrEnum
-from typing import Any, ClassVar
+from typing import ClassVar
 
 # Type aliases
 ColorTuple = tuple[int, int, int]
@@ -54,74 +54,66 @@ class Color:
             self._hash = hash((0, 0, 0, True))
             return
 
-        result_r, result_g, result_b = 0, 0, 0
-        input_value = None
+        r, g, b = self._resolve_rgb(*args)
 
-        if len(args) == 3 and all(isinstance(a, int) for a in args):
-            # Case 1: Color(r, g, b)
-            result_r, result_g, result_b = args
-        elif len(args) == 1:
-            input_value = args[0]
+        if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
+            raise ValueError(f"RGB values must be 0-255, got ({r}, {g}, {b})")
 
-            if isinstance(input_value, Color):
-                # Case 2: Color(existing_color)
-                self.__dict__.update(input_value.__dict__)
-                return
-
-            elif isinstance(input_value, tuple):
-                # Case 3: Color((r, g, b))
-                if len(input_value) == 3:
-                    if not all(isinstance(v, int) for v in input_value):
-                        raise ValueError(
-                            f"Tuple must contain integers, got {input_value}"
-                        )
-                    result_r, result_g, result_b = input_value
-
-                else:
-                    raise ValueError(
-                        f"Tuple must contain 3 integers (r, g, b), got {input_value}"
-                    )
-
-            elif isinstance(input_value, str):
-                # Case 4: Color("#hex") or Color("name")
-                try:
-                    r, g, b = self._parse_hex(input_value)
-                    result_r, result_g, result_b = r, g, b
-                except ValueError:
-                    try:
-                        r, g, b = self._parse_name(input_value)
-                        result_r, result_g, result_b = r, g, b
-                    except ValueError:
-                        raise ValueError(
-                            f"Cannot convert string '{input_value}' to Color (not hex or known name)."
-                        )
-            else:
-                raise ValueError(f"Cannot initialize Color from {type(input_value)}")
-        else:
-            raise ValueError(
-                "Color must be initialized with Color(r, g, b), Color(hex_str), Color(name), or Color(tuple)."
-            )
-
-        # --- Final Assignment and Validation ---
-        self.r = result_r
-        self.g = result_g
-        self.b = result_b
-
+        self.r = r
+        self.g = g
+        self.b = b
         self._is_none_sentinel = False
+        self._hash = hash((r, g, b, False))
 
-        if not (0 <= self.r <= 255 and 0 <= self.g <= 255 and 0 <= self.b <= 255):
+    @staticmethod
+    def _resolve_rgb(*args) -> ColorTuple:
+        """Resolve constructor arguments to an (r, g, b) tuple."""
+        if len(args) == 3 and all(isinstance(a, int) for a in args):
+            return args[0], args[1], args[2]
+
+        if len(args) != 1:
             raise ValueError(
-                f"RGB values must be 0-255, got ({self.r}, {self.g}, {self.b})"
+                "Color must be initialized with Color(r, g, b), Color(hex_str), "
+                "Color(name), or Color(tuple)."
             )
 
-        # Pre-calculate hash for immutability
-        self._hash = hash((self.r, self.g, self.b, self._is_none_sentinel))
+        val = args[0]
+
+        if isinstance(val, Color):
+            return val.r, val.g, val.b
+
+        if isinstance(val, tuple):
+            if len(val) != 3 or not all(isinstance(v, int) for v in val):
+                raise ValueError(
+                    f"Tuple must contain 3 integers (r, g, b), got {val}"
+                )
+            return val[0], val[1], val[2]
+
+        if isinstance(val, str):
+            return Color._parse_string(val)
+
+        raise ValueError(f"Cannot initialize Color from {type(val)}")
+
+    @staticmethod
+    def _parse_string(s: str) -> ColorTuple:
+        """Parse a hex string or CSS color name to (r, g, b)."""
+        try:
+            return Color._parse_hex(s)
+        except ValueError:
+            pass
+        try:
+            return Color._parse_name(s)
+        except ValueError:
+            pass
+        raise ValueError(
+            f"Cannot convert string '{s}' to Color (not hex or known name)."
+        )
 
     def is_none(self) -> bool:
         """Check if this is the special NONE sentinel (no color)"""
         return self._is_none_sentinel
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Color):
             return NotImplemented
         return (self.r, self.g, self.b, self._is_none_sentinel) == (

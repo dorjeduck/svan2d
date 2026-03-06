@@ -6,13 +6,14 @@ positions. No spatial matching or morphing between items.
 
 from __future__ import annotations
 
-from typing import Callable, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from svan2d.core.point2d import Point2D
 
 from .base import Mapper, Match
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class SimpleMapper(Mapper):
@@ -40,7 +41,7 @@ class SimpleMapper(Mapper):
         self,
         start_items: list[T],
         end_items: list[T],
-        get_position: Callable[[T], Point2D]
+        get_position: Callable[[T], Point2D],
     ) -> list[Match[T]]:
         """Map items with no correspondence - pure crossfade.
 

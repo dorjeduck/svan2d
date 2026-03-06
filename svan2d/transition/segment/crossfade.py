@@ -1,7 +1,7 @@
 """Crossfade segment function (multi-element)."""
 
 from dataclasses import replace
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.component.state.base import State
 from svan2d.velement.keystate import KeyState
@@ -37,7 +37,9 @@ def crossfade(
     keystates_in = [
         # Start invisible
         KeyState(
-            state=s_in_gone, time=max(0, t_start + (delay or 0)), transition_config=transition
+            state=s_in_gone,
+            time=max(0, t_start + (delay or 0)),
+            transition_config=transition,
         ),
         # End visible
         KeyState(state=s_in, time=min(1, t_end)),

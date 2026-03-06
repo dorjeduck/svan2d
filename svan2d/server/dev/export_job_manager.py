@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.core.logger import get_logger
 

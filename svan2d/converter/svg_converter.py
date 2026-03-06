@@ -79,9 +79,7 @@ class SVGConverter(ABC):
                     img.thumbnail((png_thumb_width_px, png_thumb_height_px))
                     img.save(thumb_path)
 
-                    result["png_thumb"] = str(
-                        Path(output_file).with_suffix(".thumb.png")
-                    )
+                    result["png_thumb"] = str(thumb_path)
 
         return result
 

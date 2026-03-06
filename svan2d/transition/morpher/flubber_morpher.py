@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import subprocess
+from dataclasses import dataclass
 from typing import Any
 
 from svan2d.path import SVGPath
@@ -267,6 +268,14 @@ class FlubberNodeBridge:
         self.close()
 
 
+@dataclass
+class _CacheEntry:
+    """A cached FlubberMorpher instance with its reference count."""
+
+    morpher: "FlubberMorpher"
+    ref_count: int = 0
+
+
 class FlubberMorpher(BaseMorpher):
     """
     Flubber-based shape interpolator with reference-counted caching.
@@ -277,8 +286,7 @@ class FlubberMorpher(BaseMorpher):
     """
 
     # --- Global Class Attributes ---
-    _morpher_cache: dict[tuple[str, str, str], "FlubberMorpher"] = {}
-    _reference_counts: dict[tuple[str, str, str], int] = {}
+    _cache_entries: dict[tuple[str, str, str], _CacheEntry] = {}
 
     @classmethod
     def for_paths(
@@ -302,16 +310,16 @@ class FlubberMorpher(BaseMorpher):
         cache_key = (key1, key2, kwargs_key)
 
         # Check cache
-        if cache_key not in cls._morpher_cache:
+        if cache_key not in cls._cache_entries:
             # Cache miss: create new instance
             morpher = cls(path1, path2, cache_key=cache_key, **kwargs)
-            cls._morpher_cache[cache_key] = morpher
-            cls._reference_counts[cache_key] = 0
+            cls._cache_entries[cache_key] = _CacheEntry(morpher=morpher)
 
         # Increment reference count
-        cls._reference_counts[cache_key] += 1
+        entry = cls._cache_entries[cache_key]
+        entry.ref_count += 1
 
-        return cls._morpher_cache[cache_key]
+        return entry.morpher
 
     def __init__(
         self,
@@ -382,11 +390,12 @@ class FlubberMorpher(BaseMorpher):
             return
 
         # Decrement reference count
-        if self._cache_key in self._reference_counts:
-            self._reference_counts[self._cache_key] -= 1
+        entry = self._cache_entries.get(self._cache_key)
+        if entry is not None:
+            entry.ref_count -= 1
 
             # Only truly close when no references remain
-            if self._reference_counts[self._cache_key] <= 0:
+            if entry.ref_count <= 0:
                 self._actually_close()
 
     def _actually_close(self):
@@ -398,11 +407,8 @@ class FlubberMorpher(BaseMorpher):
         # Clear the t-value cache
         self._cache.clear()
 
-        # Remove from global caches
-        if self._cache_key in self._morpher_cache:
-            del self._morpher_cache[self._cache_key]
-        if self._cache_key in self._reference_counts:
-            del self._reference_counts[self._cache_key]
+        # Remove from global cache
+        self._cache_entries.pop(self._cache_key, None)
 
         # Mark as closed
         self._is_closed = True
@@ -415,12 +421,11 @@ class FlubberMorpher(BaseMorpher):
         Use this for emergency cleanup or at application shutdown.
         Does not affect reference counts - resets everything.
         """
-        for morpher in list(cls._morpher_cache.values()):
-            if not morpher._is_closed:
-                morpher._actually_close()
+        for entry in list(cls._cache_entries.values()):
+            if not entry.morpher._is_closed:
+                entry.morpher._actually_close()
 
-        cls._morpher_cache.clear()
-        cls._reference_counts.clear()
+        cls._cache_entries.clear()
 
     @classmethod
     def clear_morpher_cache(cls):
@@ -450,15 +455,17 @@ class FlubberMorpher(BaseMorpher):
             Dict with cache size, active instances, total references
         """
         return {
-            "cached_instances": len(cls._morpher_cache),
-            "total_references": sum(cls._reference_counts.values()),
+            "cached_instances": len(cls._cache_entries),
+            "total_references": sum(
+                e.ref_count for e in cls._cache_entries.values()
+            ),
             "instances": [
                 {
                     "cache_key": f"{key[0][:8]}...{key[1][:8]}",
-                    "references": cls._reference_counts[key],
-                    "t_cache_size": len(cls._morpher_cache[key]._cache),
-                    "t_cache_stats": cls._morpher_cache[key].get_cache_stats(),
+                    "references": entry.ref_count,
+                    "t_cache_size": len(entry.morpher._cache),
+                    "t_cache_stats": entry.morpher.get_cache_stats(),
                 }
-                for key in cls._morpher_cache
+                for key, entry in cls._cache_entries.items()
             ],
         }

@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 import drawsvg as dw
+
+
+class _Unset(Enum):
+    """Sentinel for distinguishing 'not provided' from ``None``."""
+    UNSET = auto()
+
+
+_UNSET = _Unset.UNSET
 
 if TYPE_CHECKING:
     from svan2d.component.state.base import State

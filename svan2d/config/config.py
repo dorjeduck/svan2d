@@ -6,12 +6,15 @@ default values throughout svan2d.
 
 from __future__ import annotations
 
+import logging
 import tomllib
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from svan2d.core.color import Color
+
+logger = logging.getLogger(__name__)
 
 from .config_key import ConfigKey
 
@@ -89,9 +92,10 @@ class Svan2DConfig:
             try:
                 user_config = cls.load_from_file(user_config_path)
                 config._merge(user_config._config)
-            except Exception:
-                # Silently ignore missing/invalid user configs
-                pass
+            except FileNotFoundError:
+                logger.warning("User config file not found: %s", user_config_path)
+            except tomllib.TOMLDecodeError as e:
+                logger.warning("Invalid TOML in user config %s: %s", user_config_path, e)
 
         return config
 

@@ -1,7 +1,7 @@
 """Bezier curve path interpolation"""
 
 import math
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d.core.point2d import Point2D
 

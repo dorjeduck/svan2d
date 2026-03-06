@@ -73,41 +73,32 @@ class VertexContours:
         return self._outer.centroid()
 
     def translate(self, dx: float, dy: float) -> VertexContours:
-        """Translate all contours in-place by (dx, dy)
-
-        Returns self for method chaining.
-        """
-        self._outer.translate(dx, dy)
-        for hole in self._holes:
-            hole.translate(dx, dy)
-        return self
+        """Returns a new VertexContours with all contours translated by (dx, dy)."""
+        new_outer = self._outer.translate(dx, dy)
+        new_holes = [hole.translate(dx, dy) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
 
     def scale(self, sx: float, sy: float | None = None) -> VertexContours:
-        """Scale all contours in-place by (sx, sy)
+        """Returns a new VertexContours with all contours scaled by (sx, sy).
 
         If sy is None, uses sx for both dimensions (uniform scaling).
-        Returns self for method chaining.
         """
-        self._outer.scale(sx, sy)
-        for hole in self._holes:
-            hole.scale(sx, sy)
-        return self
+        new_outer = self._outer.scale(sx, sy)
+        new_holes = [hole.scale(sx, sy) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
 
     def rotate(
         self, angle_degrees: float, center: Point2D | None = None
     ) -> VertexContours:
-        """Rotate all contours in-place around center
+        """Returns a new VertexContours with all contours rotated around center.
 
         Args:
             angle_degrees: Rotation angle in degrees (positive = counter-clockwise)
             center: Center of rotation (default is origin)
-
-        Returns self for method chaining.
         """
-        self._outer.rotate(angle_degrees, center)
-        for hole in self._holes:
-            hole.rotate(angle_degrees, center)
-        return self
+        new_outer = self._outer.rotate(angle_degrees, center)
+        new_holes = [hole.rotate(angle_degrees, center) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
 
     @classmethod
     def from_single_loop(

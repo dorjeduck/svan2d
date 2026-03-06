@@ -15,7 +15,7 @@ from svan2d.component import (
 )
 from svan2d.component.renderer.base_vertex import VertexRenderer
 from svan2d.core.point2d import Point2D, Points2D
-from svan2d.velement.base_velement import BaseVElement
+from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
@@ -120,20 +120,20 @@ class VElement(BaseVElement, KeystateBuilder):
         *,
         renderer: Renderer | None = None,
         clip_elements: list["VElement"] | None = None,
-        mask_element: "VElement | None" = ...,  # type: ignore[assignment]
+        mask_element: VElement | None | _Unset = _UNSET,
         builder: BuilderState | None = None,
         attribute_easing: dict[str, EasingFunction] | None = None,
         attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> "VElement":
         """Return a new VElement with specified attributes replaced.
 
-        Uses ``...`` (Ellipsis) as sentinel for mask_element so that
-        explicit ``None`` (remove mask) is distinguishable from "not provided".
+        ``mask_element`` uses ``_UNSET`` sentinel so that explicit ``None``
+        (remove mask) is distinguishable from "not provided".
         """
         new = VElement.__new__(VElement)
         new._renderer = renderer if renderer is not None else self._renderer
         new.clip_element = None
-        new.mask_element = self.mask_element if mask_element is ... else mask_element
+        new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
         new._vertex_buffer_cache = {}
         new._shape_list_cache = {}

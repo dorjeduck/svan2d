@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Callable
+from collections.abc import Callable
 
 from svan2d import transition
 from svan2d.component.state.base import State

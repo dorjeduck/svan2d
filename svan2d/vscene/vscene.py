@@ -41,7 +41,12 @@ def _lerp(a: float, b: float, t: float) -> float:
     return a + (b - a) * t
 
 
-def _eased_t(easing_dict: dict | None, field: str, local_t: float, linear: Callable[[float], float]) -> float:
+def _eased_t(
+    easing_dict: dict | None,
+    field: str,
+    local_t: float,
+    linear: Callable[[float], float],
+) -> float:
     fn = easing_dict.get(field, linear) if easing_dict else linear
     return fn(local_t)
 
@@ -171,7 +176,9 @@ class VScene:
         *,
         elements: list[RenderableElement] | None = None,
         camera_keystates: list[tuple[CameraState, float, dict | None]] | None = None,
-        camera_pending_easing: dict[str, Callable[[float], float]] | None | _Unset = _UNSET,
+        camera_pending_easing: (
+            dict[str, Callable[[float], float]] | None | _Unset
+        ) = _UNSET,
         camera_scale_func: ScaleFunc | None | _Unset = _UNSET,
         camera_offset_func: OffsetFunc | None | _Unset = _UNSET,
         camera_rotation_func: RotationFunc | None | _Unset = _UNSET,
@@ -195,12 +202,36 @@ class VScene:
 
         # Replace specified attributes
         new.elements = elements if elements is not None else self.elements.copy()
-        new._camera_keystates = camera_keystates if camera_keystates is not None else self._camera_keystates.copy()
-        new._camera_pending_easing = self._camera_pending_easing if camera_pending_easing is _UNSET else camera_pending_easing
-        new._camera_scale_func = self._camera_scale_func if camera_scale_func is _UNSET else camera_scale_func
-        new._camera_offset_func = self._camera_offset_func if camera_offset_func is _UNSET else camera_offset_func
-        new._camera_rotation_func = self._camera_rotation_func if camera_rotation_func is _UNSET else camera_rotation_func
-        new._camera_func_easing = self._camera_func_easing if camera_func_easing is _UNSET else camera_func_easing
+        new._camera_keystates = (
+            camera_keystates
+            if camera_keystates is not None
+            else self._camera_keystates.copy()
+        )
+        new._camera_pending_easing = (
+            self._camera_pending_easing
+            if camera_pending_easing is _UNSET
+            else camera_pending_easing
+        )
+        new._camera_scale_func = (
+            self._camera_scale_func
+            if camera_scale_func is _UNSET
+            else camera_scale_func
+        )
+        new._camera_offset_func = (
+            self._camera_offset_func
+            if camera_offset_func is _UNSET
+            else camera_offset_func
+        )
+        new._camera_rotation_func = (
+            self._camera_rotation_func
+            if camera_rotation_func is _UNSET
+            else camera_rotation_func
+        )
+        new._camera_func_easing = (
+            self._camera_func_easing
+            if camera_func_easing is _UNSET
+            else camera_func_easing
+        )
         return new
 
     # ========================================================================
@@ -281,7 +312,9 @@ class VScene:
             new_pending = None
 
         new_keystates.append((state, at, None))
-        return self._replace(camera_keystates=new_keystates, camera_pending_easing=new_pending)
+        return self._replace(
+            camera_keystates=new_keystates, camera_pending_easing=new_pending
+        )
 
     def camera_transition(
         self,
@@ -313,7 +346,9 @@ class VScene:
     def animate_camera(
         self,
         scale: tuple[float, float] | ScaleFunc | None = None,
-        offset: tuple[tuple[float, float], tuple[float, float]] | OffsetFunc | None = None,
+        offset: (
+            tuple[tuple[float, float], tuple[float, float]] | OffsetFunc | None
+        ) = None,
         rotation: tuple[float, float] | RotationFunc | None = None,
         pivot: tuple[float, float] | None = None,
         easing: Callable[[float], float] | None = None,
@@ -528,6 +563,11 @@ class VScene:
             pos=interp_pos,
             pivot=interp_pivot,
             opacity=interp_opacity,
+        )
+        has_funcs = (
+            self._camera_scale_func is not None
+            or self._camera_offset_func is not None
+            or self._camera_rotation_func is not None
         )
         if has_funcs:
             return self._apply_camera_functions(result, frame_time)

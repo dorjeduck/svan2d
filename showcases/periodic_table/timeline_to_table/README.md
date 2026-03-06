@@ -5,7 +5,7 @@ Two-phase animation: elements first appear along a horizontal timeline axis orde
 ## Run
 
 ```bash
-python showcases/periodic_table/timeline_to_grid/main.py
+python showcases/periodic_table/timeline_to_table/main.py
 ```
 
 ## Config

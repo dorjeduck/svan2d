@@ -1,5 +1,5 @@
 [scene]
-background = "#1a1a2e"
+background = "#0f0f23"
 
 [animation]
 total_frames = 450
@@ -28,7 +28,7 @@ color = "#ffffff"
 opacity = 0.08
 
 [export]
-output_dir = "output/periodic_table/discovery_timeline"
-filename = "discovery_timeline"
+output_dir = "output/"
+filename = "table_discovery"
 converter = "playwright_http"
 png_width_px = 1920

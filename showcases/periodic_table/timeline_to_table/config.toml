@@ -43,7 +43,7 @@ fly_stagger_per_period = 0.01
 label_fade_end = 0.95
 
 [export]
-output_dir = "output/periodic_table/timeline_to_grid"
-filename = "timeline_to_grid"
+output_dir = "output/"
+filename = "timeline_to_table"
 converter = "playwright_http"
 png_width_px = 1920

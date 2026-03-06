@@ -5,7 +5,7 @@ Elements of the periodic table appear one by one in their grid positions, ordere
 ## Run
 
 ```bash
-python showcases/periodic_table/discovery_grid/main.py
+python showcases/periodic_table/table_discovery/main.py
 ```
 
 ## Config

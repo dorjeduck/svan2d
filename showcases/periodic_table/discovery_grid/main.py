@@ -81,4 +81,5 @@ if __name__ == "__main__":
         total_frames=cfg["animation"]["total_frames"],
         framerate=cfg["animation"]["framerate"],
         png_width_px=cfg["export"]["png_width_px"],
+        num_thumbnails=100,
     )

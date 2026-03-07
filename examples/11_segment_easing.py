@@ -3,12 +3,10 @@ from svan2d import (
     configure_logging,
     ConverterType,
     easing,
-    KeyState,
     layout,
     Point2D,
     TextRenderer,
     TextState,
-    TransitionConfig,
     VElement,
     VScene,
     VSceneExporter,
@@ -73,7 +71,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

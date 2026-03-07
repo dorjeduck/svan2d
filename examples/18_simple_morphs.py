@@ -1,8 +1,3 @@
-"""
-Comprehensive showcase of all svan2d layout functions
-Demonstrates each layout's unique characteristics with animated transition
-"""
-
 from dataclasses import replace
 
 from svan2d import (
@@ -23,11 +18,9 @@ from svan2d import (
     Point2D,
     PolygonState,
     RectangleState,
-    Renderer,
     SpiralState,
     SquareState,
     StarState,
-    TextRenderer,
     TextState,
     TriangleState,
     VElement,

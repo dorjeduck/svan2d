@@ -22,9 +22,12 @@ def just_slide(
     exit_effect: SlideEffect = SlideEffect.NONE,
     entrance_easing_dict: dict[str, Callable[[float], float]] | None = None,
     exit_easing_dict: dict[str, Callable[[float], float]] | None = None,
-) -> list[KeyState] | list[list[KeyState]]:
+) -> list[list[KeyState]]:
 
-    num_states = 1 if isinstance(states, State) else len(states)
+    if isinstance(states, State):
+        states = [states]
+
+    num_states = len(states)
     slide_duration = (t_end - t_start) / (num_states + 1)
 
     def apply_effect(state: State, effect: SlideEffect) -> State:
@@ -88,14 +91,9 @@ def just_slide(
 
         return res
 
-    # Single state
-    if isinstance(states, State):
-        return make_keystates(states, t_start, entrance_easing_dict, exit_easing_dict)
-
     result: list[list[KeyState]] = []
     for i, s in enumerate(states):
         t = t_start + i * slide_duration
-
         result.append(make_keystates(s, t, entrance_easing_dict, exit_easing_dict))
 
     return result

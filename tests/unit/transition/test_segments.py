@@ -258,24 +258,28 @@ class TestFadeInOut:
     def test_fade_inout_single_state(self, circle_state):
         """Single state fade in/out."""
         result = fade_inout(circle_state)
+        assert len(result) == 1  # one element
+        ks = result[0]
         # Should have keystates for: invisible -> visible -> visible -> invisible
-        assert len(result) >= 2
+        assert len(ks) >= 2
         # First keystate should be invisible
-        assert result[0].state.opacity == 0
+        assert ks[0].state.opacity == 0
         # Middle should be visible
-        assert any(ks.state.opacity == circle_state.opacity for ks in result)
+        assert any(k.state.opacity == circle_state.opacity for k in ks)
 
     def test_fade_inout_custom_times(self, circle_state):
         """Custom center time and durations."""
         result = fade_inout(
             circle_state, center_t=0.5, hold_duration=0.2, fade_duration=0.1
         )
-        assert len(result) >= 2
+        assert len(result) == 1
+        assert len(result[0]) >= 2
 
     def test_fade_inout_multiple_states(self, circle_state, rect_state):
         """Multiple states with default times."""
         result = fade_inout([circle_state, rect_state])
-        assert len(result) >= 4  # At least 2 per state
+        assert len(result) == 2  # one list per state
+        assert all(len(ks) >= 2 for ks in result)
 
     def test_fade_inout_multiple_states_custom_times(self, circle_state, rect_state):
         """Multiple states with custom times."""
@@ -285,17 +289,8 @@ class TestFadeInOut:
             hold_duration=0.1,
             fade_duration=0.05,
         )
-        assert len(result) >= 4
-
-    def test_fade_inout_single_state_list_at_raises(self, circle_state):
-        """Single state with list center_t should raise."""
-        with pytest.raises(ValueError, match="must be float"):
-            fade_inout(circle_state, center_t=[0.5])
-
-    def test_fade_inout_list_states_float_at_raises(self, circle_state, rect_state):
-        """List of states with float center_t should raise."""
-        with pytest.raises(ValueError, match="must be a list"):
-            fade_inout([circle_state, rect_state], center_t=0.5)
+        assert len(result) == 2
+        assert all(len(ks) >= 2 for ks in result)
 
 
 class TestSlideHoldSlide:
@@ -306,9 +301,11 @@ class TestSlideHoldSlide:
         result = slide_hold_slide(
             circle_state, t_start=0.0, t_end=1.0, slide_duration=0.1
         )
-        assert len(result) == 4  # entrance, hold start, hold end, exit
-        assert result[0].time == 0.0
-        assert result[-1].time == pytest.approx(1.0, abs=0.01)
+        assert len(result) == 1  # one element
+        ks = result[0]
+        assert len(ks) == 4  # entrance, hold start, hold end, exit
+        assert ks[0].time == 0.0
+        assert ks[-1].time == pytest.approx(1.0, abs=0.01)
 
     def test_slide_entrance_exit_points(self, circle_state):
         """Custom entrance and exit points."""
@@ -321,10 +318,11 @@ class TestSlideHoldSlide:
             entrance_point=entrance,
             exit_point=exit_pt,
         )
+        ks = result[0]
         # First state should be at entrance point
-        assert result[0].state.pos == entrance
+        assert ks[0].state.pos == entrance
         # Last state should be at exit point
-        assert result[-1].state.pos == exit_pt
+        assert ks[-1].state.pos == exit_pt
 
     def test_slide_with_fade_effect(self, circle_state):
         """Slide with fade effect."""
@@ -335,9 +333,10 @@ class TestSlideHoldSlide:
             entrance_effect=SlideEffect.FADE,
             exit_effect=SlideEffect.FADE,
         )
+        ks = result[0]
         # Entrance and exit states should have opacity=0
-        assert result[0].state.opacity == 0
-        assert result[-1].state.opacity == 0
+        assert ks[0].state.opacity == 0
+        assert ks[-1].state.opacity == 0
 
     def test_slide_with_scale_effect(self, circle_state):
         """Slide with scale effect."""
@@ -348,8 +347,9 @@ class TestSlideHoldSlide:
             entrance_effect=SlideEffect.SCALE,
             exit_effect=SlideEffect.SCALE,
         )
-        assert result[0].state.scale == 0
-        assert result[-1].state.scale == 0
+        ks = result[0]
+        assert ks[0].state.scale == 0
+        assert ks[-1].state.scale == 0
 
     def test_slide_multiple_states(self, circle_state, rect_state):
         """Multiple states slide in sequence."""

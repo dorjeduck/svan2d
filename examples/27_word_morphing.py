@@ -80,7 +80,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

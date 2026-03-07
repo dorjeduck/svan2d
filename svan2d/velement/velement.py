@@ -16,7 +16,7 @@ from svan2d.component import (
 from svan2d.component.renderer.base_vertex import VertexRenderer
 from svan2d.core.point2d import Point2D, Points2D
 from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
-from svan2d.velement.builder import BuilderState, KeystateBuilder
+from svan2d.velement.builder import BuilderState, KeystateTuple, KeystateBuilder
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.transition import EasingFunction
@@ -224,7 +224,7 @@ class VElement(BaseVElement, KeystateBuilder):
 
         # Build new keystates tuple
         new_keystates = self._builder.keystates + tuple(
-            (
+            KeystateTuple(
                 ks.state,
                 ks.outgoing_state,
                 ks.time,

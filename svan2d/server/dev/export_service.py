@@ -56,7 +56,7 @@ class ExportService:
             exporter = VSceneExporter(
                 scene=scene,
                 output_dir=str(self.export_manager.output_dir),
-                converter=ConverterType.PLAYWRIGHT,
+                converter=ConverterType.PLAYWRIGHT_HTTP,
             )
 
             progress_callback = self._make_progress_callback(job_id)
@@ -90,7 +90,7 @@ class ExportService:
             exporter = VSceneExporter(
                 scene=scene,
                 output_dir=str(self.export_manager.output_dir),
-                converter=ConverterType.PLAYWRIGHT,
+                converter=ConverterType.PLAYWRIGHT_HTTP,
             )
 
             progress_callback = self._make_progress_callback(job_id)
@@ -190,7 +190,7 @@ class ExportService:
                 exporter = VSceneExporter(
                     scene=scene,
                     output_dir=str(self.export_manager.output_dir),
-                    converter=ConverterType.PLAYWRIGHT,
+                    converter=ConverterType.PLAYWRIGHT_HTTP,
                 )
 
                 def batch_progress_callback(frame_num: int, total: int) -> None:

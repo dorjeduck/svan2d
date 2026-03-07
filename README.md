@@ -54,7 +54,7 @@ elements = [VElement(renderer=TextRenderer(), state=s) for s in states]
 scene = scene.add_elements(elements)
 
 # Export
-exporter = VSceneExporter(scene, converter=ConverterType.PLAYWRIGHT, output_dir="output/")
+exporter = VSceneExporter(scene, converter=ConverterType.PLAYWRIGHT_HTTP, output_dir="output/")
 exporter.export(filename="01_ellipse_layout", formats=["svg", "png"], png_width_px=1024)
 ```
 
@@ -152,7 +152,7 @@ elements = [
 scene = scene.add_elements(elements)
 
 # Export to MP4
-exporter = VSceneExporter(scene, converter=ConverterType.PLAYWRIGHT, output_dir="output/")
+exporter = VSceneExporter(scene, converter=ConverterType.PLAYWRIGHT_HTTP, output_dir="output/")
 exporter.to_mp4(filename="number_animation", total_frames=60, framerate=30, png_width_px=1024)
 ```
 

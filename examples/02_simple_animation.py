@@ -50,14 +50,13 @@ def main():
         for states in zip(start_states, end_states)
     ]
 
-
     # Add all elements to the scene
     scene = scene.add_elements(elements)
 
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

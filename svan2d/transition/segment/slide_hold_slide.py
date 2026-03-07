@@ -7,7 +7,6 @@ from svan2d.transition.segment.slide_effect import SlideEffect
 from svan2d.velement.keystate import KeyState, KeyStates
 from svan2d.velement.transition import TransitionConfig
 
-from . import linspace
 
 
 def slide_hold_slide(
@@ -22,10 +21,12 @@ def slide_hold_slide(
     exit_effect: SlideEffect = SlideEffect.NONE,
     entrance_easing_dict: dict[str, Callable[[float], float]] | None = None,
     exit_easing_dict: dict[str, Callable[[float], float]] | None = None,
-) -> list[KeyState] | list[list[KeyState]]:
+) -> list[list[KeyState]]:
 
-    num_states = 1 if isinstance(states, State) else len(states)
+    if isinstance(states, State):
+        states = [states]
 
+    num_states = len(states)
     hold_duration = (t_end - t_start - (num_states + 1) * slide_duration) / num_states
 
     def apply_effect(state: State, effect: SlideEffect) -> State:
@@ -88,14 +89,9 @@ def slide_hold_slide(
 
         return res
 
-    # Single state
-    if isinstance(states, State):
-        return make_keystates(states, t_start)
-
     result: list[list[KeyState]] = []
     for i, s in enumerate(states):
         t = t_start + i * (slide_duration + hold_duration)
-
         result.append(make_keystates(s, t))
 
     return result

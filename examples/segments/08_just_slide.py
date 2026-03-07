@@ -5,7 +5,6 @@ from svan2d import (
     Color,
     configure_logging,
     ConverterType,
-    easing,
     Point2D,
     SquareState,
     VElement,
@@ -13,7 +12,6 @@ from svan2d import (
     VSceneExporter,
 )
 from svan2d.transition import segment
-from svan2d.transition.easing import easing2D
 
 configure_logging(level="INFO")
 
@@ -59,7 +57,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

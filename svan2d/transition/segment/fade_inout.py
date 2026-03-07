@@ -16,7 +16,7 @@ def fade_inout(
     hold_duration: float | None = None,
     fade_duration: float | None = None,
     easing: dict[str, Callable[[float], float]] | None = None,
-) -> list[KeyState]:
+) -> list[list[KeyState]]:
     """Fade in, hold, then fade out.
 
     Args:
@@ -58,30 +58,19 @@ def fade_inout(
             res.append(KeyState(state=state, time=min(1, t + half_hold)))
         return res
 
-    # Handle single state case
     if isinstance(states, State):
-        if center_t is None:
-            center_t = 0.5
-        if hold_duration is None:
-            hold_duration = 1.0 / 3
-        if fade_duration is None:
-            fade_duration = 1.0 / 9
+        states = [states]
 
-        if isinstance(center_t, list):
-            raise ValueError("'center_t' must be float when 'states' is a single State")
-
-        return get_keystates(states, center_t, hold_duration, fade_duration, easing)
-
-    # Handle list of states
     if center_t is None:
         center_t = linspace(len(states))
+    elif isinstance(center_t, (int, float)):
+        center_t = [center_t]
+
     if hold_duration is None:
         hold_duration = 1.0 / (3 * len(states))
     if fade_duration is None:
         fade_duration = 1.0 / (9 * len(states))
 
-    if not isinstance(center_t, list):
-        raise ValueError("'center_t' must be a list when 'states' is a list of States")
     if len(states) != len(center_t):
         raise ValueError(
             f"Length of 'states' ({len(states)}) must match length of 'center_t' ({len(center_t)})"
@@ -89,6 +78,6 @@ def fade_inout(
 
     result = []
     for s, t in zip(states, center_t):
-        result.extend(get_keystates(s, t, hold_duration, fade_duration, easing))
+        result.append(get_keystates(s, t, hold_duration, fade_duration, easing))
 
     return result

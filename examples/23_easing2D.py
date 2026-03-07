@@ -47,26 +47,31 @@ def main():
 
     for i, eas in enumerate(easing_overrides):
 
-        vel = vel.keystate(
-            circle,
-            at=2 * i * step,
-        ).transition(
-            easing_dict={
-                "pos": easing.easing2D(
-                    easing_x=easing.linear,
-                    easing_y=eas,
-                )
-            }
-        ).keystate(
-            square,
-            at=min(1, (2 * i + 1) * step),
-        ).transition(
-            easing_dict={
-                "pos": easing.easing2D(
-                    easing_x=easing.linear,
-                    easing_y=eas,
-                )
-            }
+        vel = (
+            vel.keystate(
+                circle,
+                at=2 * i * step,
+            )
+            .transition(
+                easing_dict={
+                    "pos": easing.easing2D(
+                        easing_x=easing.linear,
+                        easing_y=eas,
+                    )
+                }
+            )
+            .keystate(
+                square,
+                at=min(1, (2 * i + 1) * step),
+            )
+            .transition(
+                easing_dict={
+                    "pos": easing.easing2D(
+                        easing_x=easing.linear,
+                        easing_y=eas,
+                    )
+                }
+            )
         )
     vel = vel.keystate(circle, at=1)
 
@@ -75,7 +80,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 

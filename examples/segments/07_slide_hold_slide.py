@@ -49,14 +49,14 @@ def main():
         slide_duration=1 / 10,
     )
 
-    elements = [VElement().segment(seg) for seg in segs]
+    elements = [VElement().segment(seg) for seg in segs]  # type: ignore
 
     scene = scene.add_elements(elements)
 
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -65,7 +65,6 @@ def main():
         total_frames=90,
         framerate=30,
         png_width_px=1024,
-        num_thumbnails=100,
     )
 
 

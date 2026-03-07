@@ -197,16 +197,15 @@ def main():
     # Add all elements to the scene
     scene = scene.add_elements(elements)
 
-    texts = VElement(renderer=renderer).segment(
-        segment.fade_inout(
-            layout_name_states,
-            segment.linspace(num_states),
-            hold_duration,
-            fade_duration,
-        )
+    text_segs = segment.fade_inout(
+        layout_name_states,
+        segment.linspace(num_states),
+        hold_duration,
+        fade_duration,
     )
+    text_elements = [VElement(renderer=renderer).segment(seg) for seg in text_segs]
 
-    scene = scene.add_element(texts)
+    scene = scene.add_elements(text_elements)
 
     # Create the exporter
     exporter = VSceneExporter(

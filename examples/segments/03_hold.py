@@ -56,7 +56,7 @@ def main():
         states=states,
         at=segment.linspace(2 * NUM_OF_EACH + 2)[1:-1],
         hold_duration=1 / (6 * NUM_OF_EACH),
-        easing_dict={"pos": easing.in_out_sine},
+        easing={"pos": easing.in_out_sine},
     )
 
     hold_element = VElement().keystate(start, at=0).segment(segs).keystate(end, at=1)
@@ -66,7 +66,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -75,7 +75,6 @@ def main():
         total_frames=120,
         framerate=30,
         png_width_px=1024,
-        num_thumbnails=100,
     )
 
 

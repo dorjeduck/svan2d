@@ -6,7 +6,6 @@ from svan2d import (
     configure_logging,
     ConverterType,
     easing,
-    Point2D,
     SquareState,
     VElement,
     VScene,
@@ -40,7 +39,7 @@ def main():
         center_t=[0.3, 0.7],
         hold_duration=0.2,
         fade_duration=0.1,
-        easing_dict={"opacity": easing.in_out_sine},
+        easing={"opacity": easing.in_out_sine},
     )
 
     elements = [VElement().segment(seg) for seg in segs]
@@ -49,7 +48,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -58,7 +57,6 @@ def main():
         total_frames=90,
         framerate=30,
         png_width_px=1024,
-        num_thumbnails=100,
     )
 
 

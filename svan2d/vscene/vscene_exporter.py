@@ -58,7 +58,7 @@ class VSceneExporter:
         self,
         scene,
         output_dir: str | None = ".",
-        converter: ConverterType = ConverterType.PLAYWRIGHT,
+        converter: ConverterType = ConverterType.PLAYWRIGHT_HTTP,
         timestamp_files: bool = False,
     ) -> None:
         """Initialize exporter
@@ -920,7 +920,9 @@ class VSceneExporter:
         logger.info(f"Phase 1 complete: {svg_time:.2f}s")
 
         # Phase 2: Convert all SVGs to PNGs in parallel
-        workers_info = f" with {parallel_workers} parallel workers" if parallel_workers > 1 else ""
+        workers_info = (
+            f" with {parallel_workers} parallel workers" if parallel_workers > 1 else ""
+        )
         logger.info(f"Phase 2: Converting {total_frames} SVGs to PNG{workers_info}...")
         png_start = time.time()
 

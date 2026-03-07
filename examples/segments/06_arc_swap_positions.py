@@ -48,7 +48,7 @@ def main():
         t_end=0.7,
         arc_radius=70,
         clockwise=True,
-        easing_dict={"pos": easing.in_out_sine},
+        easing={"pos": easing.in_out_sine},
     )
 
     e1 = VElement().keystate(c1, at=0).segment(seg1).keystate(c3, at=1)
@@ -59,7 +59,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -68,7 +68,6 @@ def main():
         total_frames=90,
         framerate=30,
         png_width_px=1024,
-        num_thumbnails=100,
     )
 
 

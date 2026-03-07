@@ -42,15 +42,10 @@ def benchmark_animation(name: str, total_frames: int = 120):
 
     # Generate frames
     exporter = VSceneExporter(
-        scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
-        output_dir="output/"
+        scene=scene, converter=ConverterType.PLAYWRIGHT_HTTP, output_dir="output/"
     )
     exporter.to_mp4(
-        filename=name,
-        total_frames=total_frames,
-        framerate=30,
-        png_width_px=800
+        filename=name, total_frames=total_frames, framerate=30, png_width_px=800
     )
 
     # Collect metrics
@@ -66,7 +61,9 @@ def benchmark_animation(name: str, total_frames: int = 120):
         "peak_memory_mb": peak_mem / (1024 * 1024),
         "memory_delta_mb": mem_delta,
         "frames_per_second": total_frames / total_time if total_time > 0 else 0,
-        "time_per_frame_ms": (total_time / total_frames * 1000) if total_frames > 0 else 0
+        "time_per_frame_ms": (
+            (total_time / total_frames * 1000) if total_frames > 0 else 0
+        ),
     }
 
 

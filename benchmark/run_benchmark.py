@@ -360,7 +360,7 @@ def main():
     converters = [
         ConverterType.CAIROSVG,
         ConverterType.INKSCAPE,
-        ConverterType.PLAYWRIGHT,
+        ConverterType.PLAYWRIGHT_HTTP,
         ConverterType.PLAYWRIGHT_HTTP,
     ]
 

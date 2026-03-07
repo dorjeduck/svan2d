@@ -6,15 +6,18 @@ Creates animated bars with company name labels and value displays.
 from collections import namedtuple
 from dataclasses import dataclass
 
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.rectangle import RectangleRenderer
-from svan2d.component.state.number import NumberFormat, NumberState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    NumberFormat,
+    NumberState,
+    Point2D,
+    RectangleRenderer,
+    RectangleState,
+    TextState,
+    VElement,
+    easing,
+    renderer,
+)
 
 from data_prep import CompanyDataPoint
 

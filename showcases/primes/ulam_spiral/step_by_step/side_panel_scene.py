@@ -1,11 +1,14 @@
 from dataclasses import replace
 
-from svan2d.component.state.square import SquareState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
-from svan2d.vscene.vscene import EasingFunc, VScene
+from svan2d import (
+    Color,
+    Point2D,
+    SquareState,
+    TextState,
+    VElement,
+    VScene,
+)
+from svan2d.vscene.vscene import EasingFunc
 
 from config import (
     COLOR_COMPOSITE,

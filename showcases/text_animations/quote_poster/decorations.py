@@ -3,11 +3,14 @@
 import random
 from dataclasses import replace
 
-from svan2d.component.state import CircleState, LineState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement import VElement
+from svan2d import (
+    CircleState,
+    Color,
+    LineState,
+    Point2D,
+    VElement,
+    easing,
+)
 
 
 def create_decoration_elements(

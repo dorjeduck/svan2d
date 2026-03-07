@@ -7,9 +7,10 @@ so year_element can use them for font-size compensation.
 
 from collections.abc import Callable
 
-from svan2d.core.point2d import Point2D
+
 from svan2d.vscene.automatic_camera import compute_automatic_camera
-from svan2d.vscene.vscene import VScene
+
+from svan2d import Point2D, VScene
 
 
 def build_camera_funcs(

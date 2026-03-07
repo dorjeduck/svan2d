@@ -9,11 +9,7 @@ from typing import Callable
 
 from data_prep import AppData
 
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import Color, easing, Point2D, TextState, VElement
 
 
 def create_year_element(
@@ -36,7 +32,7 @@ def create_year_element(
     tl_cell = data.tl_cell_size
 
     vel = VElement()
-    last_state: TextState | None = None
+    last_state: TextState | None = None  # type: ignore
 
     seen_years: set[int] = set()
     for cell in data.cells:

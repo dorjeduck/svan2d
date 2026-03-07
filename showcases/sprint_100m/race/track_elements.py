@@ -4,13 +4,16 @@ Creates lane backgrounds, distance markers, finish line, race title,
 and animated clock display.
 """
 
-from svan2d.component.state.line import LineState
-from svan2d.component.state.number import NumberFormat, NumberState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    LineState,
+    NumberFormat,
+    NumberState,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+)
 
 from data_prep import RaceData
 

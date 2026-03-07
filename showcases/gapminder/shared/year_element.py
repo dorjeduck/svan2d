@@ -1,9 +1,11 @@
 """Year display element for Gapminder bubble chart."""
 
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+)
 
 
 def create_year_element(

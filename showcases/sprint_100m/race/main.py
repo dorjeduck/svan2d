@@ -13,12 +13,14 @@ from data_prep import get_all_races, get_max_race_time
 from runner_elements import create_runner_elements
 from track_elements import create_track_elements
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.vscene.vscene import VScene
-from svan2d.vscene.vscene_composite import VSceneComposite
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneComposite,
+    VSceneExporter,
+    configure_logging,
+)
 
 configure_logging(level="INFO")
 

@@ -11,12 +11,14 @@ Usage:
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 from svan2d.font.font_glyphs import FontGlyphs
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
 
 from elements import create_wave_elements
 

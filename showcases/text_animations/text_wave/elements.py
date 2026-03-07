@@ -3,10 +3,12 @@
 import math
 from dataclasses import replace
 
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+from svan2d import (
+    Color,
+    Point2D,
+    VElement,
+)
 from svan2d.font.font_glyphs import FontGlyphs
-from svan2d.velement import VElement
 
 
 def create_wave_elements(

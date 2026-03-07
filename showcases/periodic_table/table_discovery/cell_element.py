@@ -5,12 +5,7 @@ from dataclasses import replace
 from data_prep import CellData, TimelineData
 from elements import CATEGORY_COLORS
 
-from svan2d.component.state.square import SquareState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import Color, easing, Point2D, SquareState, TextState, VElement
 
 
 def _create_cell(

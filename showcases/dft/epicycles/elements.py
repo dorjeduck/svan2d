@@ -3,13 +3,15 @@ from __future__ import annotations
 from dataclasses import replace
 import math
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.line import LineState
-from svan2d.component.state.path import PathState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement import VElement
+from svan2d import (
+    CircleState,
+    Color,
+    LineState,
+    PathState,
+    Point2D,
+    VElement,
+    easing,
+)
 
 from fourier import FourierCoefficient, evaluate_epicycles, evaluate_tip
 

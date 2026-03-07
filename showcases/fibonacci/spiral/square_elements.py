@@ -9,11 +9,10 @@ from dataclasses import replace
 from typing import Callable
 
 from data_prep import FibonacciData
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
+
 from svan2d.core.scalar_functions import log_lerp
-from svan2d.velement.velement import VElement
+
+from svan2d import Color, RectangleState, TextState, VElement
 
 
 def create_square_elements(

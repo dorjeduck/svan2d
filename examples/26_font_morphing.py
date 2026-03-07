@@ -6,13 +6,15 @@ Demonstrates using FontGlyphs to extract letter vertices and morph between:
 Requires: pip install fonttools
 """
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    Color,
+    configure_logging,
+    ConverterType,
+    VElement,
+    VScene,
+    VSceneExporter,
+)
 from svan2d.font import FontGlyphs
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
 
 configure_logging(level="INFO")
 

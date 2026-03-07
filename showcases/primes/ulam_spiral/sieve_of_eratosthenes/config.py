@@ -1,4 +1,4 @@
-from svan2d.core.color import Color
+from svan2d import Color
 
 COLOR_ONE = Color(70, 70, 180)
 COLOR_BACKGROUND = Color(10, 10, 30)

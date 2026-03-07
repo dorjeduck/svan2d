@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    CircleState,
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+)
 
 
 def _static(state) -> VElement:

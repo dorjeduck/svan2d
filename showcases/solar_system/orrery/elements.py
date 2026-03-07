@@ -4,17 +4,10 @@ import math
 
 from planets import PlanetData, EARTH_PERIOD, elliptical_orbital_curve
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.ellipse import EllipseState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import CircleState, Color, EllipseState, Point2D, TextState, VElement
 
 
-def create_sun_element(
-    sun_px: float, glow_px: float, cfg: dict
-) -> list[VElement]:
+def create_sun_element(sun_px: float, glow_px: float, cfg: dict) -> list[VElement]:
     """Create sun circle (and optional glow) at the scene center."""
     sun_cfg = cfg["sun"]
     center = Point2D(0, 0)
@@ -61,8 +54,8 @@ def create_orbit_ring_elements(
         # (In the rotated frame, the focus-to-center vector points to -y)
         ellipse_center = Point2D(0, -c)
         state = EllipseState(
-            rx=b,   # after 90° rotation: original b becomes horizontal
-            ry=a,   # original a becomes vertical
+            rx=b,  # after 90° rotation: original b becomes horizontal
+            ry=a,  # original a becomes vertical
             pos=ellipse_center,
             fill_opacity=0.0,
             stroke_color=Color(ring_cfg["stroke_color"]),
@@ -106,9 +99,7 @@ def create_planet_elements(
             .keystate(state, at=0.0)
             .transition(
                 interpolation_dict={
-                    "pos": elliptical_orbital_curve(
-                        a, e, center, revolutions
-                    )
+                    "pos": elliptical_orbital_curve(a, e, center, revolutions)
                 }
             )
             .keystate(state, at=1.0)
@@ -164,9 +155,7 @@ def create_label_elements(
             .keystate(state, at=0.0)
             .transition(
                 interpolation_dict={
-                    "pos": elliptical_orbital_curve(
-                        a, e, label_center, revolutions
-                    )
+                    "pos": elliptical_orbital_curve(a, e, label_center, revolutions)
                 }
             )
             .keystate(state, at=1.0)

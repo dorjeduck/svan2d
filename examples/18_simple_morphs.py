@@ -3,34 +3,38 @@ Comprehensive showcase of all svan2d layout functions
 Demonstrates each layout's unique characteristics with animated transition
 """
 
-from svan2d.component import TextRenderer, TextState, Renderer
-from svan2d.converter.converter_type import ConverterType
-from svan2d.component.state import (
+from dataclasses import replace
+
+from svan2d import (
     ArcState,
     ArrowState,
     CircleState,
+    Color,
+    configure_logging,
+    ConverterType,
     CrossState,
     EllipseState,
+    fade_inout,
     FlowerState,
     HeartState,
+    hold,
     InfinityState,
     LineState,
+    Point2D,
     PolygonState,
     RectangleState,
+    Renderer,
     SpiralState,
     SquareState,
     StarState,
+    TextRenderer,
+    TextState,
     TriangleState,
+    VElement,
+    VScene,
+    VSceneExporter,
     WaveState,
 )
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.velement.segments import fade_inout, hold
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from dataclasses import replace
-from svan2d.core.color import Color
 
 configure_logging(level="INFO")
 

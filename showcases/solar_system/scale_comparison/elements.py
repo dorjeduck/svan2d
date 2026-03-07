@@ -6,12 +6,7 @@ from dataclasses import replace
 from planets import PlanetData, SUN_RADIUS_KM
 from scaling import scale_values
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import CircleState, Color, easing, Point2D, TextState, VElement
 
 
 # ---------------------------------------------------------------------------

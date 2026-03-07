@@ -1,8 +1,10 @@
 from dataclasses import replace
 
-from svan2d.component.state import SquareState
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
+from svan2d import (
+    Point2D,
+    SquareState,
+    VElement,
+)
 
 from sieve import NumberStatus
 from utils import get_spiral_position

@@ -9,8 +9,7 @@ import math
 from dataclasses import dataclass
 
 from phyllotaxis import seed_position, spiral_family, fibonacci
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+from svan2d import Color, Point2D
 
 
 @dataclass

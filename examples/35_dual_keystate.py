@@ -1,11 +1,14 @@
 from dataclasses import replace
-from svan2d.component.state.circle import CircleState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
+
+from svan2d import (
+    CircleState,
+    Color,
+    ConverterType,
+    VElement,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 
 configure_logging(level="INFO")
 

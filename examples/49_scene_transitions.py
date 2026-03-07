@@ -1,10 +1,16 @@
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
-from svan2d.transition import easing
+from svan2d import (
+    CircleState,
+    Color,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+    VScene,
+    VSceneSequence,
+    configure_logging,
+    easing,
+)
 from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
-from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneSequence
 
 
 configure_logging(level="INFO")

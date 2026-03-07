@@ -2,11 +2,13 @@
 
 from typing import Tuple
 
-from svan2d.component.state import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
+from svan2d import (
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+    VScene,
+)
 
 from cell_element import create_cell_element
 from config import (

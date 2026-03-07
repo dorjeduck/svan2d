@@ -7,11 +7,13 @@ All elements are static (single state, no animation).
 
 from dataclasses import dataclass
 
-from svan2d.component.state.text import TextState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+)
 
 from coords import PlotConfig, gdp_to_x, life_exp_to_y
 

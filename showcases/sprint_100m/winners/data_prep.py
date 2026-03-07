@@ -9,7 +9,7 @@ from typing import Callable
 
 from scipy.interpolate import PchipInterpolator
 
-from svan2d.core.point2d import Point2D
+from svan2d import Point2D
 
 
 @dataclass(frozen=True)

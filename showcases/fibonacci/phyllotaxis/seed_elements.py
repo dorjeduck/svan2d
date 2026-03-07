@@ -7,9 +7,12 @@ light up with color revealing the Fibonacci structure.
 import math
 
 from data_prep import SeedData, PhyllotaxisData
-from svan2d.component.state.circle import CircleState
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+
+from svan2d import (
+    CircleState,
+    easing,
+    VElement
+)
 
 
 def create_seed_elements(data: PhyllotaxisData, style_cfg: dict) -> list[VElement]:

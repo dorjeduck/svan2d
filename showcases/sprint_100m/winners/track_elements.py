@@ -7,13 +7,16 @@ Fading elements use keystates to fade out during results transition.
 
 from dataclasses import replace
 
-from svan2d.component.state.line import LineState
-from svan2d.component.state.number import NumberFormat, NumberState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    LineState,
+    NumberFormat,
+    NumberState,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+)
 
 
 def _static(state) -> VElement:

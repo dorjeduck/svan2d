@@ -10,13 +10,15 @@ import math
 from coords import PlotConfig, gdp_to_x, life_exp_to_y
 from data_prep import CountryDataPoint
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.path import PathState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import (
+    CircleState,
+    Color,
+    PathState,
+    Point2D,
+    TextState,
+    VElement,
+    easing,
+)
 
 
 def _build_path_data(

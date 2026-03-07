@@ -5,7 +5,7 @@ Animated bar chart showing the top company brand values over time. Bars slide an
 ## Run
 
 ```bash
-python showcases/bar_chart_racing/brand_values/bar_chart_race.py
+python showcases/bar_chart_racing/brand_values/main.py
 ```
 
 ## Config

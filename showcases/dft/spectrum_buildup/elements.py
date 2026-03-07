@@ -11,16 +11,16 @@ Demonstrates svan2d animation features:
 """
 
 from __future__ import annotations
-from typing import List
-
-from svan2d.component.state.base import State
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.path import PathState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.transition import easing
+from svan2d import (
+    CircleState,
+    Color,
+    PathState,
+    Point2D,
+    State,
+    TextState,
+    VElement,
+    easing,
+)
 
 from fourier import FourierCoefficient, evaluate_tip
 

@@ -11,13 +11,17 @@ import random
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
+from svan2d import (
+    Color,
+    ConverterType,
+    Point2D,
+    VScene,
+    VSceneExporter,
+    VSceneSequence,
+    configure_logging,
+    easing,
+)
 from svan2d.transition.scene import Fade
-from svan2d.vscene import VScene, VSceneExporter, VSceneSequence
 
 from word_element import create_word_char_elements
 

@@ -10,8 +10,8 @@ from typing import Callable
 from scipy.interpolate import PchipInterpolator
 
 from data_prep import FibonacciData
-from svan2d.core.point2d import Point2D
-from svan2d.vscene.vscene import VScene
+
+from svan2d import Point2D, VScene
 
 
 def build_camera_scale(

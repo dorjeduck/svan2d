@@ -1,4 +1,4 @@
-from svan2d.core.color import Color
+from svan2d import Color
 
 from config import COLOR_ONE, COLOR_PRIME, COLOR_COMPOSITE
 

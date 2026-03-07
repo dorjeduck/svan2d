@@ -8,12 +8,14 @@ results position, results hold.
 
 from functools import partial
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+from svan2d import (
+    CircleState,
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+)
 from svan2d.transition.easing import in_out_cubic
-from svan2d.velement.velement import VElement
 
 from data_prep import RunnerSplitData, make_pos_interpolator
 from track_elements import _track_layout, distance_to_x

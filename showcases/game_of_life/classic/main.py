@@ -7,10 +7,12 @@ Demonstrates:
 - Game of Life simulation
 """
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d import (
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 
 from cell_element import create_cell_element
 from config import (

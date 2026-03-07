@@ -11,12 +11,15 @@ import data_prep
 from square_elements import create_square_elements
 from spiral_element import create_spiral_element
 from camera import build_camera_scale, apply_camera
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.transition import easing
-from svan2d.vscene.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+
+from svan2d import (
+    Color,
+    configure_logging,
+    ConverterType,
+    easing,
+    VScene,
+    VSceneExporter,
+)
 
 configure_logging(level="INFO")
 

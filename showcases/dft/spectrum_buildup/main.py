@@ -14,13 +14,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    VSceneSequence,
+    configure_logging,
+)
 from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.vscene.vscene_sequence import VSceneSequence
 
 from elements import create_buildup_elements
 from fourier import compute_dft

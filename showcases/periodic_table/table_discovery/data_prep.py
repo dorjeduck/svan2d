@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from elements import ELEMENTS, ElementData, grid_position
-from svan2d.core.point2d import Point2D
+from svan2d import Point2D
 
 
 @dataclass(frozen=True)

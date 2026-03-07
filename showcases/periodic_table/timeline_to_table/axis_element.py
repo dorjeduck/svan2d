@@ -4,13 +4,15 @@ from dataclasses import replace
 
 from data_prep import AppData, TickData
 
-from svan2d.component.state.line import LineState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    easing,
+    LineState,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+)
 
 
 def _create_axis_line(

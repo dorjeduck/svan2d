@@ -7,14 +7,16 @@ with sqrt-proportional population radius.
 import math
 from dataclasses import dataclass
 
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.circle import CircleRenderer
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import (
+    CircleRenderer,
+    CircleState,
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+    easing,
+    renderer,
+)
 
 from coords import PlotConfig, gdp_to_x, life_exp_to_y
 from data_prep import CountryDataPoint

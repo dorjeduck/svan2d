@@ -1,22 +1,21 @@
-from svan2d.component.renderer.base_vertex import VertexRenderer
-from svan2d.component.state import (
+from svan2d import (
+    Astroid,
+    Circle,
+    Color,
+    configure_logging,
+    ConverterType,
+    Ellipse,
+    hold,
     PerforatedCircleState,
     PerforatedStarState,
-    Astroid,
-    Star,
-    Ellipse,
+    Point2D,
     Polygon,
-    Circle,
+    Star,
+    VElement,
+    VertexRenderer,
+    VScene,
+    VSceneExporter,
 )
-
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.velement.segments import hold
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
 
 configure_logging(level="INFO")
 

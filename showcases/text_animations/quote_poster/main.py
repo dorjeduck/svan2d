@@ -10,11 +10,14 @@ import random
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.vscene import VScene, VSceneExporter
+from svan2d import (
+    Color,
+    ConverterType,
+    Point2D,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 
 from author_elements import create_author_elements
 from decorations import create_decoration_elements

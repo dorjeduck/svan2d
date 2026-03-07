@@ -12,11 +12,14 @@ Demonstrates svan2d animation features:
 
 from __future__ import annotations
 
-from svan2d.component.state.path import MorphMethod, PathState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement import VElement
+from svan2d import (
+    Color,
+    MorphMethod,
+    PathState,
+    Point2D,
+    VElement,
+    easing,
+)
 
 from fourier import FourierCoefficient, evaluate_shape_loop
 

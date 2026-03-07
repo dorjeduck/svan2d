@@ -8,14 +8,21 @@ Demonstrates VSceneSequence with various scene transition effects:
 - Iris: Circular reveal
 """
 
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
-from svan2d.transition import easing
+from svan2d import (
+    CircleState,
+    Color,
+    ConverterType,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+    VScene,
+    VSceneExporter,
+    VSceneSequence,
+    configure_logging,
+    easing,
+)
 from svan2d.transition.scene import Fade, Wipe
-from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneExporter, VSceneSequence
 
 
 configure_logging(level="INFO")

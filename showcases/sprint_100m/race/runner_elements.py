@@ -7,11 +7,13 @@ Each runner has 4 keystates: lead-in hold, race start, finish, end hold.
 
 from functools import partial
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    CircleState,
+    Color,
+    Point2D,
+    TextState,
+    VElement,
+)
 
 from data_prep import RaceData, make_pos_interpolator
 from track_elements import _track_layout, distance_to_x

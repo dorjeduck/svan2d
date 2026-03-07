@@ -11,11 +11,13 @@ from bar import create_bar_elements, BarConfig
 from data_prep import get_company_data, InterpolationMethod
 from year import create_year_element
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.vscene.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 
 configure_logging(level="INFO")
 

@@ -7,13 +7,20 @@ Demonstrates:
 - Animated composite export
 """
 
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
-from svan2d.transition import easing
-from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneComposite, VSceneExporter
+from svan2d import (
+    CircleState,
+    Color,
+    ConverterType,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+    VScene,
+    VSceneComposite,
+    VSceneExporter,
+    configure_logging,
+    easing,
+)
 
 configure_logging(level="INFO")
 

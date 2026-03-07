@@ -1,4 +1,4 @@
-from svan2d.core.logger import configure_logging, get_logger
+from svan2d import configure_logging, get_logger
 
 if __name__ == "__main__":
     # Test different configurations

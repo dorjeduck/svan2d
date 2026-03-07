@@ -84,7 +84,9 @@ class VElement(BaseVElement, KeystateBuilder):
         # Clip/mask elements
         self.clip_element: VElement | None = None
         self.mask_element: VElement | None = _mask_element
-        self.clip_elements: list[VElement] = _clip_elements if _clip_elements is not None else []
+        self.clip_elements: list[VElement] = (
+            _clip_elements if _clip_elements is not None else []
+        )
 
         # Vertex buffer cache for optimized interpolation
         self._vertex_buffer_cache: dict[
@@ -97,7 +99,9 @@ class VElement(BaseVElement, KeystateBuilder):
         ] = {}
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: BuilderState | None = _builder if _builder is not None else BuilderState()
+        self._builder: BuilderState | None = (
+            _builder if _builder is not None else BuilderState()
+        )
         self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
         self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
@@ -134,12 +138,20 @@ class VElement(BaseVElement, KeystateBuilder):
         new._renderer = renderer if renderer is not None else self._renderer
         new.clip_element = None
         new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
-        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
+        new.clip_elements = (
+            clip_elements if clip_elements is not None else self.clip_elements.copy()
+        )
         new._vertex_buffer_cache = {}
         new._shape_list_cache = {}
         new._builder = builder if builder is not None else self._builder
-        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
-        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._attribute_easing = (
+            attribute_easing if attribute_easing is not None else self._attribute_easing
+        )
+        new._attribute_keystates = (
+            attribute_keystates
+            if attribute_keystates is not None
+            else self._attribute_keystates
+        )
         new._interpolator = None
         return new
 
@@ -212,11 +224,17 @@ class VElement(BaseVElement, KeystateBuilder):
 
         # Build new keystates tuple
         new_keystates = self._builder.keystates + tuple(
-            (ks.state, ks.outgoing_state, ks.time, ks.transition_config, ks.render_index)
+            (
+                ks.state,
+                ks.outgoing_state,
+                ks.time,
+                ks.transition_config,
+                ks.render_index,
+            )
             for ks in segment_result
         )
         new_builder = BuilderState(
-            keystates=new_keystates,
+            keystates=new_keystates,  # type: ignore
             pending_transition=self._builder.pending_transition,
             default_transition=self._builder.default_transition,
             interpolation_dict=self._builder.interpolation_dict,
@@ -299,7 +317,8 @@ class VElement(BaseVElement, KeystateBuilder):
 
         if self.clip_elements:
             clip_states_at_t = [
-                frame for frame in (elem.get_frame(t) for elem in self.clip_elements)
+                frame
+                for frame in (elem.get_frame(t) for elem in self.clip_elements)
                 if frame is not None
             ]
 

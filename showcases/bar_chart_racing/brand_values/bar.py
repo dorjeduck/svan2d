@@ -6,15 +6,18 @@ Creates animated bars with company name labels and value displays.
 from collections import namedtuple
 from dataclasses import dataclass
 
-from svan2d.component.registry import renderer
-from svan2d.component.renderer.rectangle import RectangleRenderer
-from svan2d.component.state.number import NumberFormat, NumberState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    NumberFormat,
+    NumberState,
+    Point2D,
+    RectangleRenderer,
+    RectangleState,
+    TextState,
+    VElement,
+    easing,
+    renderer,
+)
 
 from data_prep import CompanyDataPoint
 
@@ -108,7 +111,11 @@ def create_bar_state(
         y = config.plot_top + (data_point.rank - 0.5) * config.bar_slot_height
     else:
         # offscreen_y is set in __post_init__ if None
-        y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom + config.bar_height
+        y = (
+            config.offscreen_y
+            if config.offscreen_y is not None
+            else config.plot_bottom + config.bar_height
+        )
 
     return BarState(
         pos=Point2D(x, y),
@@ -143,7 +150,11 @@ def create_label_states(
     if data_point.rank <= config.top_n:
         label_y = config.plot_top + (data_point.rank - 0.5) * config.bar_slot_height
     else:
-        label_y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom + config.bar_height
+        label_y = (
+            config.offscreen_y
+            if config.offscreen_y is not None
+            else config.plot_bottom + config.bar_height
+        )
 
     # Calculate vertical offsets based on font sizes
     # Name above center, value below center, with gap between them

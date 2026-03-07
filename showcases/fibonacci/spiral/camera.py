@@ -10,6 +10,7 @@ from typing import Callable
 from scipy.interpolate import PchipInterpolator
 
 from data_prep import FibonacciData
+from svan2d.core.point2d import Point2D
 from svan2d.vscene.vscene import VScene
 
 
@@ -95,12 +96,12 @@ def apply_camera(
             sw -= 2 * math.pi
         svg_arcs.append((cx, cy, r, sa, sw))
 
-    def offset_func(t: float) -> tuple[float, float]:
+    def offset_func(t: float) -> Point2D:
         if t <= arc_times[0][0]:
-            return arcs[0]["start"]
+            return Point2D(*arcs[0]["start"])
         if t >= anim_end:
             ht = min((t - anim_end) / (1.0 - anim_end), 1.0) if anim_end < 1.0 else 1.0
-            return (
+            return Point2D(
                 last_tip[0] + (final_center[0] - last_tip[0]) * ht,
                 last_tip[1] + (final_center[1] - last_tip[1]) * ht,
             )
@@ -110,7 +111,7 @@ def apply_camera(
                 lt = (t - ts) / (te - ts) if te > ts else 1.0
                 cx, cy, r, sa, sw = svg_arcs[i]
                 angle = sa + lt * sw
-                return (cx + r * math.cos(angle), cy + r * math.sin(angle))
-        return last_tip
+                return Point2D(cx + r * math.cos(angle), cy + r * math.sin(angle))
+        return Point2D(*last_tip)
 
     return scene.animate_camera(offset=offset_func, scale=scale_func)

@@ -7,35 +7,10 @@ from dataclasses import replace
 from svan2d.component.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-from svan2d.font.glyph_cache import get_glyph_cache
-from svan2d.font.glyph_extractor import load_font
+from svan2d.font import get_font_glyphs
 from svan2d.transition import curve, easing
 from svan2d.transition.easing import easing2D
 from svan2d.velement import VElement
-
-
-def measure_char_widths(font_path: str, text: str, font_size: float) -> list[float]:
-    """Get pixel-space advance width for each character using the glyph cache."""
-    cache = get_glyph_cache()
-    font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm  # type: ignore
-    scale = font_size / units_per_em
-
-    widths = []
-    for ch in text:
-        if ch == " ":
-            try:
-                g = cache.get_glyph(font_path, "n", font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.3)
-        else:
-            try:
-                g = cache.get_glyph(font_path, ch, font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.5)
-    return widths
 
 
 def create_word_char_elements(
@@ -58,7 +33,7 @@ def create_word_char_elements(
 
     Characters are positioned so the word is horizontally centred at *word_center*.
     """
-    widths = measure_char_widths(font_path, text, font_size)
+    widths = get_font_glyphs(font_path).measure_char_widths(text, font_size)
     total_width = sum(widths)
 
     # x positions: left-aligned then shifted so the block is centred

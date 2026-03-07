@@ -7,35 +7,10 @@ from dataclasses import replace
 from svan2d.component.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-from svan2d.font.glyph_cache import get_glyph_cache
-from svan2d.font.glyph_extractor import load_font
+from svan2d.font import get_font_glyphs
 from svan2d.transition import curve, easing
 from svan2d.transition.easing import easing2D
 from svan2d.velement import VElement
-
-
-def measure_char_widths(font_path: str, text: str, font_size: float) -> list[float]:
-    """Get pixel-space advance width for each character using the glyph cache."""
-    cache = get_glyph_cache()
-    font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm  # type: ignore
-    scale = font_size / units_per_em
-
-    widths = []
-    for ch in text:
-        if ch == " ":
-            try:
-                g = cache.get_glyph(font_path, "n", font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.3)
-        else:
-            try:
-                g = cache.get_glyph(font_path, ch, font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.5)
-    return widths
 
 
 def create_quote_elements(
@@ -64,11 +39,12 @@ def create_quote_elements(
     char_stagger = entrance_window / total_visible_chars
     entrance_dur = entrance_window * 0.3
 
+    font = get_font_glyphs(font_path)
     elements: list[VElement] = []
     global_char_idx = 0
 
     for line_idx, line in enumerate(lines):
-        widths = measure_char_widths(font_path, line, font_size)
+        widths = font.measure_char_widths(line, font_size)
         total_width = sum(widths)
 
         # Centre each line horizontally

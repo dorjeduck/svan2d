@@ -9,14 +9,6 @@ from typing import (
     TypeAlias,
 )
 
-# Type alias for easing function
-EasingFunc: TypeAlias = Callable[[float], float]
-
-# Type aliases for camera animation functions
-ScaleFunc: TypeAlias = Callable[[float], float]  # t -> scale
-OffsetFunc: TypeAlias = Callable[[float], tuple[float, float]]  # t -> (x, y)
-RotationFunc: TypeAlias = Callable[[float], float]  # t -> degrees
-
 import drawsvg as dw
 
 from svan2d.config import ConfigKey, get_config
@@ -24,6 +16,16 @@ from svan2d.velement.base_velement import _UNSET, _Unset
 from svan2d.core import Color, get_logger
 from svan2d.core.enums import Origin
 from svan2d.core.point2d import Point2D
+from svan2d.vscene import camera as camera_mod
+from svan2d.vscene import rendering as rendering_mod
+
+# Type alias for easing function
+EasingFunc: TypeAlias = Callable[[float], float]
+
+# Type aliases for camera animation functions
+ScaleFunc: TypeAlias = Callable[[float], float]  # t -> scale
+OffsetFunc: TypeAlias = Callable[[float], Point2D]  # t -> Point2D
+RotationFunc: TypeAlias = Callable[[float], float]  # t -> degrees
 from svan2d.vscene.camera_state import CameraState
 
 if TYPE_CHECKING:
@@ -35,20 +37,6 @@ if TYPE_CHECKING:
 RenderableElement: TypeAlias = "VElement | VElementGroup"
 
 logger = get_logger()
-
-
-def _lerp(a: float, b: float, t: float) -> float:
-    return a + (b - a) * t
-
-
-def _eased_t(
-    easing_dict: dict | None,
-    field: str,
-    local_t: float,
-    linear: Callable[[float], float],
-) -> float:
-    fn = easing_dict.get(field, linear) if easing_dict else linear
-    return fn(local_t)
 
 
 class VScene:
@@ -346,11 +334,9 @@ class VScene:
     def animate_camera(
         self,
         scale: tuple[float, float] | ScaleFunc | None = None,
-        offset: (
-            tuple[tuple[float, float], tuple[float, float]] | OffsetFunc | None
-        ) = None,
+        offset: tuple[Point2D, Point2D] | OffsetFunc | None = None,
         rotation: tuple[float, float] | RotationFunc | None = None,
-        pivot: tuple[float, float] | None = None,
+        pivot: Point2D | None = None,
         easing: Callable[[float], float] | None = None,
     ) -> "VScene":
         """Convenience method for simple 2-point camera animation. Returns new VScene.
@@ -360,30 +346,17 @@ class VScene:
 
         Args:
             scale: Either (start_scale, end_scale) tuple, or function(eased_t) -> float
-            offset: Either ((start_x, start_y), (end_x, end_y)) tuple,
-                    or function(eased_t) -> (x, y)
+            offset: Either (start_point, end_point) tuple of Point2D,
+                    or function(eased_t) -> Point2D
             rotation: Either (start_deg, end_deg) tuple, or function(eased_t) -> degrees
-            pivot: (pivot_x, pivot_y) zoom/rotation center point
+            pivot: Zoom/rotation center point (Point2D).
             easing: Easing function applied to t before passing to any functions
                     or interpolation
 
         Returns:
             New VScene with camera animation configured
-
-        Example:
-            # Tuple-based (original behavior)
-            scene = scene.animate_camera(scale=(1.0, 0.5), easing=easing.in_out)
-
-            # Function-based (new behavior)
-            import math
-            scene = scene.animate_camera(
-                scale=lambda t: 1.0 + 0.5 * math.sin(t * 2 * math.pi),
-                offset=lambda t: (100 * t, 50 * math.sin(t * math.pi)),
-                rotation=lambda t: 360 * t * t,
-                easing=easing.in_out
-            )
         """
-        pivot_pt = Point2D(pivot[0], pivot[1]) if pivot else Point2D(0, 0)
+        pivot_pt = pivot if pivot else Point2D(0, 0)
 
         # Determine if using functions or tuples for each parameter
         scale_is_func = callable(scale)
@@ -402,12 +375,12 @@ class VScene:
         start_offset = (
             Point2D(0, 0)
             if offset_is_func or offset is None
-            else Point2D(offset[0][0], offset[0][1])
+            else offset[0]
         )
         end_offset = (
             Point2D(0, 0)
             if offset_is_func or offset is None
-            else Point2D(offset[1][0], offset[1][1])
+            else offset[1]
         )
 
         start_rotation = 0.0 if rotation_is_func or rotation is None else rotation[0]
@@ -446,215 +419,26 @@ class VScene:
         )
 
     def _has_camera_funcs(self) -> bool:
-        return (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
+        return camera_mod.has_camera_funcs(
+            self._camera_scale_func,
+            self._camera_offset_func,
+            self._camera_rotation_func,
         )
 
     def _get_camera_state_at_time(self, frame_time: float) -> CameraState:
-        """Get interpolated camera state with visually linear panning.
-
-        Uses custom interpolation that compensates pos for scale changes,
-        ensuring camera movement appears linear on screen regardless of zoom.
-        """
-        from svan2d.transition import easing as easing_module
-
-        if len(self._camera_keystates) < 2:
-            if len(self._camera_keystates) == 1:
-                return self._camera_keystates[0][0]
-            # No camera animation - return static properties
-            return CameraState(
-                scale=self.scale,
-                rotation=self.rotation,
-                pos=Point2D(self.offset_x, self.offset_y),
-            )
-
-        # Find the segment containing frame_time
-        keystates = self._camera_keystates
-
-        # Handle boundary cases
-        boundary_state = None
-        if frame_time <= keystates[0][1]:
-            boundary_state = keystates[0][0]
-        elif frame_time >= keystates[-1][1]:
-            boundary_state = keystates[-1][0]
-
-        if boundary_state is not None:
-            if self._has_camera_funcs():
-                return self._apply_camera_functions(boundary_state, frame_time)
-            return boundary_state
-
-        # Find segment
-        start_state, start_time, easing_dict = keystates[0]
-        end_state, end_time, _ = keystates[1]
-
-        for i in range(len(keystates) - 1):
-            if keystates[i][1] <= frame_time <= keystates[i + 1][1]:
-                start_state, start_time, easing_dict = keystates[i]
-                end_state, end_time, _ = keystates[i + 1]
-                break
-
-        # Compute local t (0-1 within segment)
-        if end_time == start_time:
-            local_t = 0.0
-        else:
-            local_t = (frame_time - start_time) / (end_time - start_time)
-
-        # Apply easing
-        linear = easing_module.linear
-        scale_t = _eased_t(easing_dict, "scale", local_t, linear)
-        pos_t = _eased_t(easing_dict, "pos", local_t, linear)
-        rotation_t = _eased_t(easing_dict, "rotation", local_t, linear)
-
-        # CameraState fields are guaranteed non-None after __post_init__
-        assert start_state.scale is not None and end_state.scale is not None
-        assert start_state.rotation is not None and end_state.rotation is not None
-        assert start_state.pos is not None and end_state.pos is not None
-        assert start_state.pivot is not None and end_state.pivot is not None
-        assert start_state.opacity is not None and end_state.opacity is not None
-
-        # Interpolate scale and rotation normally
-        interp_scale = (
-            start_state.scale + (end_state.scale - start_state.scale) * scale_t
+        """Get interpolated camera state at given time."""
+        return camera_mod.get_camera_state_at_time(
+            frame_time,
+            self._camera_keystates,
+            self._camera_scale_func,
+            self._camera_offset_func,
+            self._camera_rotation_func,
+            self._camera_func_easing,
+            self.scale,
+            self.rotation,
+            self.offset_x,
+            self.offset_y,
         )
-        interp_rotation = (
-            start_state.rotation
-            + (end_state.rotation - start_state.rotation) * rotation_t
-        )
-
-        # For visually linear panning: interpolate "visual target" (pos * scale)
-        # then derive world pos from that
-        start_visual = Point2D(
-            start_state.pos.x * start_state.scale, start_state.pos.y * start_state.scale
-        )
-        end_visual = Point2D(
-            end_state.pos.x * end_state.scale, end_state.pos.y * end_state.scale
-        )
-
-        # Interpolate visual target linearly (using pos easing)
-        interp_visual = Point2D(
-            start_visual.x + (end_visual.x - start_visual.x) * pos_t,
-            start_visual.y + (end_visual.y - start_visual.y) * pos_t,
-        )
-
-        # Convert back to world pos
-        if interp_scale != 0:
-            interp_pos = Point2D(
-                interp_visual.x / interp_scale, interp_visual.y / interp_scale
-            )
-        else:
-            interp_pos = Point2D(0, 0)
-
-        # Interpolate pivot (simple linear)
-        interp_pivot = Point2D(
-            start_state.pivot.x + (end_state.pivot.x - start_state.pivot.x) * local_t,
-            start_state.pivot.y + (end_state.pivot.y - start_state.pivot.y) * local_t,
-        )
-
-        # Interpolate opacity
-        interp_opacity = (
-            start_state.opacity + (end_state.opacity - start_state.opacity) * local_t
-        )
-
-        result = CameraState(
-            scale=interp_scale,
-            rotation=interp_rotation,
-            pos=interp_pos,
-            pivot=interp_pivot,
-            opacity=interp_opacity,
-        )
-        has_funcs = (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
-        )
-        if has_funcs:
-            return self._apply_camera_functions(result, frame_time)
-        return result
-
-    def _apply_camera_functions(
-        self, base_state: CameraState, frame_time: float
-    ) -> CameraState:
-        """Apply camera functions to a base state at given frame_time.
-
-        Helper method for applying function-based camera values at boundary cases.
-
-        Args:
-            base_state: The base CameraState to modify
-            frame_time: Time to pass to functions (0.0-1.0)
-
-        Returns:
-            CameraState with function values applied
-        """
-        from svan2d.transition import easing as easing_module
-
-        func_easing = self._camera_func_easing or easing_module.linear
-        eased_frame_time = func_easing(frame_time)
-
-        scale = base_state.scale
-        rotation = base_state.rotation
-        pos = base_state.pos
-
-        if self._camera_scale_func is not None:
-            scale = self._camera_scale_func(eased_frame_time)
-
-        if self._camera_rotation_func is not None:
-            rotation = self._camera_rotation_func(eased_frame_time)
-
-        if self._camera_offset_func is not None:
-            ox, oy = self._camera_offset_func(eased_frame_time)
-            pos = Point2D(ox, oy)
-
-        return CameraState(
-            scale=scale,
-            rotation=rotation,
-            pos=pos,
-            pivot=base_state.pivot,
-            opacity=base_state.opacity,
-        )
-
-    def _build_camera_transform(self, state: CameraState, render_scale: float) -> str:
-        """Build SVG transform string from camera state with pivot support.
-
-        Args:
-            state: CameraState with transform values
-            render_scale: Additional scale factor for rendering
-
-        Returns:
-            SVG transform string
-        """
-        # CameraState fields are guaranteed non-None after __post_init__
-        assert (
-            state.scale is not None
-            and state.pivot is not None
-            and state.rotation is not None
-        )
-
-        parts = []
-        total_scale = state.scale * render_scale
-
-        has_pivot = state.pivot.x != 0 or state.pivot.y != 0
-        has_transform = total_scale != 1.0 or state.rotation != 0
-
-        # Pivot: translate to pivot point, apply transforms, translate back
-        if has_pivot and has_transform:
-            parts.append(f"translate({state.pivot.x},{state.pivot.y})")
-
-        if total_scale != 1.0:
-            parts.append(f"scale({total_scale})")
-
-        if state.rotation != 0:
-            parts.append(f"rotate({state.rotation})")
-
-        if has_pivot and has_transform:
-            parts.append(f"translate({-state.pivot.x},{-state.pivot.y})")
-
-        # Camera position LAST (world space - applied first in SVG right-to-left order)
-        if state.x != 0 or state.y != 0:
-            parts.append(f"translate({-state.x},{-state.y})")
-
-        return " ".join(parts)
 
     # ========================================================================
     # Rendering
@@ -668,9 +452,6 @@ class VScene:
         height: float | None = None,
     ) -> dw.Drawing:
         """Render the scene as a drawsvg Drawing object at specified time.
-
-        Useful for video encoding or when you need the Drawing object
-        directly without converting to SVG string.
 
         Args:
             frame_time: Time point to render (0.0 to 1.0)
@@ -702,7 +483,6 @@ class VScene:
 
         # Add background
         if self.background is not None and self.background_opacity > 0.0:
-            # Calculate background position based on origin
             if self.origin == Origin.CENTER:
                 bg_x, bg_y = -ww / 2, -hh / 2
             else:  # top-left
@@ -721,10 +501,10 @@ class VScene:
 
         # Create global transform group (use animated camera if available)
         camera_state = self._get_camera_state_at_time(frame_time)
-        transform = self._build_camera_transform(camera_state, render_scale)
+        transform = camera_mod.build_camera_transform(camera_state, render_scale)
         group = dw.Group(transform=transform) if transform else dw.Group()
 
-        # Pre-compute interpolated states once for all elements (avoid double interpolation)
+        # Pre-compute interpolated states once for all elements
         element_states = []
         for element in self.elements:
             if hasattr(element, "get_frame"):
@@ -749,7 +529,9 @@ class VScene:
 
         # Apply scene-level clipping/masking
         if self.clip_state or self.mask_state:
-            group = self._apply_scene_clipping(group, drawing)
+            group = rendering_mod.apply_scene_clipping(
+                group, drawing, self.clip_state, self.mask_state
+            )
 
         drawing.append(group)
         return drawing
@@ -798,118 +580,10 @@ class VScene:
     # ========================================================================
 
     def _build_transform(self, render_scale: float) -> str:
-        """Build SVG transform string from scene transforms
-
-        Args:
-            render_scale: Additional scale factor for rendering
-
-        Returns:
-            SVG transform string, or empty string if no transforms needed
-        """
-        transforms = []
-
-        # Combine scene scale with render scale
-        total_scale = self.scale * render_scale
-        if total_scale != 1.0:
-            transforms.append(f"scale({total_scale})")
-
-        # Add rotation if present
-        if self.rotation != 0.0:
-            transforms.append(f"rotate({self.rotation})")
-
-        # Add translation if present
-        if self.offset_x != 0.0 or self.offset_y != 0.0:
-            transforms.append(f"translate({self.offset_x},{self.offset_y})")
-
-        return " ".join(transforms)
-
-    def _apply_scene_clipping(self, group: dw.Group, drawing: dw.Drawing) -> dw.Group:
-        """Apply scene-level clip/mask to root group
-
-        Uses the same clipping logic as Renderer._apply_clipping_and_masking
-        but at the scene level.
-
-        Args:
-            group: The group containing all scene elements
-            drawing: Drawing for adding defs
-
-        Returns:
-            Group wrapped in clip/mask groups if needed
-        """
-        import uuid
-
-        from svan2d.component import get_renderer_instance_for_state
-
-        result = group
-
-        # Apply mask first (innermost)
-        if self.mask_state is not None:
-            mask_id = f"mask-{uuid.uuid4().hex[:8]}"
-            mask = dw.Mask(id=mask_id)
-
-            # Render the mask shape
-            renderer = get_renderer_instance_for_state(self.mask_state)
-            mask_elem = renderer._render_core(self.mask_state, drawing=drawing)
-
-            # Apply transforms and opacity
-            transforms = []
-            if self.mask_state.x != 0 or self.mask_state.y != 0:
-                transforms.append(f"translate({self.mask_state.x},{self.mask_state.y})")
-            if self.mask_state.rotation != 0:
-                transforms.append(f"rotate({self.mask_state.rotation})")
-            if self.mask_state.scale != 1.0:
-                transforms.append(f"scale({self.mask_state.scale})")
-
-            mask_group = dw.Group(opacity=self.mask_state.opacity)
-            if transforms:
-                mask_group.args["transform"] = " ".join(transforms)
-            mask_group.append(mask_elem)
-            mask.append(mask_group)
-
-            drawing.append_def(mask)
-
-            masked_group = dw.Group(mask=f"url(#{mask_id})")
-            masked_group.append(result)
-            result = masked_group
-
-        # Apply clip
-        if self.clip_state is not None:
-            clip_id = f"clip-{uuid.uuid4().hex[:8]}"
-            clip_path = dw.ClipPath(id=clip_id)
-
-            # Render the clip shape
-            renderer = get_renderer_instance_for_state(self.clip_state)
-            clip_elem = renderer._render_core(self.clip_state, drawing=drawing)
-
-            # Apply clip's own transforms
-            if (
-                self.clip_state.x != 0
-                or self.clip_state.y != 0
-                or self.clip_state.rotation != 0
-                or self.clip_state.scale != 1.0
-            ):
-                transforms = []
-                if self.clip_state.x != 0 or self.clip_state.y != 0:
-                    transforms.append(
-                        f"translate({self.clip_state.x},{self.clip_state.y})"
-                    )
-                if self.clip_state.rotation != 0:
-                    transforms.append(f"rotate({self.clip_state.rotation})")
-                if self.clip_state.scale != 1.0:
-                    transforms.append(f"scale({self.clip_state.scale})")
-                clip_group = dw.Group(transform=" ".join(transforms))
-                clip_group.append(clip_elem)
-                clip_path.append(clip_group)
-            else:
-                clip_path.append(clip_elem)
-
-            drawing.append_def(clip_path)
-
-            clipped_group = dw.Group(clip_path=f"url(#{clip_id})")
-            clipped_group.append(result)
-            result = clipped_group
-
-        return result
+        """Build SVG transform string from scene transforms."""
+        return rendering_mod.build_scene_transform(
+            self.scale, self.rotation, self.offset_x, self.offset_y, render_scale
+        )
 
     def get_animation_time_range(self) -> tuple[float, float]:
         """Get the time range covered by all elements
@@ -1001,9 +675,6 @@ class VScene:
     def preview_grid(self, num_frames: int = 10, scale: float = 1.0):
         """Preview animation by showing all frames in a grid layout.
 
-        Useful for quickly checking animations in Jupyter without video export.
-        Shows all frames at once for easy visual comparison.
-
         Args:
             num_frames: Number of frames to display (default: 10)
             scale: Scale factor for frame size, e.g. 0.5 for half size (default: 1.0)
@@ -1017,9 +688,6 @@ class VScene:
 
     def preview_animation(self, num_frames: int = 10, play_interval_ms: int = 100):
         """Preview animation with interactive controls (play/pause, slider, prev/next).
-
-        Useful for checking animations in Jupyter without video export.
-        Shows one frame at a time with playback controls.
 
         Args:
             num_frames: Number of frames to display (default: 10)

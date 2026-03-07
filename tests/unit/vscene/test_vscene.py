@@ -223,7 +223,7 @@ class TestVSceneCameraAnimation:
 
     def test_animate_camera_with_offset(self):
         scene = VScene()
-        scene = scene.animate_camera(offset=((0, 0), (100, 100)))
+        scene = scene.animate_camera(offset=(Point2D(0, 0), Point2D(100, 100)))
         assert len(scene._camera_keystates) == 2
 
     def test_animate_camera_with_rotation(self):

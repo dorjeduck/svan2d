@@ -128,6 +128,9 @@ class FontGlyphs:
         # Cache glyph metrics for layout
         self._units_per_em = self._font["head"].unitsPerEm
 
+        # Populated by measure_char_widths, get_word, get_letters
+        self.last_char_widths: list[float] = []
+
     def _resolve_scale(self, height: float | None, scale: float | None) -> float:
         """Resolve scale from height or scale parameter.
 
@@ -234,6 +237,41 @@ class FontGlyphs:
         outline = extract_glyph_outline(self._font, char)
         return outline.advance_width
 
+    def measure_char_widths(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> list[float]:
+        """Get scaled advance width for each character in text.
+
+        Args:
+            text: String to measure.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+
+        Returns:
+            List of widths, one per character. Spaces use "n" width as fallback.
+        """
+        scale = font_size / self._units_per_em
+        widths: list[float] = []
+        for ch in text:
+            if ch == " ":
+                widths.append(self.get_advance_width("n") * scale * letter_spacing)
+            else:
+                widths.append(self.get_advance_width(ch) * scale * letter_spacing)
+        self.last_char_widths = widths
+        return widths
+
+    def measure_text_width(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> float:
+        """Get total scaled width of text.
+
+        Args:
+            text: String to measure.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+        """
+        return sum(self.measure_char_widths(text, font_size, letter_spacing))
+
     def get_word(
         self,
         text: str,
@@ -280,16 +318,17 @@ class FontGlyphs:
 
         target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
 
+        # Pre-compute char widths (also populates last_char_widths)
+        equiv_font_size = resolved_scale * self._units_per_em
+        char_widths = self.measure_char_widths(text, equiv_font_size, letter_spacing)
+
         # First pass: collect glyphs with text layout positioning in vertices
         all_glyph_states = []
         cursor_x = 0.0
 
-        for char in text:
+        for i, char in enumerate(text):
             if char == " ":
-                space_width = (
-                    self.get_advance_width("n") * resolved_scale * letter_spacing
-                )
-                cursor_x += space_width
+                cursor_x += char_widths[i]
                 continue
 
             char_state = self.get_state(
@@ -305,8 +344,7 @@ class FontGlyphs:
             )
             all_glyph_states.extend(char_state.states)
 
-            advance = self.get_advance_width(char) * resolved_scale * letter_spacing
-            cursor_x += advance
+            cursor_x += char_widths[i]
 
         if not all_glyph_states:
             return StateCollectionState(states=[])
@@ -408,18 +446,19 @@ class FontGlyphs:
 
         target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
 
+        # Pre-compute char widths (also populates last_char_widths)
+        equiv_font_size = resolved_scale * self._units_per_em
+        char_widths = self.measure_char_widths(text, equiv_font_size, letter_spacing)
+
         # First pass: collect glyphs with text layout positioning,
         # tracking which glyph states belong to which character
         char_glyph_groups: list[list[GlyphState]] = []
         all_glyph_states: list[GlyphState] = []
         cursor_x = 0.0
 
-        for char in text:
+        for i, char in enumerate(text):
             if char == " ":
-                space_width = (
-                    self.get_advance_width("n") * resolved_scale * letter_spacing
-                )
-                cursor_x += space_width
+                cursor_x += char_widths[i]
                 continue
 
             char_state = self.get_state(
@@ -436,8 +475,7 @@ class FontGlyphs:
             char_glyph_groups.append(list(char_state.states))
             all_glyph_states.extend(char_state.states)
 
-            advance = self.get_advance_width(char) * resolved_scale * letter_spacing
-            cursor_x += advance
+            cursor_x += char_widths[i]
 
         if not all_glyph_states:
             return []
@@ -503,3 +541,13 @@ class FontGlyphs:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
+
+
+_font_glyphs_cache: dict[str, FontGlyphs] = {}
+
+
+def get_font_glyphs(font_path: str) -> FontGlyphs:
+    """Get a cached FontGlyphs instance for the given font path."""
+    if font_path not in _font_glyphs_cache:
+        _font_glyphs_cache[font_path] = FontGlyphs(font_path)
+    return _font_glyphs_cache[font_path]

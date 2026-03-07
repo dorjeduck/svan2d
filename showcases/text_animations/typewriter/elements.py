@@ -6,22 +6,7 @@ from svan2d.component.state import TextPathState
 from svan2d.component.state.rectangle import RectangleState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-from svan2d.font.glyph_cache import get_glyph_cache
-from svan2d.font.glyph_extractor import load_font
 from svan2d.velement import VElement
-
-
-def measure_char_width(font_path: str, font_size: float) -> float:
-    """Return the advance width of a single monospace character.
-
-    Measures "M" and uses that for all characters (monospace assumption).
-    """
-    cache = get_glyph_cache()
-    font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm
-    scale = font_size / units_per_em
-    glyph = cache.get_glyph(font_path, "M", font=font)
-    return glyph.advance_width * scale
 
 
 def create_char_elements(

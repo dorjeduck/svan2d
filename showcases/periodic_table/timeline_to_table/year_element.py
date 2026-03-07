@@ -26,7 +26,7 @@ def create_year_element(
     buildup_end: float,
     fly_end: float,
     scale_func: Callable[[float], float],
-    offset_func: Callable[[float], tuple[float, float]],
+    offset_func: Callable[[float], Point2D],
 ) -> VElement:
     """Create a large background year label that tracks the camera during buildup.
 
@@ -47,16 +47,16 @@ def create_year_element(
 
         t = cell.t_appear
         cam_scale = scale_func(t)
-        cam_x, cam_y = offset_func(t)
+        cam_pos = offset_func(t)
 
         # Position above the cells in camera-centered coordinates
         visual_font = font_size / cam_scale
-        label_y = cam_y - tl_cell / 2 - visual_font * 1.2
+        label_y = cam_pos.y - tl_cell / 2 - visual_font * 1.2
 
         label = f"{abs(year)} BCE" if year < 0 else str(year)
         state = TextState(
             text=label,
-            pos=Point2D(cam_x, label_y),
+            pos=Point2D(cam_pos.x, label_y),
             font_size=font_size / cam_scale,
             font_family=font_family,
             font_weight=font_weight,

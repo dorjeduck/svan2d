@@ -6,7 +6,6 @@ from svan2d import (
     SquareState,
     VElement,
     VElementGroup,
-    VElementGroupState,
     VScene,
     VSceneExporter,
     configure_logging,

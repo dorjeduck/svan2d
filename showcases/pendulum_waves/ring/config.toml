@@ -1,0 +1,31 @@
+[scene]
+width = 800
+height = 800
+background = "#0a0a1a"
+timeline_easing = "" # scene-level easing (e.g. "in_out", "in_out_cubic")
+reverse = false
+
+[pendulum]
+count = 96
+circle_radius = 200          # radius of the circle where pivots sit
+arm_length = 130
+bob_radius = 7
+max_angle = 90               # degrees
+base_oscillations = 10        # pendulum 1 does this many full swings
+freq_step = 0.05                 # frequency increment per pendulum
+quantize_freq = true         # stop each pendulum after its last full cycle
+arm_color = "#555555"
+arm_width = 2
+bob_color_start = "#FDBE02"  # first bob
+bob_color_end = "#AA0000"    # last bob
+start_angle = 180            # degrees: 0=north, 90=east, 180=south, 270=west
+clockwise = true
+
+
+[export]
+output_dir = "output/"
+filename = "pendulum_waves_ring"
+converter = "playwright_http"
+total_frames = 1200
+framerate = 30
+png_width_px = 1600

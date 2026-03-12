@@ -1,0 +1,31 @@
+[scene]
+width = 800
+height = 800
+background = "#0a0a1a"
+timeline_easing = ""       # scene-level easing (e.g. "in_out", "in_out_cubic")
+reverse = false
+
+[pendulum]
+rows = 12
+cols = 12
+arm_length = 80
+bob_radius = 10
+max_angle = 40              # degrees
+base_oscillations = 10      # top-left pendulum does this many full swings
+freq_step_col = 0.1         # frequency increment per column
+freq_step_row = 0.4        # frequency increment per row
+quantize_freq = true       # stop each pendulum after its last full cycle
+spacing = 50
+pivot_y = -100
+arm_color = "#555555"
+arm_width = 1.5
+bob_color_start = "#FDBE02" # top-left bob
+bob_color_end = "#AA0000"   # bottom-right bob
+
+[export]
+output_dir = "output/"
+filename = "pendulum_waves_grid"
+converter = "playwright_http"
+total_frames = 900
+framerate = 30
+png_width_px = 1600

@@ -6,7 +6,6 @@ from svan2d import (
     ConverterType,
     NumberFormat,
     NumberState,
-    Point2D,
     RectangleState,
     Rounding,
     TextState,
@@ -15,7 +14,6 @@ from svan2d import (
     VSceneComposite,
     VSceneExporter,
     configure_logging,
-    easing,
 )
 
 configure_logging(level="INFO")

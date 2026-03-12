@@ -1,12 +1,3 @@
-"""Example: VSceneComposite - spatial composition of scenes.
-
-Demonstrates:
-- Horizontal stacking of scenes
-- Vertical stacking of scenes
-- Nesting composites to create grids
-- Animated composite export
-"""
-
 from svan2d import (
     CircleState,
     Color,

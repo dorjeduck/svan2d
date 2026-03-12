@@ -66,6 +66,7 @@ class VScene:
         mask_state: "State | None" = None,
         # Timeline easing
         timeline_easing: EasingFunc | None = None,
+        reverse: bool = False,
     ) -> None:
         """Initialize a new scene with given dimensions and styling
 
@@ -146,6 +147,9 @@ class VScene:
         # Timeline easing
         self.timeline_easing = timeline_easing
 
+        # Reverse playback
+        self.reverse = reverse
+
         # Elements list
         self.elements: list[RenderableElement] = []
 
@@ -187,6 +191,7 @@ class VScene:
         new.clip_state = self.clip_state
         new.mask_state = self.mask_state
         new.timeline_easing = self.timeline_easing
+        new.reverse = self.reverse
 
         # Replace specified attributes
         new.elements = elements if elements is not None else self.elements.copy()
@@ -470,6 +475,10 @@ class VScene:
             raise ValueError(
                 f"frame_time must be between 0.0 and 1.0, got {frame_time}"
             )
+
+        # Apply reverse if set
+        if self.reverse:
+            frame_time = 1.0 - frame_time
 
         # Apply timeline easing if set
         if self.timeline_easing is not None:

@@ -141,12 +141,17 @@ async def render(request: RenderRequest) -> Response:
             # 1. Setup asset interception (Fixed for Type-Safety)
             if request.assets:
                 for pattern, local_path in request.assets.items():
-                    # We define a named function to avoid lambda type-checker errors
-                    # The 'lp=local_path' trick ensures the correct path is captured
-                    async def handle_route(route, lp=local_path):
-                        await route.fulfill(path=lp)
+                    # We use a helper function to "freeze" the local_path
+                    # so the browser doesn't lose it.
+                    def create_handler(path):
+                        async def handle_route(route):
+                            try:
+                                await route.fulfill(path=path)
+                            except Exception as e:
+                                logger.error(f"Failed to fulfill route for {path}: {e}")
+                                await route.abort()
 
-                    await page.route(pattern, handle_route)
+                        return handle_route
 
             # 2. Set viewport size
             await page.set_viewport_size(

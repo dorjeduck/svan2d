@@ -139,19 +139,30 @@ async def render(request: RenderRequest) -> Response:
     try:
         async with browser_pool.acquire_page() as page:
             # 1. Setup asset interception (Fixed for Type-Safety)
+            # 1. Setup asset interception
             if request.assets:
                 for pattern, local_path in request.assets.items():
-                    # We use a helper function to "freeze" the local_path
-                    # so the browser doesn't lose it.
+
                     def create_handler(path):
                         async def handle_route(route):
                             try:
-                                await route.fulfill(path=path)
+                                # Inferred content type from extension (JSON, PNG, etc.)
+                                # Headers added to bypass CORS "Failed" errors
+                                await route.fulfill(
+                                    path=path,
+                                    headers={
+                                        "Access-Control-Allow-Origin": "*",
+                                        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                                        "Access-Control-Allow-Headers": "*",
+                                    },
+                                )
                             except Exception as e:
                                 logger.error(f"Failed to fulfill route for {path}: {e}")
                                 await route.abort()
 
                         return handle_route
+
+                    await page.route(pattern, create_handler(local_path))
 
             # 2. Set viewport size
             await page.set_viewport_size(

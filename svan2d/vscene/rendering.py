@@ -34,6 +34,7 @@ def build_scene_transform(
     if offset_x != 0.0 or offset_y != 0.0:
         transforms.append(f"translate({offset_x},{offset_y})")
 
+
     return " ".join(transforms)
 
 
@@ -98,9 +99,7 @@ def apply_scene_clipping(
         ):
             transforms = []
             if clip_state.x != 0 or clip_state.y != 0:
-                transforms.append(
-                    f"translate({clip_state.x},{clip_state.y})"
-                )
+                transforms.append(f"translate({clip_state.x},{clip_state.y})")
             if clip_state.rotation != 0:
                 transforms.append(f"rotate({clip_state.rotation})")
             if clip_state.scale != 1.0:

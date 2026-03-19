@@ -205,6 +205,18 @@ async def pool_stats():
     return browser_pool.stats
 
 
+def create_server(host: str = "localhost", port: int = 4000, log_level: str = "info"):
+    """
+    Factory function required by svan2d.cli.playwright_server_commands.
+    """
+    import uvicorn
+
+    config = uvicorn.Config(
+        app, host=host, port=port, log_level=log_level, loop="asyncio"
+    )
+    return uvicorn.Server(config)
+
+
 if __name__ == "__main__":
     import uvicorn
 

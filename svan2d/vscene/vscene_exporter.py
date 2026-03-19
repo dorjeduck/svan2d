@@ -319,6 +319,9 @@ class VSceneExporter:
         Returns:
             ExportResult with paths to exported files
         """
+
+
+
         # Validate frame_time
         if not 0.0 <= frame_time <= 1.0:
             raise ValueError(

@@ -25,6 +25,8 @@ from .state.perforated import Astroid, Circle, Ellipse, Polygon, Rectangle, Shap
 from .vertex import *
 
 __all__ = [
+    "Renderer",
+    "State",
     # Submodules
     "renderer",
     "state",
@@ -40,6 +42,7 @@ __all__ = [
     "State",
     "VertexState",
     "VertexRenderer",
+    "LineRenderer",
     # Vertex classes
     "Vertex",
     "VertexLoop",

@@ -58,6 +58,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
     def __init__(
         self,
+        state: State | None = None,
         elements: list[VElement] | None = None,
         group_easing: Callable[[float], float] | None = None,
         *,
@@ -78,11 +79,15 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         self.group_easing = group_easing
 
         # Clip/mask elements
-        self.clip_elements: list[VElement] = _clip_elements if _clip_elements is not None else []
+        self.clip_elements: list[VElement] = (
+            _clip_elements if _clip_elements is not None else []
+        )
         self.mask_element: VElement | None = _mask_element
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: BuilderState | None = _builder if _builder is not None else BuilderState()
+        self._builder: BuilderState | None = (
+            _builder if _builder is not None else BuilderState()
+        )
         self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
         self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
@@ -91,6 +96,17 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         # Cache last frame time for render_state (set by get_frame)
         self._last_frame_time: float = 0.0
+
+        # Handle static state convenience parameter
+        if state is not None:
+            # Chain immutably - replace self with new instance
+            new_self = self.keystate(state)
+            # Copy all attributes from new_self to self
+            self._builder = new_self._builder
+            self._attribute_easing = new_self._attribute_easing
+            self._attribute_keystates = new_self._attribute_keystates
+            self.clip_elements = new_self.clip_elements
+            self.mask_element = new_self.mask_element
 
     def _replace(
         self,
@@ -107,11 +123,19 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         new = VElementGroup.__new__(VElementGroup)
         new.elements = elements if elements is not None else self.elements.copy()
         new.group_easing = self.group_easing if group_easing is _UNSET else group_easing
-        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
+        new.clip_elements = (
+            clip_elements if clip_elements is not None else self.clip_elements.copy()
+        )
         new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new._builder = builder if builder is not None else self._builder
-        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
-        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._attribute_easing = (
+            attribute_easing if attribute_easing is not None else self._attribute_easing
+        )
+        new._attribute_keystates = (
+            attribute_keystates
+            if attribute_keystates is not None
+            else self._attribute_keystates
+        )
         new._interpolator = None
         new._last_frame_time = 0.0
         return new
@@ -142,8 +166,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
             # Tuple format: (state, outgoing_state, time, transition_config, render_index)
-            self._builder.keystates.append((identity, None, 0.0, None, None))
-            self._builder.keystates.append((identity, None, 1.0, None, None))
+            ###TODO ### new_keystates  = self._builder.keystates + ((identity, None, 0.0, None, None)) + (identity, None, 1.0, None, None)
 
         # Use builder mixin to finalize
         keystates, attribute_keystates = self._finalize_build()
@@ -290,6 +313,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         Uses _last_frame_time (set by get_frame) to render children at the correct time.
         """
+
         if state is None:
             return None
 
@@ -378,8 +402,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
                 f"translate({state.transform_origin_x}, {state.transform_origin_y})"
             )
 
-        if state.x != 0 or state.y != 0:
-            transform_parts.append(f"translate({state.x}, {state.y})")
+        if state.pos and (state.pos.x != 0 or state.pos.y != 0):  # type: ignore
+            transform_parts.append(f"translate({state.pos.x}, {state.pos.y})")
 
         if state.rotation != 0:
             transform_parts.append(f"rotate({state.rotation})")

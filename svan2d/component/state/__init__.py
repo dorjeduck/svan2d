@@ -16,12 +16,14 @@ from .cross import CrossState
 from .ellipse import EllipseState
 from .flower import FlowerState
 from .heart import HeartState
+from .image import ImageState, ImageFitMode
 from .infinity import InfinityState
 from .line import LineState
 from .number import NumberFormat, NumberState, Rounding
 from .path import PathState
 from .path_and_text_variants import PathAndTextVariantsState
 from .path_text import PathTextState
+from .path_variants import PathVariantsState
 from .perforated import (
     Astroid,
     Circle,
@@ -68,11 +70,15 @@ __all__ = [
     "CrossState",
     "EllipseState",
     "LineState",
+    "ImageState",
+    "ImageFitMode",
+    "InfinityState",
     "NumberFormat",
     "NumberState",
     "Rounding",
     "PathState",
     "PointState",
+    "PathVariantsState",
     "PerforatedVertexState",
     "PerforatedCircleState",
     "PerforatedStarState",

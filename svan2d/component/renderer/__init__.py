@@ -14,15 +14,19 @@ from .circle_text import CircleTextRenderer
 from .cross import CrossRenderer
 from .ellipse import EllipseRenderer
 from .heart import HeartRenderer
+from .image import ImageRenderer
 from .infinity import InfinityRenderer
+from .line import LineRenderer
 from .number import NumberRenderer
 from .path import PathRenderer
 from .path_and_text_variants import PathAndTextVariantsRenderer
 from .path_text import PathTextRenderer
+from .path_variants import PathVariantsRenderer
 from .perforated_primitive import PerforatedPrimitiveRenderer
 from .point import PointRenderer
 from .poly_ring import PolyRingRenderer
 from .polygon import PolygonRenderer
+from .radial_segments import RadialSegmentsRenderer
 from .raw_svg import RawSvgRenderer
 from .rectangle import RectangleRenderer
 from .ring import RingRenderer
@@ -45,15 +49,19 @@ __all__ = [
     "CrossRenderer",
     "EllipseRenderer",
     "HeartRenderer",
+    "ImageRenderer",
     "InfinityRenderer",
+    "LineRenderer",
     "NumberRenderer",
     "PathAndTextVariantsRenderer",
     "PathRenderer",
     "PerforatedPrimitiveRenderer",
     "PointRenderer",
     "PathTextRenderer",
+    "PathVariantsRenderer",
     "PolygonRenderer",
     "PolyRingRenderer",
+    "RadialSegmentsRenderer",
     "RawSvgRenderer",
     "RingRenderer",
     "RectangleRenderer",

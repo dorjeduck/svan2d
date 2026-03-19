@@ -30,18 +30,18 @@ class ImageRenderer(Renderer):
         """
         # Random 90-degree rotation (0, 90, 180, or 270 degrees)
         rotation_choice = random.choice(
-            [None, Image.ROTATE_90, Image.ROTATE_180, Image.ROTATE_270]
+            [None, Image.Transpose.ROTATE_90, Image.Transpose.ROTATE_180, Image.Transpose.ROTATE_270]
         )
         if rotation_choice is not None:
             img = img.transpose(rotation_choice)
 
         # Random horizontal flip (50% chance)
         if random.random() > 0.5:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
         # Random vertical flip (50% chance)
         if random.random() > 0.5:
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
+            img = img.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
         return img
 
@@ -192,7 +192,8 @@ class ImageRenderer(Renderer):
                     original_width, original_height = img.size
             except Exception:
                 logging.warning(
-                    "Could not determine original image size from '%s'. Using defaults.", state.href
+                    "Could not determine original image size from '%s'. Using defaults.",
+                    state.href,
                 )
                 original_width, original_height = 100, 100
 

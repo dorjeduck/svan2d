@@ -8,7 +8,7 @@ Provides fundamental types and utilities:
   gaussian_smooth, gaussian_smooth_2d
 """
 
-from .color import Color, ColorSpace, ColorTuple, color_to_oklab, oklab_to_color
+from .color import Color, ColorSpace, ColorTuple,color_to_oklab, oklab_to_color
 from .enums import Origin
 from .logger import (
     configure_logging,

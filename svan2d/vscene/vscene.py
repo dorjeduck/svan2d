@@ -377,16 +377,8 @@ class VScene:
         start_scale = 1.0 if scale_is_func or scale is None else scale[0]
         end_scale = 1.0 if scale_is_func or scale is None else scale[1]
 
-        start_offset = (
-            Point2D(0, 0)
-            if offset_is_func or offset is None
-            else offset[0]
-        )
-        end_offset = (
-            Point2D(0, 0)
-            if offset_is_func or offset is None
-            else offset[1]
-        )
+        start_offset = Point2D(0, 0) if offset_is_func or offset is None else offset[0]
+        end_offset = Point2D(0, 0) if offset_is_func or offset is None else offset[1]
 
         start_rotation = 0.0 if rotation_is_func or rotation is None else rotation[0]
         end_rotation = 0.0 if rotation_is_func or rotation is None else rotation[1]
@@ -470,6 +462,7 @@ class VScene:
         Raises:
             ValueError: If frame_time is outside [0.0, 1.0]
         """
+
         # Validation
         if not 0.0 <= frame_time <= 1.0:
             raise ValueError(
@@ -512,10 +505,11 @@ class VScene:
         camera_state = self._get_camera_state_at_time(frame_time)
         transform = camera_mod.build_camera_transform(camera_state, render_scale)
         group = dw.Group(transform=transform) if transform else dw.Group()
-
+        
         # Pre-compute interpolated states once for all elements
         element_states = []
         for element in self.elements:
+
             if hasattr(element, "get_frame"):
                 state = element.get_frame(frame_time)
                 element_states.append((element, state))
@@ -533,6 +527,7 @@ class VScene:
         for element, state in sorted_element_states:
             if state is not None:
                 rendered = element.render_state(state, drawing=drawing)
+
                 if rendered is not None:
                     group.append(rendered)
 
@@ -590,6 +585,7 @@ class VScene:
 
     def _build_transform(self, render_scale: float) -> str:
         """Build SVG transform string from scene transforms."""
+
         return rendering_mod.build_scene_transform(
             self.scale, self.rotation, self.offset_x, self.offset_y, render_scale
         )

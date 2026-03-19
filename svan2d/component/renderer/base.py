@@ -38,11 +38,11 @@ class Renderer(ABC):
         Returns None if no transforms are needed.
         """
         transforms = []
-        if state.x != 0 or state.y != 0:
-            transforms.append(f"translate({state.x},{state.y})")
+        if state.pos != None and (state.pos.x != 0 or state.pos.y != 0):
+            transforms.append(f"translate({state.pos.x},{state.pos.y})")
         if state.rotation != 0:
             transforms.append(f"rotate({state.rotation})")
-        if state.scale != 1.0:
+        if state.scale != 1.0 and state.scale != None:
             transforms.append(f"scale({state.scale})")
         if state.skew_x:
             transforms.append(f"skewX({state.skew_x})")
@@ -65,9 +65,7 @@ class Renderer(ABC):
         aligned_contours = getattr(state, "_aligned_contours", None)
         if aligned_contours is not None:
             renderer: Renderer = VertexRenderer()
-            return renderer._render_core(
-                cast("VertexState", state), drawing=drawing
-            )
+            return renderer._render_core(cast("VertexState", state), drawing=drawing)
         else:
             renderer = get_renderer_instance_for_state(state)
             return renderer._render_core(state, drawing=drawing)
@@ -87,7 +85,7 @@ class Renderer(ABC):
     def render(
         self, state: State, drawing: dw.Drawing | None = None
     ) -> dw.DrawingElement:
-        elem = self._render_core(state, drawing=drawing)
+        elem = self._render_core(state=state, drawing=drawing)
 
         # Apply clipping/masking before transforms (only if drawing is available)
         if drawing is not None:
@@ -96,11 +94,17 @@ class Renderer(ABC):
             # Apply filter if specified
             elem = self._apply_filter(elem, state, drawing)
 
+        _set_elem_attr(elem, "opacity", str(state.opacity))
+
         transform = self._build_transform_string(state)
         if transform:
-            _set_elem_attr(elem, "transform", transform)
 
-        _set_elem_attr(elem, "opacity", str(state.opacity))
+            if isinstance(elem, dw.elements.Group):
+                mgroup = dw.Group(transform=transform)
+                mgroup.append(elem)
+                return mgroup
+
+            _set_elem_attr(elem, "transform", transform)
 
         return elem
 

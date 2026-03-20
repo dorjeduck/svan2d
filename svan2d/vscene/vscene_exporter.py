@@ -111,7 +111,7 @@ class VSceneExporter:
         invalid = set(formats) - self.SUPPORTED_FORMATS
         if invalid:
             raise ValueError(
-                f"Unsupported formats: {invalid}. Supported: {self.SUPPORTED_FORMATS}"
+                f"Unsupported formats -> :  {invalid}. Supported: {self.SUPPORTED_FORMATS}"
             )
 
     def _validate_video_params(

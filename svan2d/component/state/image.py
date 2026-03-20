@@ -6,31 +6,10 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from svan2d.component.registry import renderer
-from svan2d.component.renderer.image import ImageRenderer
+from svan2d.component.renderer.image import ImageRenderer, ImageFitMode
 from svan2d.core.color import Color
 
 from .base import State
-
-
-class ImageFitMode(StrEnum):
-    """
-    Different modes for fitting images into the specified dimensions.
-
-    Members:
-        FIT: Scale the image to fit entirely within the bounds, maintaining aspect ratio.
-        FILL: Scale the image to fill the bounds completely, cropping if necessary.
-        CROP: Keep original size, crop to fit the bounds.
-        STRETCH: Stretch the image to exact dimensions, changing aspect ratio if needed.
-        ORIGINAL: Keep original size; may warn if the image doesn't fit the bounds.
-        RANDOM_CROP: Randomly cut a section to fit the bounds, optionally rotated or flipped.
-    """
-
-    FIT = "fit"
-    FILL = "fill"
-    CROP = "crop"
-    STRETCH = "stretch"
-    ORIGINAL = "original"
-    RANDOM_CROP = "random_crop"
 
 
 @renderer(ImageRenderer)

@@ -14,7 +14,7 @@ from .circle_text import CircleTextRenderer
 from .cross import CrossRenderer
 from .ellipse import EllipseRenderer
 from .heart import HeartRenderer
-from .image import ImageRenderer
+from .image import ImageRenderer, ImageFitMode
 from .infinity import InfinityRenderer
 from .line import LineRenderer
 from .number import NumberRenderer
@@ -50,6 +50,7 @@ __all__ = [
     "EllipseRenderer",
     "HeartRenderer",
     "ImageRenderer",
+    "ImageFitMode",
     "InfinityRenderer",
     "LineRenderer",
     "NumberRenderer",

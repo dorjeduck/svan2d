@@ -277,7 +277,7 @@ class ImageRenderer(Renderer):
                 # Apply clipping to the image
                 image_kwargs["clip_path"] = f"url(#{clip_id})"
 
-        except Exception:
+        except Exception as e:
             # Placeholder rectangle if image fails to load
             placeholder = dw.Rectangle(
                 x=-100 / 2,

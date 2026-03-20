@@ -40,7 +40,7 @@ class VSceneExporter:
     DEFAULT_FRAME_PATTERN = "frame_{:04d}"
     DEFAULT_FRAMERATE = 30
     DEFAULT_CODEC = "libx264"
-    SUPPORTED_FORMATS = {"svg", "png", "pdf"}
+    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
 
     @staticmethod
@@ -319,8 +319,6 @@ class VSceneExporter:
         Returns:
             ExportResult with paths to exported files
         """
-
-
 
         # Validate frame_time
         if not 0.0 <= frame_time <= 1.0:

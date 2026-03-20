@@ -30,7 +30,12 @@ class ImageRenderer(Renderer):
         """
         # Random 90-degree rotation (0, 90, 180, or 270 degrees)
         rotation_choice = random.choice(
-            [None, Image.Transpose.ROTATE_90, Image.Transpose.ROTATE_180, Image.Transpose.ROTATE_270]
+            [
+                None,
+                Image.Transpose.ROTATE_90,
+                Image.Transpose.ROTATE_180,
+                Image.Transpose.ROTATE_270,
+            ]
         )
         if rotation_choice is not None:
             img = img.transpose(rotation_choice)
@@ -284,6 +289,19 @@ class ImageRenderer(Renderer):
                 stroke_width=2,
             )
             group.append(placeholder)
+
+            # 2. Add the actual error message as SVG text
+            # We use a small font size and wrap the error string 'e'
+            error_message = f"Error: {str(e)}"  # type: ignore
+            error_text = dw.Text(
+                text=error_message,
+                font_size=8,
+                x=-45,  # Position inside the rectangle
+                y=0,  # Middle of the rectangle
+                fill="white",
+            )
+            group.append(error_text)
+
             return group  # Skip image rendering on error
 
         # Apply fill and stroke styling

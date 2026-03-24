@@ -264,10 +264,12 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         transform_string = self._build_transform_string(group_state)
 
+        kwargs = {}
         if transform_string:
-            group = dw.Group(transform=transform_string)
-        else:
-            group = dw.Group()
+            kwargs["transform"] = transform_string
+        if group_state.opacity is not None and group_state.opacity != 1.0:
+            kwargs["opacity"] = group_state.opacity
+        group = dw.Group(**kwargs)
 
         # Sort children by z_index (stable sort preserves insertion order for equal z_index)
         def get_z_index(element: "VElement") -> float:
@@ -288,9 +290,6 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
             if child_element is not None:
                 group.append(child_element)
-
-        if group_state.opacity != 1.0:
-            group.opacity = group_state.opacity  # type: ignore[attr-defined]
 
         return group
 
@@ -325,10 +324,12 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         transform_string = self._build_transform_string(state)
 
+        kwargs = {}
         if transform_string:
-            group = dw.Group(transform=transform_string)
-        else:
-            group = dw.Group()
+            kwargs["transform"] = transform_string
+        if state.opacity is not None and state.opacity != 1.0:
+            kwargs["opacity"] = state.opacity
+        group = dw.Group(**kwargs)
 
         # Sort children by z_index
         def get_z_index(element: "VElement") -> float:
@@ -349,9 +350,6 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
             if child_element is not None:
                 group.append(child_element)
-
-        if state.opacity != 1.0:
-            group.opacity = state.opacity  # type: ignore[attr-defined]
 
         return group
 

@@ -1143,7 +1143,15 @@ class VSceneExporter:
             "-c:v",
             codec,
             "-pix_fmt",
-            "yuv420p",  # Compatibility
+            "yuv420p",
+            "-color_range",
+            "pc",
+            "-colorspace",
+            "bt709",
+            "-color_trc",
+            "bt709",
+            "-color_primaries",
+            "bt709",
             str(output_path),
         ]
 

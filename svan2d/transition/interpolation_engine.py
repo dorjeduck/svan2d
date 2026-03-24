@@ -214,6 +214,9 @@ class InterpolationEngine:
         if state_interpolation is not None:
             return state_interpolation(start_state, end_state, t)
 
+        if start_state is end_state and segment_interpolation_config is None:
+            return start_state
+
         interpolated_values = {}
         mapper, vertex_aligner = self._extract_morphing_config(morphing_config)
 

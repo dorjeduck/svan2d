@@ -37,6 +37,7 @@ class Renderer(ABC):
 
         Returns None if no transforms are needed.
         """
+
         transforms = []
         if state.pos != None and (state.pos.x != 0 or state.pos.y != 0):
             transforms.append(f"translate({state.pos.x},{state.pos.y})")
@@ -100,6 +101,7 @@ class Renderer(ABC):
         if transform:
 
             if isinstance(elem, dw.elements.Group):
+
                 mgroup = dw.Group(transform=transform)
                 mgroup.append(elem)
                 return mgroup

@@ -28,7 +28,7 @@ class State(ABC):
     pos: Point2D | None = None
     scale: float | None = None
     opacity: float | None = None
-    rotation: float | None = None
+    rotation: float | None = 0
     skew_x: float | None = None
     skew_y: float | None = None
     z_index: float = 0.0

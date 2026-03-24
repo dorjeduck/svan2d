@@ -505,7 +505,7 @@ class VScene:
         camera_state = self._get_camera_state_at_time(frame_time)
         transform = camera_mod.build_camera_transform(camera_state, render_scale)
         group = dw.Group(transform=transform) if transform else dw.Group()
-        
+
         # Pre-compute interpolated states once for all elements
         element_states = []
         for element in self.elements:

@@ -269,6 +269,7 @@ class KeystateBuilder:
 
     def transition(
         self: T,
+        easing: EasingFunction | None = None,
         easing_dict: dict[str, EasingFunction] | None = None,
         interpolation_dict: dict[str, Any] | None = None,
         morphing_config: "MorphingConfig | None" = None,
@@ -280,6 +281,8 @@ class KeystateBuilder:
         Multiple consecutive transition() calls merge their configurations.
 
         Args:
+            easing: Blanket easing function applied to all fields. Overridden
+                    by easing_dict entries for specific fields.
             easing_dict: Per-field easing functions for this segment
             interpolation_dict: Per-field interpolation functions {field_name: func}
                               - Point2D: (p1, p2, t) -> Point2D
@@ -301,6 +304,7 @@ class KeystateBuilder:
         # Merge with pending transition if exists
         if self._builder.pending_transition is None:
             new_transition = TransitionConfig(
+                easing=easing,
                 easing_dict=easing_dict,
                 interpolation_dict=interpolation_dict,
                 morphing_config=morphing_config,
@@ -308,6 +312,13 @@ class KeystateBuilder:
                 state_interpolation=state_interpolation,
             )
         else:
+            # easing: new call overrides pending
+            merged_easing_blanket = (
+                easing
+                if easing is not None
+                else self._builder.pending_transition.easing
+            )
+
             merged_easing = self._builder.pending_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
@@ -337,6 +348,7 @@ class KeystateBuilder:
             )
 
             new_transition = TransitionConfig(
+                easing=merged_easing_blanket,
                 easing_dict=merged_easing if merged_easing else None,
                 interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
@@ -349,6 +361,7 @@ class KeystateBuilder:
 
     def default_transition(
         self: T,
+        easing: EasingFunction | None = None,
         easing_dict: dict[str, EasingFunction] | None = None,
         interpolation_dict: dict[str, Any] | None = None,
         morphing: "MorphingConfig | None" = None,
@@ -357,6 +370,8 @@ class KeystateBuilder:
         """Set default transition parameters for all subsequent segments.
 
         Args:
+            easing: Blanket easing function applied to all fields. Overridden
+                    by easing_dict entries for specific fields.
             easing_dict: Per-field easing functions to use as default
             interpolation_dict: Per-field path functions to use as default
             morphing: Morphing configuration to use as default
@@ -371,12 +386,20 @@ class KeystateBuilder:
 
         if self._builder.default_transition is None:
             new_default = TransitionConfig(
+                easing=easing,
                 easing_dict=easing_dict,
                 interpolation_dict=interpolation_dict,
                 morphing_config=morphing,
                 state_interpolation=state_interpolation,
             )
         else:
+            # easing: new call overrides existing
+            merged_easing_blanket = (
+                easing
+                if easing is not None
+                else self._builder.default_transition.easing
+            )
+
             merged_easing = self._builder.default_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
@@ -399,6 +422,7 @@ class KeystateBuilder:
             )
 
             new_default = TransitionConfig(
+                easing=merged_easing_blanket,
                 easing_dict=merged_easing if merged_easing else None,
                 interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
@@ -455,6 +479,7 @@ class KeystateBuilder:
         merged_path = {**self._builder.interpolation_dict, **segment_path}
 
         return TransitionConfig(
+            easing=transition_config.easing,
             easing_dict=transition_config.easing_dict,
             morphing_config=transition_config.morphing_config,
             interpolation_dict=merged_path if merged_path else None,

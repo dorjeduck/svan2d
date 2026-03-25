@@ -20,6 +20,7 @@ def spiral(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
+    angles: list[float] | None = None,
 ) -> States:
     """
     Arrange states in a spiral formation (Archimedean spiral).
@@ -48,7 +49,7 @@ def spiral(
     result = []
     for i, state in enumerate(states):
         radius = start_radius + i * radius_step
-        angle = start_angle + i * angle_step
+        angle = angles[i] if angles is not None else start_angle + i * angle_step
         angle_rad = math.radians(angle)
 
         # Calculate position (y is flipped for SVG)

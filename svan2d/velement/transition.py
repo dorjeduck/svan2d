@@ -32,6 +32,8 @@ class TransitionConfig:
     """Transition configuration for segment between keystates.
 
     Attributes:
+        easing: Blanket easing function applied to all fields. Overridden by
+                easing_dict entries for specific fields.
         easing_dict: Per-field easing functions {field_name: easing_func}
         morphing_config: Morphing configuration for vertex states
         interpolation_dict: Per-field interpolation functions {field_name: interpolation_func}
@@ -43,6 +45,7 @@ class TransitionConfig:
                             bypasses all per-field interpolation. t is raw segment t (0→1).
     """
 
+    easing: EasingFunction | None = None
     easing_dict: dict[str, EasingFunction] | None = None
     morphing_config: MorphingConfig | dict[str, Any] | None = None
     interpolation_dict: InterpolationConfig | None = None
@@ -52,7 +55,8 @@ class TransitionConfig:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(\n"
-            f"\teasing={self.easing_dict}, \n"
+            f"\teasing={self.easing}, \n"
+            f"\teasing_dict={self.easing_dict}, \n"
             f"\tmorphing={self.morphing_config}, \n"
             f"\tinterpolation={self.interpolation_dict}, \n"
             f"\tlinear_angle_interpolation={self.linear_angle_interpolation}, \n"

@@ -232,6 +232,11 @@ class StateInterpolator:
                         else None
                     ),
                     attribute_keystates_fields=attr_fields,
+                    segment_easing=(
+                        ks1.transition_config.easing
+                        if ks1.transition_config
+                        else None
+                    ),
                     vertex_buffer=vertex_buffer,
                     segment_interpolation_config=(
                         ks1.transition_config.interpolation_dict

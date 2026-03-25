@@ -188,6 +188,7 @@ class InterpolationEngine:
         t: float,
         segment_easing_overrides: dict[str, Callable[[float], float]] | None,
         attribute_keystates_fields: set,
+        segment_easing: Callable[[float], float] | None = None,
         vertex_buffer: tuple[list, list[list]] | None = None,
         segment_interpolation_config: dict[str, Callable] | None = None,
         morphing_config: Any | None = None,
@@ -202,8 +203,9 @@ class InterpolationEngine:
             start_state: Starting state
             end_state: Ending state
             t: Interpolation parameter (0.0 to 1.0)
-            segment_easing_overrides: Per-segment easing overrides
+            segment_easing_overrides: Per-field segment easing overrides
             attribute_keystates_fields: Attributes managed by field keystates
+            segment_easing: Blanket easing function for all fields in this segment
             vertex_buffer: Optional reusable buffer for vertex interpolation
             segment_interpolation_config: Optional per-field path config dict {field_name: path_func}
             morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
@@ -244,7 +246,8 @@ class InterpolationEngine:
 
             # Get easing function for this field
             easing_func = self.easing_resolver.get_easing_for_field(
-                start_state, field_name, segment_easing_overrides
+                start_state, field_name, segment_easing_overrides,
+                segment_easing=segment_easing,
             )
             eased_t = easing_func(t) if easing_func else t
 

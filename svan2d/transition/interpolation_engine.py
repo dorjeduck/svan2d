@@ -214,7 +214,8 @@ class InterpolationEngine:
             state_interpolation: Optional callable (start, end, t) -> State that bypasses all field interpolation
         """
         if state_interpolation is not None:
-            return state_interpolation(start_state, end_state, t)
+            eased_t = segment_easing(t) if segment_easing else t
+            return state_interpolation(start_state, end_state, eased_t)
 
         if start_state is end_state and segment_interpolation_config is None:
             return start_state

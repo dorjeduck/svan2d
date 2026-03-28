@@ -100,8 +100,7 @@ class Renderer(ABC):
         transform = self._build_transform_string(state)
         if transform:
 
-            if isinstance(elem, dw.elements.Group):
-
+            if isinstance(elem, dw.elements.Group) or not hasattr(elem, "args"):
                 mgroup = dw.Group(transform=transform)
                 mgroup.append(elem)
                 return mgroup

@@ -95,16 +95,20 @@ class Renderer(ABC):
             # Apply filter if specified
             elem = self._apply_filter(elem, state, drawing)
 
-        _set_elem_attr(elem, "opacity", str(state.opacity))
-
         transform = self._build_transform_string(state)
+        needs_wrapper = not hasattr(elem, "args")
+
+        if needs_wrapper or isinstance(elem, dw.elements.Group):
+            kwargs = {}
+            if transform:
+                kwargs["transform"] = transform
+            kwargs["opacity"] = str(state.opacity)
+            mgroup = dw.Group(**kwargs)
+            mgroup.append(elem)
+            return mgroup
+
+        _set_elem_attr(elem, "opacity", str(state.opacity))
         if transform:
-
-            if isinstance(elem, dw.elements.Group) or not hasattr(elem, "args"):
-                mgroup = dw.Group(transform=transform)
-                mgroup.append(elem)
-                return mgroup
-
             _set_elem_attr(elem, "transform", transform)
 
         return elem

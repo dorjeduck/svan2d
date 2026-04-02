@@ -92,16 +92,25 @@ class StateInterpolator:
         # Handle edge case: at first keystate or single keystate
         if _times_equal(t, first_time) or len(self.keystates) == 1:
             ks = self.keystates[0]
-            if ks.render_index is None:
-                return None, False  # Don't render
-            if ks.render_index == 1:
-                assert (
-                    ks.outgoing_state is not None
-                )  # Guaranteed by KeyState validation
-                base_state = ks.outgoing_state
-            else:
-                base_state = ks.state
-            return self.timeline_resolver.apply_field_timelines(base_state, t), False
+            # If covers_boundaries is set on this segment's transition,
+            # skip the direct keystate return and fall through to interpolation
+            tc = ks.transition_config
+            if not (
+                tc is not None
+                and tc.covers_boundaries
+                and tc.state_interpolation is not None
+                and len(self.keystates) > 1
+            ):
+                if ks.render_index is None:
+                    return None, False  # Don't render
+                if ks.render_index == 1:
+                    assert (
+                        ks.outgoing_state is not None
+                    )  # Guaranteed by KeyState validation
+                    base_state = ks.outgoing_state
+                else:
+                    base_state = ks.state
+                return self.timeline_resolver.apply_field_timelines(base_state, t), False
 
         # Find the segment containing time t using binary search
         num_keystates = len(self.keystates)
@@ -130,24 +139,32 @@ class StateInterpolator:
 
         # Check if t exactly matches a keystate at segment boundaries
         # Important for dual-state keystates: render based on render_index
-        for idx in (segment_idx, segment_idx + 1):
-            if idx >= num_keystates:
-                continue
-            ks = self.keystates[idx]
-            if ks.time is not None and _times_equal(ks.time, t):
-                if ks.render_index is None:
-                    return None, False  # Don't render
-                if ks.render_index == 1:
-                    assert (
-                        ks.outgoing_state is not None
-                    )  # Guaranteed by KeyState validation
-                    rendered_state = ks.outgoing_state
-                else:
-                    rendered_state = ks.state
-                return (
-                    self.timeline_resolver.apply_field_timelines(rendered_state, t),
-                    False,
-                )
+        # Skip this check when covers_boundaries is set on the segment's transition
+        segment_tc = self.keystates[segment_idx].transition_config
+        skip_boundary = (
+            segment_tc is not None
+            and segment_tc.covers_boundaries
+            and segment_tc.state_interpolation is not None
+        )
+        if not skip_boundary:
+            for idx in (segment_idx, segment_idx + 1):
+                if idx >= num_keystates:
+                    continue
+                ks = self.keystates[idx]
+                if ks.time is not None and _times_equal(ks.time, t):
+                    if ks.render_index is None:
+                        return None, False  # Don't render
+                    if ks.render_index == 1:
+                        assert (
+                            ks.outgoing_state is not None
+                        )  # Guaranteed by KeyState validation
+                        rendered_state = ks.outgoing_state
+                    else:
+                        rendered_state = ks.state
+                    return (
+                        self.timeline_resolver.apply_field_timelines(rendered_state, t),
+                        False,
+                    )
 
         # Process only the found segment
         for i in [segment_idx] if segment_idx < num_keystates - 1 else []:

@@ -43,6 +43,9 @@ class TransitionConfig:
                          (enables multi-revolution rotation like 0° → 7200°)
         state_interpolation: Optional callable (start_state, end_state, t) -> State that
                             bypasses all per-field interpolation. t is raw segment t (0→1).
+        covers_boundaries: If True and state_interpolation is set, the state_interpolation
+                          function is called even at exact boundary t values (segment start/end)
+                          instead of returning the keystate directly.
     """
 
     easing: EasingFunction | None = None
@@ -51,6 +54,7 @@ class TransitionConfig:
     interpolation_dict: InterpolationConfig | None = None
     linear_angle_interpolation: bool = False
     state_interpolation: Callable | None = None
+    covers_boundaries: bool = False
 
     def __repr__(self):
         return (
@@ -60,6 +64,7 @@ class TransitionConfig:
             f"\tmorphing={self.morphing_config}, \n"
             f"\tinterpolation={self.interpolation_dict}, \n"
             f"\tlinear_angle_interpolation={self.linear_angle_interpolation}, \n"
-            f"\tstate_interpolation={self.state_interpolation}\n"
+            f"\tstate_interpolation={self.state_interpolation}, \n"
+            f"\tcovers_boundaries={self.covers_boundaries}\n"
             f")"
         )

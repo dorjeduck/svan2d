@@ -234,30 +234,39 @@ class VSceneComposite:
 
             # Combined scale: child scale * render_scale
             total_scale = scale * render_scale
+            child_origin = Origin(scene.origin)
 
-            # Build transform (round offsets to integers to avoid sub-pixel gaps)
+            # Compute child's visual top-left in composite coords
             if self._direction == "horizontal":
                 if self.origin == Origin.CENTER:
-                    # For center origin: position child's center at correct location
-                    child_center_x = round(offset + (scene.width * total_scale) / 2)
-                    transform = f"translate({child_center_x}, 0) scale({total_scale})"
-                else:  # top-left
-                    transform = f"translate({round(offset)}, 0) scale({total_scale})"
-                # Subtract overlap so next scene overlaps slightly (except after last)
+                    child_top_x = offset
+                    child_top_y = -scene.height * total_scale / 2
+                else:
+                    child_top_x = offset
+                    child_top_y = 0.0
                 offset += scene.width * total_scale + self._gap * render_scale
                 if i < len(self._scenes) - 1:
                     offset -= overlap
             else:  # vertical
                 if self.origin == Origin.CENTER:
-                    # For center origin: position child's center at correct location
-                    child_center_y = round(offset + (scene.height * total_scale) / 2)
-                    transform = f"translate(0, {child_center_y}) scale({total_scale})"
-                else:  # top-left
-                    transform = f"translate(0, {round(offset)}) scale({total_scale})"
-                # Subtract overlap so next scene overlaps slightly (except after last)
+                    child_top_x = -scene.width * total_scale / 2
+                    child_top_y = offset
+                else:
+                    child_top_x = 0.0
+                    child_top_y = offset
                 offset += scene.height * total_scale + self._gap * render_scale
                 if i < len(self._scenes) - 1:
                     offset -= overlap
+
+            # Adjust translate so child's origin (0,0) maps to correct position
+            if child_origin == Origin.CENTER:
+                tx = child_top_x + scene.width * total_scale / 2
+                ty = child_top_y + scene.height * total_scale / 2
+            else:  # top-left
+                tx = child_top_x
+                ty = child_top_y
+
+            transform = f"translate({round(tx)}, {round(ty)}) scale({total_scale})"
 
             # Create group with transform and add child elements
             group = dw.Group(transform=transform)

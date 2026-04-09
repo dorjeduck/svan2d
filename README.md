@@ -1,4 +1,4 @@
-# [svan2d]
+# svan2d
 
 ### ⚠️ Status: Undergoing Major Refactor
 

@@ -44,8 +44,8 @@ def _track_layout(cfg: dict) -> dict:
 
     track_left = -w / 2 + tc["margin_left"]
     track_right = w / 2 - tc["margin_right"]
-    track_top = -h / 2 + tc["margin_top"]
-    track_bottom = h / 2 - tc["margin_bottom"]
+    track_top = h / 2 - tc["margin_top"]
+    track_bottom = -h / 2 + tc["margin_bottom"]
 
     return {
         "track_left": track_left,
@@ -77,7 +77,7 @@ def create_lane_backgrounds(
     colors = tc["lane_colors"]
 
     for i in range(num_lanes):
-        y = layout["track_top"] + i * (lane_h + lane_gap) + lane_h / 2
+        y = layout["track_top"] - i * (lane_h + lane_gap) - lane_h / 2
         color_idx = i % len(colors)
 
         state = RectangleState(
@@ -111,7 +111,7 @@ def create_distance_markers(
     lane_gap = tc["lane_gap"]
 
     lanes_height = num_lanes * lane_h + (num_lanes - 1) * lane_gap
-    lanes_center_y = layout["track_top"] + lanes_height / 2
+    lanes_center_y = layout["track_top"] - lanes_height / 2
 
     for dist in distances:
         x = distance_to_x(dist, layout)
@@ -127,7 +127,7 @@ def create_distance_markers(
         )
         elements.append(_fading(line_state, timing))
 
-        label_y = layout["track_top"] + lanes_height + 6
+        label_y = layout["track_top"] - lanes_height - 6
         label_state = TextState(
             text=f"{dist}m",
             pos=Point2D(x, label_y),
@@ -156,7 +156,7 @@ def create_finish_line(
     x = distance_to_x(100.0, layout)
 
     lanes_height = num_lanes * lane_h + (num_lanes - 1) * lane_gap
-    lanes_center_y = layout["track_top"] + lanes_height / 2
+    lanes_center_y = layout["track_top"] - lanes_height / 2
 
     state = LineState(
         pos=Point2D(x, lanes_center_y),
@@ -174,7 +174,7 @@ def create_finish_line(
 def create_title(layout: dict, cfg: dict) -> VElement:
     """Create the race title text above track area, left-aligned."""
     tc = cfg["title"]
-    y = layout["track_top"] - tc["padding_above"]
+    y = layout["track_top"] + tc["padding_above"]
 
     return _static(TextState(
         text="Olympic 100m Winners 1988\u20132024",
@@ -200,7 +200,7 @@ def create_clock_element(
     race_start = timing["race_start"]
     total_duration = timing["total_duration"]
     race_finish_at = race_start + max_time / total_duration
-    y = layout["track_top"] - cc["padding_above"]
+    y = layout["track_top"] + cc["padding_above"]
 
     clock_base = dict(
         pos=Point2D(layout["track_right"], y),

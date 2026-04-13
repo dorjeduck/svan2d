@@ -52,9 +52,9 @@ def spiral(
         angle = angles[i] if angles is not None else start_angle + i * angle_step
         angle_rad = math.radians(angle)
 
-        # Calculate position (y is flipped for SVG)
-        x = center.x + radius * math.sin(angle_rad)
-        y = center.y - radius * math.cos(angle_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        x = center.x + radius * math.cos(angle_rad)
+        y = center.y + radius * math.sin(angle_rad)
 
         additional_rotation = (
             element_rotation_offset_fn(angle)
@@ -65,8 +65,8 @@ def spiral(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            # upright to the center
-            element_angle = angle + additional_rotation
+            # Bottom faces center: element_angle = position_angle - 90
+            element_angle = angle - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:
@@ -84,7 +84,7 @@ def spiral_between_radii(
     start_radius: float = 50,
     end_radius: float = 200,
     rotation: float = 0,
-    clockwise: bool = False,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
@@ -132,7 +132,7 @@ def spiral_between_radii(
 
     # Calculate angle step based on direction
     # Use 30 degrees as default (same as spiral default)
-    angle_step = 30 if not clockwise else -30
+    angle_step = 30 if counter_clockwise else -30
 
     # Call canonical spiral function
     return spiral(

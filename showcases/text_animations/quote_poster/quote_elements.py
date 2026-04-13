@@ -27,8 +27,8 @@ def create_quote_elements(
     """Create per-character VElements for the quote with scatter entrance."""
     line_height = font_size * 1.4
     total_text_height = (len(lines) - 1) * line_height
-    # Offset upward to leave room for author below
-    start_y = -total_text_height / 2 - font_size * 0.5
+    # Offset upward to leave room for author below (Cartesian: top = positive y)
+    start_y = total_text_height / 2 + font_size * 0.5
 
     # Count total visible chars for stagger calculation
     total_visible_chars = sum(len(ch) for line in lines for ch in line if ch != " ")
@@ -54,7 +54,7 @@ def create_quote_elements(
             x_positions.append(cursor + w / 2)
             cursor += w
 
-        y = start_y + line_idx * line_height
+        y = start_y - line_idx * line_height
 
         for i, ch in enumerate(line):
             if ch == " ":
@@ -123,7 +123,7 @@ def get_quote_block_bounds(
     """Return (min_y, max_y) of the quote text block, matching create_quote_elements layout."""
     line_height = font_size * 1.4
     total_text_height = (len(lines) - 1) * line_height
-    start_y = -total_text_height / 2 - font_size * 0.5
-    min_y = start_y - font_size * 0.5
-    max_y = start_y + (len(lines) - 1) * line_height + font_size * 0.5
+    start_y = total_text_height / 2 + font_size * 0.5
+    max_y = start_y + font_size * 0.5
+    min_y = start_y - (len(lines) - 1) * line_height - font_size * 0.5
     return min_y, max_y

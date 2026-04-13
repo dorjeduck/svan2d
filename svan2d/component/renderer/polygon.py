@@ -28,9 +28,9 @@ class PolygonRenderer(Renderer):
         # Generate corner points only
         corners = []
         for i in range(state.num_sides):
-            angle = (i / state.num_sides) * 2 * math.pi - math.pi / 2
+            angle = (i / state.num_sides) * 2 * math.pi  # Start from East (0°)
             x = state.size * math.cos(angle)
-            y = state.size * math.sin(angle)
+            y = -state.size * math.sin(angle)  # Negate y: local SVG Y-down, user Y-up
             corners.extend([x, y])
 
         # Build kwargs

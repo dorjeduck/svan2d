@@ -54,19 +54,19 @@ checker_pattern_1 = CheckerboardPattern(
 checker_pattern_2 = replace(checker_pattern_1, square_size=25, color1=Color("#ff0000"))
 
 start_states = [
-    SquareState(size=40, pos=Point2D(-70, -70), fill_gradient=linear_grad_1),
+    SquareState(size=40, pos=Point2D(-70, 70), fill_gradient=linear_grad_1),
     SquareState(size=40, pos=Point2D(-70, 0), fill_pattern=checker_pattern_1),
     SquareState(
-        size=40, pos=Point2D(-70, 70), fill_color=START_COLOR_1, filter=shadow_filter_1
+        size=40, pos=Point2D(-70, -70), fill_color=START_COLOR_1, filter=shadow_filter_1
     ),
 ]
 
 
 end_states = [
-    CircleState(radius=20, pos=Point2D(70, -70), fill_gradient=linear_grad_2),
+    CircleState(radius=20, pos=Point2D(70, 70), fill_gradient=linear_grad_2),
     CircleState(radius=20, pos=Point2D(70, 0), fill_pattern=checker_pattern_2),
     CircleState(
-        radius=20, pos=Point2D(70, 70), fill_color=END_COLOR_1, filter=shadow_filter_2
+        radius=20, pos=Point2D(70, -70), fill_color=END_COLOR_1, filter=shadow_filter_2
     ),
 ]
 

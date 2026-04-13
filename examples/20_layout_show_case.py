@@ -44,7 +44,7 @@ def main():
         font_family="Courier New",
         font_size=14,
         fill_color=Color("#AA0000"),
-        pos=Point2D(0, 110),
+        pos=Point2D(0, -110),
     )
 
     # Define all layout transitions
@@ -123,10 +123,10 @@ def main():
         layout.bezier(
             base_states,
             control_points=[
-                Point2D(-110, -80),
-                Point2D(-60, 80),
-                Point2D(60, -80),
-                Point2D(110, 80),
+                Point2D(-110, 80),
+                Point2D(-60, -80),
+                Point2D(60, 80),
+                Point2D(110, -80),
             ],
             alignment=layout.ElementAlignment.LAYOUT,
         )
@@ -150,11 +150,11 @@ def main():
         layout.path_points(
             base_states,
             points=[
-                Point2D(-110, -100),
+                Point2D(-110, 100),
                 Point2D(-60, 0),
-                Point2D(0, 60),
+                Point2D(0, -60),
                 Point2D(60, 0),
-                Point2D(110, 100),
+                Point2D(110, -100),
             ],
             smooth=True,
             alignment=layout.ElementAlignment.LAYOUT,

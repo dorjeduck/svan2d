@@ -15,7 +15,7 @@ def arc_swap_positions(
     state_2: State,
     t_start: float,
     t_end: float,
-    clockwise: bool = True,
+    counter_clockwise: bool = False,
     arc_radius: float | None = None,
     easing: dict[str, Callable[[float], float]] | None = None,
 ) -> tuple[list[KeyState], list[KeyState]]:
@@ -29,7 +29,7 @@ def arc_swap_positions(
         state_2: The base State of the second element.
         t_start: Start time of the swap.
         t_end: End time of the swap.
-        clockwise: Arc direction (default True).
+        counter_clockwise: Arc direction (default False = clockwise).
         arc_radius: Arc radius. If None, defaults to distance between points.
         easing: Optional easing dict for position transitions.
 
@@ -57,7 +57,7 @@ def arc_swap_positions(
         radius = max(arc_radius, min_radius)
 
     # Select arc direction (both elements use same direction to avoid collision)
-    arc_func = arc_clockwise if clockwise else arc_counterclockwise
+    arc_func = arc_counterclockwise if counter_clockwise else arc_clockwise
     path_func = arc_func(radius)
 
     # Build transition config

@@ -33,7 +33,7 @@ class FlowerState(VertexState):
             # Rose curve
             r = abs(self.size * math.cos(self.num_petals * t))
 
-            vertices.append(Point2D(r * math.sin(t), -r * math.cos(t)))
+            vertices.append(Point2D(r * math.cos(t), -r * math.sin(t)))
 
         vertices.append(vertices[0])
         return VertexContours.from_single_loop(vertices, closed=True)

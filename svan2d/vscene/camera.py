@@ -206,8 +206,18 @@ def apply_camera_functions(
     )
 
 
-def build_camera_transform(state: CameraState, render_scale: float) -> str:
-    """Build SVG transform string from camera state with pivot support."""
+def build_camera_transform(
+    state: CameraState,
+    render_scale: float,
+    viewport_width: float = 0.0,
+    viewport_height: float = 0.0,
+) -> str:
+    """Build SVG transform string from camera state with pivot support.
+
+    viewport_width / viewport_height must be supplied (in rendered pixels) when
+    the scene uses a non-center origin so the camera centers on the offset point
+    rather than placing it at the viewport's top-left corner.
+    """
     assert (
         state.scale is not None
         and state.pivot is not None
@@ -220,21 +230,26 @@ def build_camera_transform(state: CameraState, render_scale: float) -> str:
     has_pivot = state.pivot.x != 0 or state.pivot.y != 0
     has_transform = total_scale != 1.0 or state.rotation != 0
 
-    # Pivot: translate to pivot point, apply transforms, translate back
+    # Pivot: translate to pivot point (negate Y: user Cartesian → SVG Y-down)
     if has_pivot and has_transform:
-        parts.append(f"translate({state.pivot.x},{state.pivot.y})")
+        parts.append(f"translate({state.pivot.x},{-state.pivot.y})")
 
     if total_scale != 1.0:
         parts.append(f"scale({total_scale})")
 
     if state.rotation != 0:
-        parts.append(f"rotate({state.rotation})")
+        parts.append(f"rotate({-state.rotation})")  # Negate: user CCW → SVG CW
 
     if has_pivot and has_transform:
-        parts.append(f"translate({-state.pivot.x},{-state.pivot.y})")
+        parts.append(f"translate({-state.pivot.x},{state.pivot.y})")
 
     # Camera position LAST (world space - applied first in SVG right-to-left order)
     if state.x != 0 or state.y != 0:
-        parts.append(f"translate({-state.x},{-state.y})")
+        parts.append(f"translate({-state.x},{state.y})")  # Negate Y: user Cartesian → SVG Y-down
+
+    # Non-center origins: shift the target from SVG (0,0) to the viewport center.
+    # Prepend so it is the outermost transform (applied last in SVG right-to-left order).
+    if viewport_width or viewport_height:
+        parts.insert(0, f"translate({viewport_width / 2},{viewport_height / 2})")
 
     return " ".join(parts)

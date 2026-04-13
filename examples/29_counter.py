@@ -33,7 +33,7 @@ def main():
 
     bar = RectangleState(width=200, height=50, fill_color=BAR_COLOR)
 
-    bar_states = [replace(bar, pos=Point2D(0, i * 80)) for i in range(-1, 2)]
+    bar_states = [replace(bar, pos=Point2D(0, -i * 80)) for i in range(-1, 2)]
 
     bar_elements = [
         VElement().keystates([bar_state, bar_state]) for bar_state in bar_states
@@ -64,7 +64,7 @@ def main():
     left_aligned_counter_start = replace(
         centered_counter_start,
         text_anchor="start",
-        pos=Point2D(-90, -80),
+        pos=Point2D(-90, 80),
     )
     left_aligned_counter_end = replace(
         left_aligned_counter_start,
@@ -80,7 +80,7 @@ def main():
     right_aligned_counter_start = replace(
         centered_counter_start,
         text_anchor="end",
-        pos=Point2D(90, 80),
+        pos=Point2D(90, -80),
     )
     right_aligned_counter_end = replace(
         right_aligned_counter_start,

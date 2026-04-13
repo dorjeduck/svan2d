@@ -107,11 +107,11 @@ def _create_cell(
     # --- Atomic number text (5 keystates, same lifecycle as square) ---
     tl_num_pos = Point2D(
         cell.timeline_pos.x + timeline_cell_size * number_offset,
-        cell.timeline_pos.y + timeline_cell_size * number_offset,
+        cell.timeline_pos.y - timeline_cell_size * number_offset,
     )
     grid_num_pos = Point2D(
         cell.grid_pos.x + cell_size * number_offset,
-        cell.grid_pos.y + cell_size * number_offset,
+        cell.grid_pos.y - cell_size * number_offset,
     )
     num_hidden = TextState(
         text=str(cell.element.atomic_number),

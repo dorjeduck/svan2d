@@ -30,7 +30,7 @@ def line(
     Args:
         states: List of states to arrange
         spacing: Distance between adjacent elements. Only used when distances is None.
-        rotation: Angle of the line in degrees (0° = horizontal right, 90° = vertical down)
+        rotation: Angle of the line in degrees (0° = East/horizontal right, 90° = North/vertical up)
         center: Center point of the line
         distances: Optional list of specific distances from center for each element.
                   If provided, overrides automatic distribution and spacing parameter.
@@ -93,8 +93,8 @@ def line(
         if alignment == ElementAlignment.PRESERVE:
             element_rot = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            # Align with line direction + additional rotation
-            element_rot = rotation + element_rotation_offset
+            # Top faces along line direction: element_rot = line_angle - 90
+            element_rot = rotation - 90 + element_rotation_offset
         elif alignment == ElementAlignment.UPRIGHT:
             # Start from upright position + additional rotation
             element_rot = element_rotation_offset

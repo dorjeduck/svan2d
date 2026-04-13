@@ -45,10 +45,9 @@ class VertexRegularPolygon(VertexLoop):
         # Calculate corner positions
         corners = []
         for i in range(num_sides):
-            # Svan2D convention: 0° = North, so start at -90° in standard coords
-            angle = math.radians(i * (360 / num_sides) - 90 + rotation)
+            angle = math.radians(i * (360 / num_sides) + rotation)
             x = center.x + size * math.cos(angle)
-            y = center.y + size * math.sin(angle)
+            y = center.y - size * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             corners.append(Point2D(x, y))
 
         # Calculate perimeter and side lengths

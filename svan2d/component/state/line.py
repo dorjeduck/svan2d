@@ -38,8 +38,8 @@ class LineState(VertexState):
         stroke_dasharray: str | None = None,
         stroke_linecap: str | None = None,
         scale: float | None = None,
-        rotation: float | None = None,
-        opacity: float | None = None,
+        rotation: float = 0,
+        opacity: float = 1,
     ) -> LineState:
 
         cx, cy, add_rotation, length = line_endpoints_to_center_rotation_length(
@@ -75,7 +75,7 @@ def line_endpoints_to_center_rotation_length(
 ) -> tuple[float, float, float, float]:
     center_x = (x1 + x2) / 2
     center_y = (y1 + y2) / 2
-    rotation = math.atan2(y2 - y1, x2 - x1)
+    rotation = math.degrees(math.atan2(y2 - y1, x2 - x1))
     length = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     return center_x, center_y, rotation, length
 
@@ -86,7 +86,7 @@ def line_center_rotation_length_to_endpoints(
     # Calculate the endpoints based on the center, rotation, and length
     # take rotation into account
 
-    theta = math.radians(90 - rotation)
+    theta = math.radians(rotation)
     h = length / 2
     dx = math.cos(theta)
     dy = math.sin(theta)

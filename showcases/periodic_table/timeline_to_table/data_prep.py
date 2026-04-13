@@ -64,8 +64,8 @@ def prepare(cfg: dict) -> AppData:
     # Distribute t_appear evenly across [0, buildup_end - appear_dur]
     spread = max(buildup_end - appear_dur, 0.01)
 
-    # Timeline y: above the axis
-    tl_y = axis_y - tl_cell_size / 2 - tl_cell_gap
+    # Timeline y: above the axis (Cartesian: above = positive y)
+    tl_y = axis_y + tl_cell_size / 2 + tl_cell_gap
 
     cells: list[CellData] = []
     for i, elem in enumerate(sorted_elements):

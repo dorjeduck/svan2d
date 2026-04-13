@@ -37,7 +37,7 @@ def create_scene_1() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 1",
             font_size=24,
             fill_color=Color("#ffffff"),
@@ -73,7 +73,7 @@ def create_scene_2() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 2",
             font_size=24,
             fill_color=Color("#ffffff"),
@@ -107,7 +107,7 @@ def create_scene_3() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 3",
             font_size=24,
             fill_color=Color("#1a1a2e"),

@@ -28,8 +28,8 @@ def create_pendulum_elements(
     clockwise: bool = True,
 ) -> list[VElement]:
     """Create pendulum VElements arranged in a ring, hanging radially outward."""
-    start_rad = math.radians(start_angle - 90)
-    direction = 1 if clockwise else -1
+    start_rad = math.radians(90 - start_angle)
+    direction = -1 if clockwise else 1
     specs = []
     for i in range(count):
         angle = direction * 2 * math.pi * i / count + start_rad

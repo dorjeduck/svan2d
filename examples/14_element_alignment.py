@@ -34,28 +34,36 @@ def main():
     ]
 
     def east_west(angle):
-        if angle == 0:
+        if angle == 90:
             return 0
-        elif angle > 180:
-            return 90
-        else:
+        elif angle > 90 and angle < 270:
             return -90
+        else:
+            return 90
 
     all_states = [
         layout.circle(
-            base_states, radius=100, alignment=layout.ElementAlignment.UPRIGHT
-        ),
-        layout.circle(
-            base_states, radius=100, alignment=layout.ElementAlignment.LAYOUT
+            base_states,
+            rotation=90,
+            radius=100,
+            alignment=layout.ElementAlignment.UPRIGHT,
         ),
         layout.circle(
             base_states,
+            rotation=90,
             radius=100,
             alignment=layout.ElementAlignment.LAYOUT,
-            element_rotation_offset=90,
         ),
         layout.circle(
             base_states,
+            rotation=90,
+            radius=100,
+            alignment=layout.ElementAlignment.LAYOUT,
+            element_rotation_offset=-90,
+        ),
+        layout.circle(
+            base_states,
+            rotation=90,
             radius=100,
             alignment=layout.ElementAlignment.LAYOUT,
             element_rotation_offset_fn=east_west,
@@ -93,6 +101,7 @@ def main():
         total_frames=210,
         framerate=30,
         png_width_px=1024,
+        num_thumbnails=100,
     )
 
 

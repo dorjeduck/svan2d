@@ -33,8 +33,8 @@ class RadialSegmentsRenderer(Renderer):
         stroke = state.stroke_color.to_rgb_string() if state.stroke_color else "black"
 
         for idx, angle in enumerate(angles):
-            # Make 0 degrees point north and 90 east
-            rad = math.radians(angle - 90)
+            # 0° = East, CCW positive (Cartesian convention)
+            rad = math.radians(angle)
             segs = None
             segments = state.segments
             # Determine base_segments for this index
@@ -63,9 +63,9 @@ class RadialSegmentsRenderer(Renderer):
             if segs:
                 for from_px, to_px in segs:
                     x1 = from_px * math.cos(rad)
-                    y1 = from_px * math.sin(rad)
+                    y1 = -from_px * math.sin(rad)  # Negate y: local SVG Y-down, user Y-up
                     x2 = to_px * math.cos(rad)
-                    y2 = to_px * math.sin(rad)
+                    y2 = -to_px * math.sin(rad)
                     line_kwargs = {}
                     self._set_fill_and_stroke_kwargs(state, line_kwargs, drawing)
                     line = dw.Line(x1, y1, x2, y2, **line_kwargs)

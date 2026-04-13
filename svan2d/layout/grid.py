@@ -61,7 +61,7 @@ def grid(
         grid_width = (cols - 1) * spacing_h
         grid_height = (rows - 1) * spacing_v
         x = center.x + (col * spacing_h - grid_width / 2)
-        y = center.y + (row * spacing_v - grid_height / 2)
+        y = center.y - (row * spacing_v - grid_height / 2)
 
         # Calculate element rotation based on alignment mode
         if alignment == ElementAlignment.PRESERVE:

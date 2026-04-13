@@ -35,17 +35,18 @@ class TestCircleLayout:
         positioned = layout.circle(states, radius=100)
 
         assert len(positioned) == 1
-        # Single element should be positioned at angle 0 (top, y=-radius)
-        assert positioned[0].y == pytest.approx(-100, abs=1.0)
+        # Single element should be positioned at angle 0 (East, x=radius)
+        assert positioned[0].x == pytest.approx(100, abs=1.0)
+        assert positioned[0].y == pytest.approx(0, abs=1.0)
 
     def test_circle_layout_rotation(self):
         """Test circle layout with rotation"""
         states = [CircleState(radius=10) for _ in range(4)]
         positioned = layout.circle(states, radius=100, rotation=90)
 
-        # First element should be at 90 degrees (East)
-        assert positioned[0].x == pytest.approx(100, abs=1.0)
-        assert positioned[0].y == pytest.approx(0, abs=1.0)
+        # rotation=90 CCW from East = North (x≈0, y=radius)
+        assert positioned[0].x == pytest.approx(0, abs=1.0)
+        assert positioned[0].y == pytest.approx(100, abs=1.0)
 
 
 @pytest.mark.unit
@@ -117,15 +118,15 @@ class TestGridLayout:
         assert len(positioned) == 12
 
         # Check first element (top-left, centered at grid center)
-        # Grid is centered at (0,0), so first element offset is -(cols-1)/2 * spacing_h, -(rows-1)/2 * spacing_v
+        # In Cartesian (Y-up): row 0 is at top = positive Y
         expected_x0 = -(4 - 1) * 50 / 2
-        expected_y0 = -(3 - 1) * 50 / 2
+        expected_y0 = +(3 - 1) * 50 / 2
         assert positioned[0].x == pytest.approx(expected_x0)
         assert positioned[0].y == pytest.approx(expected_y0)
 
         # Check spacing is correct
         assert positioned[1].x == pytest.approx(positioned[0].x + 50)  # Next column
-        assert positioned[4].y == pytest.approx(positioned[0].y + 50)  # Next row
+        assert positioned[4].y == pytest.approx(positioned[0].y - 50)  # Next row (lower Y in Cartesian)
 
     def test_grid_layout_single_row(self):
         """Test grid layout with single row"""
@@ -460,6 +461,6 @@ class TestLayoutEdgeCases:
         states = [CircleState(radius=5) for _ in range(4)]
         positioned = layout.grid(states, rows=2, cols=2, spacing_h=-20, spacing_v=-20)
 
-        # Elements should overlap
+        # Elements should overlap (negative spacing reverses direction)
         assert positioned[1].x < positioned[0].x
-        assert positioned[2].y < positioned[0].y
+        assert positioned[2].y > positioned[0].y

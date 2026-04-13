@@ -27,10 +27,10 @@ class TriangleState(VertexState):
     def _generate_contours(self) -> VertexContours:
         """Generate triangle vertices distributed along perimeter
 
-        Triangle points upward with vertices at:
-        - Top: 0° (North/straight up)
-        - Bottom-right: 120°
-        - Bottom-left: 240°
+        Triangle points right with first vertex at:
+        - Right: 0° (East)
+        - Upper-left: 120°
+        - Lower-left: 240°
 
         Generates num_points vertices that form a complete closed loop.
         The last vertex equals the first vertex to properly close the shape.
@@ -38,9 +38,9 @@ class TriangleState(VertexState):
         # Calculate triangle vertices (pointing up, Svan2D coordinate system)
         triangle_verts = []
         for i in range(3):
-            angle = math.radians(i * 120)  # 0°, 120°, 240°
+            angle = math.radians(i * 120)
             triangle_verts.append(
-                Point2D(self.size * math.sin(angle), -self.size * math.cos(angle))
+                Point2D(self.size * math.cos(angle), -self.size * math.sin(angle))
             )
 
         # Calculate perimeter lengths between vertices

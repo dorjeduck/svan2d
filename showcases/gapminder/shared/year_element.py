@@ -37,7 +37,7 @@ def create_year_element(
     """
     first_country_data = next(iter(country_data.values()))
 
-    y_pos = layout["plot_bottom"] - offset_bottom
+    y_pos = layout["plot_bottom"] + offset_bottom
     x_pos = layout["plot_right"] - offset_right
 
     year_keystates = [

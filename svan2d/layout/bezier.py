@@ -164,7 +164,8 @@ def bezier(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            element_angle = tangent_angle + additional_rotation
+            # Top faces forward along tangent: element_angle = tangent_angle - 90
+            element_angle = tangent_angle - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:

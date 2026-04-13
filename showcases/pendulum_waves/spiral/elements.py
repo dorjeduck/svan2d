@@ -34,8 +34,8 @@ def create_pendulum_elements(
 
     When freq_inward is True, the highest frequency is at the center (inner radius).
     """
-    start_rad = math.radians(start_angle - 90)
-    direction = 1 if clockwise else -1
+    start_rad = math.radians(90 - start_angle)
+    direction = -1 if clockwise else 1
     specs = []
     for i in range(count):
         frac = i / (count - 1) if count > 1 else 0.0

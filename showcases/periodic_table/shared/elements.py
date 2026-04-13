@@ -48,11 +48,11 @@ def table_size() -> tuple[float, float]:
 
 
 def _table_offset() -> tuple[float, float]:
-    """Compute offset to center the table at origin."""
+    """Compute offset to center the table at origin (Cartesian: top row at positive y)."""
     step = CELL_SIZE + GAP
     total_w = COLS * step - GAP
     total_h = ROWS * step - GAP
-    return -total_w / 2 + CELL_SIZE / 2, -total_h / 2 + CELL_SIZE / 2
+    return -total_w / 2 + CELL_SIZE / 2, total_h / 2 - CELL_SIZE / 2
 
 
 def grid_position(element: ElementData) -> Point2D:
@@ -66,7 +66,7 @@ def grid_position(element: ElementData) -> Point2D:
 
     step = CELL_SIZE + GAP
     x = ox + col * step
-    y = oy + row * step
+    y = oy - row * step
     return Point2D(x, y)
 
 

@@ -401,10 +401,11 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             )
 
         if state.pos and (state.pos.x != 0 or state.pos.y != 0):  # type: ignore
-            transform_parts.append(f"translate({state.pos.x}, {state.pos.y})")
+            transform_parts.append(f"translate({state.pos.x}, {-state.pos.y})")
 
         if state.rotation != 0:
-            transform_parts.append(f"rotate({state.rotation})")
+
+            transform_parts.append(f"rotate({-state.rotation})") # type: ignore #t
 
         if state.scale != 1.0 and (state.scale_x == 1.0 and state.scale_y == 1.0):
             transform_parts.append(f"scale({state.scale})")

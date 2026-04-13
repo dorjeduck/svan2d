@@ -60,7 +60,7 @@ def create_runner_elements(
     finish_time_elements = []
 
     for lane_idx, runner in enumerate(race.runners):
-        y = layout["track_top"] + lane_idx * (lane_h + lane_gap) + lane_h / 2
+        y = layout["track_top"] - lane_idx * (lane_h + lane_gap) - lane_h / 2
         finish_at = race_start + runner.final_time / total_duration
 
         color_key = _LANE_COLOR_KEYS[lane_idx] if lane_idx < len(_LANE_COLOR_KEYS) else "lane_1"

@@ -44,7 +44,7 @@ def main():
         font_family="Courier New",
         font_size=20,
         fill_color=Color("#AA0000"),
-        pos=Point2D(0, 110),
+        pos=Point2D(0, -110),
     )
 
     # Define all layout transition
@@ -55,7 +55,7 @@ def main():
     morph_name_states.append(replace(base_name_state, text="Circle"))
 
     morph_states.append(
-        ArrowState(fill_color=FILL_COLOR, stroke_color=STROKE_COLOR, rotation=-45),
+        ArrowState(fill_color=FILL_COLOR, stroke_color=STROKE_COLOR, rotation=45),
     )
     morph_name_states.append(replace(base_name_state, text="Arrow"))
 
@@ -125,8 +125,8 @@ def main():
         ArcState(
             stroke_color=STROKE_COLOR,
             radius=40,
-            start_angle=10,
-            end_angle=170,
+            start_angle=-10,
+            end_angle=-170,
         )
     )
     morph_name_states.append(replace(base_name_state, text="Arc"))

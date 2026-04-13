@@ -86,13 +86,12 @@ class PolyRingRenderer(Renderer):
         angle_step = 360.0 / num_edges
 
         for i in range(num_edges):
-            # Start at North (270° in standard coords) and go clockwise
-            # Svan2D convention: 0° = North, 90° = East
-            angle = -90 + rotation + (i * angle_step)  # -90 to start at North
+            # Cartesian convention: 0° = East, CCW positive
+            angle = rotation + (i * angle_step)
             angle_rad = math.radians(angle)
 
             x = size * math.cos(angle_rad)
-            y = size * math.sin(angle_rad)
+            y = -size * math.sin(angle_rad)  # Negate y: local SVG Y-down, user Y-up
             vertices.append(Point2D(x, y))
 
         return vertices

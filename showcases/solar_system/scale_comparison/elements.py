@@ -52,12 +52,12 @@ def create_sun_element(cfg: dict) -> list[VElement]:
     offset_y = label_cfg["offset_y"]
     line_spacing = label_cfg.get("line_spacing", 14)
 
-    # Final position: top of Sun near top of scene
-    sun_center_y = -scene_h / 2 + sun_radius + padding_top
+    # Final position: top of Sun near top of scene (Cartesian: top = positive y)
+    sun_center_y = scene_h / 2 - sun_radius - padding_top
 
     # Hidden: centre far above so circle + labels are all off-screen
     label_extent = offset_y + line_spacing
-    hidden_y = -(scene_h / 2 + sun_radius + label_extent)
+    hidden_y = scene_h / 2 + sun_radius + label_extent
 
     # Vertical offset from hidden to visible (labels slide the same amount)
     slide_dy = sun_center_y - hidden_y
@@ -78,8 +78,8 @@ def create_sun_element(cfg: dict) -> list[VElement]:
         .keystate(visible_state, at=1.0)
     )
 
-    # Label positions: below the Sun circle
-    label_y_visible = sun_center_y + sun_radius + offset_y + label_cfg["font_size"]
+    # Label positions: below the Sun circle (Cartesian: below = smaller y)
+    label_y_visible = sun_center_y - sun_radius - offset_y - label_cfg["font_size"]
     label_y_hidden = label_y_visible - slide_dy
     font_color = Color(label_cfg["font_color"])
     easing_dict = {"pos": easing.in_out}
@@ -107,7 +107,7 @@ def create_sun_element(cfg: dict) -> list[VElement]:
     # Radius info label
     info_visible = TextState(
         text=_format_radius_km(SUN_RADIUS_KM),
-        pos=Point2D(0, label_y_visible + line_spacing),
+        pos=Point2D(0, label_y_visible - line_spacing),
         font_family=label_cfg["font_family"],
         font_size=label_cfg["font_size"] - 1,
         fill_color=font_color,
@@ -116,7 +116,7 @@ def create_sun_element(cfg: dict) -> list[VElement]:
         dominant_baseline="auto",
         stroke_width=0,
     )
-    info_hidden = replace(info_visible, pos=Point2D(0, label_y_hidden + line_spacing))
+    info_hidden = replace(info_visible, pos=Point2D(0, label_y_hidden - line_spacing))
     info_el = (
         VElement()
         .keystate(info_hidden, at=phase2_start)
@@ -153,8 +153,8 @@ def create_planet_elements(planets: list[PlanetData], cfg: dict) -> list[VElemen
 
     # Phase 2 radii + positions (below the Sun)
     sun_radius_px = sun_cfg["radius_px"]
-    sun_center_y = -scene_h / 2 + sun_radius_px + sun_cfg["padding_top"]
-    planet_row_y = sun_center_y + sun_radius_px + sun_cfg["gap_to_planets"]
+    sun_center_y = scene_h / 2 - sun_radius_px - sun_cfg["padding_top"]
+    planet_row_y = sun_center_y - sun_radius_px - sun_cfg["gap_to_planets"]
 
     phase2_all = {"Sun": SUN_RADIUS_KM}
     phase2_all.update({p.name: p.radius_km for p in planets})
@@ -231,8 +231,8 @@ def create_label_elements(planets: list[PlanetData], cfg: dict) -> list[VElement
 
     # Phase 2
     sun_radius_px = sun_cfg["radius_px"]
-    sun_center_y = -scene_h / 2 + sun_radius_px + sun_cfg["padding_top"]
-    planet_row_y = sun_center_y + sun_radius_px + sun_cfg["gap_to_planets"]
+    sun_center_y = scene_h / 2 - sun_radius_px - sun_cfg["padding_top"]
+    planet_row_y = sun_center_y - sun_radius_px - sun_cfg["gap_to_planets"]
 
     phase2_all = {"Sun": SUN_RADIUS_KM}
     phase2_all.update({p.name: p.radius_km for p in planets})
@@ -241,26 +241,26 @@ def create_label_elements(planets: list[PlanetData], cfg: dict) -> list[VElement
 
     easing_dict = {"pos": easing.in_out}
 
-    # At 45° rotation, offset the info line perpendicular to the text direction
+    # At -45° rotation, offset the info line perpendicular to the text direction
     # so it appears as a clean second line in the rotated frame.
-    # Perpendicular (below) at 45°: dx = -sin(45°)*ls, dy = cos(45°)*ls
+    # Perpendicular (below) at -45°: dx = -sin(45°)*ls, dy = -cos(45°)*ls
     sin45 = math.sin(math.radians(45))
     cos45 = math.cos(math.radians(45))
     ls_dx = -line_spacing * sin45
-    ls_dy = line_spacing * cos45
+    ls_dy = -line_spacing * cos45
 
     elements: list[VElement] = []
     for i, p in enumerate(planets):
         font_color = Color(label_cfg["font_color"])
-        y_equal = equal_radius + offset_y
-        y_true = true_radii[p.name] + offset_y
-        y_final = planet_row_y + phase2_radii[p.name] + offset_y
+        y_equal = -(equal_radius + offset_y)
+        y_true = -(true_radii[p.name] + offset_y)
+        y_final = planet_row_y - phase2_radii[p.name] - offset_y
 
         # --- Planet name (45° rotated) ---
         name_equal = TextState(
             text=p.name,
             pos=Point2D(equal_xs[i], y_equal),
-            rotation=45,
+            rotation=-45,
             font_family=label_cfg["font_family"],
             font_size=label_cfg["font_size"],
             fill_color=font_color,
@@ -289,7 +289,7 @@ def create_label_elements(planets: list[PlanetData], cfg: dict) -> list[VElement
         info_equal = TextState(
             text=_format_radius_km(p.radius_km),
             pos=Point2D(equal_xs[i] + ls_dx, y_equal + ls_dy),
-            rotation=45,
+            rotation=-45,
             font_family=label_cfg["font_family"],
             font_size=label_cfg["font_size"] - 3,
             fill_color=font_color,

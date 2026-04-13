@@ -23,27 +23,27 @@ def main():
     state1 = StateCollectionState(
         states=[
             TriangleState(
-                pos=Point2D(-70, -50),
+                pos=Point2D(-70, 50),
                 size=30,
                 fill_color=Color("#F3B700"),
             ),
             TriangleState(
-                pos=Point2D(0, -50),
+                pos=Point2D(0, 50),
                 size=30,
                 fill_color=Color("#FAA300"),
             ),
             TriangleState(
-                pos=Point2D(70, -50),
+                pos=Point2D(70, 50),
                 size=30,
                 fill_color=Color("#E57C04"),
             ),
             SquareState(
-                pos=Point2D(-50, 50),
+                pos=Point2D(-50, -50),
                 size=40,
                 fill_color=Color("#F63E02"),
             ),
             SquareState(
-                pos=Point2D(50, 50),
+                pos=Point2D(50, -50),
                 size=40,
                 fill_color=Color("#FF0000"),
             ),
@@ -53,13 +53,13 @@ def main():
     state2 = StateCollectionState(
         states=[
             EllipseState(
-                pos=Point2D(0, -60),
+                pos=Point2D(0, 60),
                 rx=70,
                 ry=30,
                 fill_color=Color("#FDBE02"),
             ),
             RectangleState(
-                pos=Point2D(70, 50),
+                pos=Point2D(70, -50),
                 width=50,
                 height=30,
                 fill_color=Color("#FDBE02"),

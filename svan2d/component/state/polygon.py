@@ -27,7 +27,7 @@ class PolygonState(VertexState):
         corners = []
         for i in range(self.num_sides):
             angle = math.radians(i * 360 / self.num_sides)
-            corners.append(Point2D(self.size * math.sin(angle), -self.size * math.cos(angle)))
+            corners.append(Point2D(self.size * math.cos(angle), -self.size * math.sin(angle)))
 
         # Calculate edge lengths
         def distance(p1:Point2D, p2:Point2D):

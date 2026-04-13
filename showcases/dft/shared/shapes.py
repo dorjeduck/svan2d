@@ -17,7 +17,7 @@ def heart(num_samples: int, scale: float) -> list[complex]:
     for i in range(num_samples):
         t = (i / num_samples) * 2 * math.pi
         x = 16 * math.sin(t) ** 3
-        y = -(
+        y = (
             13 * math.cos(t)
             - 5 * math.cos(2 * t)
             - 2 * math.cos(3 * t)

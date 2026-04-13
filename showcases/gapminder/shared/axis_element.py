@@ -98,9 +98,9 @@ def create_axis_elements(
     for gdp_val in gdp_ticks:
         x = gdp_to_x(gdp_val, bubble_config)
 
-        # Vertical gridline
+        # Vertical gridline (center between top and bottom)
         elements.append(_static(RectangleState(
-            pos=Point2D(x, plot_top + plot_height / 2),
+            pos=Point2D(x, plot_bottom + plot_height / 2),
             width=axis_config.gridline_width,
             height=plot_height,
             fill_color=axis_config.gridline_color,
@@ -108,10 +108,10 @@ def create_axis_elements(
             z_index=-10.0,
         )))
 
-        # Tick label below plot
+        # Tick label below plot (Cartesian: below = smaller y)
         elements.append(_static(TextState(
             text=format_gdp_tick(gdp_val),
-            pos=Point2D(x, plot_bottom + 15),
+            pos=Point2D(x, plot_bottom - 15),
             font_family=axis_config.font_family,
             font_size=axis_config.font_size,
             fill_color=axis_config.label_color,
@@ -149,7 +149,7 @@ def create_axis_elements(
     # --- Border lines (left edge + bottom edge) ---
     # Left border
     elements.append(_static(RectangleState(
-        pos=Point2D(plot_left, plot_top + plot_height / 2),
+        pos=Point2D(plot_left, plot_bottom + plot_height / 2),
         width=axis_config.border_width,
         height=plot_height,
         fill_color=axis_config.border_color,
@@ -166,10 +166,10 @@ def create_axis_elements(
     )))
 
     # --- Axis titles ---
-    # X axis title (below tick labels)
+    # X axis title (below tick labels, Cartesian: below = smaller y)
     elements.append(_static(TextState(
         text=axis_config.x_title,
-        pos=Point2D(plot_left + plot_width / 2, plot_bottom + 33),
+        pos=Point2D(plot_left + plot_width / 2, plot_bottom - 33),
         font_family=axis_config.title_font_family,
         font_size=axis_config.title_font_size,
         font_weight=axis_config.title_font_weight,
@@ -180,11 +180,9 @@ def create_axis_elements(
     )))
 
     # Y axis title (left of tick labels, rotated)
-    # Note: SVG rotation not supported via TextState directly,
-    # so we place it vertically as a horizontal label
     elements.append(_static(TextState(
         text=axis_config.y_title,
-        pos=Point2D(plot_left - 40, plot_top + plot_height / 2),
+        pos=Point2D(plot_left - 40, plot_bottom + plot_height / 2),
         font_family=axis_config.title_font_family,
         font_size=axis_config.title_font_size,
         font_weight=axis_config.title_font_weight,

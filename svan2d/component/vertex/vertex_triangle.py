@@ -34,9 +34,9 @@ class VertexTriangle(VertexLoop):
         # Positioned with one vertex pointing up
         corners = []
         for i in range(3):
-            angle = math.radians(i * 120 - 90)  # -90 to point first vertex upward
+            angle = math.radians(i * 120)
             x = center.x + size * math.cos(angle)
-            y = center.y + size * math.sin(angle)
+            y = center.y - size * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             corners.append(Point2D(x, y))
 
         # Calculate side lengths (all equal for equilateral triangle)

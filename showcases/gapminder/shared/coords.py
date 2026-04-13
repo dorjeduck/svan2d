@@ -12,11 +12,11 @@ from dataclasses import dataclass
 class PlotConfig:
     """Configuration for plot area bounds and axis ranges."""
 
-    # Plot area bounds (centered origin)
+    # Plot area bounds (centered origin, Cartesian: top > bottom)
     plot_left: float = -425.0
     plot_right: float = 460.0
-    plot_top: float = -250.0
-    plot_bottom: float = 225.0
+    plot_top: float = 250.0
+    plot_bottom: float = -225.0
 
     # GDP log scale range
     gdp_min: float = 200.0
@@ -32,7 +32,7 @@ class PlotConfig:
 
     @property
     def plot_height(self) -> float:
-        return self.plot_bottom - self.plot_top
+        return self.plot_top - self.plot_bottom
 
 
 def gdp_to_x(gdp: float, config: PlotConfig) -> float:
@@ -45,6 +45,6 @@ def gdp_to_x(gdp: float, config: PlotConfig) -> float:
 
 
 def life_exp_to_y(life_exp: float, config: PlotConfig) -> float:
-    """Map life expectancy to Y coordinate (higher life exp = up = lower Y in center origin)."""
+    """Map life expectancy to Y coordinate (higher life exp = up = larger Y in Cartesian)."""
     t = (life_exp - config.life_exp_min) / (config.life_exp_max - config.life_exp_min)
-    return config.plot_bottom - t * config.plot_height
+    return config.plot_bottom + t * config.plot_height

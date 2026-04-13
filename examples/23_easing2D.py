@@ -23,13 +23,13 @@ def main():
     # Create two different shapes
     circle = CircleState(
         radius=20,
-        pos=Point2D(-90, -90),
+        pos=Point2D(-90, 90),
         fill_color=CIRCLE_COLOR,
     )
 
     square = SquareState(
         size=40,
-        pos=Point2D(90, 90),
+        pos=Point2D(90, -90),
         fill_color=RECTANGLE_COLOR,
     )
 

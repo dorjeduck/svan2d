@@ -86,7 +86,7 @@ def main():
             font_path=FONT_PATH,
             font_size=40,
             fill_color=Color(color),
-            pos=Point2D(offset_x, 120),
+            pos=Point2D(offset_x, -120),
             scale=0.0,
         )
 

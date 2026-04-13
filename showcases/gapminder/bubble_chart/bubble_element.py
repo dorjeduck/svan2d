@@ -105,7 +105,7 @@ def create_label_state(
 
     return TextState(
         text=point.country,
-        pos=Point2D(x, y - r + config.label_offset_y),
+        pos=Point2D(x, y + r - config.label_offset_y),
         font_family=config.label_font_family,
         font_size=config.label_font_size,
         font_weight=config.label_font_weight,

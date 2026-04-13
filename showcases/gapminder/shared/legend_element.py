@@ -55,10 +55,10 @@ def create_legend_elements(
     elements: list[VElement] = []
 
     x_swatch = plot_right - config.offset_right
-    y_start = plot_top + config.offset_top + config.swatch_radius
+    y_start = plot_top - config.offset_top - config.swatch_radius
 
     for i, (continent, color) in enumerate(continent_colors.items()):
-        y = y_start + i * config.swatch_gap
+        y = y_start - i * config.swatch_gap
 
         # Color swatch (small filled circle)
         elements.append(_static(CircleState(

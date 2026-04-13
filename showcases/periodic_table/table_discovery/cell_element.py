@@ -75,7 +75,7 @@ def _create_cell(
     # Atomic number
     num_pos = Point2D(
         cell.pos.x + cell_size * number_offset,
-        cell.pos.y + cell_size * number_offset,
+        cell.pos.y - cell_size * number_offset,
     )
     base_number = TextState(
         text=str(cell.element.atomic_number),

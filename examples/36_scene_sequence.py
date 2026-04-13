@@ -52,7 +52,7 @@ def create_scene_1() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 1",
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.25),
@@ -87,7 +87,7 @@ def create_scene_2() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 2",
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.75),
@@ -124,7 +124,7 @@ def create_scene_3() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 3",
         font_size=28,
         fill_color=COLOR_2,

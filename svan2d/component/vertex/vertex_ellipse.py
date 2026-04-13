@@ -32,7 +32,7 @@ class VertexEllipse(VertexLoop):
             rx: Horizontal radius
             ry: Vertical radius
             num_vertices: Number of vertices to generate (important for morphing!)
-            start_angle: Starting angle in degrees (0 = top/north, clockwise)
+            start_angle: Starting angle in degrees (0 = East, counter-clockwise positive)
         """
         if num_vertices < 3:
             raise ValueError("Ellipse requires at least 3 vertices")
@@ -43,8 +43,8 @@ class VertexEllipse(VertexLoop):
         # Generate num_vertices - 1 distinct positions
         for i in range(num_vertices - 1):
             angle = start_rad + 2 * math.pi * i / (num_vertices - 1)
-            x = center.x + rx * math.sin(angle)
-            y = center.y - ry * math.cos(angle)
+            x = center.x + rx * math.cos(angle)
+            y = center.y - ry * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             vertices.append(Point2D(x, y))
 
         # Last vertex equals first to close the loop

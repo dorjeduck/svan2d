@@ -57,8 +57,8 @@ def main():
     ]
 
     g_start_state = VElementGroupState()
-    g1_end_state = VElementGroupState(rotation=75, transform_origin_x=x_shifts[1] / 2)
-    g2_end_state = VElementGroupState(rotation=-75, transform_origin_x=x_shifts[1] / 2)
+    g1_end_state = VElementGroupState(rotation=-75, transform_origin_x=x_shifts[1] / 2)
+    g2_end_state = VElementGroupState(rotation=75, transform_origin_x=x_shifts[1] / 2)
 
     g1 = (
         VElementGroup(elements=elements[:4])

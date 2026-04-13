@@ -23,31 +23,31 @@ def main():
 
     states = [
         TriangleState(
-            pos=Point2D(-70, -50),
+            pos=Point2D(-70, 50),
             size=30,
             fill_color=Color("#F3B700"),
             scale=0,
         ),
         TriangleState(
-            pos=Point2D(0, -50),
+            pos=Point2D(0, 50),
             size=30,
             fill_color=Color("#FAA300"),
             scale=0,
         ),
         TriangleState(
-            pos=Point2D(70, -50),
+            pos=Point2D(70, 50),
             size=30,
             fill_color=Color("#E57C04"),
             scale=0,
         ),
         SquareState(
-            pos=Point2D(-50, 50),
+            pos=Point2D(-50, -50),
             size=40,
             fill_color=Color("#F63E02"),
             scale=0,
         ),
         SquareState(
-            pos=Point2D(50, 50),
+            pos=Point2D(50, -50),
             size=40,
             fill_color=Color("#FF0000"),
             scale=0,

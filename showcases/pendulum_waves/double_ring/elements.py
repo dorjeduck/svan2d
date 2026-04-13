@@ -33,8 +33,8 @@ class RingConfig:
 
 def _build_ring_specs(ring: RingConfig, angle_offset: float = 0.0) -> list[PendulumSpec]:
     """Build PendulumSpecs for a single ring."""
-    start_rad = math.radians(ring.start_angle - 90)
-    direction = 1 if ring.clockwise else -1
+    start_rad = math.radians(90 - ring.start_angle)
+    direction = -1 if ring.clockwise else 1
     specs = []
     for i in range(ring.count):
         angle = direction * 2 * math.pi * i / ring.count + start_rad + angle_offset

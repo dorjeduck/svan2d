@@ -61,18 +61,18 @@ def polygon(
         angle1_rad = math.radians(angle1)
         angle2_rad = math.radians(angle2)
 
-        # Calculate vertex positions
-        x1 = center.x + radius * math.sin(angle1_rad)
-        y1 = center.y - radius * math.cos(angle1_rad)
-        x2 = center.x + radius * math.sin(angle2_rad)
-        y2 = center.y - radius * math.cos(angle2_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        x1 = center.x + radius * math.cos(angle1_rad)
+        y1 = center.y + radius * math.sin(angle1_rad)
+        x2 = center.x + radius * math.cos(angle2_rad)
+        y2 = center.y + radius * math.sin(angle2_rad)
 
         # Interpolate position along edge
         x = x1 + t * (x2 - x1)
         y = y1 + t * (y2 - y1)
 
-        # Calculate edge angle (direction from vertex1 to vertex2)
-        edge_angle = math.degrees(math.atan2(x2 - x1, -(y2 - y1)))
+        # Calculate edge angle (direction from vertex1 to vertex2) in Cartesian convention
+        edge_angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
 
         # Determine if we're at a vertex (t is very close to 0)
         at_vertex = t < 0.01

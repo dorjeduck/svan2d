@@ -49,7 +49,7 @@ class WaveState(VertexState):
         for i in range(self._num_vertices):
             t = i / (self._num_vertices - 1) if self._num_vertices > 1 else 0
             x = -half_length + t * self.length
-            y = self.amplitude * math.sin(t * self.frequency * 2 * math.pi)
+            y = -self.amplitude * math.sin(t * self.frequency * 2 * math.pi)
             vertices.append(Point2D(x, y))
 
         return VertexContours.from_single_loop(vertices, closed=self.closed)

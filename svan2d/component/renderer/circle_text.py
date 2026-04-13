@@ -44,8 +44,8 @@ class CircleTextRenderer(Renderer):
 
             for i, text_content in enumerate(texts):
                 if state.angles is not None:
-                    # Use custom angle - convert degrees to fraction of circle (0-1 range)
-                    angle_fraction = (state.angles[i] % 360) / 360
+                    # Use custom angle - convert Cartesian degrees (0=East, CCW) to path fraction
+                    angle_fraction = (90 - state.angles[i]) % 360 / 360
                     text_position = state.rotation / 360 + angle_fraction
                 else:
                     # Distribute texts evenly around one full circle (0 to 1 range)

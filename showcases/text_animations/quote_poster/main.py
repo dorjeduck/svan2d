@@ -58,8 +58,8 @@ def main():
         font_size=font_cfg["quote_size"],
     )
 
-    # Author position: below the quote block + separator
-    author_pos = Point2D(0, quote_max_y + 45)
+    # Author position: below the quote block + separator (Cartesian: below = smaller y)
+    author_pos = Point2D(0, quote_min_y - 45)
 
     # 1. Quote characters with scatter entrance
     quote_elements = create_quote_elements(

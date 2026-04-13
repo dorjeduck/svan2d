@@ -503,7 +503,9 @@ class VScene:
 
         # Create global transform group (use animated camera if available)
         camera_state = self._get_camera_state_at_time(frame_time)
-        transform = camera_mod.build_camera_transform(camera_state, render_scale)
+        needs_centering = self.origin != Origin.CENTER and self._camera_offset_func is not None
+        vp_w, vp_h = (ww, hh) if needs_centering else (0.0, 0.0)
+        transform = camera_mod.build_camera_transform(camera_state, render_scale, vp_w, vp_h)
         group = dw.Group(transform=transform) if transform else dw.Group()
 
         # Pre-compute interpolated states once for all elements

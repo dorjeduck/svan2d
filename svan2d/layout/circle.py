@@ -15,7 +15,7 @@ def circle(
     radius: float = 100,
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     angles: list[float] | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
@@ -30,11 +30,11 @@ def circle(
     Args:
         states: List of states to arrange.
         radius: Radius of the circle.
-        rotation: Rotation offset in degrees (0° = top).
+        rotation: Rotation offset in degrees (0° = East).
         center: Center point of the circle.
-        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        counter_clockwise: If True, arrange counter-clockwise; if False, clockwise.
         angles: Optional list of specific angles in degrees for each element.
-               If provided, overrides automatic distribution and clockwise parameter.
+               If provided, overrides automatic distribution and counter_clockwise parameter.
         alignment: How to align each element relative to the circle.
                   PRESERVE keeps original rotation, LAYOUT aligns radially,
                   UPRIGHT starts from vertical position.
@@ -60,7 +60,7 @@ def circle(
         num_elements = len(states)
         angle_step = 360 / num_elements
         element_angles = [
-            i * angle_step if clockwise else -i * angle_step
+            i * angle_step if counter_clockwise else -i * angle_step
             for i in range(num_elements)
         ]
 
@@ -74,9 +74,9 @@ def circle(
         # Calculate radius for this element
         r = radius_fn(i, radius) if radius_fn else radius
 
-        # Calculate position (note: y is flipped because SVG y increases downward)
-        x = center.x + r * math.sin(angle_rad)
-        y = center.y - r * math.cos(angle_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        x = center.x + r * math.cos(angle_rad)
+        y = center.y + r * math.sin(angle_rad)
 
         # Calculate additional rotation (function-based or static)
         additional_rotation = (
@@ -89,8 +89,8 @@ def circle(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            # Align with layout direction (tangent to circle) + additional rotation
-            element_angle = angle + additional_rotation
+            # Bottom faces center: element_angle = - position_angle + 90
+            element_angle = angle - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             # Start from upright position + additional rotation
             element_angle = additional_rotation
@@ -109,7 +109,7 @@ def circle_between_points(
     p1: Point2D,
     p2: Point2D,
     rotation: float = 0,
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     angles: list[float] | None = None,
@@ -128,7 +128,7 @@ def circle_between_points(
         p1: First diameter endpoint.
         p2: Second diameter endpoint. Center is at their midpoint, radius = distance / 2.
         rotation: Rotation offset in degrees.
-        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        counter_clockwise: If True, arrange counter-clockwise; if False, clockwise.
         alignment: How to align each element relative to the circle.
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         angles: Optional list of specific angles in degrees for each element.
@@ -172,7 +172,7 @@ def circle_between_points(
         radius=radius,
         rotation=rotation,
         center=center,
-        clockwise=clockwise,
+        counter_clockwise=counter_clockwise,
         angles=angles,
         alignment=alignment,
         element_rotation_offset=element_rotation_offset,
@@ -187,7 +187,7 @@ def circle_through_points(
     p2: Point2D,
     p3: Point2D,
     rotation: float = 0,
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     angles: list[float] | None = None,
@@ -207,7 +207,7 @@ def circle_through_points(
         p2: Second point on the circumcircle.
         p3: Third point on the circumcircle.
         rotation: Rotation offset in degrees.
-        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        counter_clockwise: If True, arrange counter-clockwise; if False, clockwise.
         alignment: How to align each element relative to the circle.
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         angles: Optional list of specific angles in degrees for each element.
@@ -268,7 +268,7 @@ def circle_through_points(
         radius=radius,
         rotation=rotation,
         center=Point2D(cx, cy),
-        clockwise=clockwise,
+        counter_clockwise=counter_clockwise,
         angles=angles,
         alignment=alignment,
         element_rotation_offset=element_rotation_offset,

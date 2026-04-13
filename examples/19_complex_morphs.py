@@ -41,9 +41,9 @@ def main():
     s2 = PerforatedCircleState(
         radius=270,
         holes=[
-            Circle(radius=50, pos=Point2D(0, -100)),
-            Star(num_points=5, inner_radius=40, outer_radius=70, pos=Point2D(-120, 60)),
-            Astroid(radius=100, num_cusps=4, curvature=0.3, pos=Point2D(100, 60)),
+            Circle(radius=50, pos=Point2D(0, 100)),
+            Star(num_points=5, inner_radius=40, outer_radius=70, pos=Point2D(-120, -60)),
+            Astroid(radius=100, num_cusps=4, curvature=0.3, pos=Point2D(100, -60)),
         ],
         fill_color=FILL_COLOR,
         stroke_color=STROKE_COLOR,
@@ -56,8 +56,8 @@ def main():
         outer_radius=400,
         inner_radius=200,
         holes=[
-            Ellipse(rx=50, ry=40, pos=Point2D(-70, -80)),
-            Polygon(num_sides=3, radius=80, pos=Point2D(40, 40)),
+            Ellipse(rx=50, ry=40, pos=Point2D(-70, 80)),
+            Polygon(num_sides=3, radius=80, pos=Point2D(40, -40)),
         ],
         fill_color=FILL_COLOR,
         stroke_color=STROKE_COLOR,

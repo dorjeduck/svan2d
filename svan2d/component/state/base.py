@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import Field, dataclass, replace
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from svan2d.component.effect.filter import Filter
 from svan2d.core.color import Color
@@ -25,12 +25,12 @@ class State(ABC):
     the configuration system if not explicitly provided.
     """
 
-    pos: Point2D | None = None
-    scale: float | None = None
-    opacity: float | None = None
-    rotation: float | None = 0
-    skew_x: float | None = None
-    skew_y: float | None = None
+    pos: Point2D = Point2D(0, 0)
+    scale: float = 1
+    opacity: float = 1
+    rotation: float = 0
+    skew_x: float = 0
+    skew_y: float = 0
     z_index: float = 0.0
 
     # Clipping and masking support

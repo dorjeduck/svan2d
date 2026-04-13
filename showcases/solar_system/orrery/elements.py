@@ -51,8 +51,8 @@ def create_orbit_ring_elements(
         b = a * math.sqrt(1 - e * e)
         c = a * e  # focal offset
         # Sun is at scene center; ellipse geometric center is offset upward
-        # (In the rotated frame, the focus-to-center vector points to -y)
-        ellipse_center = Point2D(0, -c)
+        # (In the rotated frame, the focus-to-center vector points to +y)
+        ellipse_center = Point2D(0, c)
         state = EllipseState(
             rx=b,  # after 90° rotation: original b becomes horizontal
             ry=a,  # original a becomes vertical
@@ -84,8 +84,8 @@ def create_planet_elements(
         a = orbit_radii[p.name]
         e = p.eccentricity
         c = a * e
-        # Aphelion at top: after 90° CCW rotation, aphelion is at y = -(a + c)
-        start_pos = Point2D(center.x, center.y - (a + c))
+        # Aphelion at top: in Cartesian y-up, aphelion is at y = +(a + c)
+        start_pos = Point2D(center.x, center.y + (a + c))
 
         state = CircleState(
             radius=radius_px,
@@ -134,7 +134,7 @@ def create_label_elements(
         label_y_offset = offset_y - planet_radius_px
 
         # Label start: above planet's aphelion position
-        start_pos = Point2D(center.x, center.y - (a + c) + label_y_offset)
+        start_pos = Point2D(center.x, center.y + (a + c) + label_y_offset)
 
         # Label orbit center: same focal offset as planet, plus label shift
         label_center = Point2D(center.x, center.y + label_y_offset)

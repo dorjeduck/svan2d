@@ -32,6 +32,6 @@ class SpiralState(VertexState):
             angle = t * self.turns * 2 * math.pi
             radius = self.start_radius + t * (self.end_radius - self.start_radius)
 
-            vertices.append(Point2D(radius * math.sin(angle), -radius * math.cos(angle)))
+            vertices.append(Point2D(radius * math.cos(angle), -radius * math.sin(angle)))
 
         return VertexContours.from_single_loop(vertices, closed=self.closed)

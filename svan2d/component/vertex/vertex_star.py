@@ -44,8 +44,8 @@ class VertexStar(VertexLoop):
         for i in range(num_points * 2):
             angle = math.radians(i * 180 / num_points)
             radius = outer_radius if i % 2 == 0 else inner_radius
-            x = center.x + radius * math.sin(angle)
-            y = center.y - radius * math.cos(angle)
+            x = center.x + radius * math.cos(angle)
+            y = center.y - radius * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             corners.append(Point2D(x, y))
 
         # Calculate edge lengths between corners

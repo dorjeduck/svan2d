@@ -48,8 +48,8 @@ def orbital_curve(
     def curve(p1: Point2D, p2: Point2D, t: float) -> Point2D:
         angle = 2 * math.pi * t * revolutions
         return Point2D(
-            center.x + radius_px * math.sin(angle),
-            center.y - radius_px * math.cos(angle),  # SVG y-flip: up = negative
+            center.x + radius_px * math.cos(angle),
+            center.y + radius_px * math.sin(angle),
         )
 
     return curve
@@ -90,11 +90,13 @@ def elliptical_orbital_curve(
         x_focus = a * math.cos(E) - c
         y_focus = b * math.sin(E)
         # Rotate 90° CCW so aphelion (E=π → x_focus = -(a+c)) goes to top.
-        # Rotation by +90°: x' = -y, y' = x
-        # In SVG coords (y-down), "top" means negative y, so: x' = -y_focus, y' = -x_focus
+        # Cartesian y-up: rotation by +90° gives x' = -y_focus, y' = x_focus
+        # Aphelion: x_focus = -(a+c), y_focus = 0 → x' = 0, y' = -(a+c) ... that's bottom.
+        # Use rotation by -90° (CW): x' = y_focus, y' = -x_focus
+        # Aphelion: x' = 0, y' = (a+c) → top. Correct.
         return Point2D(
-            center.x - y_focus,
-            center.y + x_focus,  # + because SVG y-down; aphelion gives negative x_focus → top
+            center.x + y_focus,
+            center.y - x_focus,
         )
 
     return curve

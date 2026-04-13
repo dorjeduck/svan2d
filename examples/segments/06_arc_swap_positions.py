@@ -47,7 +47,7 @@ def main():
         t_start=0.3,
         t_end=0.7,
         arc_radius=70,
-        clockwise=True,
+        counter_clockwise=False,
         easing={"pos": easing.in_out_sine},
     )
 

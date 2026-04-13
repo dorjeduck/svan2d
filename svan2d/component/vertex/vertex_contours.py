@@ -34,8 +34,20 @@ class VertexContours:
                 if not hole.closed:
                     raise ValueError(f"Hole {i} must be closed")
 
+        # Normalize outer to CCW in std math (positive area)
+        if outer.area() < 0:
+            outer = outer.reverse()
+
+        # Normalize holes to CW in std math (negative area)
+        normalized_holes: list[VertexLoop] = []
+        if holes:
+            for hole in holes:
+                if hole.area() > 0:
+                    hole = hole.reverse()
+                normalized_holes.append(hole)
+
         self._outer = outer
-        self._holes = list(holes) if holes else []
+        self._holes = normalized_holes
 
     @property
     def outer(self) -> VertexLoop:

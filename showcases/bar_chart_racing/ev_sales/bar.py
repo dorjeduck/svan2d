@@ -41,11 +41,11 @@ LabelStates = namedtuple("LabelStates", ["company_name", "value"])
 class BarConfig:
     """Configuration for bar chart layout."""
 
-    # Plot area bounds (in scene coordinates)
+    # Plot area bounds (in scene coordinates, Cartesian: top > bottom)
     plot_left: float = -245.0
     plot_right: float = 245.0
-    plot_top: float = -225.0
-    plot_bottom: float = 240.0
+    plot_top: float = 225.0
+    plot_bottom: float = -240.0
 
     # Bar dimensions
     bar_height: float = 42.0
@@ -73,8 +73,8 @@ class BarConfig:
     def __post_init__(self):
 
         if self.offscreen_y is None:
-            # Position just below the visible plot area
-            self.offscreen_y = self.plot_bottom + self.bar_height
+            # Position just below the visible plot area (Cartesian: below = smaller y)
+            self.offscreen_y = self.plot_bottom - self.bar_height
 
     @property
     def bar_width(self) -> float:
@@ -151,12 +151,12 @@ def create_bar_state(
     # X position: left edge + half bar width (centered on left edge)
     x = config.plot_left + bar_width / 2
 
-    # Y position: based on rank
+    # Y position: based on rank (Cartesian: top is positive, ranks go downward)
     if data_point.rank <= config.top_n:
-        y = config.plot_top + (data_point.rank - 0.5) * config.bar_slot_height
+        y = config.plot_top - (data_point.rank - 0.5) * config.bar_slot_height
     else:
         # offscreen_y is set in __post_init__ if None
-        y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom + config.bar_height
+        y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom - config.bar_height
 
     return BarState(
         pos=Point2D(x, y),
@@ -189,15 +189,15 @@ def create_label_states(
     label_x = config.plot_left + bar_width + config.label_gap
 
     if data_point.rank <= config.top_n:
-        label_y = config.plot_top + (data_point.rank - 0.5) * config.bar_slot_height
+        label_y = config.plot_top - (data_point.rank - 0.5) * config.bar_slot_height
     else:
-        label_y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom + config.bar_height
+        label_y = config.offscreen_y if config.offscreen_y is not None else config.plot_bottom - config.bar_height
 
     # Calculate vertical offsets based on font sizes
     # Name above center, value below center, with gap between them
     half_gap = config.label_gap / 2
-    name_y_offset = -(config.value_font_size * 0.5 + half_gap)
-    value_y_offset = config.name_font_size * 0.5 + half_gap
+    name_y_offset = config.value_font_size * 0.5 + half_gap
+    value_y_offset = -(config.name_font_size * 0.5 + half_gap)
 
     name_state = TextState(
         text=data_point.name,

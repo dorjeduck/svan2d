@@ -192,7 +192,7 @@ def _entrance_scatter(visible, target, radius, max_rot, rng):
 def _entrance_rain(visible, target, radius, rng):
     """Characters drop in from above with slight horizontal drift."""
     x_drift = rng.uniform(-60, 60)
-    origin = Point2D(target.x + x_drift, target.y - radius)
+    origin = Point2D(target.x + x_drift, target.y + radius)
 
     hidden = replace(visible, pos=origin, opacity=0.0, scale=0.6)
 

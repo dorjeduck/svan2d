@@ -52,7 +52,7 @@ def build_scene(
 
     line_height = font_size * 1.4
     total_text_height = (len(words) - 1) * line_height
-    start_y = -total_text_height / 2
+    start_y = total_text_height / 2
 
     total_chars = sum(len(w.replace(" ", "")) for w in words)
 
@@ -73,7 +73,7 @@ def build_scene(
 
     for word_idx, word in enumerate(words):
         color = palette[word_idx % len(palette)]
-        y = start_y + word_idx * line_height
+        y = start_y - word_idx * line_height
         word_center = Point2D(0, y)
 
         char_elements = create_word_char_elements(

@@ -143,7 +143,8 @@ class VertexLoop:
         """Returns a new VertexLoop with all vertices rotated by angle_degrees around center (default: origin)."""
         rot_center: Point2D = center if center is not None else Point2D(0.0, 0.0)
 
-        angle_rad = math.radians(angle_degrees)
+        # Negate angle: vertices are in SVG local Y-down; user CCW = negative SVG angle
+        angle_rad = math.radians(-angle_degrees)
         cos_a = math.cos(angle_rad)
         sin_a = math.sin(angle_rad)
 

@@ -47,10 +47,10 @@ class AstroidRenderer(Renderer):
         cusps = []
         for i in range(state.num_cusps):
             angle = math.radians(
-                i * (360 / state.num_cusps) - 90
-            )  # -90 to start at top
+                i * (360 / state.num_cusps)
+            )  # 0° = East, CCW positive
             x = state.radius * math.cos(angle)
-            y = state.radius * math.sin(angle)
+            y = -state.radius * math.sin(angle)  # Negate y: local SVG Y-down, user Y-up
             cusps.append(Point2D(x, y))
 
         # Start at first cusp

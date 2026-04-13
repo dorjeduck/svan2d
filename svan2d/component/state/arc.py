@@ -34,7 +34,7 @@ class ArcState(VertexState):
             angle = start_rad + t * angle_range
 
             vertices.append(
-                Point2D(self.radius * math.sin(angle), -self.radius * math.cos(angle))
+                Point2D(self.radius * math.cos(angle), -self.radius * math.sin(angle))
             )
 
         return VertexContours.from_single_loop(vertices, closed=self.closed)

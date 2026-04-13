@@ -30,7 +30,7 @@ class VertexCircle(VertexLoop):
             center: Center point
             radius: Circle radius
             num_vertices: Number of vertices to generate (important for morphing!)
-            start_angle: Starting angle in degrees (0 = top/north, clockwise)
+            start_angle: Starting angle in degrees (0 = East, counter-clockwise positive)
         """
         if num_vertices < 3:
             raise ValueError("Circle requires at least 3 vertices")
@@ -41,8 +41,8 @@ class VertexCircle(VertexLoop):
         # Generate num_vertices - 1 distinct positions
         for i in range(num_vertices - 1):
             angle = start_rad + 2 * math.pi * i / (num_vertices - 1)
-            x = center.x + radius * math.sin(angle)
-            y = center.y - radius * math.cos(angle)
+            x = center.x + radius * math.cos(angle)
+            y = center.y - radius * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             vertices.append(Point2D(x, y))
 
         # Last vertex equals first to close the loop

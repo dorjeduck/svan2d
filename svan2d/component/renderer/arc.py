@@ -23,11 +23,11 @@ class ArcRenderer(Renderer):
         start_rad = math.radians(state.start_angle)
         end_rad = math.radians(state.end_angle)
 
-        # Calculate start and end points
-        start_x = state.radius * math.sin(start_rad)
-        start_y = -state.radius * math.cos(start_rad)
-        end_x = state.radius * math.sin(end_rad)
-        end_y = -state.radius * math.cos(end_rad)
+        # Calculate start and end points: 0° = East, CCW positive (negate y for SVG Y-down)
+        start_x = state.radius * math.cos(start_rad)
+        start_y = -state.radius * math.sin(start_rad)
+        end_x = state.radius * math.cos(end_rad)
+        end_y = -state.radius * math.sin(end_rad)
 
         # Determine if we need the large arc flag
         angle_diff = end_rad - start_rad

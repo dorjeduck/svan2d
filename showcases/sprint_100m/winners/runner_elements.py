@@ -38,7 +38,7 @@ def _results_target_y(placement: int, layout: dict, cfg: dict) -> float:
     tc = cfg["track"]
     lane_h = tc["lane_height"]
     lane_gap = tc["lane_gap"]
-    return layout["track_top"] + (placement - 1) * (lane_h + lane_gap) + lane_h / 2
+    return layout["track_top"] - (placement - 1) * (lane_h + lane_gap) - lane_h / 2
 
 
 def create_runner_elements(
@@ -88,7 +88,7 @@ def create_runner_elements(
     placement_elements = []
 
     for lane_idx, runner in enumerate(runners):
-        y = layout["track_top"] + lane_idx * (lane_h + lane_gap) + lane_h / 2
+        y = layout["track_top"] - lane_idx * (lane_h + lane_gap) - lane_h / 2
         finish_at = race_start + runner.final_time / total_duration
         target_y = _results_target_y(runner.placement, layout, cfg)
 

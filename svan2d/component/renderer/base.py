@@ -40,15 +40,15 @@ class Renderer(ABC):
 
         transforms = []
         if state.pos != None and (state.pos.x != 0 or state.pos.y != 0):
-            transforms.append(f"translate({state.pos.x},{state.pos.y})")
-        if state.rotation != 0:
-            transforms.append(f"rotate({state.rotation})")
+            transforms.append(f"translate({state.pos.x},{-state.pos.y})")
+        if state.rotation is not None and state.rotation != 0:
+            transforms.append(f"rotate({-state.rotation})")
         if state.scale != 1.0 and state.scale != None:
             transforms.append(f"scale({state.scale})")
         if state.skew_x:
-            transforms.append(f"skewX({state.skew_x})")
+            transforms.append(f"skewX({-state.skew_x})")
         if state.skew_y:
-            transforms.append(f"skewY({state.skew_y})")
+            transforms.append(f"skewY({-state.skew_y})")
         return " ".join(transforms) if transforms else None
 
     @staticmethod

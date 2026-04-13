@@ -388,14 +388,14 @@ class TestArcSwapPositions:
     def test_arc_swap_clockwise(self, circle_state, circle_state_2):
         """Clockwise arc swap."""
         ks1, _ = arc_swap_positions(
-            circle_state, circle_state_2, t_start=0.0, t_end=1.0, clockwise=True
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, counter_clockwise=False
         )
         assert ks1[0].transition_config is not None
 
     def test_arc_swap_counterclockwise(self, circle_state, circle_state_2):
         """Counter-clockwise arc swap."""
         ks1, _ = arc_swap_positions(
-            circle_state, circle_state_2, t_start=0.0, t_end=1.0, clockwise=False
+            circle_state, circle_state_2, t_start=0.0, t_end=1.0, counter_clockwise=True
         )
         assert ks1[0].transition_config is not None
 

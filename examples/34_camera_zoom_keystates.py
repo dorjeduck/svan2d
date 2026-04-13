@@ -32,11 +32,11 @@ def main():
             }
         )
         .camera_keystate(
-            CameraState(scale=2.5, pos=Point2D(80, 80)),
+            CameraState(scale=2.5, pos=Point2D(80, -80)),
             at=0.9,
         )
         .camera_keystate(
-            CameraState(scale=2.5, pos=Point2D(80, 80)),
+            CameraState(scale=2.5, pos=Point2D(80, -80)),
             at=1.0,
         )
     )

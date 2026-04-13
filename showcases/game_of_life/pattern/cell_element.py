@@ -47,7 +47,7 @@ def create_cell_element(
 
     pos = Point2D(
         offset + grid_x * cell_spacing,
-        offset + grid_y * cell_spacing,
+        -(offset + grid_y * cell_spacing),
     )
 
     # Base states (both scale and opacity differ)

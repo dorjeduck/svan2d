@@ -44,11 +44,11 @@ def create_decoration_elements(
         # Position: scattered, avoiding central quote area
         margin = 40
         x = rng.uniform(-scene_width / 2 + margin, scene_width / 2 - margin)
-        # Push circles above or below the quote block
+        # Push circles above or below the quote block (Cartesian: above = larger y)
         if rng.random() < 0.5:
-            y = rng.uniform(-scene_height / 2 + margin, q_min_y - 10)
-        else:
             y = rng.uniform(q_max_y + 10, scene_height / 2 - margin)
+        else:
+            y = rng.uniform(-scene_height / 2 + margin, q_min_y - 10)
 
         visible = CircleState(
             radius=radius,
@@ -80,10 +80,10 @@ def create_decoration_elements(
     line_width = style_cfg["line_width"]
     line_length = scene_width * style_cfg["line_length_ratio"]
 
-    # Line above quote block
-    line_above_y = q_min_y - 15
-    # Line between quote and author area
-    line_below_y = q_max_y + 15
+    # Line above quote block (Cartesian: above = larger y)
+    line_above_y = q_max_y + 15
+    # Line between quote and author area (Cartesian: below = smaller y)
+    line_below_y = q_min_y - 15
 
     for y_pos in [line_above_y, line_below_y]:
         visible = LineState(

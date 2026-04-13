@@ -49,9 +49,9 @@ class VertexAstroid(VertexLoop):
         # Calculate cusp positions (the pointed tips)
         cusps = []
         for i in range(num_cusps):
-            angle = math.radians(i * (360 / num_cusps) - 90)  # -90 to start at top
+            angle = math.radians(i * (360 / num_cusps))
             x = center.x + radius * math.cos(angle)
-            y = center.y + radius * math.sin(angle)
+            y = center.y - radius * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
             cusps.append(Point2D(x, y))
 
         # Generate vertices along the astroid curve

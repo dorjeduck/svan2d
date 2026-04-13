@@ -69,9 +69,9 @@ def _create_tick(
     """Create tick mark (rectangle) and tick label (text) for one tick."""
     appear_dur = 0.005
 
-    # Tick mark: thin rectangle below axis
+    # Tick mark: thin rectangle below axis (Cartesian: below = smaller y)
     base_tick = RectangleState(
-        pos=Point2D(tick.x_pos, axis_y + tick_height / 2),
+        pos=Point2D(tick.x_pos, axis_y - tick_height / 2),
         width=1.0,
         height=tick_height,
         fill_color=tick_color,
@@ -92,10 +92,10 @@ def _create_tick(
         .keystate(faded_tick, at=1.0)
     )
 
-    # Tick label: year text below tick
+    # Tick label: year text below tick (Cartesian: below = smaller y)
     base_label = TextState(
         text=str(tick.year),
-        pos=Point2D(tick.x_pos, axis_y + tick_height + tick_label_offset),
+        pos=Point2D(tick.x_pos, axis_y - tick_height - tick_label_offset),
         font_size=tick_font_size,
         font_family=tick_font_family,
         fill_color=tick_label_color,

@@ -179,7 +179,8 @@ class PerforatedPrimitiveRenderer(Renderer):
         """
         # shape.pos is guaranteed non-None after Shape.__post_init__
         assert shape.pos is not None
-        center = shape.pos
+        # Convert user-Cartesian pos to SVG coordinates (negate y)
+        center = Point2D(shape.pos.x, -shape.pos.y)
 
         if isinstance(shape, Circle):
             self._add_circle(path, center, shape.radius, clockwise)
@@ -262,9 +263,9 @@ class PerforatedPrimitiveRenderer(Renderer):
             (-half_w, half_h),
         ]
 
-        # Apply rotation if specified
+        # Apply rotation if specified; negate angle for CCW user convention in SVG Y-down
         if rotation != 0:
-            angle_rad = math.radians(rotation)
+            angle_rad = math.radians(-rotation)
             cos_a, sin_a = math.cos(angle_rad), math.sin(angle_rad)
             corners = [
                 (x * cos_a - y * sin_a + center.x, x * sin_a + y * cos_a + center.y)
@@ -320,7 +321,8 @@ class PerforatedPrimitiveRenderer(Renderer):
         """Add a regular polygon to path"""
         corners = []
         for i in range(num_sides):
-            angle = math.radians(i * (360 / num_sides) - 90 + rotation)
+            # 0° = East, CCW positive; negate y for SVG Y-down
+            angle = math.radians(i * (360 / num_sides) - rotation)
             x = center.x + size * math.cos(angle)
             y = center.y + size * math.sin(angle)
             corners.append(Point2D(x, y))
@@ -346,7 +348,8 @@ class PerforatedPrimitiveRenderer(Renderer):
         """Add a star to path with alternating outer and inner vertices"""
         corners = []
         for i in range(num_points * 2):
-            angle = math.radians(i * (360 / (num_points * 2)) - 90 + rotation)
+            # 0° = East, CCW positive; negate rotation for SVG Y-down convention
+            angle = math.radians(i * (360 / (num_points * 2)) - rotation)
             # Alternate between outer and inner radius
             radius = outer_radius if i % 2 == 0 else inner_radius
             x = center.x + radius * math.cos(angle)
@@ -375,7 +378,8 @@ class PerforatedPrimitiveRenderer(Renderer):
         # Calculate cusp positions (the pointed tips)
         cusps = []
         for i in range(num_cusps):
-            angle = math.radians(i * (360 / num_cusps) - 90 + rotation)
+            # 0° = East, CCW positive; negate rotation for SVG Y-down convention
+            angle = math.radians(i * (360 / num_cusps) - rotation)
             x = center.x + radius * math.cos(angle)
             y = center.y + radius * math.sin(angle)
             cusps.append(Point2D(x, y))

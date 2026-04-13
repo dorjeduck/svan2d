@@ -55,8 +55,8 @@ class SquareRingRenderer(Renderer):
         # Draw inner square (counter-clockwise - creates the hole due to even-odd rule)
         # Apply rotation if specified
         if state.inner_rotation != 0:
-            # Convert rotation to radians
-            angle_rad = math.radians(state.inner_rotation)
+            # Convert rotation to radians; negate for CCW user convention in SVG Y-down space
+            angle_rad = math.radians(-state.inner_rotation)
             cos_a = math.cos(angle_rad)
             sin_a = math.sin(angle_rad)
 

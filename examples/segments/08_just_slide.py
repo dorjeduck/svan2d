@@ -44,8 +44,8 @@ def main():
         states,
         t_start=0,
         t_end=1,
-        entrance_point=Point2D(100, -100),
-        exit_point=Point2D(-100, 100),
+        entrance_point=Point2D(100, 100),
+        exit_point=Point2D(-100, -100),
         entrance_effect=segment.SlideEffect.FADE_SCALE,
         exit_effect=segment.SlideEffect.FADE_SCALE,
     )

@@ -18,7 +18,7 @@ def radial_grid(
     inner_radius: float = 50,
     center: Point2D = Point2D(0, 0),
     rotation: float = 0,
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[int, int, float], float] | None = None,
@@ -101,12 +101,12 @@ def radial_grid(
             state = states[state_idx]
 
             # Calculate angle for this segment
-            angle = rotation + (seg * angle_step if clockwise else -seg * angle_step)
+            angle = rotation + (seg * angle_step if counter_clockwise else -seg * angle_step)
             angle_rad = math.radians(angle)
 
-            # Calculate position
-            x = center.x + radius * math.sin(angle_rad)
-            y = center.y - radius * math.cos(angle_rad)
+            # Cartesian coordinates: 0° = East, counter-clockwise positive
+            x = center.x + radius * math.cos(angle_rad)
+            y = center.y + radius * math.sin(angle_rad)
 
             # Calculate rotation
             additional_rotation = (
@@ -118,8 +118,8 @@ def radial_grid(
             if alignment == ElementAlignment.PRESERVE:
                 element_angle = state.rotation
             elif alignment == ElementAlignment.LAYOUT:
-                # Point radially outward from center
-                element_angle = angle + additional_rotation
+                # Bottom faces center: element_angle = position_angle - 90
+                element_angle = angle - 90 + additional_rotation
             elif alignment == ElementAlignment.UPRIGHT:
                 element_angle = additional_rotation
             else:

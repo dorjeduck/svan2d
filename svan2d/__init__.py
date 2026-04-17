@@ -169,6 +169,8 @@ from svan2d.component.effect.pattern import (
 )
 
 # Effects - Filters
+from svan2d.utils.schedule import OverlapMode, WeightedSchedule
+
 from svan2d.component.effect.filter import (
     BlendFilter,
     ColorMatrixFilter,
@@ -326,6 +328,9 @@ __all__ = [
     "GridPattern",
     "Pattern",
     "StripesPattern",
+    # Utils
+    "OverlapMode",
+    "WeightedSchedule",
     # Effects - Filters
     "BlendFilter",
     "ColorMatrixFilter",

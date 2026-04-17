@@ -217,6 +217,19 @@ class VElement(BaseVElement, KeystateBuilder):
         """Set the mask element. Returns new VElement."""
         return self._replace(mask_element=velement)
 
+    @property
+    def base_state(self) -> State:
+        """Return the state of the first keystate.
+
+        Useful when rebuilding a still-image VElement as an animated one —
+        extract the base state, then construct a new VElement with animation keystates.
+        """
+        if self._builder is None:
+            raise RuntimeError("Cannot access base_state after rendering has begun.")
+        if not self._builder.keystates:
+            raise RuntimeError("VElement has no keystates.")
+        return self._builder.keystates[0].state
+
     def segment(self, segment_result: list[KeyState]) -> "VElement":
         """Add keystates from a segment function result. Returns new VElement."""
         if self._builder is None:

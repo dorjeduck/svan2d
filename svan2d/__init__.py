@@ -170,6 +170,7 @@ from svan2d.component.effect.pattern import (
 
 # Effects - Filters
 from svan2d.utils.schedule import OverlapMode, WeightedSchedule
+from svan2d.utils.stagger_schedule import StaggerDirection, StaggerSchedule
 
 from svan2d.component.effect.filter import (
     BlendFilter,
@@ -330,6 +331,8 @@ __all__ = [
     "StripesPattern",
     # Utils
     "OverlapMode",
+    "StaggerDirection",
+    "StaggerSchedule",
     "WeightedSchedule",
     # Effects - Filters
     "BlendFilter",

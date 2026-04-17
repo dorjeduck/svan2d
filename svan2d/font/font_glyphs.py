@@ -272,6 +272,32 @@ class FontGlyphs:
         """
         return sum(self.measure_char_widths(text, font_size, letter_spacing))
 
+    def centered_char_x_positions(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> list[float]:
+        """Return the centred x position for each character in text.
+
+        Positions are relative to the text block's horizontal centre (0.0),
+        so the full block spans [-total_width/2, total_width/2]. Each value
+        is the centre x of that character's advance cell.
+
+        Args:
+            text: String to lay out.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+
+        Returns:
+            List of x positions, one per character (including spaces).
+        """
+        widths = self.measure_char_widths(text, font_size, letter_spacing)
+        total_width = sum(widths)
+        positions: list[float] = []
+        cursor = -total_width / 2
+        for w in widths:
+            positions.append(cursor + w / 2)
+            cursor += w
+        return positions
+
     def get_word(
         self,
         text: str,

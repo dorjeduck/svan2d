@@ -8,6 +8,7 @@ from svan2d import (
     Point2D,
     VElement,
 )
+from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.font.font_glyphs import FontGlyphs
 
 
@@ -64,12 +65,18 @@ def create_wave_elements(
     # --- Build keystates per letter ---
     offscreen_x = scene_width / 2 + 50
 
+    n_letters = len(base_states)
+    entry_schedule = StaggerSchedule(
+        n_letters,
+        t_end=(n_letters - 1) * stagger + entry_duration,
+        slot_duration=entry_duration,
+    )
+
     elements = []
     for letter_idx, (base_state, rest_x) in enumerate(
         zip(base_states, rest_xs)
     ):
-        entry_start = letter_idx * stagger
-        arrival_t = entry_start + entry_duration
+        entry_start, arrival_t = entry_schedule[letter_idx]
 
         frame_states = []
         frame_times = []

@@ -10,6 +10,8 @@ from svan2d.core.point2d import Point2D
 from svan2d.font import get_font_glyphs
 from svan2d.transition import curve, easing
 from svan2d.transition.easing import easing2D
+from svan2d.utils.scatter_entrance import scatter_entrance as _scatter_entrance
+from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.velement import VElement
 
 
@@ -33,16 +35,11 @@ def create_word_char_elements(
 
     Characters are positioned so the word is horizontally centred at *word_center*.
     """
-    widths = get_font_glyphs(font_path).measure_char_widths(text, font_size)
-    total_width = sum(widths)
+    x_positions = get_font_glyphs(font_path).centered_char_x_positions(text, font_size)
 
-    # x positions: left-aligned then shifted so the block is centred
-    x_positions: list[float] = []
-    cursor = -total_width / 2
-    for w in widths:
-        # centre of this character cell
-        x_positions.append(cursor + w / 2)
-        cursor += w
+    n = len(text)
+    entrance_sched = StaggerSchedule(n, t_start=first_char_time, t_end=first_char_time + n * char_stagger, overlap=0.0)
+    exit_sched = StaggerSchedule(n, t_start=exit_at, t_end=exit_at + n * char_stagger, overlap=0.0)
 
     elements: list[VElement] = []
     for i, ch in enumerate(text):
@@ -50,7 +47,6 @@ def create_word_char_elements(
             continue
 
         target = Point2D(word_center.x + x_positions[i], word_center.y)
-        appear_at = first_char_time + char_stagger * i
 
         element = _build_char_element(
             ch=ch,
@@ -58,9 +54,9 @@ def create_word_char_elements(
             color=color,
             font_path=font_path,
             font_size=font_size,
-            appear_at=appear_at,
+            appear_at=entrance_sched[i][0],
             entrance_duration=entrance_duration,
-            exit_at=exit_at + char_stagger * i,
+            exit_at=exit_sched[i][0],
             exit_duration=exit_duration,
             entrance=entrance,
             scatter_radius=scatter_radius,
@@ -163,29 +159,8 @@ def _entrance_state(
 
 def _entrance_scatter(visible, target, radius, max_rot, rng):
     """Characters fly in from random positions along bezier arcs."""
-    angle = rng.uniform(0, 2 * math.pi)
-    dist = rng.uniform(radius * 0.6, radius)
-    origin = Point2D(
-        target.x + math.cos(angle) * dist, target.y + math.sin(angle) * dist
-    )
-    rot = rng.uniform(-max_rot, max_rot)
-
+    origin, rot, easing_dict, interpolation_dict = _scatter_entrance(target, radius, max_rot, rng)
     hidden = replace(visible, pos=origin, scale=0.0, opacity=0.0, rotation=rot)
-
-    # Bezier control point: perpendicular to the line origin→target
-    mid = Point2D((origin.x + target.x) / 2, (origin.y + target.y) / 2)
-    dx, dy = target.x - origin.x, target.y - origin.y
-    perp_scale = rng.uniform(-0.4, 0.4)
-    cp = Point2D(mid.x + (-dy) * perp_scale, mid.y + dx * perp_scale)
-
-    easing_dict = {
-        "pos": easing2D(easing.out_cubic, easing.out_back),
-        "scale": easing.out_back,
-        "opacity": easing.out_cubic,
-        "rotation": easing.out_cubic,
-    }
-    interpolation_dict = {"pos": curve.bezier([cp])}
-
     return hidden, easing_dict, interpolation_dict
 
 

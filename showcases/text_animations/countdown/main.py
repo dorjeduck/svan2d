@@ -21,6 +21,7 @@ from svan2d import (
 from svan2d.font import FontGlyphs
 from svan2d.transition.mapping.explicit import ExplicitMapper
 from svan2d.transition.vertex_alignment.angular import AngularAligner
+from svan2d.utils.schedule import WeightedSchedule
 
 
 def load_config():
@@ -62,23 +63,13 @@ def compute_timeline(n_items, hold_ratio, morph_ratio):
     Layout: hold0 | morph0 | hold1 | morph1 | ... | holdN
     Returns list of (hold_start, hold_end) for each item.
     """
-    total_parts = n_items * hold_ratio + (n_items - 1) * morph_ratio
-    hold_norm = hold_ratio / total_parts
-    morph_norm = morph_ratio / total_parts
-
-    times = []
-    cursor = 0.0
+    weights = {}
     for i in range(n_items):
-        hold_start = cursor
-        hold_end = cursor + hold_norm
-        times.append((hold_start, hold_end))
-        cursor = hold_end
+        weights[f"hold_{i}"] = hold_ratio
         if i < n_items - 1:
-            cursor += morph_norm
-
-    # Snap last hold_end to 1.0 to avoid float drift
-    times[-1] = (times[-1][0], 1.0)
-    return times
+            weights[f"morph_{i}"] = morph_ratio
+    schedule = WeightedSchedule(weights)
+    return [schedule[f"hold_{i}"] for i in range(n_items)]
 
 
 def build_element(states, timeline):

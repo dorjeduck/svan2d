@@ -4,8 +4,11 @@ Animated bar chart showing electric vehicle sales by country over time.
 Data source: IEA Global EV Data 2024.
 """
 
+import sys
 import tomllib
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 
 from axis import create_axis_elements, AxisConfig
 from bar import create_bar_elements, BarConfig, estimate_label_reserve
@@ -134,6 +137,8 @@ def create_scene() -> VScene:
         value_color=Color(cfg["bars"]["value_color"]),
         label_gap=cfg["bars"]["label_gap"],
         label_reserve=label_reserve,
+        label_h_offset=cfg["bars"]["label_gap"],  # labels outside bar, offset = label_gap
+        label_anchor="start",
     )
 
     bar_elements, name_elements, value_elements = create_bar_elements(

@@ -3,8 +3,11 @@
 Animated bar chart showing company brand values over time.
 """
 
+import sys
 import tomllib
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 
 from axis import create_axis_elements, AxisConfig
 from bar import create_bar_elements, BarConfig

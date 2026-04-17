@@ -1,6 +1,5 @@
 """Per-character quote VElements with scatter entrance animation."""
 
-import math
 import random
 from dataclasses import replace
 
@@ -8,8 +7,8 @@ from svan2d.component.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.font import get_font_glyphs
-from svan2d.transition import curve, easing
-from svan2d.transition.easing import easing2D
+from svan2d.utils.scatter_entrance import scatter_entrance
+from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.velement import VElement
 
 
@@ -36,23 +35,15 @@ def create_quote_elements(
         return []
 
     entrance_window = entrance_end - entrance_start
-    char_stagger = entrance_window / total_visible_chars
     entrance_dur = entrance_window * 0.3
+    schedule = StaggerSchedule(total_visible_chars, t_start=entrance_start, t_end=entrance_end, overlap=0.0)
 
     font = get_font_glyphs(font_path)
     elements: list[VElement] = []
     global_char_idx = 0
 
     for line_idx, line in enumerate(lines):
-        widths = font.measure_char_widths(line, font_size)
-        total_width = sum(widths)
-
-        # Centre each line horizontally
-        x_positions: list[float] = []
-        cursor = -total_width / 2
-        for w in widths:
-            x_positions.append(cursor + w / 2)
-            cursor += w
+        x_positions = font.centered_char_x_positions(line, font_size)
 
         y = start_y - line_idx * line_height
 
@@ -61,7 +52,7 @@ def create_quote_elements(
                 continue
 
             target = Point2D(x_positions[i], y)
-            appear_time = entrance_start + global_char_idx * char_stagger
+            appear_time = schedule[global_char_idx][0]
             appear_end = min(appear_time + entrance_dur, entrance_end)
 
             visible = TextPathState(
@@ -76,30 +67,10 @@ def create_quote_elements(
                 text_anchor="middle",
             )
 
-            # Scatter entrance: random origin
-            angle = rng.uniform(0, 2 * math.pi)
-            dist = rng.uniform(scatter_radius * 0.6, scatter_radius)
-            origin = Point2D(
-                target.x + math.cos(angle) * dist,
-                target.y + math.sin(angle) * dist,
+            origin, rot, easing_dict, interpolation_dict = scatter_entrance(
+                target, scatter_radius, scatter_rotation, rng
             )
-            rot = rng.uniform(-scatter_rotation, scatter_rotation)
-
             hidden = replace(visible, pos=origin, scale=0.0, opacity=0.0, rotation=rot)
-
-            # Bezier control point: perpendicular to origin→target
-            mid = Point2D((origin.x + target.x) / 2, (origin.y + target.y) / 2)
-            dx, dy = target.x - origin.x, target.y - origin.y
-            perp_scale = rng.uniform(-0.4, 0.4)
-            cp = Point2D(mid.x + (-dy) * perp_scale, mid.y + dx * perp_scale)
-
-            easing_dict = {
-                "pos": easing2D(easing.out_cubic, easing.out_back),
-                "scale": easing.out_back,
-                "opacity": easing.out_cubic,
-                "rotation": easing.out_cubic,
-            }
-            interpolation_dict = {"pos": curve.bezier([cp])}
 
             element = (
                 VElement()

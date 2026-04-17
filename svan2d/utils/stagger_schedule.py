@@ -92,7 +92,7 @@ class StaggerSchedule:
         if slot_duration is not None:
             if n > 1 and slot_duration >= span:
                 raise ValueError("slot_duration must be less than the total span")
-            resolved_overlap = 1.0 - slot_duration * (n - 1) / span if n > 1 else 0.0
+            resolved_overlap = 1.0 - (span - slot_duration) / (slot_duration * (n - 1)) if n > 1 else 0.0
         else:
             resolved_overlap = overlap if overlap is not None else 0.0
 

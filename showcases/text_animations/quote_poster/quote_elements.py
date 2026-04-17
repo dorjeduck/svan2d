@@ -1,13 +1,18 @@
 """Per-character quote VElements with scatter entrance animation."""
 
 import random
+import sys
 from dataclasses import replace
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
+
+from scatter_entrance import scatter_entrance
 
 from svan2d.component.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.font import get_font_glyphs
-from svan2d.utils.scatter_entrance import scatter_entrance
 from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.velement import VElement
 

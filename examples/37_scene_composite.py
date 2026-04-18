@@ -86,7 +86,7 @@ def create_scene(
         fill_color=Color("#FFFFFF"),
     )
 
-    text = VElement().keystates([state, state])
+    text = VElement(state=state)
     scene = scene.add_element(text)
 
     return scene

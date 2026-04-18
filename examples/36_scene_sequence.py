@@ -59,7 +59,7 @@ def create_scene_1() -> VScene:
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.25),
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene
@@ -93,7 +93,7 @@ def create_scene_2() -> VScene:
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.75),
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene
@@ -129,7 +129,7 @@ def create_scene_3() -> VScene:
         font_size=28,
         fill_color=COLOR_2,
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene

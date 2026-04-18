@@ -36,7 +36,7 @@ def main():
     bar_states = [replace(bar, pos=Point2D(0, -i * 80)) for i in range(-1, 2)]
 
     bar_elements = [
-        VElement().keystates([bar_state, bar_state]) for bar_state in bar_states
+        VElement(state=bar_state) for bar_state in bar_states
     ]
 
     scene = scene.add_elements(bar_elements)

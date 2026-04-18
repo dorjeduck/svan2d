@@ -39,7 +39,7 @@ def main():
     c3 = replace(c1, pos=Point2D(0, -70), z_index=3)
     c4 = replace(c1, pos=Point2D(-70, 0), z_index=4)
 
-    surrounding_elements = [VElement().keystates([s, s]) for s in [c1, c2, c3, c4]]
+    surrounding_elements = [VElement(state=s) for s in [c1, c2, c3, c4]]
 
     scene = scene.add_element(center_element)
     scene = scene.add_elements(surrounding_elements)

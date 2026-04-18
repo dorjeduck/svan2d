@@ -63,6 +63,8 @@ class VElement(BaseVElement, KeystateBuilder):
         "_attribute_keystates",
         "_interpolator",
         "_keystates_list",
+        "_frame_fn",
+        "_frame_base_state",
         "attribute_keystates",
         "easing_resolver",
     )
@@ -107,6 +109,8 @@ class VElement(BaseVElement, KeystateBuilder):
 
         # Interpolator (created on first render)
         self._interpolator: StateInterpolator | None = None
+        self._frame_fn: Callable | None = None
+        self._frame_base_state = None
 
         # Handle static state convenience parameter
         if state is not None:
@@ -153,6 +157,8 @@ class VElement(BaseVElement, KeystateBuilder):
             else self._attribute_keystates
         )
         new._interpolator = None
+        new._frame_fn = None
+        new._frame_base_state = None
         return new
 
     def _replace_builder(self, new_builder: BuilderState) -> "VElement":
@@ -175,6 +181,13 @@ class VElement(BaseVElement, KeystateBuilder):
     def _ensure_built(self) -> None:
         """Lazy-initialize the interpolation pipeline from builder state."""
         if self._builder is None:
+            return
+
+        # frame_fn bypasses the keystate/interpolation system entirely
+        if self._builder.frame_fn is not None:
+            self._frame_fn = self._builder.frame_fn
+            self._frame_base_state = self._builder.frame_base_state
+            self._builder = None
             return
 
         # Use builder mixin to finalize
@@ -267,9 +280,13 @@ class VElement(BaseVElement, KeystateBuilder):
     ) -> dw.DrawingElement | None:
         """Render the element at a specific animation time."""
         self._ensure_built()
-        assert self._interpolator is not None
 
-        interpolated_state, inbetween = self._interpolator.get_state_at_time(t)
+        if self._frame_fn is not None:
+            interpolated_state = self._frame_fn(self._frame_base_state, t)
+            inbetween = False
+        else:
+            assert self._interpolator is not None
+            interpolated_state, inbetween = self._interpolator.get_state_at_time(t)
 
         if interpolated_state is None:
             return None
@@ -292,6 +309,8 @@ class VElement(BaseVElement, KeystateBuilder):
     def get_frame(self, t: float) -> State | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
+        if self._frame_fn is not None:
+            return self._frame_fn(self._frame_base_state, t)
         assert self._interpolator is not None
         state, _ = self._interpolator.get_state_at_time(t)
         return state

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
 
 import logging
 from dataclasses import replace
@@ -27,7 +27,7 @@ def _normalize_to_state_list(value: Any) -> list[State] | None:
     - List[State] → List[State]
     - Other → None (not a state field)
     """
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
 
     if value is None:
         return []

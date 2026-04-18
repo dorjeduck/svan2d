@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.scalar_functions import lerp
 
 if TYPE_CHECKING:
@@ -102,9 +102,8 @@ class AttributeTimelineResolver:
 
                 # Get easing function (use segment-level or fallback)
                 if easing1 is None:
-                    base_state = self.keystates[0].state if self.keystates else None
                     easing_func = self.easing_resolver.get_easing_for_field_timeline(
-                        base_state, field_name
+                        field_name
                     )
                 else:
                     easing_func = easing1

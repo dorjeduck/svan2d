@@ -4,26 +4,29 @@ Demonstrates using the crossfade segment function to fade
 one element out while another fades in.
 """
 
-from dataclasses import replace
-
-from svan2d import (
-    CircleState,
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
     Point2D,
-    SquareState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
+from svan2d.primitive.state import (
+    CircleState,
+    SquareState,
+)
+from dataclasses import replace
+
 from svan2d.transition import segment
 
 configure_logging(level="INFO")
 
 CIRCLE_COLOR = Color("#FDBE02")
 RECTANGLE_COLOR = Color("#AA0000")
-
 
 def main():
     scene = VScene(width=256, height=256, background=Color("#000017"))
@@ -65,7 +68,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

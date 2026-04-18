@@ -3,8 +3,8 @@
 import drawsvg as dw
 import pytest
 
-from svan2d.component.registry import get_renderer_class_for_state
-from svan2d.component.renderer import (
+from svan2d.primitive.registry import get_renderer_class_for_state
+from svan2d.primitive.renderer import (
     CircleRenderer,
     EllipseRenderer,
     PolygonRenderer,
@@ -12,7 +12,7 @@ from svan2d.component.renderer import (
     TextRenderer,
     TriangleRenderer,
 )
-from svan2d.component.state import (
+from svan2d.primitive.state import (
     CircleState,
     EllipseState,
     LineState,
@@ -342,7 +342,7 @@ class TestVertexRenderer:
 
     def test_draw_progress_limits_stroke_vertices(self):
         """Test that draw_progress < 1.0 reduces stroke vertex count"""
-        from svan2d.component.renderer.base_vertex import VertexRenderer
+        from svan2d.primitive.renderer.base_vertex import VertexRenderer
 
         num_verts = 20
         state_full = LineState(
@@ -383,7 +383,7 @@ class TestVertexRenderer:
 
     def test_draw_progress_zero_renders_single_vertex(self):
         """Test that draw_progress=0.0 renders at least 1 vertex (M only)"""
-        from svan2d.component.renderer.base_vertex import VertexRenderer
+        from svan2d.primitive.renderer.base_vertex import VertexRenderer
 
         state = LineState(
             length=100,

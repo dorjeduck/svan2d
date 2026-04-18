@@ -3,7 +3,7 @@
 from dataclasses import replace
 from typing import Any
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 
 
 class NestedStateInterpolator:
@@ -40,7 +40,7 @@ class NestedStateInterpolator:
             vertex_aligner: Optional vertex aligner for shape morphing.
         """
         # Check if this is a morph between different VertexState types
-        from svan2d.component.state.base_vertex import VertexState
+        from svan2d.primitive.state.base_vertex import VertexState
 
         start_state = start_value
         end_state = end_value

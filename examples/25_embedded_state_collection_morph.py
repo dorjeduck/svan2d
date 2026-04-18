@@ -1,21 +1,24 @@
-from dataclasses import replace
-
-from svan2d import (
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
     Point2D,
-    SquareState,
-    StateCollectionState,
-    TriangleState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
+from svan2d.primitive.state import (
+    SquareState,
+    StateCollectionState,
+    TriangleState,
+)
+from dataclasses import replace
+
 from svan2d.transition.segment import hold
 
 configure_logging(level="INFO")
-
 
 def main():
     # Create the scene
@@ -107,7 +110,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

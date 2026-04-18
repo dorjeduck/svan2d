@@ -10,8 +10,8 @@ from dataclasses import dataclass, replace
 from physics import lookup_cycle, precompute_pendulum_cycle
 
 from svan2d import Color, Point2D, VElement
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.line import LineState
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.line import LineState
 
 
 @dataclass(frozen=True)

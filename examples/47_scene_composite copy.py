@@ -1,20 +1,24 @@
-from svan2d import (
-    CircleState,
+
+
+from svan2d.transition import easing
+from svan2d.core import (
     Color,
-    ConverterType,
     Point2D,
-    RectangleState,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneComposite,
     VSceneExporter,
-    configure_logging,
-    easing,
 )
-
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
+)
 configure_logging(level="INFO")
-
 
 def create_scene(
     label: str, color: Color, width: float = 200, height: float = 150
@@ -47,7 +51,6 @@ def create_scene(
 
     return scene
 
-
 def create_animated_scene(
     color: Color, width: float = 200, height: float = 150
 ) -> VScene:
@@ -69,7 +72,6 @@ def create_animated_scene(
     scene = scene.add_element(circle)
 
     return scene
-
 
 def main():
     # Create scenes with different sizes and colors
@@ -117,7 +119,6 @@ def main():
         total_frames=60,
         framerate=30,
     )
-
 
 if __name__ == "__main__":
     main()

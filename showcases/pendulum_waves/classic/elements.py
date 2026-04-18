@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 from pendulum import PendulumSpec, create_pendulums
 
 from svan2d import Color, Point2D, VElement
-from svan2d.component.state.line import LineState
+from svan2d.primitive.state.line import LineState
 
 ORIENTATION_DOWN = -math.pi / 2
 

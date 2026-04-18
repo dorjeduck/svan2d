@@ -10,7 +10,7 @@ from typing import Callable
 
 from data_prep import SpiralData
 
-from svan2d.component.state.path import StrokeLinecap
+from svan2d.primitive.state.path import StrokeLinecap
 from svan2d.core.scalar_functions import log_lerp
 
 from svan2d import Color, PathState, VElement

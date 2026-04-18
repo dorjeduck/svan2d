@@ -4,11 +4,11 @@ import logging
 from dataclasses import fields, replace
 from typing import Any, Callable, Iterator
 
-from svan2d.component.effect.filter.base import Filter
-from svan2d.component.effect.gradient.base import Gradient
-from svan2d.component.effect.pattern.base import Pattern
-from svan2d.component.state.base import State
-from svan2d.component.vertex.vertex_contours import VertexContours
+from svan2d.primitive.effect.filter.base import Filter
+from svan2d.primitive.effect.gradient.base import Gradient
+from svan2d.primitive.effect.pattern.base import Pattern
+from svan2d.primitive.state.base import State
+from svan2d.primitive.vertex.vertex_contours import VertexContours
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.core.scalar_functions import lerp
@@ -193,7 +193,7 @@ class InterpolationEngine:
         segment_interpolation_config: dict[str, Callable] | None = None,
         morphing_config: Any | None = None,
         changed_fields: tuple[set, dict[str, tuple[Any, Any]]] | None = None,
-        linear_angle_interpolation: bool = False,
+        exact_rotation: bool = False,
         state_interpolation: Callable | None = None,
     ) -> State:
         """
@@ -210,7 +210,7 @@ class InterpolationEngine:
             segment_interpolation_config: Optional per-field path config dict {field_name: path_func}
             morphing_config: Optional morphing configuration (Morphing or MorphingConfig)
             changed_fields: Optional pre-computed (changed_field_names, field_values) tuple
-            linear_angle_interpolation: If True, rotation uses linear interpolation (no angle wrapping)
+            exact_rotation: If True, rotation uses linear interpolation (no angle wrapping)
             state_interpolation: Optional callable (start, end, t) -> State that bypasses all field interpolation
         """
         if state_interpolation is not None:
@@ -247,7 +247,7 @@ class InterpolationEngine:
 
             # Get easing function for this field
             easing_func = self.easing_resolver.get_easing_for_field(
-                start_state, field_name, segment_easing_overrides,
+                field_name, segment_easing_overrides,
                 segment_easing=segment_easing,
             )
             eased_t = easing_func(t) if easing_func else t
@@ -264,7 +264,7 @@ class InterpolationEngine:
                 segment_interpolation_config,
                 mapper=mapper,
                 vertex_aligner=vertex_aligner,
-                linear_angle_interpolation=linear_angle_interpolation,
+                exact_rotation=exact_rotation,
             )
 
         if t < 0.5:
@@ -318,7 +318,7 @@ class InterpolationEngine:
         segment_interpolation_config: dict[str, Callable] | None = None,
         mapper: Any | None = None,
         vertex_aligner: Any | None = None,
-        linear_angle_interpolation: bool = False,
+        exact_rotation: bool = False,
     ) -> Any:
         """
         Interpolate a single value based on its type and context.
@@ -422,7 +422,7 @@ class InterpolationEngine:
             and isinstance(start_value, (int, float))
             and isinstance(end_value, (int, float))
         ):
-            if not linear_angle_interpolation:
+            if not exact_rotation:
                 return self._type_interpolators.interpolate_angle(
                     start_value, end_value, eased_t
                 )

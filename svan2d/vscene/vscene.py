@@ -29,7 +29,7 @@ RotationFunc: TypeAlias = Callable[[float], float]  # t -> degrees
 from svan2d.vscene.camera_state import CameraState
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
     from svan2d.velement import VElement, VElementGroup
 
 

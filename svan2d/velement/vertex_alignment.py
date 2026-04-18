@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from svan2d.component import State, VertexState
+from svan2d.primitive import State, VertexState
 from svan2d.transition.align_vertices import get_aligned_vertices
 from svan2d.velement.keystate import KeyState
 

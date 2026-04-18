@@ -1,27 +1,27 @@
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import CircleState
 import math
 
 from dataclasses import replace
 
-from svan2d import (
-    CircleState,
-    Color,
-    ConverterType,
-    Point2D,
-    VElement,
-    VScene,
-    VSceneExporter,
-    configure_logging,
-)
 from svan2d.vscene.automatic_camera import automatic_camera
 
 configure_logging(level="INFO")
-
 
 COLOR_ONE = Color("#FDBE02")
 COLOR_TWO = Color("#AA0000")
 
 NUM_CIRLCES = 6
-
 
 def main():
     scene = VScene(width=600, height=600, background=Color("#000017"))
@@ -89,7 +89,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

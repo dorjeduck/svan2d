@@ -6,10 +6,10 @@ Run with: pytest tests/benchmark -v --benchmark-only
 
 import pytest
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.vertex.vertex_contours import VertexContours
-from svan2d.component.vertex.vertex_loop import VertexLoop
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
+from svan2d.primitive.vertex.vertex_contours import VertexContours
+from svan2d.primitive.vertex.vertex_loop import VertexLoop
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.transition.easing_resolver import EasingResolver

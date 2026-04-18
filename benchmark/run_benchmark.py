@@ -19,8 +19,8 @@ from svan2d.core.point2d import Point2D
 from svan2d.vscene import VScene
 from svan2d.vscene.vscene_exporter import VSceneExporter, ConverterType
 from svan2d.velement import VElement
-from svan2d.component.state import CircleState, TextState
-from svan2d.component.renderer import CircleRenderer, TextRenderer
+from svan2d.primitive.state import CircleState, TextState
+from svan2d.primitive.renderer import CircleRenderer, TextRenderer
 from svan2d.core.color import Color
 from svan2d.server.playwright.process_manager import ProcessManager
 

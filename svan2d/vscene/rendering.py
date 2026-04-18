@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import drawsvg as dw
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
 
 
 def build_scene_transform(
@@ -51,7 +51,7 @@ def apply_scene_clipping(
     """
     import uuid
 
-    from svan2d.component import get_renderer_instance_for_state
+    from svan2d.primitive import get_renderer_instance_for_state
 
     result = group
 

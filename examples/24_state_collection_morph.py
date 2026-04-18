@@ -1,20 +1,24 @@
-from svan2d import (
+
+
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    EllipseState,
     Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    EllipseState,
     RectangleState,
     SquareState,
     StateCollectionState,
     TriangleState,
-    VElement,
-    VScene,
-    VSceneExporter,
 )
-
 configure_logging(level="INFO")
-
 
 def main():
     # Create the scene
@@ -92,7 +96,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

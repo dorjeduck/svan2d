@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from svan2d.component.registry import renderer
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.state.state_collection import StateCollectionState
-from svan2d.component.vertex.vertex_contours import VertexContours
+from svan2d.primitive.registry import renderer
+from svan2d.primitive.state.base_vertex import VertexState
+from svan2d.primitive.state.state_collection import StateCollectionState
+from svan2d.primitive.vertex.vertex_contours import VertexContours
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
@@ -21,7 +21,7 @@ def _map_contour_vertices(
     func: Callable[[Point2D], Point2D],
 ) -> VertexContours:
     """Apply a vertex transform function to all contours (outer + holes)."""
-    from svan2d.component.vertex.vertex_loop import VertexLoop
+    from svan2d.primitive.vertex.vertex_loop import VertexLoop
 
     new_outer = VertexLoop(
         [func(v) for v in contours.outer.vertices],
@@ -72,7 +72,7 @@ def _offset_contours(
 
 
 def _get_glyph_renderer():
-    from svan2d.component.renderer.base_vertex import VertexRenderer
+    from svan2d.primitive.renderer.base_vertex import VertexRenderer
 
     return VertexRenderer
 

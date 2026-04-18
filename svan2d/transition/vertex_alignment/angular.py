@@ -9,12 +9,12 @@ from __future__ import annotations
 import inspect
 import math
 
-from svan2d.component.vertex import (
+from svan2d.primitive.vertex import (
     angle_distance,
     angle_from_centroid,
     centroid,
 )
-from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
+from svan2d.primitive.vertex.vertex_utils import rotate_list, rotate_vertices
 from svan2d.core.point2d import Point2D, Points2D
 
 from .base import AlignmentContext, VertexAligner

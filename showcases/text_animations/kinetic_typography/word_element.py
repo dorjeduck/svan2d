@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 
 from scatter_entrance import scatter_entrance as _scatter_entrance
 
-from svan2d.component.state import TextPathState
+from svan2d.primitive.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.font import get_font_glyphs

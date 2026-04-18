@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.point2d import Point2D
 
 

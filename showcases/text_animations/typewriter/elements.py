@@ -2,8 +2,8 @@
 
 from dataclasses import replace
 
-from svan2d.component.state import TextPathState
-from svan2d.component.state.rectangle import RectangleState
+from svan2d.primitive.state import TextPathState
+from svan2d.primitive.state.rectangle import RectangleState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.velement import VElement

@@ -1,19 +1,24 @@
-from svan2d import (
+
+
+from svan2d.transition import easing
+from svan2d import layout
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    easing,
-    layout,
     Point2D,
-    StaggerDirection,
-    StaggerSchedule,
-    TextRenderer,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
-
+from svan2d.primitive.state import TextState
+from svan2d.primitive.renderer import TextRenderer
+from svan2d.utils.stagger_schedule import (
+    StaggerDirection,
+    StaggerSchedule,
+)
 configure_logging(level="INFO")
 
 n = 9
@@ -27,7 +32,6 @@ schedule = StaggerSchedule(
 )
 
 schedule.print_slots()
-
 
 def main():
     scene = VScene(width=256, height=256, background=Color("#000017"))
@@ -56,8 +60,9 @@ def main():
             VElement(renderer)
             .attributes(easing_dict={"pos": easing.linear})
             .keystates(
-                [start_states[i], start_states[i], end_states[i], end_states[i]],
-                at=[0.0, t_start, t_end, 1.0],
+                [start_states[i], end_states[i]],
+                between=[t_start, t_end],
+                extend=True,
             )
         )
 
@@ -72,7 +77,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

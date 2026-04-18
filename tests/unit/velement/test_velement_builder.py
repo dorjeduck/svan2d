@@ -2,9 +2,9 @@
 
 import pytest
 
-from svan2d.component.renderer.circle import CircleRenderer
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
+from svan2d.primitive.renderer.circle import CircleRenderer
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.transition import easing

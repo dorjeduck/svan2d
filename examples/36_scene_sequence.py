@@ -8,29 +8,31 @@ Demonstrates VSceneSequence with various scene transition effects:
 - Iris: Circular reveal
 """
 
-from svan2d import (
-    CircleState,
+from svan2d.transition import easing
+from svan2d.core import (
     Color,
-    ConverterType,
     Point2D,
-    RectangleState,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
     VSceneSequence,
-    configure_logging,
-    easing,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
 )
 from svan2d.transition.scene import Fade, Wipe
-
 
 configure_logging(level="INFO")
 
 # Base colors
 COLOR_1 = Color("#FDBE02")
 COLOR_2 = Color("#AA0000")
-
 
 def create_scene_1() -> VScene:
     """Create first scene with animated circle."""
@@ -61,7 +63,6 @@ def create_scene_1() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_2() -> VScene:
     """Create second scene with animated rectangle."""
@@ -96,7 +97,6 @@ def create_scene_2() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_3() -> VScene:
     """Create third scene with multiple circles."""
@@ -134,7 +134,6 @@ def create_scene_3() -> VScene:
 
     return scene
 
-
 def main():
     # Create scenes
     scene1 = create_scene_1()
@@ -170,7 +169,6 @@ def main():
     )
 
     print("Export complete!")
-
 
 if __name__ == "__main__":
     main()

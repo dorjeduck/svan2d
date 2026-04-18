@@ -1,25 +1,26 @@
-from dataclasses import replace
-
-from svan2d import (
-    CircleState,
+from svan2d.core import (
     Color,
-    ConverterType,
-    NumberFormat,
-    NumberState,
     Point2D,
-    RectangleState,
-    VElement,
-    VScene,
-    VSceneExporter,
     configure_logging,
 )
-
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    NumberFormat,
+    NumberState,
+    RectangleState,
+)
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 CENTER_CIRCLE = Color("#FDBE02")
 SURROUNDING_CIRCLES = Color("#AA0000")
-
 
 def main():
 
@@ -59,7 +60,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

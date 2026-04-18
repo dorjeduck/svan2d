@@ -31,6 +31,7 @@ from .scalar_functions import (
     gaussian_smooth_2d,
     step,
 )
+from .splines import catmull_rom_2d, densify_catmull_rom
 
 __all__ = [
     "Color",
@@ -55,4 +56,6 @@ __all__ = [
     "circular_midpoint",
     "gaussian_smooth",
     "gaussian_smooth_2d",
+    "catmull_rom_2d",
+    "densify_catmull_rom",
 ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from svan2d.component import State, VertexState
+from svan2d.primitive import State, VertexState
 from svan2d.velement.attribute_timeline import AttributeTimelineResolver
 from svan2d.velement.vertex_alignment import VertexAligner
 
@@ -266,8 +266,8 @@ class StateInterpolator:
                         else None
                     ),
                     changed_fields=changed_fields,
-                    linear_angle_interpolation=(
-                        ks1.transition_config.linear_angle_interpolation
+                    exact_rotation=(
+                        ks1.transition_config.exact_rotation
                         if ks1.transition_config
                         else False
                     ),

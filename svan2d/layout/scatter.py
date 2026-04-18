@@ -3,7 +3,7 @@
 import random
 from dataclasses import replace
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment

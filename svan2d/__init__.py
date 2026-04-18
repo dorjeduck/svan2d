@@ -42,12 +42,12 @@ from svan2d.vscene import (
     VSceneSequence,
 )
 
-# --- Component: states, renderers, effects ---
-# States (from svan2d.component.state)
+# --- Primitive: states, renderers, effects ---
+# States (from svan2d.primitive.state)
 
-from svan2d.component.registry import renderer
+from svan2d.primitive.registry import renderer
 
-from svan2d.component.state import (
+from svan2d.primitive.state import (
     ArcState,
     ArrowState,
     AstroidState,
@@ -96,7 +96,7 @@ from svan2d.component.state import (
 )
 
 # Perforated shapes
-from svan2d.component.state.perforated import (
+from svan2d.primitive.state.perforated import (
     Astroid,
     Circle,
     Ellipse,
@@ -106,8 +106,8 @@ from svan2d.component.state.perforated import (
     Star,
 )
 
-# Renderers (from svan2d.component.renderer)
-from svan2d.component.renderer import (
+# Renderers (from svan2d.primitive.renderer)
+from svan2d.primitive.renderer import (
     ArcRenderer,
     ArrowRenderer,
     AstroidRenderer,
@@ -140,7 +140,7 @@ from svan2d.component.renderer import (
 )
 
 # Vertex geometry
-from svan2d.component.vertex import (
+from svan2d.primitive.vertex import (
     VertexCircle,
     VertexContours,
     VertexEllipse,
@@ -151,7 +151,7 @@ from svan2d.component.vertex import (
 )
 
 # Effects - Gradients
-from svan2d.component.effect.gradient import (
+from svan2d.primitive.effect.gradient import (
     Gradient,
     GradientStop,
     LinearGradient,
@@ -159,7 +159,7 @@ from svan2d.component.effect.gradient import (
 )
 
 # Effects - Patterns
-from svan2d.component.effect.pattern import (
+from svan2d.primitive.effect.pattern import (
     CheckerboardPattern,
     CustomPattern,
     DotsPattern,
@@ -172,7 +172,7 @@ from svan2d.component.effect.pattern import (
 from svan2d.utils.schedule import OverlapMode, WeightedSchedule
 from svan2d.utils.stagger_schedule import StaggerDirection, StaggerSchedule
 
-from svan2d.component.effect.filter import (
+from svan2d.primitive.effect.filter import (
     BlendFilter,
     ColorMatrixFilter,
     CompositeFilter,

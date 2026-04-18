@@ -1,20 +1,25 @@
-from dataclasses import replace
-
-from svan2d import (
-    CheckerboardPattern,
-    CircleState,
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    DropShadowFilter,
-    GradientStop,
-    LinearGradient,
     Point2D,
-    SquareState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
+from svan2d.primitive.state import (
+    CircleState,
+    SquareState,
+)
+from svan2d.primitive.effect.gradient import (
+    GradientStop,
+    LinearGradient,
+)
+from svan2d.primitive.effect.pattern import CheckerboardPattern
+from svan2d.primitive.effect.filter import DropShadowFilter
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
@@ -60,7 +65,6 @@ start_states = [
         size=40, pos=Point2D(-70, -70), fill_color=START_COLOR_1, filter=shadow_filter_1
     ),
 ]
-
 
 end_states = [
     CircleState(radius=20, pos=Point2D(70, 70), fill_gradient=linear_grad_2),

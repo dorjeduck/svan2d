@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from svan2d.component.state.bounds import state_bounds
+from svan2d.primitive.state.bounds import state_bounds
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
     from svan2d.vscene.vscene import VScene
 
 
@@ -49,7 +49,7 @@ def _is_visible(state: State) -> bool:
     if state.opacity == 0:
         return False
 
-    from svan2d.component.state.base_color import ColorState
+    from svan2d.primitive.state.base_color import ColorState
 
     if isinstance(state, ColorState):
         if state.fill_opacity == 0 and state.stroke_opacity == 0:

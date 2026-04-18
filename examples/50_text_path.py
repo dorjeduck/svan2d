@@ -7,19 +7,20 @@ rotation, and other transformations.
 Requires: pip install svan2d[font]
 """
 
-from dataclasses import replace
-
-from svan2d import (
+from svan2d.transition import easing
+from svan2d.core import (
     Color,
-    ConverterType,
     Point2D,
-    TextPathState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
-    configure_logging,
-    easing,
 )
+from svan2d.primitive.state import TextPathState
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
@@ -28,7 +29,6 @@ configure_logging(level="INFO")
 # Linux: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
 # Windows: C:/Windows/Fonts/arial.ttf
 FONT_PATH = "/System/Library/Fonts/Supplemental/Arial.ttf"
-
 
 def main():
     scene = VScene(width=400, height=400, background=Color("#1a1a2e"))
@@ -118,7 +118,6 @@ def main():
         png_width_px=800,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

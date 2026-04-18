@@ -5,7 +5,7 @@ import math
 import pytest
 
 from svan2d import layout
-from svan2d.component.state import CircleState, RectangleState, TextState
+from svan2d.primitive.state import CircleState, RectangleState, TextState
 from svan2d.core.point2d import Point2D
 
 

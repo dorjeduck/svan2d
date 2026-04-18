@@ -1,21 +1,28 @@
-from dataclasses import replace
-
-from svan2d import (
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import (
+    VElement,
+    fade_inout,
+    hold,
+)
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
     ArcState,
     ArrowState,
     CircleState,
-    Color,
-    configure_logging,
-    ConverterType,
     CrossState,
     EllipseState,
-    fade_inout,
     FlowerState,
     HeartState,
-    hold,
     InfinityState,
     LineState,
-    Point2D,
     PolygonState,
     RectangleState,
     SpiralState,
@@ -23,17 +30,14 @@ from svan2d import (
     StarState,
     TextState,
     TriangleState,
-    VElement,
-    VScene,
-    VSceneExporter,
     WaveState,
 )
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 FILL_COLOR = Color("#FDBE02")
 STROKE_COLOR = Color("#AA0000")
-
 
 def main():
     # Create the scene
@@ -217,7 +221,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

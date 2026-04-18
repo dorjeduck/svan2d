@@ -13,7 +13,7 @@ The (time, state) tuple is kept as a convenience for the common case of explicit
 
 from typing import Any, Callable
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 
 from .keystate import KeyState
 

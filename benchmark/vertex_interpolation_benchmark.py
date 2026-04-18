@@ -8,7 +8,7 @@ import time
 import tracemalloc
 from svan2d.vscene import VScene
 from svan2d.velement import VElement
-from svan2d.component import CircleState, SquareState
+from svan2d.primitive import CircleState, SquareState
 from svan2d.vscene.vscene_exporter import VSceneExporter
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import configure_logging

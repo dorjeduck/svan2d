@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING, Callable
 
 import drawsvg as dw
 
-from svan2d.component import (
+from svan2d.primitive import (
     Renderer,
     State,
     VertexState,
     get_renderer_instance_for_state,
 )
-from svan2d.component.renderer.base_vertex import VertexRenderer
+from svan2d.primitive.renderer.base_vertex import VertexRenderer
 from svan2d.core.point2d import Point2D, Points2D
 from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateTuple, KeystateBuilder

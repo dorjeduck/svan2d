@@ -1,19 +1,20 @@
-from svan2d import (
+
+
+from svan2d import layout
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    layout,
     Point2D,
-    TextRenderer,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
-
-
+from svan2d.primitive.state import TextState
+from svan2d.primitive.renderer import TextRenderer
 configure_logging(level="INFO")
-
 
 def main():
 
@@ -67,7 +68,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

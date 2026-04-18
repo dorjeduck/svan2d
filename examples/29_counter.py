@@ -1,28 +1,28 @@
-from dataclasses import replace
-
-from svan2d import (
+from svan2d.core import (
     Color,
-    ConverterType,
-    NumberFormat,
-    NumberState,
     Point2D,
-    RectangleState,
-    VElement,
-    VScene,
-    VSceneExporter,
     configure_logging,
 )
-
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    NumberFormat,
+    NumberState,
+    RectangleState,
+)
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 FROM = 1
 TO = 120
 
-
 COUNTER_COLOR = Color("#FDBE02")
 BAR_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -114,7 +114,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

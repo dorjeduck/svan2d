@@ -1,7 +1,7 @@
 from dataclasses import replace
 from collections.abc import Callable
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.point2d import Point2D
 from svan2d.transition.segment.slide_effect import SlideEffect
 from svan2d.velement.keystate import KeyState, KeyStates

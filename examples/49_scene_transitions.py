@@ -1,20 +1,23 @@
-from svan2d import (
-    CircleState,
+from svan2d.transition import easing
+from svan2d.core import (
     Color,
     Point2D,
-    RectangleState,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneSequence,
-    configure_logging,
-    easing,
 )
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
+)
+
 from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
 
-
 configure_logging(level="INFO")
-
 
 def create_scene_1() -> VScene:
     """Create first scene with animated circle."""
@@ -46,7 +49,6 @@ def create_scene_1() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_2() -> VScene:
     """Create second scene with animated rectangle."""
@@ -83,7 +85,6 @@ def create_scene_2() -> VScene:
 
     return scene
 
-
 def create_scene_3() -> VScene:
     """Create third scene with multiple circles."""
     scene = VScene(width=400, height=300, background=Color("#16c79a"))
@@ -117,7 +118,6 @@ def create_scene_3() -> VScene:
 
     return scene
 
-
 def main():
     # Create scenes
     scene1 = create_scene_1()
@@ -144,9 +144,7 @@ def main():
         png_width_px=800,
     )
 
-
     print("Export complete!")
-
 
 def demo_all_transitions():
     """Demo showcasing each transition type individually."""
@@ -177,9 +175,7 @@ def demo_all_transitions():
             .scene(scene2, duration=0.35)
         )
 
-
     print("All transitions exported!")
-
 
 if __name__ == "__main__":
     main()

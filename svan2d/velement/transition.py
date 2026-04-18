@@ -39,8 +39,9 @@ class TransitionConfig:
         interpolation_dict: Per-field interpolation functions {field_name: interpolation_func}
                            - Point2D fields: (p1, p2, t) -> Point2D (spatial curves)
                            - Rotation field: (r1, r2, t) -> float (custom rotation)
-        linear_angle_interpolation: If True, rotation interpolates linearly without angle wrapping
-                         (enables multi-revolution rotation like 0° → 7200°)
+        exact_rotation: If True, rotation uses the exact angle value — no shortest-arc
+                         optimization. Use to force a direction (e.g. always clockwise)
+                         or for multi-revolution rotation (e.g. 0° → 720°).
         state_interpolation: Optional callable (start_state, end_state, t) -> State that
                             bypasses all per-field interpolation. t is raw segment t (0→1).
         covers_boundaries: If True and state_interpolation is set, the state_interpolation
@@ -52,7 +53,7 @@ class TransitionConfig:
     easing_dict: dict[str, EasingFunction] | None = None
     morphing_config: MorphingConfig | dict[str, Any] | None = None
     interpolation_dict: InterpolationConfig | None = None
-    linear_angle_interpolation: bool = False
+    exact_rotation: bool = False
     state_interpolation: Callable | None = None
     covers_boundaries: bool = False
 
@@ -63,7 +64,7 @@ class TransitionConfig:
             f"\teasing_dict={self.easing_dict}, \n"
             f"\tmorphing={self.morphing_config}, \n"
             f"\tinterpolation={self.interpolation_dict}, \n"
-            f"\tlinear_angle_interpolation={self.linear_angle_interpolation}, \n"
+            f"\texact_rotation={self.exact_rotation}, \n"
             f"\tstate_interpolation={self.state_interpolation}, \n"
             f"\tcovers_boundaries={self.covers_boundaries}\n"
             f")"

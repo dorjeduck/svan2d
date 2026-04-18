@@ -8,12 +8,16 @@ Uses StateCollectionState M->N morphing to handle different letter counts.
 Requires: pip install fonttools
 """
 
-from svan2d import (
+from svan2d.core import (
     Color,
     configure_logging,
-    ConverterType,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import (
     MorphingConfig,
     VElement,
+)
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
@@ -25,7 +29,6 @@ from svan2d.transition.vertex_alignment.angular import AngularAligner
 from svan2d.transition.vertex_alignment.norm import AlignmentNorm
 
 configure_logging(level="INFO")
-
 
 def main():
     # Use a system font (adjust path for your OS)
@@ -90,7 +93,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

@@ -13,7 +13,7 @@ from typing import (
     TypeVar,
 )
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import (
     AttributeKeyStatesDict,
@@ -273,7 +273,7 @@ class KeystateBuilder:
         easing_dict: dict[str, EasingFunction] | None = None,
         interpolation_dict: dict[str, Any] | None = None,
         morphing_config: "MorphingConfig | None" = None,
-        linear_angle_interpolation: bool = False,
+        exact_rotation: bool = False,
         state_interpolation: Callable | None = None,
         covers_boundaries: bool = False,
     ) -> T:
@@ -289,7 +289,7 @@ class KeystateBuilder:
                               - Point2D: (p1, p2, t) -> Point2D
                               - Rotation: (r1, r2, t) -> float
             morphing_config: Morphing configuration for vertex state transitions
-            linear_angle_interpolation: If True, rotation interpolates linearly without angle wrapping
+            exact_rotation: If True, rotation uses the exact angle value — no shortest-arc optimization. Use to force direction or for multi-revolution rotation.
             state_interpolation: Optional callable (start_state, end_state, t) -> State that
                                 bypasses all per-field interpolation. t is raw segment t (0→1).
             covers_boundaries: If True and state_interpolation is set, state_interpolation
@@ -312,7 +312,7 @@ class KeystateBuilder:
                 easing_dict=easing_dict,
                 interpolation_dict=interpolation_dict,
                 morphing_config=morphing_config,
-                linear_angle_interpolation=linear_angle_interpolation,
+                exact_rotation=exact_rotation,
                 state_interpolation=state_interpolation,
                 covers_boundaries=covers_boundaries,
             )
@@ -338,11 +338,11 @@ class KeystateBuilder:
                 else self._builder.pending_transition.morphing_config
             )
 
-            # linear_angle_interpolation: new call overrides pending
-            merged_linear_angle_interpolation = (
-                linear_angle_interpolation
-                if linear_angle_interpolation
-                else self._builder.pending_transition.linear_angle_interpolation
+            # exact_rotation: new call overrides pending
+            merged_exact_rotation = (
+                exact_rotation
+                if exact_rotation
+                else self._builder.pending_transition.exact_rotation
             )
 
             # state_interpolation: new call overrides pending
@@ -364,7 +364,7 @@ class KeystateBuilder:
                 easing_dict=merged_easing if merged_easing else None,
                 interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
-                linear_angle_interpolation=merged_linear_angle_interpolation,
+                exact_rotation=merged_exact_rotation,
                 state_interpolation=merged_state_interpolation,
                 covers_boundaries=merged_covers_boundaries,
             )
@@ -528,7 +528,7 @@ class KeystateBuilder:
             easing_dict=transition_config.easing_dict,
             morphing_config=transition_config.morphing_config,
             interpolation_dict=merged_path if merged_path else None,
-            linear_angle_interpolation=transition_config.linear_angle_interpolation,
+            exact_rotation=transition_config.exact_rotation,
             state_interpolation=transition_config.state_interpolation,
         )
 
@@ -551,7 +551,7 @@ class KeystateBuilder:
             )
 
         # Validate compatible state types (ShapeCollectionState cannot mix with others)
-        from svan2d.component.state.state_collection import StateCollectionState
+        from svan2d.primitive.state.state_collection import StateCollectionState
 
         for i in range(len(self._builder.keystates) - 1):
             state1 = self._builder.keystates[i].state

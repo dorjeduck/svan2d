@@ -6,9 +6,9 @@ from dataclasses import replace
 
 import pytest
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.star import StarState
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
+from svan2d.primitive.state.star import StarState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
@@ -352,22 +352,22 @@ class TestCustomInterpolationFunctions:
 
 
 # ---------------------------------------------------------------------------
-# 3. linear_angle_interpolation
+# 3. exact_rotation
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
-class TestLinearAngleInterpolation:
-    """Verify that linear_angle_interpolation disables angle wrapping."""
+class TestExactRotation:
+    """Verify that exact_rotation disables angle wrapping."""
 
     def test_multi_revolution_with_flag(self):
-        """Rotation should go beyond 360 when linear_angle_interpolation=True."""
+        """Rotation should go beyond 360 when exact_rotation=True."""
         s1 = RectangleState(pos=Point2D(), width=100, height=50, rotation=0)
         s2 = RectangleState(pos=Point2D(), width=100, height=50, rotation=720)
 
         elem = (
             VElement()
             .keystate(s1, at=0.0)
-            .transition(linear_angle_interpolation=True)
+            .transition(exact_rotation=True)
             .keystate(s2, at=1.0)
         )
 
@@ -390,8 +390,8 @@ class TestLinearAngleInterpolation:
         # Shortest path: 0 → 350 wraps to 0 → -10, midpoint is -5
         assert result.rotation == pytest.approx(-5, abs=1)
 
-    def test_linear_angle_interpolation_preserved_with_element_interpolation_dict(self):
-        """linear_angle_interpolation should survive merge with element-level interpolation_dict."""
+    def test_exact_rotation_preserved_with_element_interpolation_dict(self):
+        """exact_rotation should survive merge with element-level interpolation_dict."""
         s1 = CircleState(pos=Point2D(0, 0), radius=50, rotation=0)
         s2 = CircleState(pos=Point2D(100, 0), radius=50, rotation=720)
 
@@ -402,7 +402,7 @@ class TestLinearAngleInterpolation:
             VElement()
             .attributes(interpolation_dict={"pos": my_curve})
             .keystate(s1, at=0.0)
-            .transition(linear_angle_interpolation=True)
+            .transition(exact_rotation=True)
             .keystate(s2, at=1.0)
         )
 
@@ -739,15 +739,15 @@ class TestInbetweenFlag:
 
 
 # ---------------------------------------------------------------------------
-# 11. TransitionConfig.linear_angle_interpolation merge bug (Fix 1)
+# 11. TransitionConfig.exact_rotation merge bug (Fix 1)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
 class TestBuilderMergeBugFix:
-    """Verify that linear_angle_interpolation is preserved during merge."""
+    """Verify that exact_rotation is preserved during merge."""
 
     def test_linear_angle_survives_element_interpolation_merge(self):
-        """Bug fix: _merge_element_path_into_transition must preserve linear_angle_interpolation."""
+        """Bug fix: _merge_element_path_into_transition must preserve exact_rotation."""
         s1 = CircleState(pos=Point2D(0, 0), radius=50, rotation=0)
         s2 = CircleState(pos=Point2D(100, 0), radius=50, rotation=720)
 
@@ -758,7 +758,7 @@ class TestBuilderMergeBugFix:
             VElement()
             .attributes(interpolation_dict={"pos": my_curve})
             .keystate(s1, at=0.0)
-            .transition(linear_angle_interpolation=True)
+            .transition(exact_rotation=True)
             .keystate(s2, at=1.0)
         )
 
@@ -766,7 +766,7 @@ class TestBuilderMergeBugFix:
         # After merge, the keystate's transition should still have the flag
         tc = elem._keystates_list[0].transition_config
         assert tc is not None
-        assert tc.linear_angle_interpolation is True
+        assert tc.exact_rotation is True
         # And the actual interpolation should work
         result = elem.get_frame(0.5)
         assert result.rotation == pytest.approx(360)

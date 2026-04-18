@@ -1,27 +1,35 @@
-from svan2d import (
-    Astroid,
-    Circle,
+
+
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    Ellipse,
-    hold,
-    PerforatedCircleState,
-    PerforatedStarState,
     Point2D,
-    Polygon,
-    Star,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import (
     VElement,
-    VertexRenderer,
+    hold,
+)
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
-
+from svan2d.primitive.state import (
+    PerforatedCircleState,
+    PerforatedStarState,
+)
+from svan2d.primitive.state.perforated import (
+    Astroid,
+    Circle,
+    Ellipse,
+    Polygon,
+    Star,
+)
+from svan2d.primitive.renderer import VertexRenderer
 configure_logging(level="INFO")
 
 FILL_COLOR = Color("#FDBE02")
 STROKE_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -86,7 +94,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

@@ -2,9 +2,9 @@
 
 import logging
 
-from svan2d.component.state.base import State
-from svan2d.component.vertex.vertex_contours import VertexContours
-from svan2d.component.vertex.vertex_loop import VertexLoop
+from svan2d.primitive.state.base import State
+from svan2d.primitive.vertex.vertex_contours import VertexContours
+from svan2d.primitive.vertex.vertex_loop import VertexLoop
 from svan2d.core.point2d import Points2D
 
 logger = logging.getLogger(__name__)

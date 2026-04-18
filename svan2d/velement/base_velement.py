@@ -17,7 +17,7 @@ class _Unset(Enum):
 _UNSET = _Unset.UNSET
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
 
 
 class BaseVElement(ABC):

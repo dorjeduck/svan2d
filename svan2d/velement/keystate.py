@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.morphing import MorphingConfig
 from svan2d.velement.transition import TransitionConfig
 

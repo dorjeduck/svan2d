@@ -1,20 +1,20 @@
-from dataclasses import replace
-
-from svan2d import (
-    CircleState,
+from svan2d.core import (
     Color,
-    ConverterType,
-    VElement,
-    VScene,
-    VSceneExporter,
     configure_logging,
 )
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import CircleState
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 START_COLOR = Color("#AA0000")
 END_COLOR = Color("#0AEF21")
-
 
 def main():
 
@@ -49,7 +49,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

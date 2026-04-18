@@ -16,7 +16,7 @@ sequences of KeyState objects. Use with VElement.segment():
 from dataclasses import replace
 from collections.abc import Callable
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
 

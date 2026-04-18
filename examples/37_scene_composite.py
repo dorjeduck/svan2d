@@ -1,26 +1,28 @@
-from dataclasses import replace
-
-from svan2d import (
-    CircleState,
+from svan2d.core import (
     Color,
-    ConverterType,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneComposite,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
     NumberFormat,
     NumberState,
     RectangleState,
     Rounding,
     TextState,
-    VElement,
-    VScene,
-    VSceneComposite,
-    VSceneExporter,
-    configure_logging,
 )
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 START_COLOR = Color("#AA0000")
 END_COLOR = Color("#FDBE02")
-
 
 def create_timer_scene(
     background_color: Color,
@@ -47,7 +49,6 @@ def create_timer_scene(
 
     return scene
 
-
 def create_scene(
     label: str,
     end_time: float,
@@ -70,7 +71,7 @@ def create_scene(
         fill_color=END_COLOR,
     )
 
-    scene.add_element(
+    scene = scene.add_element(
         VElement()
         .keystate(start_state, at=0)
         .keystate(end_state, at=end_time)
@@ -89,7 +90,6 @@ def create_scene(
     scene = scene.add_element(text)
 
     return scene
-
 
 def main():
     # Create scenes with different sizes and colors
@@ -127,7 +127,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=30,
     )
-
 
 if __name__ == "__main__":
     main()

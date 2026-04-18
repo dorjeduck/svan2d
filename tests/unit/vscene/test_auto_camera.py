@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from svan2d.component.state.circle import CircleState
+from svan2d.primitive.state.circle import CircleState
 from svan2d.core.point2d import Point2D
 from svan2d.velement import VElement
 from svan2d.vscene import VScene

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, cast
 
 import drawsvg as dw
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict

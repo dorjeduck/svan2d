@@ -4,10 +4,10 @@ import math
 
 import pytest
 
-from svan2d.component.state.bounds import state_bounds
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.component.state.text import TextState
+from svan2d.primitive.state.bounds import state_bounds
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
+from svan2d.primitive.state.text import TextState
 from svan2d.core.point2d import Point2D
 
 

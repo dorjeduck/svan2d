@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.component.vertex.vertex_contours import VertexContours
-from svan2d.component.vertex.vertex_loop import VertexLoop
+from svan2d.primitive.vertex.vertex_contours import VertexContours
+from svan2d.primitive.vertex.vertex_loop import VertexLoop
 from svan2d.core.point2d import Point2D, Points2D
 
 from .bezier_sampler import (

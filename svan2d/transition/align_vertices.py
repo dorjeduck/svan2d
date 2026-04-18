@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.vertex import VertexContours, VertexLoop
+from svan2d.primitive.state.base_vertex import VertexState
+from svan2d.primitive.vertex import VertexContours, VertexLoop
 from svan2d.config import ConfigKey, get_config
 
 from .mapping import ClusteringMapper, GreedyMapper, Mapper, SimpleMapper

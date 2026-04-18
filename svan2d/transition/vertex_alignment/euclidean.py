@@ -11,7 +11,7 @@ import inspect
 import logging
 import math
 
-from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
+from svan2d.primitive.vertex.vertex_utils import rotate_list, rotate_vertices
 from svan2d.core.point2d import Point2D, Points2D
 
 from .base import AlignmentContext, VertexAligner

@@ -2,8 +2,8 @@
 
 import pytest
 
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
 from svan2d.core.color import Color, RED, BLUE
 from svan2d.core.point2d import Point2D
 from svan2d.transition.segment.hold import hold

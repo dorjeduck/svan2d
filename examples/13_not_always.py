@@ -1,22 +1,24 @@
-from svan2d import (
+
+
+from svan2d.transition import easing
+from svan2d import layout
+from svan2d.core import (
     Color,
-    configure_logging,
-    ConverterType,
-    easing,
-    layout,
     Point2D,
-    TextRenderer,
-    TextState,
-    VElement,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
     VScene,
     VSceneExporter,
 )
-
+from svan2d.primitive.state import TextState
+from svan2d.primitive.renderer import TextRenderer
 configure_logging(level="INFO")
 
 START_COLOR = Color("#FDBE02")
 END_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -71,7 +73,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

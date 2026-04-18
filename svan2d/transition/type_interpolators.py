@@ -3,7 +3,7 @@
 from dataclasses import fields
 from typing import Any
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.core.scalar_functions import angle, lerp, step

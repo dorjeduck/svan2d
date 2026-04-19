@@ -281,7 +281,7 @@ class TestVElementBuilderAttributes:
         # Trigger build
         element.get_frame(0.0)
 
-        assert "fill_color" in element.attribute_keystates
+        assert element._attribute_keystates is not None and "fill_color" in element._attribute_keystates
 
 
 class TestVElementBuilderClipMask:

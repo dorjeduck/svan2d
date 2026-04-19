@@ -94,6 +94,10 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Interpolator (created on first render)
         self._interpolator: StateInterpolator | None = None
 
+        # frame_fn bypass slots (populated in _ensure_built)
+        self._frame_fn: Callable | None = None
+        self._frame_base_state: VElementGroupState | None = None
+
         # Cache last frame time for render_state (set by get_frame)
         self._last_frame_time: float = 0.0
 
@@ -137,6 +141,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             else self._attribute_keystates
         )
         new._interpolator = None
+        new._frame_fn = None
+        new._frame_base_state = None
         new._last_frame_time = 0.0
         return new
 
@@ -162,6 +168,13 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         if self._builder is None:
             return
 
+        # frame_fn bypasses the keystate/interpolation system entirely
+        if self._builder.frame_fn is not None:
+            self._frame_fn = self._builder.frame_fn
+            self._frame_base_state = self._builder.frame_base_state
+            self._builder = None
+            return
+
         # Auto-create identity keystates if group_easing is set but no keystates defined
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
@@ -169,7 +182,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             ###TODO ### new_keystates  = self._builder.keystates + ((identity, None, 0.0, None, None)) + (identity, None, 1.0, None, None)
 
         # Use builder mixin to finalize
-        keystates, attribute_keystates = self._finalize_build()
+        keystates, attribute_timelines = self._finalize_build()
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
@@ -180,11 +193,10 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         # Store keystates and create interpolator (no vertex aligner for groups)
         self._keystates_list = keystates
-        self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
             keystates=keystates,
-            attribute_keystates=attribute_keystates,
+            attribute_timelines=attribute_timelines,
             easing_resolver=easing_resolver,
             interpolation_engine=interpolation_engine,
             # No vertex_aligner - groups don't morph shapes
@@ -246,63 +258,36 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     ) -> dw.Group | None:
         """Render the element transform group at a specific animation time."""
         self._ensure_built()
-        assert self._interpolator is not None
 
         if self.group_easing is not None:
             t = self.group_easing(t)
 
-        group_state, _ = self._interpolator.get_state_at_time(t)
+        if self._frame_fn is not None:
+            group_state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            group_state, _ = self._interpolator.get_state_at_time(t)
 
         if group_state is None:
             return None
 
-        group_state = cast(VElementGroupState, group_state)
-
-        # Apply clip/mask if present
-        if self.clip_elements or self.mask_element:
-            group_state = self._apply_velement_clips(group_state, t)
-
-        transform_string = self._build_transform_string(group_state)
-
-        kwargs = {}
-        if transform_string:
-            kwargs["transform"] = transform_string
-        if group_state.opacity is not None and group_state.opacity != 1.0:
-            kwargs["opacity"] = group_state.opacity
-        group = dw.Group(**kwargs)
-
-        # Sort children by z_index (stable sort preserves insertion order for equal z_index)
-        def get_z_index(element: "VElement") -> float:
-            if hasattr(element, "get_frame"):
-                state = element.get_frame(t)
-                if state is not None:
-                    return state.z_index
-            return 0.0
-
-        sorted_children = sorted(self.elements, key=get_z_index)
-
-        for child in sorted_children:
-            child_element = None
-            if hasattr(child, "render_at_frame_time") and child.is_animatable():
-                child_element = child.render_at_frame_time(t)
-            else:
-                child_element = child.render()
-
-            if child_element is not None:
-                group.append(child_element)
-
-        return group
+        return self._render_group_state(cast(VElementGroupState, group_state), t)
 
     def get_frame(self, t: float) -> VElementGroupState | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
-        assert self._interpolator is not None
 
         if self.group_easing is not None:
             t = self.group_easing(t)
 
         self._last_frame_time = t  # Cache for render_state
-        state, _ = self._interpolator.get_state_at_time(t)
+
+        if self._frame_fn is not None:
+            state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            state, _ = self._interpolator.get_state_at_time(t)
+
         return cast(VElementGroupState, state) if state is not None else None
 
     def render_state(
@@ -312,12 +297,24 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         Uses _last_frame_time (set by get_frame) to render children at the correct time.
         """
-
         if state is None:
             return None
+        return self._render_group_state(state, self._last_frame_time)
 
-        t = self._last_frame_time
+    def is_animatable(self) -> bool:
+        """Check if this group can be animated."""
+        self._ensure_built()
+        if self._frame_fn is not None:
+            return True
+        return len(self._keystates_list) > 1 or bool(self._attribute_keystates)
 
+    def _render_group_state(
+        self, state: VElementGroupState, t: float
+    ) -> dw.Group | None:
+        """Build the dw.Group for a given group state at time t.
+
+        Shared by render_at_frame_time (interpolator and frame_fn paths) and render_state.
+        """
         # Apply clip/mask if present
         if self.clip_elements or self.mask_element:
             state = self._apply_velement_clips(state, t)
@@ -331,7 +328,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             kwargs["opacity"] = state.opacity
         group = dw.Group(**kwargs)
 
-        # Sort children by z_index
+        # Sort children by z_index (stable sort preserves insertion order for equal z_index)
         def get_z_index(element: "VElement") -> float:
             if hasattr(element, "get_frame"):
                 child_state = element.get_frame(t)
@@ -352,11 +349,6 @@ class VElementGroup(BaseVElement, KeystateBuilder):
                 group.append(child_element)
 
         return group
-
-    def is_animatable(self) -> bool:
-        """Check if this group can be animated."""
-        self._ensure_built()
-        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
 
     # =========================================================================
     # Internal helpers

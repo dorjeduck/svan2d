@@ -23,7 +23,7 @@ class AttributeTimelineResolver:
 
     def __init__(
         self,
-        attribute_keystates: dict[str, list],
+        attribute_timelines: dict[str, list],
         keystates: "KeyStates",
         easing_resolver: "EasingResolver",
         interpolation_engine: "InterpolationEngine",
@@ -31,12 +31,12 @@ class AttributeTimelineResolver:
         """Initialize the attribute timeline resolver.
 
         Args:
-            attribute_keystates: Per-field keystate timelines {field_name: [(t, value), ...]}
+            attribute_timelines: Parsed per-field timelines {field_name: [(t, value, easing), ...]}
             keystates: Main element keystates (for base state reference)
             easing_resolver: Easing resolver for fallback easing functions
             interpolation_engine: Interpolation engine for value interpolation
         """
-        self.attribute_keystates = attribute_keystates
+        self.attribute_timelines = attribute_timelines
         self.keystates = keystates
         self.easing_resolver = easing_resolver
         self.interpolation_engine = interpolation_engine
@@ -51,17 +51,17 @@ class AttributeTimelineResolver:
         Returns:
             State with field timeline values applied
         """
-        if not self.attribute_keystates:
+        if not self.attribute_timelines:
             return base_state
 
         updates = {}
-        for field_name in self.attribute_keystates.keys():
+        for field_name in self.attribute_timelines.keys():
             updates[field_name] = self.get_field_value_at_time(field_name, t)
 
         return replace(base_state, **updates)
 
     def get_field_value_at_time(self, field_name: str, t: float) -> Any:
-        """Get field value at time t from attribute_keystates.
+        """Get field value at time t from the parsed attribute timeline.
 
         Attribute timelines extend their first/last values to 0.0/1.0 to ensure
         attributes always have values when the element exists.
@@ -73,7 +73,7 @@ class AttributeTimelineResolver:
         Returns:
             Interpolated field value
         """
-        timeline = self.attribute_keystates[field_name]
+        timeline = self.attribute_timelines[field_name]
 
         if not timeline:
             raise ValueError(f"Empty timeline for field '{field_name}'")

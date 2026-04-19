@@ -65,7 +65,6 @@ class VElement(BaseVElement, KeystateBuilder):
         "_keystates_list",
         "_frame_fn",
         "_frame_base_state",
-        "attribute_keystates",
         "easing_resolver",
     )
 
@@ -191,7 +190,7 @@ class VElement(BaseVElement, KeystateBuilder):
             return
 
         # Use builder mixin to finalize
-        keystates, attribute_keystates = self._finalize_build()
+        keystates, attribute_timelines = self._finalize_build()
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
@@ -203,11 +202,10 @@ class VElement(BaseVElement, KeystateBuilder):
 
         # Store keystates and create interpolator
         self._keystates_list = keystates
-        self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
             keystates=keystates,
-            attribute_keystates=attribute_keystates,
+            attribute_timelines=attribute_timelines,
             easing_resolver=easing_resolver,
             interpolation_engine=interpolation_engine,
             vertex_aligner=VertexAligner(),
@@ -238,7 +236,11 @@ class VElement(BaseVElement, KeystateBuilder):
         extract the base state, then construct a new VElement with animation keystates.
         """
         if self._builder is None:
-            raise RuntimeError("Cannot access base_state after rendering has begun.")
+            raise RuntimeError(
+                "Cannot access base_state after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Call base_state before any of these."
+            )
         if not self._builder.keystates:
             raise RuntimeError("VElement has no keystates.")
         return self._builder.keystates[0].state
@@ -246,7 +248,11 @@ class VElement(BaseVElement, KeystateBuilder):
     def segment(self, segment_result: list[KeyState]) -> "VElement":
         """Add keystates from a segment function result. Returns new VElement."""
         if self._builder is None:
-            raise RuntimeError("Cannot modify VElement after rendering has begun.")
+            raise RuntimeError(
+                "Cannot modify VElement after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Apply .segment() before any of these."
+            )
 
         # Build new keystates tuple
         new_keystates = self._builder.keystates + tuple(
@@ -337,7 +343,7 @@ class VElement(BaseVElement, KeystateBuilder):
         self._ensure_built()
         if self._frame_fn is not None:
             return True
-        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
+        return len(self._keystates_list) > 1 or bool(self._attribute_keystates)
 
     # =========================================================================
     # Internal helpers

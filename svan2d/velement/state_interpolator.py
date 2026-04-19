@@ -33,7 +33,7 @@ class StateInterpolator:
     def __init__(
         self,
         keystates: "KeyStates",
-        attribute_keystates: dict[str, list],
+        attribute_timelines: dict[str, list],
         easing_resolver: "EasingResolver",
         interpolation_engine: "InterpolationEngine",
         vertex_aligner: VertexAligner | None = None,
@@ -43,14 +43,14 @@ class StateInterpolator:
 
         Args:
             keystates: List of keystates for the animation
-            attribute_keystates: Per-field keystate timelines
+            attribute_timelines: Parsed per-field timelines (output of parse_attribute_keystates)
             easing_resolver: Easing resolver for field easing
             interpolation_engine: Interpolation engine for state interpolation
             vertex_aligner: Optional vertex aligner for shape morphing (VElement only)
             get_vertex_buffer: Optional vertex buffer getter for optimized interpolation
         """
         self.keystates = keystates
-        self.attribute_keystates = attribute_keystates
+        self.attribute_timelines = attribute_timelines
         self.easing_resolver = easing_resolver
         self.interpolation_engine = interpolation_engine
         self.vertex_aligner = vertex_aligner
@@ -58,7 +58,7 @@ class StateInterpolator:
 
         # Create timeline resolver
         self.timeline_resolver = AttributeTimelineResolver(
-            attribute_keystates, keystates, easing_resolver, interpolation_engine
+            attribute_timelines, keystates, easing_resolver, interpolation_engine
         )
 
         # Cache for pre-computed changed fields per segment
@@ -226,7 +226,7 @@ class StateInterpolator:
                         )
 
                 # Get or compute changed fields for this segment (lazy field interpolation)
-                attr_fields = set(self.attribute_keystates.keys())
+                attr_fields = set(self.attribute_timelines.keys())
                 if i not in self._changed_fields_cache:
                     from svan2d.transition.interpolation_engine import (
                         InterpolationEngine,

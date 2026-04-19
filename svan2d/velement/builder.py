@@ -393,7 +393,11 @@ class KeystateBuilder:
             New instance with frame_fn set.
         """
         if self._builder is None:
-            raise RuntimeError("Cannot modify element after rendering has begun.")
+            raise RuntimeError(
+                "Cannot modify element after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Call frame_fn() before any of these."
+            )
 
         new_builder = BuilderState(
             keystates=self._builder.keystates,
@@ -534,10 +538,10 @@ class KeystateBuilder:
         )
 
     def _finalize_build(self) -> tuple[list[KeyState], dict]:
-        """Convert builder state to final keystates and attribute_keystates.
+        """Convert builder state to final keystates and attribute timelines.
 
         Returns:
-            Tuple of (keystates list, attribute_keystates dict)
+            Tuple of (keystates list, attribute_timelines dict)
 
         Raises:
             ValueError: If no keystates or orphan transition
@@ -611,15 +615,15 @@ class KeystateBuilder:
                 )
             )
 
-        # Parse attribute keystates
-        attribute_keystates = {}
+        # Parse attribute keystates into per-field timelines
+        attribute_timelines = {}
         if self._attribute_keystates:
             for field_name, timeline in self._attribute_keystates.items():
                 if not timeline:
                     raise ValueError(f"Empty timeline for field '{field_name}'")
-                attribute_keystates[field_name] = parse_attribute_keystates(timeline)
+                attribute_timelines[field_name] = parse_attribute_keystates(timeline)
 
         # Clear builder state
         self._builder = None
 
-        return parse_element_keystates(keystates), attribute_keystates  # type: ignore[arg-type]
+        return parse_element_keystates(keystates), attribute_timelines  # type: ignore[arg-type]

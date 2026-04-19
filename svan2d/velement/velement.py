@@ -335,6 +335,8 @@ class VElement(BaseVElement, KeystateBuilder):
     def is_animatable(self) -> bool:
         """Check if this element can be animated."""
         self._ensure_built()
+        if self._frame_fn is not None:
+            return True
         return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
 
     # =========================================================================

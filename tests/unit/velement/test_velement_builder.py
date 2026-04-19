@@ -631,3 +631,13 @@ class TestVElementConvenienceConstructor:
 
         with pytest.raises(RuntimeError, match="Cannot modify"):
             element.keystate(CircleState(radius=150))
+
+
+class TestFrameFnAnimatable:
+    """Tests for frame_fn path of VElement (Finding #3)."""
+
+    def test_frame_fn_element_is_animatable(self):
+        """A VElement constructed via frame_fn should report is_animatable() as True
+        without raising AttributeError on _keystates_list."""
+        elem = VElement().frame_fn(lambda base, t: None)
+        assert elem.is_animatable() is True

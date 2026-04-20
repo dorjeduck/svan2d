@@ -286,7 +286,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             state = self._frame_fn(self._frame_base_state, t)
         else:
             assert self._interpolator is not None
-            state, _ = self._interpolator.get_state_at_time(t)
+            state = self._interpolator.get_state_at_time(t)
 
         return cast(VElementGroupState, state) if state is not None else None
 

@@ -241,9 +241,10 @@ class TestVElementBuilderAttributes:
         # Trigger build
         element.get_frame(0.0)
 
-        # Check that attribute_easing was passed
-        assert element.easing_resolver.attribute_easing is not None
-        assert "pos" in element.easing_resolver.attribute_easing
+        # Check that attribute_easing was passed through to the interpolator
+        assert element._interpolator is not None
+        assert element._interpolator.easing_resolver.attribute_easing is not None
+        assert "pos" in element._interpolator.easing_resolver.attribute_easing
 
     def test_attributes_path(self):
         """Attributes should set element-level path"""

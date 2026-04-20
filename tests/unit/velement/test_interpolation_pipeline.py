@@ -707,35 +707,41 @@ class TestSegmentLookup:
 
 
 # ---------------------------------------------------------------------------
-# 10. Inbetween flag and VertexRenderer selection
+# 10. Aligned-contours propagation drives VertexRenderer selection
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
-class TestInbetweenFlag:
-    """Verify the inbetween flag is set during cross-type vertex morphing."""
+class TestAlignedContoursPropagation:
+    """Verify cross-type vertex morphs produce states carrying _aligned_contours.
 
-    def test_inbetween_flag_for_different_vertex_types(self):
-        """Morphing between different VertexState types should set inbetween=True."""
+    The interpolated state's _aligned_contours is the single signal used by
+    Renderer.render() (via _render_state_element) to dispatch to VertexRenderer,
+    so this invariant is what makes cross-type morph rendering work.
+    """
+
+    def test_aligned_contours_set_for_different_vertex_types(self):
+        """Morphing between different VertexState types yields a state with aligned contours."""
         star = StarState(pos=Point2D(0, 0), outer_radius=50, inner_radius=20)
         circle = CircleState(pos=Point2D(0, 0), radius=50)
 
         elem = VElement().keystate(star, at=0.0).keystate(circle, at=1.0)
 
-        # Access the interpolator directly to check the flag
         elem._ensure_built()
-        _, inbetween = elem._interpolator.get_state_at_time(0.5)
-        assert inbetween is True
+        state = elem._interpolator.get_state_at_time(0.5)
+        assert state is not None
+        assert state._aligned_contours is not None
 
-    def test_no_inbetween_for_same_type(self):
-        """Same VertexState types should not set inbetween."""
+    def test_no_aligned_contours_for_same_type_no_morph(self):
+        """Same VertexState types with no morph needed do not set aligned contours."""
         c1 = CircleState(pos=Point2D(0, 0), radius=50)
         c2 = CircleState(pos=Point2D(100, 0), radius=100)
 
         elem = VElement().keystate(c1, at=0.0).keystate(c2, at=1.0)
 
         elem._ensure_built()
-        _, inbetween = elem._interpolator.get_state_at_time(0.5)
-        assert inbetween is False
+        state = elem._interpolator.get_state_at_time(0.5)
+        assert state is not None
+        assert state._aligned_contours is None
 
 
 # ---------------------------------------------------------------------------

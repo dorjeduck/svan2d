@@ -86,7 +86,21 @@ class Renderer(ABC):
     def render(
         self, state: State, drawing: dw.Drawing | None = None
     ) -> dw.DrawingElement:
-        elem = self._render_core(state=state, drawing=drawing)
+        # Aligned contours are the signal of an in-progress vertex morph.
+        # Any renderer handed such a state must defer to VertexRenderer,
+        # which is the only one that consumes _aligned_contours.
+        aligned_contours = getattr(state, "_aligned_contours", None)
+        if aligned_contours is not None:
+            from svan2d.primitive.renderer.base_vertex import VertexRenderer
+
+            core_renderer: Renderer = (
+                self if isinstance(self, VertexRenderer) else VertexRenderer()
+            )
+            elem = core_renderer._render_core(
+                cast("VertexState", state), drawing=drawing
+            )
+        else:
+            elem = self._render_core(state=state, drawing=drawing)
 
         # Apply clipping/masking before transforms (only if drawing is available)
         if drawing is not None:

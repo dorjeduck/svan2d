@@ -35,27 +35,10 @@ class StateCollectionRenderer(Renderer):
         group = dw.Group()
 
         if state.states:
-            # Import here to avoid circular dependency
             from svan2d.primitive import get_renderer_instance_for_state
-            from svan2d.primitive.renderer.base_vertex import VertexRenderer
 
             for s in state.states:
-                # Check if this is a morph state (has _aligned_contours from interpolation)
-                if (
-                    hasattr(s, "_aligned_contours")
-                    and s._aligned_contours is not None
-                ):
-                    # This is an interpolated state between different shape types
-                    # Use VertexRenderer for smooth morphing
-                    renderer = VertexRenderer()
-                else:
-                    # Normal state - use its registered renderer
-                    renderer = get_renderer_instance_for_state(s)
-
-                # Render the shape (applies transforms, opacity, clips, etc.)
-                rendered = renderer.render(s, drawing)
-
-                # Add to collection group
-                group.append(rendered)
+                renderer = get_renderer_instance_for_state(s)
+                group.append(renderer.render(s, drawing))
 
         return group

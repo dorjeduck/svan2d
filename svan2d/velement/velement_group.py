@@ -266,7 +266,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             group_state = self._frame_fn(self._frame_base_state, t)
         else:
             assert self._interpolator is not None
-            group_state, _ = self._interpolator.get_state_at_time(t)
+            group_state = self._interpolator.get_state_at_time(t)
 
         if group_state is None:
             return None
@@ -370,8 +370,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         return replace(
             state,
-            mask_state=mask_state_at_t or state.mask_state,
-            clip_states=clip_states_at_t or state.clip_states,
+            mask_state=mask_state_at_t if mask_state_at_t is not None else state.mask_state,
+            clip_states=clip_states_at_t if clip_states_at_t is not None else state.clip_states,
         )
 
     def _build_transform_string(self, state: VElementGroupState) -> str:

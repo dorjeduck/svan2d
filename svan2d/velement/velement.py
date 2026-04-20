@@ -10,10 +10,8 @@ import drawsvg as dw
 from svan2d.primitive import (
     Renderer,
     State,
-    VertexState,
     get_renderer_instance_for_state,
 )
-from svan2d.primitive.renderer.base_vertex import VertexRenderer
 from svan2d.core.point2d import Point2D, Points2D
 from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateTuple, KeystateBuilder
@@ -53,7 +51,6 @@ class VElement(BaseVElement, KeystateBuilder):
 
     __slots__ = (
         "_renderer",
-        "clip_element",
         "mask_element",
         "clip_elements",
         "_vertex_buffer_cache",
@@ -65,7 +62,6 @@ class VElement(BaseVElement, KeystateBuilder):
         "_keystates_list",
         "_frame_fn",
         "_frame_base_state",
-        "easing_resolver",
     )
 
     def __init__(
@@ -83,7 +79,6 @@ class VElement(BaseVElement, KeystateBuilder):
         self._renderer = renderer
 
         # Clip/mask elements
-        self.clip_element: VElement | None = None
         self.mask_element: VElement | None = _mask_element
         self.clip_elements: list[VElement] = (
             _clip_elements if _clip_elements is not None else []
@@ -139,7 +134,6 @@ class VElement(BaseVElement, KeystateBuilder):
         """
         new = VElement.__new__(VElement)
         new._renderer = renderer if renderer is not None else self._renderer
-        new.clip_element = None
         new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new.clip_elements = (
             clip_elements if clip_elements is not None else self.clip_elements.copy()
@@ -197,7 +191,6 @@ class VElement(BaseVElement, KeystateBuilder):
         from svan2d.transition.interpolation_engine import InterpolationEngine
 
         easing_resolver = EasingResolver(self._attribute_easing)
-        self.easing_resolver = easing_resolver  # Keep for shape matching
         interpolation_engine = InterpolationEngine(easing_resolver)
 
         # Store keystates and create interpolator
@@ -289,27 +282,18 @@ class VElement(BaseVElement, KeystateBuilder):
 
         if self._frame_fn is not None:
             interpolated_state = self._frame_fn(self._frame_base_state, t)
-            inbetween = False
         else:
             assert self._interpolator is not None
-            interpolated_state, inbetween = self._interpolator.get_state_at_time(t)
+            interpolated_state = self._interpolator.get_state_at_time(t)
 
         if interpolated_state is None:
             return None
 
         # Apply clips/masks
-        if self.clip_element or self.mask_element or self.clip_elements:
+        if self.mask_element or self.clip_elements:
             interpolated_state = self._apply_velement_clips(interpolated_state, t)
 
-        # Select renderer — inbetween means mid-morph between vertex shapes,
-        # so force VertexRenderer regardless of the element's own renderer.
-        if inbetween:
-            renderer = VertexRenderer()
-        elif self._renderer:
-            renderer = self._renderer
-        else:
-            renderer = get_renderer_instance_for_state(interpolated_state)
-
+        renderer = self._renderer or get_renderer_instance_for_state(interpolated_state)
         return renderer.render(interpolated_state, drawing=drawing)
 
     def get_frame(self, t: float) -> State | None:
@@ -318,8 +302,7 @@ class VElement(BaseVElement, KeystateBuilder):
         if self._frame_fn is not None:
             return self._frame_fn(self._frame_base_state, t)
         assert self._interpolator is not None
-        state, _ = self._interpolator.get_state_at_time(t)
-        return state
+        return self._interpolator.get_state_at_time(t)
 
     def render_state(
         self, state: State, drawing: dw.Drawing | None = None
@@ -328,14 +311,7 @@ class VElement(BaseVElement, KeystateBuilder):
         if state is None:
             return None
 
-        # Check if this is a morph transition (VertexState with aligned contours)
-        if isinstance(state, VertexState) and state._aligned_contours is not None:
-            renderer = VertexRenderer()
-        elif self._renderer:
-            renderer = self._renderer
-        else:
-            renderer = get_renderer_instance_for_state(state)
-
+        renderer = self._renderer or get_renderer_instance_for_state(state)
         return renderer.render(state, drawing=drawing)
 
     def is_animatable(self) -> bool:
@@ -352,7 +328,6 @@ class VElement(BaseVElement, KeystateBuilder):
     def _apply_velement_clips(self, state: State, t: float) -> State:
         """Resolve VElement-level clip/mask references into state-level fields at time *t*."""
         mask_state_at_t = self.mask_element.get_frame(t) if self.mask_element else None
-        clip_state_at_t = self.clip_element.get_frame(t) if self.clip_element else None
         clip_states_at_t = None
 
         if self.clip_elements:
@@ -364,9 +339,8 @@ class VElement(BaseVElement, KeystateBuilder):
 
         return replace(
             state,
-            clip_state=clip_state_at_t or state.clip_state,
-            mask_state=mask_state_at_t or state.mask_state,
-            clip_states=clip_states_at_t or state.clip_states,
+            mask_state=mask_state_at_t if mask_state_at_t is not None else state.mask_state,
+            clip_states=clip_states_at_t if clip_states_at_t is not None else state.clip_states,
         )
 
     def _get_vertex_buffer(

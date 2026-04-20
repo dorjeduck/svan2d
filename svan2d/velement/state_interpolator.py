@@ -65,7 +65,7 @@ class StateInterpolator:
         # Key: segment_idx, Value: (changed_field_names, field_values)
         self._changed_fields_cache: dict[int, tuple] = {}
 
-    def get_state_at_time(self, t: float) -> tuple[State | None, bool]:
+    def get_state_at_time(self, t: float) -> State | None:
         """Get the interpolated state at a specific time.
 
         Returns None if t is outside the element's keystate timeline range.
@@ -76,10 +76,10 @@ class StateInterpolator:
             t: Animation time (0.0 to 1.0)
 
         Returns:
-            Tuple of (interpolated state or None, is_inbetween flag)
+            Interpolated state, or None if t is outside the timeline.
         """
         if not self.keystates:
-            return None, False
+            return None
 
         # Existence check: element only exists within its keystate range
         first_time = self.keystates[0].time
@@ -87,7 +87,7 @@ class StateInterpolator:
         assert first_time is not None and last_time is not None
 
         if t < first_time - TIME_EPSILON or t > last_time + TIME_EPSILON:
-            return None, False
+            return None
 
         # Handle edge case: at first keystate or single keystate
         if _times_equal(t, first_time) or len(self.keystates) == 1:
@@ -102,7 +102,7 @@ class StateInterpolator:
                 and len(self.keystates) > 1
             ):
                 if ks.render_index is None:
-                    return None, False  # Don't render
+                    return None  # Don't render
                 if ks.render_index == 1:
                     assert (
                         ks.outgoing_state is not None
@@ -110,7 +110,7 @@ class StateInterpolator:
                     base_state = ks.outgoing_state
                 else:
                     base_state = ks.state
-                return self.timeline_resolver.apply_field_timelines(base_state, t), False
+                return self.timeline_resolver.apply_field_timelines(base_state, t)
 
         # Find the segment containing time t using binary search
         num_keystates = len(self.keystates)
@@ -153,7 +153,7 @@ class StateInterpolator:
                 ks = self.keystates[idx]
                 if ks.time is not None and _times_equal(ks.time, t):
                     if ks.render_index is None:
-                        return None, False  # Don't render
+                        return None  # Don't render
                     if ks.render_index == 1:
                         assert (
                             ks.outgoing_state is not None
@@ -161,10 +161,7 @@ class StateInterpolator:
                         rendered_state = ks.outgoing_state
                     else:
                         rendered_state = ks.state
-                    return (
-                        self.timeline_resolver.apply_field_timelines(rendered_state, t),
-                        False,
-                    )
+                    return self.timeline_resolver.apply_field_timelines(rendered_state, t)
 
         # Process only the found segment
         for i in [segment_idx] if segment_idx < num_keystates - 1 else []:
@@ -189,10 +186,7 @@ class StateInterpolator:
             if t1 <= t <= t2:
                 # Handle coincident keystates
                 if _times_equal(t1, t2):
-                    return (
-                        self.timeline_resolver.apply_field_timelines(state2, t),
-                        False,
-                    )
+                    return self.timeline_resolver.apply_field_timelines(state2, t)
 
                 # Interpolate between keystates
                 segment_t = (t - t1) / (t2 - t1)
@@ -278,24 +272,12 @@ class StateInterpolator:
                     ),
                 )
 
-                # Determine if this is an "inbetween" frame (different state types morphing)
-                is_inbetween = (
-                    type(state1) != type(state2)
-                    and isinstance(state1, VertexState)
-                    and isinstance(state2, VertexState)
-                    and t != 0
-                    and t != 1
-                )
-
-                return (
-                    self.timeline_resolver.apply_field_timelines(interpolated_state, t),
-                    is_inbetween,
-                )
+                return self.timeline_resolver.apply_field_timelines(interpolated_state, t)
 
         # At or past final keystate
         final_ks = self.keystates[-1]
         if final_ks.render_index is None:
-            return None, False  # Don't render
+            return None  # Don't render
         if final_ks.render_index == 1:
             assert (
                 final_ks.outgoing_state is not None
@@ -303,4 +285,4 @@ class StateInterpolator:
             final_state = final_ks.outgoing_state
         else:
             final_state = final_ks.state
-        return self.timeline_resolver.apply_field_timelines(final_state, t), False
+        return self.timeline_resolver.apply_field_timelines(final_state, t)

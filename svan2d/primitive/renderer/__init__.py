@@ -19,6 +19,7 @@ from .infinity import InfinityRenderer
 from .line import LineRenderer
 from .number import NumberRenderer
 from .path import PathRenderer
+from .path_band import PathBandRenderer
 from .path_and_text_variants import PathAndTextVariantsRenderer
 from .path_text import PathTextRenderer
 from .path_variants import PathVariantsRenderer
@@ -56,6 +57,7 @@ __all__ = [
     "NumberRenderer",
     "PathAndTextVariantsRenderer",
     "PathRenderer",
+    "PathBandRenderer",
     "PerforatedPrimitiveRenderer",
     "PointRenderer",
     "PathTextRenderer",

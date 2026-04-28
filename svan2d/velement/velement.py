@@ -25,6 +25,31 @@ if TYPE_CHECKING:
     from svan2d.velement.morphing import MorphingConfig
 
 
+def _is_cache_safe(state: State) -> bool:
+    """True when a rendered element for *state* can be reused across drawings.
+
+    Clipping, masking, filters, and fill/stroke patterns/gradients are added
+    as <defs> on the specific Drawing passed to render(), and the rendered
+    element refers to those defs by ID. Sharing such an element with a
+    different Drawing breaks the reference, so those states are never cached.
+    """
+    if state.mask_state is not None or state.mask_states is not None:
+        return False
+    if state.clip_state is not None or state.clip_states is not None:
+        return False
+    if getattr(state, "filter", None) is not None:
+        return False
+    if getattr(state, "fill_pattern", None) is not None:
+        return False
+    if getattr(state, "fill_gradient", None) is not None:
+        return False
+    if getattr(state, "stroke_pattern", None) is not None:
+        return False
+    if getattr(state, "stroke_gradient", None) is not None:
+        return False
+    return True
+
+
 class VElement(BaseVElement, KeystateBuilder):
     """Central object that combines a renderer with its state(s).
 
@@ -62,6 +87,10 @@ class VElement(BaseVElement, KeystateBuilder):
         "_keystates_list",
         "_frame_fn",
         "_frame_base_state",
+        "_cache_frame_time",
+        "_cache_state",
+        "_cache_rendered_state",
+        "_cache_rendered",
     )
 
     def __init__(
@@ -105,6 +134,14 @@ class VElement(BaseVElement, KeystateBuilder):
         self._interpolator: StateInterpolator | None = None
         self._frame_fn: Callable | None = None
         self._frame_base_state = None
+
+        # Per-frame caches. Hit when the same frame_time is requested twice
+        # (e.g. get_frame + render_state in the same VScene pass) or when a
+        # static element's state is identical to the previous frame.
+        self._cache_frame_time: float | None = None
+        self._cache_state: State | None = None
+        self._cache_rendered_state: State | None = None
+        self._cache_rendered: dw.DrawingElement | None = None
 
         # Handle static state convenience parameter
         if state is not None:
@@ -152,6 +189,10 @@ class VElement(BaseVElement, KeystateBuilder):
         new._interpolator = None
         new._frame_fn = None
         new._frame_base_state = None
+        new._cache_frame_time = None
+        new._cache_state = None
+        new._cache_rendered_state = None
+        new._cache_rendered = None
         return new
 
     def _replace_builder(self, new_builder: BuilderState) -> "VElement":
@@ -299,20 +340,50 @@ class VElement(BaseVElement, KeystateBuilder):
     def get_frame(self, t: float) -> State | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
+        # Intra-frame cache: same t requested twice in one scene pass reuses
+        # the previously computed state instead of re-running interpolation.
+        if self._cache_frame_time is not None and self._cache_frame_time == t:
+            return self._cache_state
         if self._frame_fn is not None:
-            return self._frame_fn(self._frame_base_state, t)
-        assert self._interpolator is not None
-        return self._interpolator.get_state_at_time(t)
+            state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            state = self._interpolator.get_state_at_time(t)
+        self._cache_frame_time = t
+        self._cache_state = state
+        return state
 
     def render_state(
         self, state: State, drawing: dw.Drawing | None = None
     ) -> dw.DrawingElement | None:
-        """Render a pre-computed state directly (avoids re-interpolation)."""
+        """Render a pre-computed state directly (avoids re-interpolation).
+
+        Cross-frame cache: if *state* is the same instance as the previously
+        rendered state, or compares equal, the cached rendered element is
+        returned. Skipped for states that produce per-drawing defs (clip/mask/
+        filter/pattern/gradient), since those reference IDs on a specific
+        drawing's defs table and can't be safely shared across drawings.
+        """
         if state is None:
             return None
 
+        cached_prev = self._cache_rendered_state
+        cached_rendered = self._cache_rendered
+        if cached_rendered is not None and cached_prev is not None:
+            if (state is cached_prev or state == cached_prev) and _is_cache_safe(state):
+                return cached_rendered
+
         renderer = self._renderer or get_renderer_instance_for_state(state)
-        return renderer.render(state, drawing=drawing)
+        rendered = renderer.render(state, drawing=drawing)
+
+        if _is_cache_safe(state):
+            self._cache_rendered_state = state
+            self._cache_rendered = rendered
+        else:
+            self._cache_rendered_state = None
+            self._cache_rendered = None
+
+        return rendered
 
     def is_animatable(self) -> bool:
         """Check if this element can be animated."""

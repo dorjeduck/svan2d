@@ -18,6 +18,9 @@ class GaussianBlurFilter(Filter):
         std_deviation: Standard deviation of the blur (higher = more blur)
         std_deviation_x: Optional separate x-axis blur (overrides std_deviation)
         std_deviation_y: Optional separate y-axis blur (overrides std_deviation)
+        x, y, width, height: Optional SVG filter region (SVG accepts px or
+            percentage strings like "-100%"). Defaults expand from SVG's
+            120% region — enlarge for large blurs that would otherwise clip.
 
     Example:
         blur = GaussianBlurFilter(std_deviation=5.0)
@@ -28,6 +31,10 @@ class GaussianBlurFilter(Filter):
     std_deviation: float = 0.0
     std_deviation_x: float | None = None
     std_deviation_y: float | None = None
+    x: str | float | None = None
+    y: str | float | None = None
+    width: str | float | None = None
+    height: str | float | None = None
 
     def __post_init__(self):
         if self.std_deviation < 0:
@@ -93,8 +100,12 @@ class GaussianBlurFilter(Filter):
         else:
             std_deviation_y = other.std_deviation_y
 
+        # Region fields are not interpolated — keep the dominant side's.
+        region_src = self if t < 0.5 else other
         return GaussianBlurFilter(
             std_deviation=std_deviation,
             std_deviation_x=std_deviation_x,
             std_deviation_y=std_deviation_y,
+            x=region_src.x, y=region_src.y,
+            width=region_src.width, height=region_src.height,
         )

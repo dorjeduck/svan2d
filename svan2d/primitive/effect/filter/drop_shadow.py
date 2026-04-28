@@ -23,6 +23,9 @@ class DropShadowFilter(Filter):
         std_deviation: Blur amount for the shadow
         color: Shadow color (default: semi-transparent black)
         opacity: Shadow opacity (0-1)
+        x, y, width, height: Optional SVG filter region (SVG accepts px or
+            percentage strings like "-100%"). Defaults expand from SVG's
+            120% region — enlarge for large blurs that would otherwise clip.
 
     Example:
         from svan2d.core import Color
@@ -34,6 +37,10 @@ class DropShadowFilter(Filter):
     std_deviation: float = 2.0
     color: Color | None = None
     opacity: float = 1.0
+    x: str | float | None = None
+    y: str | float | None = None
+    width: str | float | None = None
+    height: str | float | None = None
 
     def __post_init__(self):
         if self.std_deviation < 0:
@@ -78,6 +85,11 @@ class DropShadowFilter(Filter):
         other_color = other.color if other.color else default_color
         color = self_color.interpolate(other_color, t)
 
+        # Region fields are not interpolated — keep whichever side's value
+        # is dominant at t, matching the step behavior used elsewhere.
+        region_src = self if t < 0.5 else other
         return DropShadowFilter(
-            dx=dx, dy=dy, std_deviation=std_deviation, color=color, opacity=opacity
+            dx=dx, dy=dy, std_deviation=std_deviation, color=color, opacity=opacity,
+            x=region_src.x, y=region_src.y,
+            width=region_src.width, height=region_src.height,
         )

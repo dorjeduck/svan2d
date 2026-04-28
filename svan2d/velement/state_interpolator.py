@@ -65,6 +65,43 @@ class StateInterpolator:
         # Key: segment_idx, Value: (changed_field_names, field_values)
         self._changed_fields_cache: dict[int, tuple] = {}
 
+        # Per-segment "endpoints are equal" flag. When True, interpolation is a
+        # no-op and we can return the endpoint state directly (after field
+        # timelines), skipping the heavy create_eased_state path.
+        self._segment_is_constant: list[bool] = self._compute_segment_constants()
+
+    def _compute_segment_constants(self) -> list[bool]:
+        """Precompute which segments have identical endpoint states.
+
+        Frozen State dataclass `__eq__` is field-wise and cheap. When both
+        endpoints are equal, create_eased_state would return the same state,
+        so we can skip interpolation entirely at runtime.
+
+        The fast path is disabled when the segment carries custom interpolation
+        overrides (``interpolation_dict`` or ``state_interpolation``), because
+        those callbacks are contractually called on every frame regardless of
+        whether the endpoint values happen to be equal.
+        """
+        n = len(self.keystates)
+        if n < 2:
+            return []
+        result = [False] * (n - 1)
+        for i in range(n - 1):
+            ks1 = self.keystates[i]
+            ks2 = self.keystates[i + 1]
+            tc = ks1.transition_config
+            if tc is not None and (
+                tc.interpolation_dict or tc.state_interpolation is not None
+            ):
+                continue
+            state1 = ks1.outgoing_state if ks1.outgoing_state is not None else ks1.state
+            state2 = ks2.state
+            try:
+                result[i] = state1 == state2
+            except Exception:
+                result[i] = False
+        return result
+
     def get_state_at_time(self, t: float) -> State | None:
         """Get the interpolated state at a specific time.
 
@@ -174,6 +211,11 @@ class StateInterpolator:
             state1 = ks1.outgoing_state or ks1.state
             state2 = ks2.state
             assert t1 is not None and t2 is not None
+
+            # Constant-segment fast path: endpoints equal → interpolation is a
+            # no-op. Skip vertex alignment and create_eased_state entirely.
+            if self._segment_is_constant[i]:
+                return self.timeline_resolver.apply_field_timelines(state1, t)
 
             # Static preprocessing for vertex alignment (if aligner provided)
             if self.vertex_aligner:

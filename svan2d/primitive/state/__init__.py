@@ -21,6 +21,7 @@ from .infinity import InfinityState
 from .line import LineState
 from .number import NumberFormat, NumberState, Rounding
 from .path import PathState
+from .path_band import PathBandState
 from .path_and_text_variants import PathAndTextVariantsState
 from .path_text import PathTextState
 from .path_variants import PathVariantsState
@@ -77,6 +78,7 @@ __all__ = [
     "NumberState",
     "Rounding",
     "PathState",
+    "PathBandState",
     "PointState",
     "PathVariantsState",
     "PerforatedVertexState",

@@ -10,6 +10,7 @@ from .displacement_map import DisplacementMapFilter
 from .drop_shadow import DropShadowFilter
 from .flood import FloodFilter
 from .gaussian_blur import GaussianBlurFilter
+from .glow import GlowFilter
 from .image import ImageFilter
 from .merge_node import MergeNodeFilter
 from .morphology import MorphologyFilter
@@ -34,4 +35,5 @@ __all__ = [
     "TileFilter",
     "ImageFilter",
     "MergeNodeFilter",
+    "GlowFilter",
 ]

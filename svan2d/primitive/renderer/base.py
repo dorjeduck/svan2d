@@ -310,8 +310,16 @@ class Renderer(ABC):
         # Generate unique ID
         filter_id = f"filter-{uuid.uuid4().hex[:8]}"
 
-        # Create Filter container
-        filter_elem = dw.Filter(id=filter_id)
+        # Create Filter container. If the filter object exposes region fields
+        # (x, y, width, height), forward them so the SVG filter region can be
+        # expanded beyond the default 120% of the element's bounding box —
+        # necessary for large blurs / glows that would otherwise get clipped.
+        filter_kwargs: dict = {"id": filter_id}
+        for name in ("x", "y", "width", "height"):
+            val = getattr(filter_obj, name, None)
+            if val is not None:
+                filter_kwargs[name] = val
+        filter_elem = dw.Filter(**filter_kwargs)
 
         # Handle composite filters (multiple filter items)
         from svan2d.primitive.effect.filter import CompositeFilter
@@ -320,6 +328,10 @@ class Renderer(ABC):
             for sub_filter in filter_obj.filters:
                 filter_item = sub_filter.to_drawsvg()
                 filter_elem.append(filter_item)
+        elif hasattr(filter_obj, "to_drawsvg_items"):
+            # Multi-primitive filter (e.g. GlowFilter = blur + matrix + merge)
+            for item in filter_obj.to_drawsvg_items():
+                filter_elem.append(item)
         else:
             # Single filter
             filter_item = filter_obj.to_drawsvg()

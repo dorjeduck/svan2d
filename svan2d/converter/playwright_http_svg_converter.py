@@ -224,7 +224,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
                         }
                     )
                     parts = " ".join(f"{k}={v}ms" for k, v in server_timings.items())
-                    logger.info(
+                    logger.debug(
                         f"{type_.upper()} {output_path} client={elapsed*1000:.1f}ms "
                         f"payload={payload_kb}KB server[{parts}]"
                     )

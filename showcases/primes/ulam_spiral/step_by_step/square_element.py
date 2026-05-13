@@ -1,9 +1,12 @@
 from dataclasses import replace
 
-from svan2d.component.state import SquareState, TextPathState
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement import VElement
+from svan2d import (
+    Point2D,
+    SquareState,
+    TextPathState,
+    VElement,
+    easing,
+)
 
 from config import COLOR_TEXT, FONT_PATH, GAP, SQUARE_SIZE
 from utils import get_color, get_spiral_position

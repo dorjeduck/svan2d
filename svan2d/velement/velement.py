@@ -3,20 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable
 
 import drawsvg as dw
 
-from svan2d.component import (
+from svan2d.primitive import (
     Renderer,
     State,
-    VertexState,
     get_renderer_instance_for_state,
 )
-from svan2d.component.renderer.base_vertex import VertexRenderer
 from svan2d.core.point2d import Point2D, Points2D
-from svan2d.velement.base_velement import BaseVElement
-from svan2d.velement.builder import BuilderState, KeystateBuilder
+from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
+from svan2d.velement.builder import BuilderState, KeystateTuple, KeystateBuilder
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.transition import EasingFunction
@@ -25,6 +23,31 @@ from svan2d.velement.vertex_alignment import VertexAligner
 
 if TYPE_CHECKING:
     from svan2d.velement.morphing import MorphingConfig
+
+
+def is_cache_safe(state: State) -> bool:
+    """True when a rendered element for *state* can be reused across drawings.
+
+    Clipping, masking, filters, and fill/stroke patterns/gradients are added
+    as <defs> on the specific Drawing passed to render(), and the rendered
+    element refers to those defs by ID. Sharing such an element with a
+    different Drawing breaks the reference, so those states are never cached.
+    """
+    if state.mask_state is not None or state.mask_states is not None:
+        return False
+    if state.clip_state is not None or state.clip_states is not None:
+        return False
+    if getattr(state, "filter", None) is not None:
+        return False
+    if getattr(state, "fill_pattern", None) is not None:
+        return False
+    if getattr(state, "fill_gradient", None) is not None:
+        return False
+    if getattr(state, "stroke_pattern", None) is not None:
+        return False
+    if getattr(state, "stroke_gradient", None) is not None:
+        return False
+    return True
 
 
 class VElement(BaseVElement, KeystateBuilder):
@@ -51,9 +74,12 @@ class VElement(BaseVElement, KeystateBuilder):
         element = VElement().keystates([s1, s2, s3])
     """
 
+    # Class-level marker checked by VScene to gate the frozen-render fast path
+    # without colliding with MagicMock's auto-attribute behavior in tests.
+    _HAS_FREEZE_CACHE = True
+
     __slots__ = (
         "_renderer",
-        "clip_element",
         "mask_element",
         "clip_elements",
         "_vertex_buffer_cache",
@@ -63,46 +89,70 @@ class VElement(BaseVElement, KeystateBuilder):
         "_attribute_keystates",
         "_interpolator",
         "_keystates_list",
-        "attribute_keystates",
-        "easing_resolver",
+        "_frame_fn",
+        "_frame_base_state",
+        "_cache_frame_time",
+        "_cache_state",
+        "_cache_rendered_state",
+        "_cache_rendered",
+        "_frozen_render",
+        "_frozen_state",
     )
 
     def __init__(
         self,
-        renderer: Optional[Renderer] = None,
+        renderer: Renderer | None = None,
         state: State | None = None,
         *,
         # Private params for _replace - don't use directly
-        _builder: Optional[BuilderState] = None,
-        _clip_elements: Optional[List["VElement"]] = None,
-        _mask_element: Optional["VElement"] = None,
-        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        _builder: BuilderState | None = None,
+        _clip_elements: list["VElement"] | None = None,
+        _mask_element: "VElement | None" = None,
+        _attribute_easing: dict[str, EasingFunction] | None = None,
+        _attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> None:
         self._renderer = renderer
 
         # Clip/mask elements
-        self.clip_element: Optional[VElement] = None
-        self.mask_element: Optional[VElement] = _mask_element
-        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
+        self.mask_element: VElement | None = _mask_element
+        self.clip_elements: list[VElement] = (
+            _clip_elements if _clip_elements is not None else []
+        )
 
         # Vertex buffer cache for optimized interpolation
-        self._vertex_buffer_cache: Dict[
-            Tuple[int, int], Tuple[Points2D, List[Points2D]]
+        self._vertex_buffer_cache: dict[
+            tuple[int, int], tuple[Points2D, list[Points2D]]
         ] = {}
 
         # Shape list matching cache for multi-shape morphing
-        self._shape_list_cache: Dict[
-            Tuple[str, int], Tuple[List[State], List[State]]
+        self._shape_list_cache: dict[
+            tuple[str, int], tuple[list[State], list[State]]
         ] = {}
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
-        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
+        self._builder: BuilderState | None = (
+            _builder if _builder is not None else BuilderState()
+        )
+        self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
+        self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
         # Interpolator (created on first render)
-        self._interpolator: Optional[StateInterpolator] = None
+        self._interpolator: StateInterpolator | None = None
+        self._frame_fn: Callable | None = None
+        self._frame_base_state = None
+
+        # Per-frame caches. Hit when the same frame_time is requested twice
+        # (e.g. get_frame + render_state in the same VScene pass) or when a
+        # static element's state is identical to the previous frame.
+        self._cache_frame_time: float | None = None
+        self._cache_state: State | None = None
+        self._cache_rendered_state: State | None = None
+        self._cache_rendered: dw.DrawingElement | None = None
+
+        # Frozen render: set once an element produces a state with is_final=True
+        # and remains valid for every subsequent frame. Cleared by _replace.
+        self._frozen_render: dw.DrawingElement | None = None
+        self._frozen_state: State | None = None
 
         # Handle static state convenience parameter
         if state is not None:
@@ -118,26 +168,44 @@ class VElement(BaseVElement, KeystateBuilder):
     def _replace(
         self,
         *,
-        renderer: Optional[Renderer] = None,
-        clip_elements: Optional[List["VElement"]] = None,
-        mask_element: Optional["VElement"] = ...,  # type: ignore[assignment]
-        builder: Optional[BuilderState] = None,
-        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        renderer: Renderer | None = None,
+        clip_elements: list["VElement"] | None = None,
+        mask_element: VElement | None | _Unset = _UNSET,
+        builder: BuilderState | None = None,
+        attribute_easing: dict[str, EasingFunction] | None = None,
+        attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> "VElement":
-        """Return a new VElement with specified attributes replaced."""
-        # Use sentinel value for mask_element to distinguish None from "not provided"
+        """Return a new VElement with specified attributes replaced.
+
+        ``mask_element`` uses ``_UNSET`` sentinel so that explicit ``None``
+        (remove mask) is distinguishable from "not provided".
+        """
         new = VElement.__new__(VElement)
         new._renderer = renderer if renderer is not None else self._renderer
-        new.clip_element = None
-        new.mask_element = self.mask_element if mask_element is ... else mask_element
-        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
+        new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
+        new.clip_elements = (
+            clip_elements if clip_elements is not None else self.clip_elements.copy()
+        )
         new._vertex_buffer_cache = {}
         new._shape_list_cache = {}
         new._builder = builder if builder is not None else self._builder
-        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
-        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._attribute_easing = (
+            attribute_easing if attribute_easing is not None else self._attribute_easing
+        )
+        new._attribute_keystates = (
+            attribute_keystates
+            if attribute_keystates is not None
+            else self._attribute_keystates
+        )
         new._interpolator = None
+        new._frame_fn = None
+        new._frame_base_state = None
+        new._cache_frame_time = None
+        new._cache_state = None
+        new._cache_rendered_state = None
+        new._cache_rendered = None
+        new._frozen_render = None
+        new._frozen_state = None
         return new
 
     def _replace_builder(self, new_builder: BuilderState) -> "VElement":
@@ -147,8 +215,8 @@ class VElement(BaseVElement, KeystateBuilder):
     def _replace_attributes(
         self,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> "VElement":
         """Return a new VElement with updated builder and attribute settings."""
         return self._replace(
@@ -158,30 +226,33 @@ class VElement(BaseVElement, KeystateBuilder):
         )
 
     def _ensure_built(self) -> None:
-        """Convert builder state to final keystates if not already done."""
+        """Lazy-initialize the interpolation pipeline from builder state."""
         if self._builder is None:
             return
 
+        # frame_fn bypasses the keystate/interpolation system entirely
+        if self._builder.frame_fn is not None:
+            self._frame_fn = self._builder.frame_fn
+            self._frame_base_state = self._builder.frame_base_state
+            self._builder = None
+            return
+
         # Use builder mixin to finalize
-        keystates, attribute_keystates = self._finalize_build()
+        keystates, attribute_timelines = self._finalize_build()
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
         from svan2d.transition.interpolation_engine import InterpolationEngine
-        from svan2d.transition.path_resolver import PathResolver
 
         easing_resolver = EasingResolver(self._attribute_easing)
-        self.easing_resolver = easing_resolver  # Keep for shape matching
-        path_resolver = PathResolver()
-        interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
+        interpolation_engine = InterpolationEngine(easing_resolver)
 
         # Store keystates and create interpolator
         self._keystates_list = keystates
-        self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
             keystates=keystates,
-            attribute_keystates=attribute_keystates,
+            attribute_timelines=attribute_timelines,
             easing_resolver=easing_resolver,
             interpolation_engine=interpolation_engine,
             vertex_aligner=VertexAligner(),
@@ -204,21 +275,48 @@ class VElement(BaseVElement, KeystateBuilder):
         """Set the mask element. Returns new VElement."""
         return self._replace(mask_element=velement)
 
-    def segment(self, segment_result: List[KeyState]) -> "VElement":
+    @property
+    def base_state(self) -> State:
+        """Return the state of the first keystate.
+
+        Useful when rebuilding a still-image VElement as an animated one —
+        extract the base state, then construct a new VElement with animation keystates.
+        """
+        if self._builder is None:
+            raise RuntimeError(
+                "Cannot access base_state after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Call base_state before any of these."
+            )
+        if not self._builder.keystates:
+            raise RuntimeError("VElement has no keystates.")
+        return self._builder.keystates[0].state
+
+    def segment(self, segment_result: list[KeyState]) -> "VElement":
         """Add keystates from a segment function result. Returns new VElement."""
         if self._builder is None:
-            raise RuntimeError("Cannot modify VElement after rendering has begun.")
+            raise RuntimeError(
+                "Cannot modify VElement after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Apply .segment() before any of these."
+            )
 
         # Build new keystates tuple
         new_keystates = self._builder.keystates + tuple(
-            (ks.state, ks.outgoing_state, ks.time, ks.transition_config, ks.render_index)
+            KeystateTuple(
+                ks.state,
+                ks.outgoing_state,
+                ks.time,
+                ks.transition_config,
+                ks.render_index,
+            )
             for ks in segment_result
         )
         new_builder = BuilderState(
-            keystates=new_keystates,
+            keystates=new_keystates,  # type: ignore
             pending_transition=self._builder.pending_transition,
             default_transition=self._builder.default_transition,
-            curve_dict=self._builder.curve_dict,
+            interpolation_dict=self._builder.interpolation_dict,
         )
         return self._replace(builder=new_builder)
 
@@ -226,93 +324,116 @@ class VElement(BaseVElement, KeystateBuilder):
     # Rendering
     # =========================================================================
 
-    def render(self) -> Optional[dw.DrawingElement]:
+    def render(self) -> dw.DrawingElement | None:
         """Render the element in its initial state."""
         return self.render_at_frame_time(0.0)
 
     def render_at_frame_time(
-        self, t: float, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.DrawingElement]:
+        self, t: float, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement | None:
         """Render the element at a specific animation time."""
-        self._ensure_built()
-        assert self._interpolator is not None
+        if self._frozen_render is not None:
+            return self._frozen_render
 
-        interpolated_state, inbetween = self._interpolator.get_state_at_time(t)
+        self._ensure_built()
+
+        if self._frame_fn is not None:
+            interpolated_state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            interpolated_state = self._interpolator.get_state_at_time(t)
 
         if interpolated_state is None:
             return None
 
         # Apply clips/masks
-        if self.clip_element or self.mask_element or self.clip_elements:
+        if self.mask_element or self.clip_elements:
             interpolated_state = self._apply_velement_clips(interpolated_state, t)
 
-        # Select renderer
-        if inbetween:
-            renderer = VertexRenderer()
-        elif self._renderer:
-            renderer = self._renderer
-        else:
-            renderer = get_renderer_instance_for_state(interpolated_state)
-
+        renderer = self._renderer or get_renderer_instance_for_state(interpolated_state)
         return renderer.render(interpolated_state, drawing=drawing)
 
-    def get_frame(self, t: float) -> Optional[State]:
+    def get_frame(self, t: float) -> State | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
-        assert self._interpolator is not None
-        state, _ = self._interpolator.get_state_at_time(t)
+        # Intra-frame cache: same t requested twice in one scene pass reuses
+        # the previously computed state instead of re-running interpolation.
+        if self._cache_frame_time is not None and self._cache_frame_time == t:
+            return self._cache_state
+        if self._frame_fn is not None:
+            state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            state = self._interpolator.get_state_at_time(t)
+        self._cache_frame_time = t
+        self._cache_state = state
         return state
 
     def render_state(
-        self, state: State, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.DrawingElement]:
-        """Render a pre-computed state directly (avoids re-interpolation)."""
+        self, state: State, drawing: dw.Drawing | None = None
+    ) -> dw.DrawingElement | None:
+        """Render a pre-computed state directly (avoids re-interpolation).
+
+        Cross-frame cache: if *state* is the same instance as the previously
+        rendered state, or compares equal, the cached rendered element is
+        returned. Skipped for states that produce per-drawing defs (clip/mask/
+        filter/pattern/gradient), since those reference IDs on a specific
+        drawing's defs table and can't be safely shared across drawings.
+        """
         if state is None:
             return None
 
-        # Check if this is a morph transition (VertexState with aligned contours)
-        if isinstance(state, VertexState) and state._aligned_contours is not None:
-            renderer = VertexRenderer()
-        elif self._renderer:
-            renderer = self._renderer
-        else:
-            renderer = get_renderer_instance_for_state(state)
+        cached_prev = self._cache_rendered_state
+        cached_rendered = self._cache_rendered
+        if cached_rendered is not None and cached_prev is not None:
+            if (state is cached_prev or state == cached_prev) and is_cache_safe(state):
+                return cached_rendered
 
-        return renderer.render(state, drawing=drawing)
+        renderer = self._renderer or get_renderer_instance_for_state(state)
+        rendered = renderer.render(state, drawing=drawing)
+
+        if is_cache_safe(state):
+            self._cache_rendered_state = state
+            self._cache_rendered = rendered
+        else:
+            self._cache_rendered_state = None
+            self._cache_rendered = None
+
+        return rendered
 
     def is_animatable(self) -> bool:
         """Check if this element can be animated."""
         self._ensure_built()
-        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
+        if self._frame_fn is not None:
+            return True
+        return len(self._keystates_list) > 1 or bool(self._attribute_keystates)
 
     # =========================================================================
     # Internal helpers
     # =========================================================================
 
     def _apply_velement_clips(self, state: State, t: float) -> State:
-        """Inject VElement-based clips into state."""
+        """Resolve VElement-level clip/mask references into state-level fields at time *t*."""
         mask_state_at_t = self.mask_element.get_frame(t) if self.mask_element else None
-        clip_state_at_t = self.clip_element.get_frame(t) if self.clip_element else None
         clip_states_at_t = None
 
         if self.clip_elements:
             clip_states_at_t = [
-                elem.get_frame(t)
-                for elem in self.clip_elements
-                if elem.get_frame(t) is not None
+                frame
+                for frame in (elem.get_frame(t) for elem in self.clip_elements)
+                if frame is not None
             ]
 
         return replace(
             state,
-            clip_state=clip_state_at_t or state.clip_state,
-            mask_state=mask_state_at_t or state.mask_state,
-            clip_states=clip_states_at_t or state.clip_states,
+            mask_state=mask_state_at_t if mask_state_at_t is not None else state.mask_state,
+            clip_states=clip_states_at_t if clip_states_at_t is not None else state.clip_states,
         )
 
     def _get_vertex_buffer(
         self, num_verts: int, num_vertex_loops: int
-    ) -> Tuple[Points2D, List[Points2D]]:
-        """Get or create reusable vertex buffer for interpolation."""
+    ) -> tuple[Points2D, list[Points2D]]:
+        """Get or create reusable vertex buffer, keyed by (vertex_count, hole_count) to avoid per-frame allocation."""
         key = (num_verts, num_vertex_loops)
         if key not in self._vertex_buffer_cache:
             outer_buffer = [Point2D(0.0, 0.0) for _ in range(num_verts)]
@@ -328,10 +449,10 @@ class VElement(BaseVElement, KeystateBuilder):
         self,
         field_name: str,
         segment_idx: int,
-        states1: List[State],
-        states2: List[State],
-    ) -> Tuple[List[State], List[State]]:
-        """Cache M→N shape matching for list attributes."""
+        states1: list[State],
+        states2: list[State],
+    ) -> tuple[list[State], list[State]]:
+        """Cache M→N shape matching per (field, segment) so it's only computed once."""
         cache_key = (field_name, segment_idx)
 
         if cache_key in self._shape_list_cache:

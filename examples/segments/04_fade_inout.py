@@ -1,13 +1,17 @@
 from dataclasses import replace
-from svan2d.component.state import CircleState, SquareState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.core.color import Color
-from svan2d.velement import VElement
-from svan2d.transition import easing, segment
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+
+from svan2d import (
+    CircleState,
+    Color,
+    configure_logging,
+    ConverterType,
+    easing,
+    SquareState,
+    VElement,
+    VScene,
+    VSceneExporter,
+)
+from svan2d.transition import segment
 
 configure_logging(level="INFO")
 
@@ -35,7 +39,7 @@ def main():
         center_t=[0.3, 0.7],
         hold_duration=0.2,
         fade_duration=0.1,
-        easing_dict={"opacity": easing.in_out_sine},
+        easing={"opacity": easing.in_out_sine},
     )
 
     elements = [VElement().segment(seg) for seg in segs]
@@ -44,7 +48,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -53,7 +57,6 @@ def main():
         total_frames=90,
         framerate=30,
         png_width_px=1024,
-        num_thumbnails=100,
     )
 
 

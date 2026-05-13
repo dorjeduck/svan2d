@@ -1,6 +1,6 @@
 """Configuration for Conway's Game of Life showcase."""
 
-from svan2d.core.color import Color
+from svan2d import Color
 
 # Grid settings
 GRID_SIZE = 50  # 30x30 grid (900 cells)

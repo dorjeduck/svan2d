@@ -25,16 +25,20 @@ class Point2D:
         """Calculate Euclidean distance to another point using math.hypot."""
         return math.hypot(self.x - other.x, self.y - other.y)
 
-    def center_to(self, other: Point2D):
+    def center_to(self, other: Point2D) -> Point2D:
+        """Return the midpoint between this point and ``other``."""
         return Point2D((self.x + other.x) / 2, (self.y + other.y) / 2)
 
-    def rotation_to(self, other: Point2D):
+    def rotation_to(self, other: Point2D) -> float:
+        """Return the angle in degrees from this point toward ``other``."""
         return math.degrees(math.atan2(other.y - self.y, other.x - self.x))
 
-    def with_x(self, x):
+    def with_x(self, x: float) -> Point2D:
+        """Return a copy with x replaced."""
         return Point2D(x, self.y)
 
-    def with_y(self, y):
+    def with_y(self, y: float) -> Point2D:
+        """Return a copy with y replaced."""
         return Point2D(self.x, y)
 
     # -------------------------------------------------------------

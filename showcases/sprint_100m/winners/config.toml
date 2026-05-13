@@ -1,0 +1,101 @@
+# Olympic 100m Winners Race Configuration (1988–2024)
+
+[scene]
+width = 900
+height = 440
+background = "#1a1a2e"
+
+[track]
+margin_left = 120             # Space for year + name labels
+margin_right = 80             # Space for finish time + rank
+margin_top = 40               # Space for title/clock row
+margin_bottom = 28            # Space for distance marker labels
+
+# Lane geometry
+lane_height = 30
+lane_gap = 5
+lane_colors = ["#2a2a4a", "#222244"]
+
+# Distance markers
+marker_distances = [0, 20, 40, 60, 80, 100]
+marker_color = "#555577"
+marker_width = 0.5
+marker_label_color = "#666688"
+marker_font_size = 9
+marker_font_family = "monospace"
+
+# Finish line
+finish_color = "#ffffff"
+finish_width = 2.0
+finish_opacity = 0.8
+
+[runner]
+radius = 10
+stroke_width = 1.5
+stroke_color = "#ffffff"
+
+[runner.colors]
+lane_0 = "#e6194b"            # Red — 1988 Lewis
+lane_1 = "#3cb44b"            # Green — 1992 Christie
+lane_2 = "#ffe119"            # Yellow — 1996 Bailey
+lane_3 = "#4363d8"            # Blue — 2000 Greene
+lane_4 = "#f58231"            # Orange — 2004 Gatlin
+lane_5 = "#ffd700"            # Gold — 2008 Bolt
+lane_6 = "#42d4f4"            # Cyan — 2012 Bolt
+lane_7 = "#f032e6"            # Magenta — 2016 Bolt
+lane_8 = "#00b386"            # Teal — 2020 Jacobs
+lane_9 = "#fabebe"            # Pink — 2024 Lyles
+
+[runner.label]
+font_family = "Arial"
+font_size = 10
+font_weight = "bold"
+color = "#ccccdd"
+offset_x = -15                # Left of circle
+offset_y = 0
+
+[runner.finish_time]
+font_family = "monospace"
+font_size = 11
+font_weight = "bold"
+color = "#ffffff"
+offset_x = 14
+offset_y = 0
+
+[runner.placement]
+font_family = "monospace"
+font_size = 11
+font_weight = "bold"
+color = "#ffd700"
+offset_x = -30                # Left of the name label column
+
+[runner.results]
+label_offset_x = 40           # Name label X relative to placement_x
+time_offset_x = 210           # Finish time X relative to placement_x
+
+[title]
+font_family = "Arial"
+font_size = 13
+font_weight = "bold"
+color = "#aaaacc"
+padding_above = 12
+
+[clock]
+font_family = "monospace"
+font_size = 13
+font_weight = "bold"
+color = "#88ff88"
+padding_above = 12
+
+[timing]
+lead_in = 1                 # Seconds before race starts
+hold_after = 2.0              # Seconds after last runner finishes (longer to read placements)
+results_transition = 2.0      # Seconds for reordering animation
+results_hold = 3.0            # Seconds showing final results
+
+[export]
+output_dir = "output/"
+filename = "sprint_100m_winners"
+converter = "playwright_http"
+framerate = 60
+png_width_px = 1920

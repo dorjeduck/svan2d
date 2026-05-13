@@ -6,7 +6,7 @@ scaling. Composites are nestable and work seamlessly with VSceneSequence.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 import drawsvg as dw
 
@@ -21,14 +21,14 @@ if TYPE_CHECKING:
 logger = get_logger()
 
 # Type alias for composable scene types
-ComposableScene = Union["VScene", "VSceneSequence", "VSceneComposite"]
+ComposableScene: TypeAlias = "VScene | VSceneSequence | VSceneComposite"
 
 
 class VSceneComposite:
     """Spatial composition of multiple scenes.
 
-    VSceneComposite stacks multiple scenes horizontally or vertically with
-    automatic scaling to align dimensions. Scenes maintain aspect ratio.
+    VSceneComposite stacks multiple scenes horizontally, vertically, or as
+    overlapping layers. Scenes in horizontal/vertical mode maintain aspect ratio.
 
     Example:
         # Horizontal stack (scenes scaled to match max height)
@@ -36,6 +36,9 @@ class VSceneComposite:
 
         # Vertical stack (scenes scaled to match max width)
         column = VSceneComposite([scene1, scene2, scene3], direction="vertical")
+
+        # Overlay (scenes stacked at same position; last scene on top)
+        composite = VSceneComposite([base_scene, overlay_scene], direction="overlay")
 
         # Nesting - create a grid
         row1 = VSceneComposite([scene1, scene2], direction="horizontal")
@@ -48,17 +51,17 @@ class VSceneComposite:
 
     def __init__(
         self,
-        scenes: List[ComposableScene],
-        direction: Literal["horizontal", "vertical"] = "horizontal",
+        scenes: list[ComposableScene],
+        direction: Literal["horizontal", "vertical", "overlay"] = "horizontal",
         gap: float = 0.0,
-        origin: Optional[Origin] = None,
-        background: Optional[Color] = None,
+        origin: Origin | None = None,
+        background: Color | None = None,
     ) -> None:
         """Initialize a composite of scenes.
 
         Args:
             scenes: List of VScene, VSceneSequence, or VSceneComposite to compose
-            direction: Stack direction - "horizontal" or "vertical"
+            direction: Stack direction - "horizontal", "vertical", or "overlay"
             gap: Gap between scenes in pixels (default: 0.0)
             origin: Override origin mode (default: use first scene's origin)
             background: Background color to fill gaps (default: first scene's background)
@@ -69,25 +72,25 @@ class VSceneComposite:
         if not scenes:
             raise ValueError("Cannot create composite with empty scenes list")
 
-        if direction not in ("horizontal", "vertical"):
+        if str(direction) not in ("horizontal", "vertical", "overlay"):
             raise ValueError(
-                f"direction must be 'horizontal' or 'vertical', got '{direction}'"
+                f"direction must be 'horizontal', 'vertical', or 'overlay', got '{direction}'"
             )
 
         self._scenes = list(scenes)
-        self._direction: Literal["horizontal", "vertical"] = direction
+        self._direction: Literal["horizontal", "vertical", "overlay"] = direction
         self._gap = gap
         self._origin_override = origin
 
         # Use provided background or try to get from first scene
         if background is not None:
-            self._background: Optional[Color] = background
+            self._background: Color | None = background
         else:
             first_scene = self._scenes[0]
             self._background = getattr(first_scene, "background", None)
 
         # Compute scales and dimensions
-        self._scales: List[float] = []
+        self._scales: list[float] = []
         self._total_width: float = 0.0
         self._total_height: float = 0.0
         self._compute_layout()
@@ -117,7 +120,7 @@ class VSceneComposite:
                 + self._gap * (n - 1)
             )
             self._total_height = target_height
-        else:  # vertical
+        elif self._direction == "vertical":
             # Scale each scene to match max width
             target_width = max(s.width for s in self._scenes)
             self._scales = [target_width / s.width for s in self._scenes]
@@ -126,6 +129,10 @@ class VSceneComposite:
                 sum(s.height * scale for s, scale in zip(self._scenes, self._scales))
                 + self._gap * (n - 1)
             )
+        else:  # overlay
+            self._scales = [1.0] * n
+            self._total_width = max(s.width for s in self._scenes)
+            self._total_height = max(s.height for s in self._scenes)
 
         # Ensure dimensions are even for video codec compatibility
         self._total_width = self._round_to_even(self._total_width)
@@ -149,7 +156,7 @@ class VSceneComposite:
         return Origin(self._scenes[0].origin)
 
     @property
-    def direction(self) -> Literal["horizontal", "vertical"]:
+    def direction(self) -> Literal["horizontal", "vertical", "overlay"]:
         """Get the stack direction."""
         return self._direction
 
@@ -159,12 +166,12 @@ class VSceneComposite:
         return self._gap
 
     @property
-    def scenes(self) -> List[ComposableScene]:
+    def scenes(self) -> list[ComposableScene]:
         """Get the list of composed scenes."""
         return list(self._scenes)
 
     @property
-    def background(self) -> Optional[Color]:
+    def background(self) -> Color | None:
         """Get the composite background color."""
         return self._background
 
@@ -172,19 +179,16 @@ class VSceneComposite:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
+        width: float | None = None,
+        height: float | None = None,
     ) -> dw.Drawing:
         """Render the composite at a specific time point.
 
         Args:
-            frame_time: Time point to render (0.0 to 1.0)
-            render_scale: Scale factor for rendering
-            width: Unused, for VSceneExporter compatibility
-            height: Unused, for VSceneExporter compatibility
-
-        Returns:
-            A drawsvg Drawing
+            frame_time: Time point to render (0.0 to 1.0).
+            render_scale: Scale factor for rendering. Applied when width/height not provided.
+            width: Override output width. Defaults to total_width * render_scale.
+            height: Override output height. Defaults to total_height * render_scale.
 
         Raises:
             ValueError: If frame_time is outside [0.0, 1.0]
@@ -220,7 +224,9 @@ class VSceneComposite:
 
         # Determine starting offset based on origin mode
         # Use float for accumulation, round when creating transforms
-        if self.origin == Origin.CENTER:
+        if self._direction == "overlay":
+            offset = 0.0
+        elif self.origin == Origin.CENTER:
             if self._direction == "horizontal":
                 offset = -self._total_width / 2 * render_scale
             else:
@@ -237,30 +243,46 @@ class VSceneComposite:
 
             # Combined scale: child scale * render_scale
             total_scale = scale * render_scale
+            child_origin = Origin(scene.origin)
 
-            # Build transform (round offsets to integers to avoid sub-pixel gaps)
+            # Compute child's visual top-left in composite coords
             if self._direction == "horizontal":
                 if self.origin == Origin.CENTER:
-                    # For center origin: position child's center at correct location
-                    child_center_x = round(offset + (scene.width * total_scale) / 2)
-                    transform = f"translate({child_center_x}, 0) scale({total_scale})"
-                else:  # top-left
-                    transform = f"translate({round(offset)}, 0) scale({total_scale})"
-                # Subtract overlap so next scene overlaps slightly (except after last)
+                    child_top_x = offset
+                    child_top_y = -scene.height * total_scale / 2
+                else:
+                    child_top_x = offset
+                    child_top_y = 0.0
                 offset += scene.width * total_scale + self._gap * render_scale
                 if i < len(self._scenes) - 1:
                     offset -= overlap
-            else:  # vertical
+            elif self._direction == "vertical":
                 if self.origin == Origin.CENTER:
-                    # For center origin: position child's center at correct location
-                    child_center_y = round(offset + (scene.height * total_scale) / 2)
-                    transform = f"translate(0, {child_center_y}) scale({total_scale})"
-                else:  # top-left
-                    transform = f"translate(0, {round(offset)}) scale({total_scale})"
-                # Subtract overlap so next scene overlaps slightly (except after last)
+                    child_top_x = -scene.width * total_scale / 2
+                    child_top_y = offset
+                else:
+                    child_top_x = 0.0
+                    child_top_y = offset
                 offset += scene.height * total_scale + self._gap * render_scale
                 if i < len(self._scenes) - 1:
                     offset -= overlap
+            else:  # overlay
+                if self.origin == Origin.CENTER:
+                    child_top_x = -scene.width * total_scale / 2
+                    child_top_y = -scene.height * total_scale / 2
+                else:
+                    child_top_x = 0.0
+                    child_top_y = 0.0
+
+            # Adjust translate so child's origin (0,0) maps to correct position
+            if child_origin == Origin.CENTER:
+                tx = child_top_x + scene.width * total_scale / 2
+                ty = child_top_y + scene.height * total_scale / 2
+            else:  # top-left
+                tx = child_top_x
+                ty = child_top_y
+
+            transform = f"translate({round(tx)}, {round(ty)}) scale({total_scale})"
 
             # Create group with transform and add child elements
             group = dw.Group(transform=transform)
@@ -274,23 +296,20 @@ class VSceneComposite:
         self,
         frame_time: float = 0.0,
         render_scale: float = 1.0,
-        width: Optional[float] = None,
-        height: Optional[float] = None,
-        filename: Optional[str] = None,
+        width: float | None = None,
+        height: float | None = None,
+        filename: str | None = None,
         log: bool = True,
     ) -> str:
         """Render the composite to SVG at a specific time point.
 
         Args:
-            frame_time: Time point to render (0.0 to 1.0)
-            render_scale: Scale factor for rendering
-            width: Target width for the drawing
-            height: Target height for the drawing
-            filename: Optional filename to save SVG to
-            log: Whether to log the save operation
-
-        Returns:
-            SVG string
+            frame_time: Time point to render (0.0 to 1.0).
+            render_scale: Scale factor for rendering.
+            width: Override output width.
+            height: Override output height.
+            filename: Optional filename to save SVG to.
+            log: Whether to log the save operation.
         """
         drawing = self.to_drawing(
             frame_time=frame_time, render_scale=render_scale, width=width, height=height

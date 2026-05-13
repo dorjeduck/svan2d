@@ -1,0 +1,44 @@
+[scene]
+width = 800
+height = 800
+background = "#0a0a1a"
+padding = 30                   # edge margin in pixels
+
+[planets]
+# Which planets to show (comment out to hide)
+show = ["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn"]
+
+[planets.labels]
+show = true
+font_family = "Arial"
+font_size = 9
+font_color = "#cccccc"
+offset_y = -8              # above planet
+
+[bodies]
+scaling = "cbrt"                # "linear", "sqrt", "cbrt", or "log"
+max_radius_px = 25             # largest body (Sun) gets this radius
+
+[orbits]
+scaling = "sqrt"               # "linear", "sqrt", "cbrt", or "log"
+
+[orbits.ring]
+stroke_color = "#ffffff"
+stroke_width = 0.5
+stroke_opacity = 0.15
+
+[sun]
+color = "#ffdd44"
+glow_opacity = 0.3
+
+[animation]
+# How many Earth-orbits to simulate in the full animation
+earth_orbits = 1.0
+
+[export]
+output_dir = "output/"
+filename = "solar_system_orrery"
+converter = "playwright_http"
+total_frames = 1800
+framerate = 60
+png_width_px = 2048

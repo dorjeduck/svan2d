@@ -1,22 +1,24 @@
-"""Example: VSceneComposite - spatial composition of scenes.
 
-Demonstrates:
-- Horizontal stacking of scenes
-- Vertical stacking of scenes
-- Nesting composites to create grids
-- Animated composite export
-"""
 
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
 from svan2d.transition import easing
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneComposite, VSceneExporter
-
+from svan2d.vscene import (
+    VScene,
+    VSceneComposite,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
+)
 configure_logging(level="INFO")
-
 
 def create_scene(
     label: str, color: Color, width: float = 200, height: float = 150
@@ -49,7 +51,6 @@ def create_scene(
 
     return scene
 
-
 def create_animated_scene(
     color: Color, width: float = 200, height: float = 150
 ) -> VScene:
@@ -71,7 +72,6 @@ def create_animated_scene(
     scene = scene.add_element(circle)
 
     return scene
-
 
 def main():
     # Create scenes with different sizes and colors
@@ -119,7 +119,6 @@ def main():
         total_frames=60,
         framerate=30,
     )
-
 
 if __name__ == "__main__":
     main()

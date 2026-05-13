@@ -18,30 +18,21 @@ Usage:
     reset_config()
 """
 
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Optional
 
 from .config import Svan2DConfig
 from .config_key import ConfigKey
 
 # Global configuration instance
-_global_config: Optional[Svan2DConfig] = None
+_global_config: Svan2DConfig | None = None
 
 
 def get_config() -> Svan2DConfig:
-    """Get the global configuration instance
-
-    Returns:
-        Global Svan2DConfig instance
+    """Return the global Svan2DConfig, initializing from defaults and user config on first call.
 
     Example:
-        from svan2d.config import get_config, ConfigKey
         config = get_config()
-        width = config.get(ConfigKey.SCENE_WIDTH)
-        width
-        800
+        config.get(ConfigKey.SCENE_WIDTH)  # 800
     """
     global _global_config
 
@@ -52,7 +43,7 @@ def get_config() -> Svan2DConfig:
     return _global_config
 
 
-def load_config(path: Optional[Path | str] = None):
+def load_config(path: Path | str | None = None):
     """Load configuration from file
 
     If path is None, searches for config in standard locations:
@@ -72,12 +63,7 @@ def load_config(path: Optional[Path | str] = None):
 
 
 def reset_config():
-    """Reset configuration to system defaults
-
-    Example:
-        from svan2d.config import reset_config
-        reset_config()
-    """
+    """Reset the global configuration to system defaults."""
     global _global_config
     _global_config = Svan2DConfig.load_defaults()
 

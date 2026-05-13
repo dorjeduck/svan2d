@@ -1,4 +1,4 @@
-from svan2d.core.color import Color
+from svan2d import Color
 
 # Font path - adjust for your system
 # macOS: /System/Library/Fonts/Supplemental/Arial.ttf

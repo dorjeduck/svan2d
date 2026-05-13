@@ -3,31 +3,33 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, NamedTuple
 
-from svan2d.core.point2d import Point2D, Points2D
+from svan2d.core.point2d import Point2D
 
 try:
-    from fontTools.pens.recordingPen import RecordingPen
-    from fontTools.ttLib import TTFont
+    import fontTools  # noqa: F401
 
     FONTTOOLS_AVAILABLE = True
 except ImportError:
     FONTTOOLS_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from fontTools.ttLib import TTFont
 
 
 class BezierSegment(NamedTuple):
     """A single bezier segment"""
 
     type: str  # 'line', 'qcurve', 'curve'
-    points: List[Point2D]  # Control points (including end point)
+    points: list[Point2D]  # Control points (including end point)
 
 
 @dataclass
 class GlyphContour:
     """A single contour from a glyph (list of bezier segments)"""
 
-    segments: List[BezierSegment]
+    segments: list[BezierSegment]
 
     def is_empty(self) -> bool:
         return len(self.segments) == 0
@@ -37,9 +39,9 @@ class GlyphContour:
 class GlyphOutline:
     """All contours from a glyph"""
 
-    contours: List[GlyphContour]
+    contours: list[GlyphContour]
     advance_width: float
-    bounds: Optional[Tuple[float, float, float, float]]  # xMin, yMin, xMax, yMax
+    bounds: tuple[float, float, float, float] | None  # xMin, yMin, xMax, yMax
 
     def is_empty(self) -> bool:
         return len(self.contours) == 0 or all(c.is_empty() for c in self.contours)
@@ -57,16 +59,15 @@ def load_font(font_path: str) -> TTFont:
     """Load a font file.
 
     Args:
-        font_path: Path to TTF or OTF font file
-
-    Returns:
-        TTFont object
+        font_path: Path to TTF or OTF font file.
     """
     _check_fonttools()
-    return TTFont(font_path)  # type: ignore[reportPossiblyUnboundVariable]
+    from fontTools.ttLib import TTFont as _TTFont
+
+    return _TTFont(font_path)
 
 
-def get_glyph_name(font: TTFont, char: str) -> Optional[str]:
+def get_glyph_name(font: TTFont, char: str) -> str | None:
     """Get the glyph name for a character.
 
     Args:
@@ -87,11 +88,8 @@ def extract_glyph_outline(font: TTFont, char: str) -> GlyphOutline:
     """Extract bezier paths from a glyph.
 
     Args:
-        font: TTFont object
-        char: Single character to extract
-
-    Returns:
-        GlyphOutline with all contours
+        font: TTFont object.
+        char: Single character to extract.
     """
     _check_fonttools()
 
@@ -116,7 +114,9 @@ def extract_glyph_outline(font: TTFont, char: str) -> GlyphOutline:
                 bounds = (glyf_glyph.xMin, glyf_glyph.yMin, glyf_glyph.xMax, glyf_glyph.yMax)
 
     # Use RecordingPen to capture the drawing commands
-    pen = RecordingPen()  # type: ignore[reportPossiblyUnboundVariable]
+    from fontTools.pens.recordingPen import RecordingPen as _RecordingPen
+
+    pen = _RecordingPen()
     glyph.draw(pen)
 
     # Convert recording to contours
@@ -125,7 +125,7 @@ def extract_glyph_outline(font: TTFont, char: str) -> GlyphOutline:
     return GlyphOutline(contours=contours, advance_width=advance_width, bounds=bounds)
 
 
-def _recording_to_contours(recording: List) -> List[GlyphContour]:
+def _recording_to_contours(recording: list) -> list[GlyphContour]:
     """Convert RecordingPen output to GlyphContours.
 
     RecordingPen records operations as tuples: (operation_name, args)

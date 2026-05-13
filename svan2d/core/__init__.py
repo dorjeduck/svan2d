@@ -1,13 +1,14 @@
 """Core utilities for svan2d.
 
 Provides fundamental types and utilities:
-- Color: Color representation with interpolation support
-- Point2D: 2D point with vector operations
+- Color: Immutable RGB color with interpolation and format conversion
+- Point2D / MutablePoint2D: 2D point types (immutable and pooled-mutable)
 - Logging: Configurable logging system
-- Scalar functions: lerp, angle, step, inbetween, circular_midpoint
+- Scalar functions: lerp, log_lerp, angle, step, inbetween, circular_midpoint,
+  gaussian_smooth, gaussian_smooth_2d
 """
 
-from .color import Color, ColorSpace, ColorTuple, color_to_oklab, oklab_to_color
+from .color import Color, ColorSpace, ColorTuple,color_to_oklab, oklab_to_color
 from .enums import Origin
 from .logger import (
     configure_logging,
@@ -20,7 +21,17 @@ from .mutable_point2d import (
     get_pooled_point,
     reset_point_pool,
 )
-from .scalar_functions import angle, circular_midpoint, inbetween, lerp, step
+from .scalar_functions import (
+    angle,
+    circular_midpoint,
+    inbetween,
+    lerp,
+    log_lerp,
+    gaussian_smooth,
+    gaussian_smooth_2d,
+    step,
+)
+from .splines import catmull_rom_2d, densify_catmull_rom
 
 __all__ = [
     "Color",
@@ -38,8 +49,13 @@ __all__ = [
     "color_to_oklab",
     "oklab_to_color",
     "lerp",
+    "log_lerp",
     "angle",
     "step",
     "inbetween",
     "circular_midpoint",
+    "gaussian_smooth",
+    "gaussian_smooth_2d",
+    "catmull_rom_2d",
+    "densify_catmull_rom",
 ]

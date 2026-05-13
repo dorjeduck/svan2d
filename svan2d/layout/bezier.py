@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Optional, Sequence
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D, Points2D
 
 from .enums import ElementAlignment
@@ -15,8 +15,8 @@ def bezier(
     control_points: Points2D,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
-    arc_length_spacing: bool = True,  # New parameter
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
+    arc_length_spacing: bool = True,
 ) -> States:
     """
     Arrange states along a Bezier curve (quadratic or cubic).
@@ -28,16 +28,13 @@ def bezier(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position t (0-1) and returns rotation offset.
         arc_length_spacing: If True, space elements evenly by arc length. If False, use even t spacing.
-
-    Returns:
-        New list of states with positions along the Bezier curve
     """
 
     if not states or not control_points:
         return []
     
     if not isinstance(control_points[0], Point2D):
-        raise Exception("bezier control_points must be a list of Point2D objects")
+        raise ValueError("bezier control_points must be a list of Point2D objects")
 
     def bezier_point(t, pts:Points2D) -> Point2D:
 
@@ -167,7 +164,8 @@ def bezier(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            element_angle = tangent_angle + additional_rotation
+            # Top faces forward along tangent: element_angle = tangent_angle - 90
+            element_angle = tangent_angle - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:

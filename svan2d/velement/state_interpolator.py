@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
+from dataclasses import replace
+from typing import TYPE_CHECKING, Callable
 
-from svan2d.component import State, VertexState
+from svan2d.primitive import State, VertexState
 from svan2d.velement.attribute_timeline import AttributeTimelineResolver
 from svan2d.velement.vertex_alignment import VertexAligner
 
@@ -33,26 +34,24 @@ class StateInterpolator:
     def __init__(
         self,
         keystates: "KeyStates",
-        attribute_keystates: Dict[str, List],
+        attribute_timelines: dict[str, list],
         easing_resolver: "EasingResolver",
         interpolation_engine: "InterpolationEngine",
-        vertex_aligner: Optional[VertexAligner] = None,
-        get_vertex_buffer: Optional[
-            Callable[[int, int], Tuple["Points2D", List["Points2D"]]]
-        ] = None,
+        vertex_aligner: VertexAligner | None = None,
+        get_vertex_buffer: Callable[[int, int], tuple["Points2D", list["Points2D"]]] | None = None,
     ) -> None:
         """Initialize the state interpolator.
 
         Args:
             keystates: List of keystates for the animation
-            attribute_keystates: Per-field keystate timelines
+            attribute_timelines: Parsed per-field timelines (output of parse_attribute_keystates)
             easing_resolver: Easing resolver for field easing
             interpolation_engine: Interpolation engine for state interpolation
             vertex_aligner: Optional vertex aligner for shape morphing (VElement only)
             get_vertex_buffer: Optional vertex buffer getter for optimized interpolation
         """
         self.keystates = keystates
-        self.attribute_keystates = attribute_keystates
+        self.attribute_timelines = attribute_timelines
         self.easing_resolver = easing_resolver
         self.interpolation_engine = interpolation_engine
         self.vertex_aligner = vertex_aligner
@@ -60,14 +59,72 @@ class StateInterpolator:
 
         # Create timeline resolver
         self.timeline_resolver = AttributeTimelineResolver(
-            attribute_keystates, keystates, easing_resolver, interpolation_engine
+            attribute_timelines, keystates, easing_resolver, interpolation_engine
         )
 
         # Cache for pre-computed changed fields per segment
         # Key: segment_idx, Value: (changed_field_names, field_values)
-        self._changed_fields_cache: Dict[int, tuple] = {}
+        self._changed_fields_cache: dict[int, tuple] = {}
 
-    def get_state_at_time(self, t: float) -> Tuple[Optional[State], bool]:
+        # Per-segment "endpoints are equal" flag. When True, interpolation is a
+        # no-op and we can return the endpoint state directly (after field
+        # timelines), skipping the heavy create_eased_state path.
+        self._segment_is_constant: list[bool] = self._compute_segment_constants()
+
+    def _compute_segment_constants(self) -> list[bool]:
+        """Precompute which segments have identical endpoint states.
+
+        Frozen State dataclass `__eq__` is field-wise and cheap. When both
+        endpoints are equal, create_eased_state would return the same state,
+        so we can skip interpolation entirely at runtime.
+
+        The fast path is disabled when the segment carries custom interpolation
+        overrides (``interpolation_dict`` or ``state_interpolation``), because
+        those callbacks are contractually called on every frame regardless of
+        whether the endpoint values happen to be equal.
+        """
+        n = len(self.keystates)
+        if n < 2:
+            return []
+        result = [False] * (n - 1)
+        for i in range(n - 1):
+            ks1 = self.keystates[i]
+            ks2 = self.keystates[i + 1]
+            tc = ks1.transition_config
+            if tc is not None and (
+                tc.interpolation_dict or tc.state_interpolation is not None
+            ):
+                continue
+            state1 = ks1.outgoing_state if ks1.outgoing_state is not None else ks1.state
+            state2 = ks2.state
+            try:
+                result[i] = state1 == state2
+            except Exception:
+                result[i] = False
+        return result
+
+    def _attribute_timelines_settled_at(self, t: float) -> bool:
+        """True iff no attribute timeline produces a value change after time t.
+
+        The keystate parser extends every timeline to anchor at 0.0 and 1.0
+        (see keystate_parser docstring), so the last tuple's time is typically
+        1.0. We scan each timeline for the latest tuple whose value differs
+        from the timeline's tail value — past that time the value is constant.
+        """
+        for tl in self.attribute_timelines.values():
+            if not tl:
+                continue
+            tail_value = tl[-1][1]
+            settle_time = tl[0][0]
+            for i in range(len(tl) - 1, -1, -1):
+                if tl[i][1] != tail_value:
+                    settle_time = tl[i + 1][0]
+                    break
+            if t < settle_time:
+                return False
+        return True
+
+    def get_state_at_time(self, t: float) -> State | None:
         """Get the interpolated state at a specific time.
 
         Returns None if t is outside the element's keystate timeline range.
@@ -78,10 +135,10 @@ class StateInterpolator:
             t: Animation time (0.0 to 1.0)
 
         Returns:
-            Tuple of (interpolated state or None, is_inbetween flag)
+            Interpolated state, or None if t is outside the timeline.
         """
         if not self.keystates:
-            return None, False
+            return None
 
         # Existence check: element only exists within its keystate range
         first_time = self.keystates[0].time
@@ -89,38 +146,34 @@ class StateInterpolator:
         assert first_time is not None and last_time is not None
 
         if t < first_time - TIME_EPSILON or t > last_time + TIME_EPSILON:
-            return None, False
+            return None
 
         # Handle edge case: at first keystate or single keystate
         if _times_equal(t, first_time) or len(self.keystates) == 1:
             ks = self.keystates[0]
-            if ks.render_index is None:
-                return None, False  # Don't render
-            if ks.render_index == 1:
-                assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
-                base_state = ks.outgoing_state
-            else:
-                base_state = ks.state
-            return self.timeline_resolver.apply_field_timelines(base_state, t), False
-
-        # Check if t exactly matches any keystate time - return that keystate's state directly
-        # This is important for dual-state keystates: at exactly the keystate time,
-        # render based on render_index (0=incoming state, 1=outgoing state, None=don't render)
-        for ks in self.keystates:
-            if ks.time is not None and _times_equal(ks.time, t):
+            # If covers_boundaries is set on this segment's transition,
+            # skip the direct keystate return and fall through to interpolation
+            tc = ks.transition_config
+            if not (
+                tc is not None
+                and tc.covers_boundaries
+                and tc.state_interpolation is not None
+                and len(self.keystates) > 1
+            ):
                 if ks.render_index is None:
-                    return None, False  # Don't render
+                    return None  # Don't render
                 if ks.render_index == 1:
-                    assert ks.outgoing_state is not None  # Guaranteed by KeyState validation
-                    rendered_state = ks.outgoing_state
+                    assert (
+                        ks.outgoing_state is not None
+                    )  # Guaranteed by KeyState validation
+                    base_state = ks.outgoing_state
                 else:
-                    rendered_state = ks.state
-                return self.timeline_resolver.apply_field_timelines(rendered_state, t), False
+                    base_state = ks.state
+                return self.timeline_resolver.apply_field_timelines(base_state, t)
 
-        # Find the segment containing time t using binary search for many keystates
+        # Find the segment containing time t using binary search
         num_keystates = len(self.keystates)
 
-        # Binary search to find segment
         lo, hi = 0, num_keystates - 1
         segment_idx = None
         while lo < hi:
@@ -143,6 +196,32 @@ class StateInterpolator:
         if segment_idx is None:
             segment_idx = lo
 
+        # Check if t exactly matches a keystate at segment boundaries
+        # Important for dual-state keystates: render based on render_index
+        # Skip this check when covers_boundaries is set on the segment's transition
+        segment_tc = self.keystates[segment_idx].transition_config
+        skip_boundary = (
+            segment_tc is not None
+            and segment_tc.covers_boundaries
+            and segment_tc.state_interpolation is not None
+        )
+        if not skip_boundary:
+            for idx in (segment_idx, segment_idx + 1):
+                if idx >= num_keystates:
+                    continue
+                ks = self.keystates[idx]
+                if ks.time is not None and _times_equal(ks.time, t):
+                    if ks.render_index is None:
+                        return None  # Don't render
+                    if ks.render_index == 1:
+                        assert (
+                            ks.outgoing_state is not None
+                        )  # Guaranteed by KeyState validation
+                        rendered_state = ks.outgoing_state
+                    else:
+                        rendered_state = ks.state
+                    return self.timeline_resolver.apply_field_timelines(rendered_state, t)
+
         # Process only the found segment
         for i in [segment_idx] if segment_idx < num_keystates - 1 else []:
             ks1 = self.keystates[i]
@@ -155,6 +234,17 @@ class StateInterpolator:
             state2 = ks2.state
             assert t1 is not None and t2 is not None
 
+            # Constant-segment fast path: endpoints equal → interpolation is a
+            # no-op. Skip vertex alignment and create_eased_state entirely.
+            if self._segment_is_constant[i]:
+                # If this is the final segment and every attribute timeline has
+                # settled (no later value change), the element is provably
+                # static for the rest of the timeline — stamp the cache marker.
+                if i == num_keystates - 2 and self._attribute_timelines_settled_at(t):
+                    if not state1.is_final:
+                        state1 = replace(state1, is_final=True)
+                return self.timeline_resolver.apply_field_timelines(state1, t)
+
             # Static preprocessing for vertex alignment (if aligner provided)
             if self.vertex_aligner:
 
@@ -166,10 +256,7 @@ class StateInterpolator:
             if t1 <= t <= t2:
                 # Handle coincident keystates
                 if _times_equal(t1, t2):
-                    return (
-                        self.timeline_resolver.apply_field_timelines(state2, t),
-                        False,
-                    )
+                    return self.timeline_resolver.apply_field_timelines(state2, t)
 
                 # Interpolate between keystates
                 segment_t = (t - t1) / (t2 - t1)
@@ -203,11 +290,16 @@ class StateInterpolator:
                         )
 
                 # Get or compute changed fields for this segment (lazy field interpolation)
-                attr_fields = set(self.attribute_keystates.keys())
+                attr_fields = set(self.attribute_timelines.keys())
                 if i not in self._changed_fields_cache:
-                    from svan2d.transition.interpolation_engine import InterpolationEngine
-                    self._changed_fields_cache[i] = InterpolationEngine.compute_changed_fields(
-                        state1, state2, attr_fields
+                    from svan2d.transition.interpolation_engine import (
+                        InterpolationEngine,
+                    )
+
+                    self._changed_fields_cache[i] = (
+                        InterpolationEngine.compute_changed_fields(
+                            state1, state2, attr_fields
+                        )
                     )
                 changed_fields = self._changed_fields_cache[i]
 
@@ -221,9 +313,14 @@ class StateInterpolator:
                         else None
                     ),
                     attribute_keystates_fields=attr_fields,
+                    segment_easing=(
+                        ks1.transition_config.easing
+                        if ks1.transition_config
+                        else None
+                    ),
                     vertex_buffer=vertex_buffer,
-                    segment_path_config=(
-                        ks1.transition_config.curve_dict
+                    segment_interpolation_config=(
+                        ks1.transition_config.interpolation_dict
                         if ks1.transition_config
                         else None
                     ),
@@ -233,29 +330,34 @@ class StateInterpolator:
                         else None
                     ),
                     changed_fields=changed_fields,
+                    exact_rotation=(
+                        ks1.transition_config.exact_rotation
+                        if ks1.transition_config
+                        else False
+                    ),
+                    state_interpolation=(
+                        ks1.transition_config.state_interpolation
+                        if ks1.transition_config
+                        else None
+                    ),
                 )
 
-                # Determine if this is an "inbetween" frame (different state types morphing)
-                is_inbetween = (
-                    type(state1) != type(state2)
-                    and isinstance(state1, VertexState)
-                    and isinstance(state2, VertexState)
-                    and t != 0
-                    and t != 1
-                )
-
-                return (
-                    self.timeline_resolver.apply_field_timelines(interpolated_state, t),
-                    is_inbetween,
-                )
+                return self.timeline_resolver.apply_field_timelines(interpolated_state, t)
 
         # At or past final keystate
         final_ks = self.keystates[-1]
         if final_ks.render_index is None:
-            return None, False  # Don't render
+            return None  # Don't render
         if final_ks.render_index == 1:
-            assert final_ks.outgoing_state is not None  # Guaranteed by KeyState validation
+            assert (
+                final_ks.outgoing_state is not None
+            )  # Guaranteed by KeyState validation
             final_state = final_ks.outgoing_state
         else:
             final_state = final_ks.state
-        return self.timeline_resolver.apply_field_timelines(final_state, t), False
+
+        # Mark as final iff every attribute timeline has settled (no later
+        # value change) at this time.
+        if self._attribute_timelines_settled_at(t) and not final_state.is_final:
+            final_state = replace(final_state, is_final=True)
+        return self.timeline_resolver.apply_field_timelines(final_state, t)

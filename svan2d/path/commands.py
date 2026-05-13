@@ -1,6 +1,3 @@
-# ============================================================================
-# svan2d/paths/commands.py
-# ============================================================================
 """SVG Path Command Classes"""
 
 from __future__ import annotations
@@ -96,7 +93,7 @@ class LineTo(PathCommand):
         )
 
 
-# --- New Commands: Horizontal and Vertical Lines ---
+# --- Horizontal and Vertical Lines ---
 
 
 @dataclass
@@ -239,7 +236,7 @@ class CubicBezier(PathCommand):
         )
 
 
-# --- New Commands: Smooth Bezier Curves ---
+# --- Smooth Bezier Curves ---
 
 
 @dataclass
@@ -314,7 +311,7 @@ class SmoothCubicBezier(PathCommand):
         )
 
 
-# --- New Command: Arc ---
+# --- Arc ---
 
 
 @dataclass

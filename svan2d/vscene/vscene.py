@@ -5,37 +5,43 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
-    List,
-    Optional,
     Sequence,
     TypeAlias,
-    Union,
 )
+
+import drawsvg as dw
+
+from svan2d.config import ConfigKey, get_config
+from svan2d.velement.base_velement import _UNSET, _Unset
+from svan2d.velement.velement import is_cache_safe
+from svan2d.core import Color, get_logger
+from svan2d.core.enums import Origin
+from svan2d.core.point2d import Point2D
+from svan2d.transition.pause import (
+    PauseDescriptor,
+    build_pause_easing,
+    local_pause_t,
+    pause_opacity,
+)
+from svan2d.vscene import camera as camera_mod
+from svan2d.vscene import rendering as rendering_mod
 
 # Type alias for easing function
 EasingFunc: TypeAlias = Callable[[float], float]
 
 # Type aliases for camera animation functions
 ScaleFunc: TypeAlias = Callable[[float], float]  # t -> scale
-OffsetFunc: TypeAlias = Callable[[float], tuple[float, float]]  # t -> (x, y)
+OffsetFunc: TypeAlias = Callable[[float], Point2D]  # t -> Point2D
 RotationFunc: TypeAlias = Callable[[float], float]  # t -> degrees
-
-import drawsvg as dw
-
-from svan2d.config import ConfigKey, get_config
-from svan2d.core import Color, get_logger
-from svan2d.core.enums import Origin
-from svan2d.core.point2d import Point2D
 from svan2d.vscene.camera_state import CameraState
 
 if TYPE_CHECKING:
-    from svan2d.component.state.base import State
+    from svan2d.primitive.state.base import State
     from svan2d.velement import VElement, VElementGroup
 
 
 # Type alias for any renderable element
-RenderableElement = Union["VElement", "VElementGroup"]
+RenderableElement: TypeAlias = "VElement | VElementGroup"
 
 logger = get_logger()
 
@@ -57,16 +63,17 @@ class VScene:
         height: float | None = None,
         background: Color | None = None,
         background_opacity: float | None = None,
-        origin: Optional[Origin] = None,
+        origin: Origin | None = None,
         offset_x: float = 0.0,
         offset_y: float = 0.0,
         scale: float = 1.0,
         rotation: float = 0.0,
         # Scene-level clipping/masking
-        clip_state: Optional["State"] = None,
-        mask_state: Optional["State"] = None,
+        clip_state: "State | None" = None,
+        mask_state: "State | None" = None,
         # Timeline easing
-        timeline_easing: Optional[EasingFunc] = None,
+        timeline_easing: EasingFunc | None = None,
+        reverse: bool = False,
     ) -> None:
         """Initialize a new scene with given dimensions and styling
 
@@ -147,31 +154,47 @@ class VScene:
         # Timeline easing
         self.timeline_easing = timeline_easing
 
+        # Reverse playback
+        self.reverse = reverse
+
         # Elements list
-        self.elements: List[RenderableElement] = []
+        self.elements: list[RenderableElement] = []
+
+        # Pause descriptors. Set via add_pause(). When non-empty, an effective
+        # pause-piecewise easing is composed with the user-supplied
+        # timeline_easing during rendering, and overlays (if any) are drawn on
+        # top of the main element pass with raw-time-derived opacity.
+        self._pauses: list[PauseDescriptor] = []
+
+        # Optional per-motion-segment relative speeds. None means uniform
+        # motion. Length, when set, must be `len(_pauses) + 1`. See
+        # `set_motion_speeds`.
+        self._motion_speeds: list[float] | None = None
 
         # Camera animation state
-        self._camera_keystates: List[tuple[CameraState, float, Optional[Dict]]] = []
-        self._camera_pending_easing: Optional[Dict[str, Callable[[float], float]]] = (
-            None
-        )
+        self._camera_keystates: list[tuple[CameraState, float, dict | None]] = []
+        self._camera_pending_easing: dict[str, Callable[[float], float]] | None = None
 
         # Camera animation functions (for function-based animate_camera)
-        self._camera_scale_func: Optional[ScaleFunc] = None
-        self._camera_offset_func: Optional[OffsetFunc] = None
-        self._camera_rotation_func: Optional[RotationFunc] = None
-        self._camera_func_easing: Optional[EasingFunc] = None
+        self._camera_scale_func: ScaleFunc | None = None
+        self._camera_offset_func: OffsetFunc | None = None
+        self._camera_rotation_func: RotationFunc | None = None
+        self._camera_func_easing: EasingFunc | None = None
 
     def _replace(
         self,
         *,
-        elements: Optional[List[RenderableElement]] = None,
-        camera_keystates: Optional[List[tuple[CameraState, float, Optional[Dict]]]] = None,
-        camera_pending_easing: Optional[Dict[str, Callable[[float], float]]] = ...,  # type: ignore[assignment]
-        camera_scale_func: Optional[ScaleFunc] = ...,  # type: ignore[assignment]
-        camera_offset_func: Optional[OffsetFunc] = ...,  # type: ignore[assignment]
-        camera_rotation_func: Optional[RotationFunc] = ...,  # type: ignore[assignment]
-        camera_func_easing: Optional[EasingFunc] = ...,  # type: ignore[assignment]
+        elements: list[RenderableElement] | None = None,
+        pauses: list[PauseDescriptor] | None = None,
+        motion_speeds: list[float] | None | _Unset = _UNSET,
+        camera_keystates: list[tuple[CameraState, float, dict | None]] | None = None,
+        camera_pending_easing: (
+            dict[str, Callable[[float], float]] | None | _Unset
+        ) = _UNSET,
+        camera_scale_func: ScaleFunc | None | _Unset = _UNSET,
+        camera_offset_func: OffsetFunc | None | _Unset = _UNSET,
+        camera_rotation_func: RotationFunc | None | _Unset = _UNSET,
+        camera_func_easing: EasingFunc | None | _Unset = _UNSET,
     ) -> "VScene":
         """Return a new VScene with specified attributes replaced."""
         new = VScene.__new__(VScene)
@@ -188,15 +211,46 @@ class VScene:
         new.clip_state = self.clip_state
         new.mask_state = self.mask_state
         new.timeline_easing = self.timeline_easing
+        new.reverse = self.reverse
 
         # Replace specified attributes
         new.elements = elements if elements is not None else self.elements.copy()
-        new._camera_keystates = camera_keystates if camera_keystates is not None else self._camera_keystates.copy()
-        new._camera_pending_easing = self._camera_pending_easing if camera_pending_easing is ... else camera_pending_easing
-        new._camera_scale_func = self._camera_scale_func if camera_scale_func is ... else camera_scale_func
-        new._camera_offset_func = self._camera_offset_func if camera_offset_func is ... else camera_offset_func
-        new._camera_rotation_func = self._camera_rotation_func if camera_rotation_func is ... else camera_rotation_func
-        new._camera_func_easing = self._camera_func_easing if camera_func_easing is ... else camera_func_easing
+        new._pauses = pauses if pauses is not None else list(self._pauses)
+        new._motion_speeds = (
+            (None if self._motion_speeds is None else list(self._motion_speeds))
+            if motion_speeds is _UNSET
+            else (None if motion_speeds is None else list(motion_speeds))
+        )
+        new._camera_keystates = (
+            camera_keystates
+            if camera_keystates is not None
+            else self._camera_keystates.copy()
+        )
+        new._camera_pending_easing = (
+            self._camera_pending_easing
+            if camera_pending_easing is _UNSET
+            else camera_pending_easing
+        )
+        new._camera_scale_func = (
+            self._camera_scale_func
+            if camera_scale_func is _UNSET
+            else camera_scale_func
+        )
+        new._camera_offset_func = (
+            self._camera_offset_func
+            if camera_offset_func is _UNSET
+            else camera_offset_func
+        )
+        new._camera_rotation_func = (
+            self._camera_rotation_func
+            if camera_rotation_func is _UNSET
+            else camera_rotation_func
+        )
+        new._camera_func_easing = (
+            self._camera_func_easing
+            if camera_func_easing is _UNSET
+            else camera_func_easing
+        )
         return new
 
     # ========================================================================
@@ -254,6 +308,91 @@ class VScene:
         return sum(1 for e in self.elements if e.is_animatable())
 
     # ========================================================================
+    # Pauses
+    # ========================================================================
+
+    def add_pause(
+        self,
+        at: float,
+        fraction: float,
+        overlay: "RenderableElement | VScene | None" = None,
+        fade: float = 0.0,
+    ) -> "VScene":
+        """Add a pause to the timeline. Returns new VScene.
+
+        While the raw frame time advances through the pause window, the eased
+        time passed to elements is held constant at `at`, freezing the scene.
+        An optional overlay element or sub-scene is rendered on top during the
+        window, with a triangular fade-in / fade-out controlled by `fade`.
+
+        Args:
+            at: Position on the *unpaused* timeline in [0, 1] where the scene
+                pauses.
+            fraction: Share of the *final rendered* timeline this pause
+                occupies, in (0, 1). The sum of fractions across all pauses on
+                a scene must remain strictly less than 1; violation raises
+                `PauseFractionError` at render time.
+            overlay: Optional element or sub-scene shown during the pause. A
+                VElement is queried at the pause's local time; a VScene is
+                rendered with `frame_time = local_t` (0..1 across the window).
+            fade: Fraction of the pause window used for fade-in / fade-out at
+                each edge. 0.0 means hard cut.
+
+        Returns:
+            New VScene with the pause added.
+        """
+        descriptor = PauseDescriptor(
+            at=at, fraction=fraction, overlay=overlay, fade=fade
+        )
+        return self._replace(pauses=self._pauses + [descriptor])
+
+    def set_motion_speeds(self, motion_speeds: list[float] | None) -> "VScene":
+        """Assign relative speeds to motion segments between pauses. Returns new VScene.
+
+        Provide one entry per *real* (nonzero-length) motion segment, in
+        sorted-`at` order. Pauses at `at=0` or `at=1` collapse the adjacent
+        edge segment, so those entries are omitted: e.g. with three pauses at
+        `at=0`, `at=0.6`, `at=1.0` you supply two speeds (one for `0→0.6`, one
+        for `0.6→1.0`). Each segment receives
+        `speed_k * out_len_k / Σ(speed_j * out_len_j)` of the motion input
+        budget; all-1.0 yields globally uniform velocity. A length mismatch or
+        non-positive value raises `ValueError` at render time.
+
+        Pass `None` to clear and revert to uniform motion.
+        """
+        return self._replace(motion_speeds=motion_speeds)
+
+    def _resolve_pause_easing(
+        self,
+    ) -> tuple[EasingFunc | None, list[tuple[float, float]]]:
+        """Build the effective easing and per-pause raw-time windows.
+
+        Composes any user-supplied `timeline_easing` with the pause-piecewise
+        easing: the user's easing is applied first to raw_t, then the pause
+        easing on top. With no pauses, returns the user's easing unchanged
+        (or None) and an empty window list.
+        """
+        if not self._pauses:
+            return self.timeline_easing, []
+
+        pause_fn, windows = build_pause_easing(self._pauses, self._motion_speeds)
+        user_fn = self.timeline_easing
+        if user_fn is None:
+            return pause_fn, windows
+
+        def composed(t: float) -> float:
+            return pause_fn(user_fn(t))
+
+        return composed, windows
+
+    def get_pause_windows(self) -> list[tuple[float, float]]:
+        """Return raw-time `(start, end)` windows for each pause, in input order."""
+        if not self._pauses:
+            return []
+        _, windows = build_pause_easing(self._pauses, self._motion_speeds)
+        return windows
+
+    # ========================================================================
     # Camera Animation
     # ========================================================================
 
@@ -277,11 +416,13 @@ class VScene:
             new_pending = None
 
         new_keystates.append((state, at, None))
-        return self._replace(camera_keystates=new_keystates, camera_pending_easing=new_pending)
+        return self._replace(
+            camera_keystates=new_keystates, camera_pending_easing=new_pending
+        )
 
     def camera_transition(
         self,
-        easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
+        easing_dict: dict[str, Callable[[float], float]] | None = None,
     ) -> "VScene":
         """Configure the transition between the previous and next camera keystate.
         Returns new VScene.
@@ -308,13 +449,11 @@ class VScene:
 
     def animate_camera(
         self,
-        scale: Optional[Union[tuple[float, float], ScaleFunc]] = None,
-        offset: Optional[
-            Union[tuple[tuple[float, float], tuple[float, float]], OffsetFunc]
-        ] = None,
-        rotation: Optional[Union[tuple[float, float], RotationFunc]] = None,
-        pivot: Optional[tuple[float, float]] = None,
-        easing: Optional[Callable[[float], float]] = None,
+        scale: tuple[float, float] | ScaleFunc | None = None,
+        offset: tuple[Point2D, Point2D] | OffsetFunc | None = None,
+        rotation: tuple[float, float] | RotationFunc | None = None,
+        pivot: Point2D | None = None,
+        easing: Callable[[float], float] | None = None,
     ) -> "VScene":
         """Convenience method for simple 2-point camera animation. Returns new VScene.
 
@@ -323,30 +462,17 @@ class VScene:
 
         Args:
             scale: Either (start_scale, end_scale) tuple, or function(eased_t) -> float
-            offset: Either ((start_x, start_y), (end_x, end_y)) tuple,
-                    or function(eased_t) -> (x, y)
+            offset: Either (start_point, end_point) tuple of Point2D,
+                    or function(eased_t) -> Point2D
             rotation: Either (start_deg, end_deg) tuple, or function(eased_t) -> degrees
-            pivot: (pivot_x, pivot_y) zoom/rotation center point
+            pivot: Zoom/rotation center point (Point2D).
             easing: Easing function applied to t before passing to any functions
                     or interpolation
 
         Returns:
             New VScene with camera animation configured
-
-        Example:
-            # Tuple-based (original behavior)
-            scene = scene.animate_camera(scale=(1.0, 0.5), easing=easing.in_out)
-
-            # Function-based (new behavior)
-            import math
-            scene = scene.animate_camera(
-                scale=lambda t: 1.0 + 0.5 * math.sin(t * 2 * math.pi),
-                offset=lambda t: (100 * t, 50 * math.sin(t * math.pi)),
-                rotation=lambda t: 360 * t * t,
-                easing=easing.in_out
-            )
         """
-        pivot_pt = Point2D(pivot[0], pivot[1]) if pivot else Point2D(0, 0)
+        pivot_pt = pivot if pivot else Point2D(0, 0)
 
         # Determine if using functions or tuples for each parameter
         scale_is_func = callable(scale)
@@ -362,16 +488,8 @@ class VScene:
         start_scale = 1.0 if scale_is_func or scale is None else scale[0]
         end_scale = 1.0 if scale_is_func or scale is None else scale[1]
 
-        start_offset = (
-            Point2D(0, 0)
-            if offset_is_func or offset is None
-            else Point2D(offset[0][0], offset[0][1])
-        )
-        end_offset = (
-            Point2D(0, 0)
-            if offset_is_func or offset is None
-            else Point2D(offset[1][0], offset[1][1])
-        )
+        start_offset = Point2D(0, 0) if offset_is_func or offset is None else offset[0]
+        end_offset = Point2D(0, 0) if offset_is_func or offset is None else offset[1]
 
         start_rotation = 0.0 if rotation_is_func or rotation is None else rotation[0]
         end_rotation = 0.0 if rotation_is_func or rotation is None else rotation[1]
@@ -408,247 +526,27 @@ class VScene:
             camera_func_easing=easing,
         )
 
+    def _has_camera_funcs(self) -> bool:
+        return camera_mod.has_camera_funcs(
+            self._camera_scale_func,
+            self._camera_offset_func,
+            self._camera_rotation_func,
+        )
+
     def _get_camera_state_at_time(self, frame_time: float) -> CameraState:
-        """Get interpolated camera state with visually linear panning.
-
-        Uses custom interpolation that compensates pos for scale changes,
-        ensuring camera movement appears linear on screen regardless of zoom.
-        """
-        from svan2d.transition import easing as easing_module
-
-        if len(self._camera_keystates) < 2:
-            if len(self._camera_keystates) == 1:
-                return self._camera_keystates[0][0]
-            # No camera animation - return static properties
-            return CameraState(
-                scale=self.scale,
-                rotation=self.rotation,
-                pos=Point2D(self.offset_x, self.offset_y),
-            )
-
-        # Find the segment containing frame_time
-        keystates = self._camera_keystates
-
-        # Handle boundary cases
-        # If functions are set, apply them even at boundaries
-        has_funcs = (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
+        """Get interpolated camera state at given time."""
+        return camera_mod.get_camera_state_at_time(
+            frame_time,
+            self._camera_keystates,
+            self._camera_scale_func,
+            self._camera_offset_func,
+            self._camera_rotation_func,
+            self._camera_func_easing,
+            self.scale,
+            self.rotation,
+            self.offset_x,
+            self.offset_y,
         )
-
-        if frame_time <= keystates[0][1]:
-            if not has_funcs:
-                return keystates[0][0]
-            # Apply functions at boundary
-            base_state = keystates[0][0]
-            return self._apply_camera_functions(base_state, frame_time)
-
-        if frame_time >= keystates[-1][1]:
-            if not has_funcs:
-                return keystates[-1][0]
-            # Apply functions at boundary
-            base_state = keystates[-1][0]
-            return self._apply_camera_functions(base_state, frame_time)
-
-        # Find segment
-        start_state, start_time, easing_dict = keystates[0]
-        end_state, end_time, _ = keystates[1]
-
-        for i in range(len(keystates) - 1):
-            if keystates[i][1] <= frame_time <= keystates[i + 1][1]:
-                start_state, start_time, easing_dict = keystates[i]
-                end_state, end_time, _ = keystates[i + 1]
-                break
-
-        # Compute local t (0-1 within segment)
-        if end_time == start_time:
-            local_t = 0.0
-        else:
-            local_t = (frame_time - start_time) / (end_time - start_time)
-
-        # Get easing functions
-        scale_easing = (
-            easing_dict.get("scale", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-        pos_easing = (
-            easing_dict.get("pos", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-        rotation_easing = (
-            easing_dict.get("rotation", easing_module.linear)
-            if easing_dict
-            else easing_module.linear
-        )
-
-        # Apply easing
-        scale_t = scale_easing(local_t)
-        pos_t = pos_easing(local_t)
-        rotation_t = rotation_easing(local_t)
-
-        # CameraState fields are guaranteed non-None after __post_init__
-        assert start_state.scale is not None and end_state.scale is not None
-        assert start_state.rotation is not None and end_state.rotation is not None
-        assert start_state.pos is not None and end_state.pos is not None
-        assert start_state.pivot is not None and end_state.pivot is not None
-        assert start_state.opacity is not None and end_state.opacity is not None
-
-        # Interpolate scale and rotation normally
-        interp_scale = (
-            start_state.scale + (end_state.scale - start_state.scale) * scale_t
-        )
-        interp_rotation = (
-            start_state.rotation
-            + (end_state.rotation - start_state.rotation) * rotation_t
-        )
-
-        # For visually linear panning: interpolate "visual target" (pos * scale)
-        # then derive world pos from that
-        start_visual = Point2D(
-            start_state.pos.x * start_state.scale, start_state.pos.y * start_state.scale
-        )
-        end_visual = Point2D(
-            end_state.pos.x * end_state.scale, end_state.pos.y * end_state.scale
-        )
-
-        # Interpolate visual target linearly (using pos easing)
-        interp_visual = Point2D(
-            start_visual.x + (end_visual.x - start_visual.x) * pos_t,
-            start_visual.y + (end_visual.y - start_visual.y) * pos_t,
-        )
-
-        # Convert back to world pos
-        if interp_scale != 0:
-            interp_pos = Point2D(
-                interp_visual.x / interp_scale, interp_visual.y / interp_scale
-            )
-        else:
-            interp_pos = Point2D(0, 0)
-
-        # Interpolate pivot (simple linear)
-        interp_pivot = Point2D(
-            start_state.pivot.x + (end_state.pivot.x - start_state.pivot.x) * local_t,
-            start_state.pivot.y + (end_state.pivot.y - start_state.pivot.y) * local_t,
-        )
-
-        # Interpolate opacity
-        interp_opacity = (
-            start_state.opacity + (end_state.opacity - start_state.opacity) * local_t
-        )
-
-        # Override with function-based values if functions are set
-        if (
-            self._camera_scale_func is not None
-            or self._camera_offset_func is not None
-            or self._camera_rotation_func is not None
-        ):
-            # Apply function easing to frame_time (not local_t)
-            func_easing = self._camera_func_easing or easing_module.linear
-            eased_frame_time = func_easing(frame_time)
-
-            if self._camera_scale_func is not None:
-                interp_scale = self._camera_scale_func(eased_frame_time)
-
-            if self._camera_rotation_func is not None:
-                interp_rotation = self._camera_rotation_func(eased_frame_time)
-
-            if self._camera_offset_func is not None:
-                ox, oy = self._camera_offset_func(eased_frame_time)
-                interp_pos = Point2D(ox, oy)
-
-        return CameraState(
-            scale=interp_scale,
-            rotation=interp_rotation,
-            pos=interp_pos,
-            pivot=interp_pivot,
-            opacity=interp_opacity,
-        )
-
-    def _apply_camera_functions(
-        self, base_state: CameraState, frame_time: float
-    ) -> CameraState:
-        """Apply camera functions to a base state at given frame_time.
-
-        Helper method for applying function-based camera values at boundary cases.
-
-        Args:
-            base_state: The base CameraState to modify
-            frame_time: Time to pass to functions (0.0-1.0)
-
-        Returns:
-            CameraState with function values applied
-        """
-        from svan2d.transition import easing as easing_module
-
-        func_easing = self._camera_func_easing or easing_module.linear
-        eased_frame_time = func_easing(frame_time)
-
-        scale = base_state.scale
-        rotation = base_state.rotation
-        pos = base_state.pos
-
-        if self._camera_scale_func is not None:
-            scale = self._camera_scale_func(eased_frame_time)
-
-        if self._camera_rotation_func is not None:
-            rotation = self._camera_rotation_func(eased_frame_time)
-
-        if self._camera_offset_func is not None:
-            ox, oy = self._camera_offset_func(eased_frame_time)
-            pos = Point2D(ox, oy)
-
-        return CameraState(
-            scale=scale,
-            rotation=rotation,
-            pos=pos,
-            pivot=base_state.pivot,
-            opacity=base_state.opacity,
-        )
-
-    def _build_camera_transform(self, state: CameraState, render_scale: float) -> str:
-        """Build SVG transform string from camera state with pivot support.
-
-        Args:
-            state: CameraState with transform values
-            render_scale: Additional scale factor for rendering
-
-        Returns:
-            SVG transform string
-        """
-        # CameraState fields are guaranteed non-None after __post_init__
-        assert (
-            state.scale is not None
-            and state.pivot is not None
-            and state.rotation is not None
-        )
-
-        parts = []
-        total_scale = state.scale * render_scale
-
-        has_pivot = state.pivot.x != 0 or state.pivot.y != 0
-        has_transform = total_scale != 1.0 or state.rotation != 0
-
-        # Pivot: translate to pivot point, apply transforms, translate back
-        if has_pivot and has_transform:
-            parts.append(f"translate({state.pivot.x},{state.pivot.y})")
-
-        if total_scale != 1.0:
-            parts.append(f"scale({total_scale})")
-
-        if state.rotation != 0:
-            parts.append(f"rotate({state.rotation})")
-
-        if has_pivot and has_transform:
-            parts.append(f"translate({-state.pivot.x},{-state.pivot.y})")
-
-        # Camera position LAST (world space - applied first in SVG right-to-left order)
-        if state.x != 0 or state.y != 0:
-            parts.append(f"translate({-state.x},{-state.y})")
-
-        return " ".join(parts)
 
     # ========================================================================
     # Rendering
@@ -663,9 +561,6 @@ class VScene:
     ) -> dw.Drawing:
         """Render the scene as a drawsvg Drawing object at specified time.
 
-        Useful for video encoding or when you need the Drawing object
-        directly without converting to SVG string.
-
         Args:
             frame_time: Time point to render (0.0 to 1.0)
             render_scale: Additional scale factor for rendering (multiplies scene scale)
@@ -678,15 +573,25 @@ class VScene:
         Raises:
             ValueError: If frame_time is outside [0.0, 1.0]
         """
+
         # Validation
         if not 0.0 <= frame_time <= 1.0:
             raise ValueError(
                 f"frame_time must be between 0.0 and 1.0, got {frame_time}"
             )
 
-        # Apply timeline easing if set
-        if self.timeline_easing is not None:
-            frame_time = self.timeline_easing(frame_time)
+        # Apply reverse if set
+        if self.reverse:
+            frame_time = 1.0 - frame_time
+
+        # Raw (un-eased) time is preserved for the pause-overlay pass.
+        raw_t = frame_time
+
+        # Compose pause easing (if any) with user-supplied timeline_easing,
+        # then apply.
+        effective_easing, pause_windows = self._resolve_pause_easing()
+        if effective_easing is not None:
+            frame_time = effective_easing(frame_time)
 
         # Calculate final dimensions
         ww = width if width is not None else render_scale * self.width
@@ -696,7 +601,6 @@ class VScene:
 
         # Add background
         if self.background is not None and self.background_opacity > 0.0:
-            # Calculate background position based on origin
             if self.origin == Origin.CENTER:
                 bg_x, bg_y = -ww / 2, -hh / 2
             else:  # top-left
@@ -715,12 +619,21 @@ class VScene:
 
         # Create global transform group (use animated camera if available)
         camera_state = self._get_camera_state_at_time(frame_time)
-        transform = self._build_camera_transform(camera_state, render_scale)
+        needs_centering = self.origin != Origin.CENTER and self._camera_offset_func is not None
+        vp_w, vp_h = (ww, hh) if needs_centering else (0.0, 0.0)
+        transform = camera_mod.build_camera_transform(camera_state, render_scale, vp_w, vp_h)
         group = dw.Group(transform=transform) if transform else dw.Group()
 
-        # Pre-compute interpolated states once for all elements (avoid double interpolation)
+        # Pre-compute interpolated states once for all elements.
+        # Elements with a stored _frozen_render skip get_frame entirely — their
+        # state is by contract identical to the frame the freeze was captured.
         element_states = []
         for element in self.elements:
+            supports_freeze = getattr(type(element), "_HAS_FREEZE_CACHE", False)
+            if supports_freeze and element._frozen_render is not None:
+                element_states.append((element, element._frozen_state))
+                continue
+
             if hasattr(element, "get_frame"):
                 state = element.get_frame(frame_time)
                 element_states.append((element, state))
@@ -736,17 +649,92 @@ class VScene:
 
         # Render elements using cached states
         for element, state in sorted_element_states:
+            supports_freeze = getattr(type(element), "_HAS_FREEZE_CACHE", False)
+            if supports_freeze and element._frozen_render is not None:
+                group.append(element._frozen_render)
+                continue
+
             if state is not None:
                 rendered = element.render_state(state, drawing=drawing)
+
                 if rendered is not None:
                     group.append(rendered)
+                    if (
+                        supports_freeze
+                        and getattr(state, "is_final", False)
+                        and is_cache_safe(state)
+                        and element._frozen_render is None
+                    ):
+                        element._frozen_render = rendered
+                        element._frozen_state = state
 
         # Apply scene-level clipping/masking
         if self.clip_state or self.mask_state:
-            group = self._apply_scene_clipping(group, drawing)
+            group = rendering_mod.apply_scene_clipping(
+                group, drawing, self.clip_state, self.mask_state
+            )
 
         drawing.append(group)
+
+        # Pause-overlay pass: drawn on top of the main element pass, addressed
+        # by *raw* time (pre-easing) so each overlay's local time advances
+        # while the main scene is held frozen.
+        if self._pauses and pause_windows:
+            for descriptor, window in zip(self._pauses, pause_windows):
+                if descriptor.overlay is None:
+                    continue
+                start, end = window
+                if raw_t < start or raw_t > end:
+                    continue
+                opacity = pause_opacity(raw_t, window, descriptor.fade)
+                if opacity <= 0.0:
+                    continue
+                local_t = local_pause_t(raw_t, window)
+                overlay_group = self._render_pause_overlay(
+                    descriptor.overlay, local_t, opacity, drawing, render_scale
+                )
+                if overlay_group is not None:
+                    drawing.append(overlay_group)
+
         return drawing
+
+    def _render_pause_overlay(
+        self,
+        overlay: "RenderableElement | VScene",
+        local_t: float,
+        opacity: float,
+        drawing: dw.Drawing,
+        render_scale: float,
+    ) -> dw.Group | None:
+        """Render a pause overlay into a Group with the given opacity.
+
+        Sub-scenes (anything with `to_drawing`) are rendered at `frame_time =
+        local_t` and their elements are wrapped in an opacity Group. Elements
+        (anything with `get_frame` + `render_state`) are queried at `local_t`
+        and rendered directly. The returned Group is the caller's
+        responsibility to append to the parent drawing.
+        """
+        if hasattr(overlay, "to_drawing"):
+            child_drawing = overlay.to_drawing(  # type: ignore[union-attr]
+                frame_time=local_t, render_scale=render_scale
+            )
+            wrapper = dw.Group(opacity=opacity)
+            for elem in child_drawing.elements:
+                wrapper.append(elem)
+            return wrapper
+
+        if hasattr(overlay, "get_frame") and hasattr(overlay, "render_state"):
+            state = overlay.get_frame(local_t)
+            if state is None:
+                return None
+            rendered = overlay.render_state(state, drawing=drawing)
+            if rendered is None:
+                return None
+            wrapper = dw.Group(opacity=opacity)
+            wrapper.append(rendered)
+            return wrapper
+
+        return None
 
     def to_svg(
         self,
@@ -792,118 +780,11 @@ class VScene:
     # ========================================================================
 
     def _build_transform(self, render_scale: float) -> str:
-        """Build SVG transform string from scene transforms
+        """Build SVG transform string from scene transforms."""
 
-        Args:
-            render_scale: Additional scale factor for rendering
-
-        Returns:
-            SVG transform string, or empty string if no transforms needed
-        """
-        transforms = []
-
-        # Combine scene scale with render scale
-        total_scale = self.scale * render_scale
-        if total_scale != 1.0:
-            transforms.append(f"scale({total_scale})")
-
-        # Add rotation if present
-        if self.rotation != 0.0:
-            transforms.append(f"rotate({self.rotation})")
-
-        # Add translation if present
-        if self.offset_x != 0.0 or self.offset_y != 0.0:
-            transforms.append(f"translate({self.offset_x},{self.offset_y})")
-
-        return " ".join(transforms)
-
-    def _apply_scene_clipping(self, group: dw.Group, drawing: dw.Drawing) -> dw.Group:
-        """Apply scene-level clip/mask to root group
-
-        Uses the same clipping logic as Renderer._apply_clipping_and_masking
-        but at the scene level.
-
-        Args:
-            group: The group containing all scene elements
-            drawing: Drawing for adding defs
-
-        Returns:
-            Group wrapped in clip/mask groups if needed
-        """
-        import uuid
-
-        from svan2d.component import get_renderer_instance_for_state
-
-        result = group
-
-        # Apply mask first (innermost)
-        if self.mask_state is not None:
-            mask_id = f"mask-{uuid.uuid4().hex[:8]}"
-            mask = dw.Mask(id=mask_id)
-
-            # Render the mask shape
-            renderer = get_renderer_instance_for_state(self.mask_state)
-            mask_elem = renderer._render_core(self.mask_state, drawing=drawing)
-
-            # Apply transforms and opacity
-            transforms = []
-            if self.mask_state.x != 0 or self.mask_state.y != 0:
-                transforms.append(f"translate({self.mask_state.x},{self.mask_state.y})")
-            if self.mask_state.rotation != 0:
-                transforms.append(f"rotate({self.mask_state.rotation})")
-            if self.mask_state.scale != 1.0:
-                transforms.append(f"scale({self.mask_state.scale})")
-
-            mask_group = dw.Group(opacity=self.mask_state.opacity)
-            if transforms:
-                mask_group.args["transform"] = " ".join(transforms)
-            mask_group.append(mask_elem)
-            mask.append(mask_group)
-
-            drawing.append_def(mask)
-
-            masked_group = dw.Group(mask=f"url(#{mask_id})")
-            masked_group.append(result)
-            result = masked_group
-
-        # Apply clip
-        if self.clip_state is not None:
-            clip_id = f"clip-{uuid.uuid4().hex[:8]}"
-            clip_path = dw.ClipPath(id=clip_id)
-
-            # Render the clip shape
-            renderer = get_renderer_instance_for_state(self.clip_state)
-            clip_elem = renderer._render_core(self.clip_state, drawing=drawing)
-
-            # Apply clip's own transforms
-            if (
-                self.clip_state.x != 0
-                or self.clip_state.y != 0
-                or self.clip_state.rotation != 0
-                or self.clip_state.scale != 1.0
-            ):
-                transforms = []
-                if self.clip_state.x != 0 or self.clip_state.y != 0:
-                    transforms.append(
-                        f"translate({self.clip_state.x},{self.clip_state.y})"
-                    )
-                if self.clip_state.rotation != 0:
-                    transforms.append(f"rotate({self.clip_state.rotation})")
-                if self.clip_state.scale != 1.0:
-                    transforms.append(f"scale({self.clip_state.scale})")
-                clip_group = dw.Group(transform=" ".join(transforms))
-                clip_group.append(clip_elem)
-                clip_path.append(clip_group)
-            else:
-                clip_path.append(clip_elem)
-
-            drawing.append_def(clip_path)
-
-            clipped_group = dw.Group(clip_path=f"url(#{clip_id})")
-            clipped_group.append(result)
-            result = clipped_group
-
-        return result
+        return rendering_mod.build_scene_transform(
+            self.scale, self.rotation, self.offset_x, self.offset_y, render_scale
+        )
 
     def get_animation_time_range(self) -> tuple[float, float]:
         """Get the time range covered by all elements
@@ -917,7 +798,7 @@ class VScene:
         if not self.elements:
             return (0.0, 1.0)
 
-        times: List[float] = []
+        times: list[float] = []
         for element in self.elements:
             keystates = getattr(element, "_keystates_list", None)
             if keystates and isinstance(keystates, list) and len(keystates) > 0:
@@ -995,9 +876,6 @@ class VScene:
     def preview_grid(self, num_frames: int = 10, scale: float = 1.0):
         """Preview animation by showing all frames in a grid layout.
 
-        Useful for quickly checking animations in Jupyter without video export.
-        Shows all frames at once for easy visual comparison.
-
         Args:
             num_frames: Number of frames to display (default: 10)
             scale: Scale factor for frame size, e.g. 0.5 for half size (default: 1.0)
@@ -1011,9 +889,6 @@ class VScene:
 
     def preview_animation(self, num_frames: int = 10, play_interval_ms: int = 100):
         """Preview animation with interactive controls (play/pause, slider, prev/next).
-
-        Useful for checking animations in Jupyter without video export.
-        Shows one frame at a time with playback controls.
 
         Args:
             num_frames: Number of frames to display (default: 10)

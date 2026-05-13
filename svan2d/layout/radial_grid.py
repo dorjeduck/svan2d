@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment
@@ -18,10 +18,10 @@ def radial_grid(
     inner_radius: float = 50,
     center: Point2D = Point2D(0, 0),
     rotation: float = 0,
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[int, int, float], float]] = None,
+    element_rotation_offset_fn: Callable[[int, int, float], float] | None = None,
     include_center: bool = False,
 ) -> States:
     """
@@ -36,8 +36,7 @@ def radial_grid(
         segments: Number of angular segments (divisions around the circle)
         ring_spacing: Distance between consecutive rings
         inner_radius: Radius of the innermost ring (set to 0 to start from center)
-        cx: X coordinate of grid center
-        cy: Y coordinate of grid center
+        center: Center point of the grid
         rotation: Rotation offset in degrees (0° = top)
         clockwise: If True, segments arranged clockwise; if False, counterclockwise
         alignment: How to align each element relative to the grid.
@@ -46,10 +45,7 @@ def radial_grid(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes (ring_index, segment_index, angle)
                            and returns rotation offset. If provided, overrides element_rotation_offset.
-        include_center: If True, place first element at center point (0,0)
-
-    Returns:
-        New list of states with radial grid positions
+        include_center: If True, place first element at center point (0,0).
 
     Examples:
         # Simple radial grid
@@ -105,12 +101,12 @@ def radial_grid(
             state = states[state_idx]
 
             # Calculate angle for this segment
-            angle = rotation + (seg * angle_step if clockwise else -seg * angle_step)
+            angle = rotation + (seg * angle_step if counter_clockwise else -seg * angle_step)
             angle_rad = math.radians(angle)
 
-            # Calculate position
-            x = center.x + radius * math.sin(angle_rad)
-            y = center.y - radius * math.cos(angle_rad)
+            # Cartesian coordinates: 0° = East, counter-clockwise positive
+            x = center.x + radius * math.cos(angle_rad)
+            y = center.y + radius * math.sin(angle_rad)
 
             # Calculate rotation
             additional_rotation = (
@@ -122,8 +118,8 @@ def radial_grid(
             if alignment == ElementAlignment.PRESERVE:
                 element_angle = state.rotation
             elif alignment == ElementAlignment.LAYOUT:
-                # Point radially outward from center
-                element_angle = angle + additional_rotation
+                # Bottom faces center: element_angle = position_angle - 90
+                element_angle = angle - 90 + additional_rotation
             elif alignment == ElementAlignment.UPRIGHT:
                 element_angle = additional_rotation
             else:
@@ -146,7 +142,7 @@ def radial_grid_between_radii(
     rotation: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[int, int, float], float]] = None,
+    element_rotation_offset_fn: Callable[[int, int, float], float] | None = None,
 ) -> States:
     """
     Arrange states in a radial grid with specified inner and outer radii.
@@ -157,8 +153,7 @@ def radial_grid_between_radii(
 
     Args:
         states: List of states to arrange
-        cx: X coordinate of grid center
-        cy: Y coordinate of grid center
+        center: Center point of the grid
         inner_radius: Radius of innermost ring
         outer_radius: Radius of outermost ring
         rings: Number of concentric rings
@@ -166,10 +161,7 @@ def radial_grid_between_radii(
         rotation: Base rotation in degrees
         alignment: How to align each element
         element_rotation_offset: Additional rotation offset
-        element_rotation_offset_fn: Function(ring, seg, angle) -> rotation offset
-
-    Returns:
-        New list of states with radial grid positions
+        element_rotation_offset_fn: Function(ring, seg, angle) -> rotation offset.
 
     Raises:
         ValueError: If outer_radius <= inner_radius

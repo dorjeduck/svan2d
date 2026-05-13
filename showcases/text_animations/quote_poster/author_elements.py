@@ -2,14 +2,16 @@
 
 from dataclasses import replace
 
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+from svan2d import (
+    Color,
+    MorphingConfig,
+    Point2D,
+    VElement,
+    easing,
+)
 from svan2d.font import FontGlyphs
-from svan2d.transition import easing
 from svan2d.transition.mapping.explicit import ExplicitMapper
 from svan2d.transition.vertex_alignment.angular import AngularAligner
-from svan2d.velement import VElement
-from svan2d.velement.morphing import MorphingConfig
 
 
 def create_author_elements(

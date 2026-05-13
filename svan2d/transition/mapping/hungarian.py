@@ -8,17 +8,19 @@ Requires scipy for the linear_sum_assignment implementation.
 
 from __future__ import annotations
 
-from typing import Callable, List, TypeVar
+from collections.abc import Callable
+from typing import TypeVar
 
 from svan2d.core.point2d import Point2D
 
 from .base import Mapper, Match
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 # Try to import scipy
 try:
     from scipy.optimize import linear_sum_assignment
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
@@ -55,10 +57,10 @@ class HungarianMapper(Mapper):
 
     def map(
         self,
-        start_items: List[T],
-        end_items: List[T],
-        get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+        start_items: list[T],
+        end_items: list[T],
+        get_position: Callable[[T], Point2D],
+    ) -> list[Match[T]]:
         """Map items using Hungarian algorithm for optimal assignment."""
         if not SCIPY_AVAILABLE:
             raise ImportError(
@@ -89,10 +91,10 @@ class HungarianMapper(Mapper):
 
     def _match_equal(
         self,
-        start_items: List[T],
-        end_items: List[T],
-        get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+        start_items: list[T],
+        end_items: list[T],
+        get_position: Callable[[T], Point2D],
+    ) -> list[Match[T]]:
         """Hungarian matching for equal counts (N=M)."""
         positions1 = [get_position(item) for item in start_items]
         positions2 = [get_position(item) for item in end_items]
@@ -115,10 +117,10 @@ class HungarianMapper(Mapper):
 
     def _match_split(
         self,
-        start_items: List[T],
-        end_items: List[T],
-        get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+        start_items: list[T],
+        end_items: list[T],
+        get_position: Callable[[T], Point2D],
+    ) -> list[Match[T]]:
         """Hungarian matching when splitting (N < M).
 
         Each start item may morph to multiple end items.
@@ -157,10 +159,10 @@ class HungarianMapper(Mapper):
 
     def _match_merge(
         self,
-        start_items: List[T],
-        end_items: List[T],
-        get_position: Callable[[T], Point2D]
-    ) -> List[Match[T]]:
+        start_items: list[T],
+        end_items: list[T],
+        get_position: Callable[[T], Point2D],
+    ) -> list[Match[T]]:
         """Hungarian matching when merging (N > M).
 
         Multiple start items may morph to the same end item.

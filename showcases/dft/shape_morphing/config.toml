@@ -1,0 +1,22 @@
+[scene]
+width = 400
+height = 400
+background = "#0a0a1a"
+
+[morphing]
+shapes = ["square","heart", "infinity", "circle" ,"star"]
+num_samples = 200
+shape_scale = 120.0
+num_coefficients = 60
+
+[style]
+trail_color = "#4ecdc4"
+trail_width = 2.5
+
+[export]
+output_dir = "output/"
+filename = "shape_morphing"
+converter = "playwright_http"
+total_frames = 480
+framerate = 30
+png_width_px = 800

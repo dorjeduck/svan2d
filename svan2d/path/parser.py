@@ -1,5 +1,4 @@
 import re
-from typing import List, Tuple, Union
 
 # Regex to match a command letter or a number (including signs, decimals, and exponents)
 # This handles the complex, comma-less, space-optional SVG syntax like M100-20L10,30
@@ -8,7 +7,7 @@ COMMAND_OR_COORD_RE = re.compile(
 )
 
 
-def tokenize_path(path_string: str) -> List[str]:
+def tokenize_path(path_string: str) -> list[str]:
     """
     Tokenizes an SVG path string into a list of command letters and coordinate values (as strings).
 
@@ -31,8 +30,8 @@ def tokenize_path(path_string: str) -> List[str]:
 
 
 def parse_coordinates(
-    tokens: List[str], num_args: int
-) -> Tuple[List[float], List[str]]:
+    tokens: list[str], num_args: int
+) -> tuple[list[float], list[str]]:
     """
     Extracts a specified number of coordinates from the beginning of a token list.
 
@@ -54,14 +53,19 @@ def parse_coordinates(
     coords = []
     remaining_tokens = tokens[:]
 
-    for _ in range(num_args):
-        try:
-            # We assume the tokens are already clean strings representing numbers
-            coords.append(float(remaining_tokens.pop(0)))
-        except (IndexError, ValueError):
-            # If the token is not a number, or the list runs out, something is wrong
+    for i in range(num_args):
+        if not remaining_tokens:
             raise ValueError(
-                f"Invalid path data: Expected numeric coordinate, got '{remaining_tokens[0] if remaining_tokens else 'END'}'"
+                f"Unexpected end of path data: expected coordinate "
+                f"{i + 1} of {num_args}"
+            )
+        token = remaining_tokens.pop(0)
+        try:
+            coords.append(float(token))
+        except ValueError:
+            raise ValueError(
+                f"Invalid path data: expected numeric coordinate "
+                f"{i + 1} of {num_args}, got command '{token}'"
             )
 
     return coords, remaining_tokens

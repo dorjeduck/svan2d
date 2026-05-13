@@ -2,10 +2,11 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional, Sequence, Tuple
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D, Points2D
+from svan2d.core.splines import catmull_rom_2d
 
 from .enums import ElementAlignment
 
@@ -15,7 +16,7 @@ def path_points(
     points: Points2D,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
     smooth: bool = True,
 ) -> States:
     """
@@ -32,9 +33,6 @@ def path_points(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position t (0-1) and returns rotation offset.
         smooth: If True, use Catmull-Rom spline interpolation for smoother curves.
-
-    Returns:
-        New list of states with positions along the path
     """
     if not states or not points or len(points) < 2:
         return []
@@ -77,33 +75,6 @@ def path_points(
             total += math.sqrt(dx * dx + dy * dy)
         return total
 
-    def catmull_rom_point(
-        t: float,
-        p0: Point2D,
-        p1: Point2D,
-        p2: Point2D,
-        p3: Point2D,
-    ) -> Point2D:
-        """Calculate point on Catmull-Rom spline"""
-        t2 = t * t
-        t3 = t2 * t
-
-        x = 0.5 * (
-            (2 * p1.x)
-            + (-p0.x + p2.x) * t
-            + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2
-            + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
-        )
-
-        y = 0.5 * (
-            (2 * p1.y)
-            + (-p0.y + p2.y) * t
-            + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2
-            + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
-        )
-
-        return Point2D(x, y)
-
     def get_point_at_t(t: float) -> Point2D:
         """Get point at normalized position t (0-1) along path based on parameter t."""
         if smooth:  # Logic relies on padded list now
@@ -119,7 +90,7 @@ def path_points(
             p2 = points_to_use[segment_index + 2]
             p3 = points_to_use[segment_index + 3]
 
-            return catmull_rom_point(local_t, p0, p1, p2, p3)
+            return catmull_rom_2d(p0, p1, p2, p3, local_t)
         else:
             # Linear interpolation between points_to_use (same as original points if not smooth)
             total_length = get_path_length(points_to_use)
@@ -161,7 +132,7 @@ def path_points(
         return math.degrees(math.atan2(dy, dx))
 
     # --- ARC-LENGTH PARAMETERIZATION IMPLEMENTATION ---
-    def resample_path(samples: int = 1000) -> Tuple[List[float], List[float]]:
+    def resample_path(samples: int = 1000) -> tuple[list[float], list[float]]:
         """
         Pre-calculate a map (distance_t_map, t_map) for arc-length parameterization.
         """

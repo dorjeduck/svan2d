@@ -1,28 +1,35 @@
-from svan2d.component.renderer.base_vertex import VertexRenderer
-from svan2d.component.state import (
+
+
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import (
+    VElement,
+    hold,
+)
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
     PerforatedCircleState,
     PerforatedStarState,
+)
+from svan2d.primitive.state.perforated import (
     Astroid,
-    Star,
+    Circle,
     Ellipse,
     Polygon,
-    Circle,
+    Star,
 )
-
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.velement.segments import hold
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
-
+from svan2d.primitive.renderer import VertexRenderer
 configure_logging(level="INFO")
 
 FILL_COLOR = Color("#FDBE02")
 STROKE_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -42,9 +49,9 @@ def main():
     s2 = PerforatedCircleState(
         radius=270,
         holes=[
-            Circle(radius=50, pos=Point2D(0, -100)),
-            Star(num_points=5, inner_radius=40, outer_radius=70, pos=Point2D(-120, 60)),
-            Astroid(radius=100, num_cusps=4, curvature=0.3, pos=Point2D(100, 60)),
+            Circle(radius=50, pos=Point2D(0, 100)),
+            Star(num_points=5, inner_radius=40, outer_radius=70, pos=Point2D(-120, -60)),
+            Astroid(radius=100, num_cusps=4, curvature=0.3, pos=Point2D(100, -60)),
         ],
         fill_color=FILL_COLOR,
         stroke_color=STROKE_COLOR,
@@ -57,8 +64,8 @@ def main():
         outer_radius=400,
         inner_radius=200,
         holes=[
-            Ellipse(rx=50, ry=40, pos=Point2D(-70, -80)),
-            Polygon(num_sides=3, radius=80, pos=Point2D(40, 40)),
+            Ellipse(rx=50, ry=40, pos=Point2D(-70, 80)),
+            Polygon(num_sides=3, radius=80, pos=Point2D(40, -40)),
         ],
         fill_color=FILL_COLOR,
         stroke_color=STROKE_COLOR,
@@ -76,7 +83,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -87,7 +94,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

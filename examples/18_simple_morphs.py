@@ -1,11 +1,19 @@
-"""
-Comprehensive showcase of all svan2d layout functions
-Demonstrates each layout's unique characteristics with animated transition
-"""
-
-from svan2d.component import TextRenderer, TextState, Renderer
-from svan2d.converter.converter_type import ConverterType
-from svan2d.component.state import (
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import (
+    VElement,
+    fade_inout,
+    hold,
+)
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
     ArcState,
     ArrowState,
     CircleState,
@@ -20,23 +28,16 @@ from svan2d.component.state import (
     SpiralState,
     SquareState,
     StarState,
+    TextState,
     TriangleState,
     WaveState,
 )
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.velement.segments import fade_inout, hold
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
 from dataclasses import replace
-from svan2d.core.color import Color
 
 configure_logging(level="INFO")
 
 FILL_COLOR = Color("#FDBE02")
 STROKE_COLOR = Color("#AA0000")
-
 
 def main():
     # Create the scene
@@ -47,7 +48,7 @@ def main():
         font_family="Courier New",
         font_size=20,
         fill_color=Color("#AA0000"),
-        pos=Point2D(0, 110),
+        pos=Point2D(0, -110),
     )
 
     # Define all layout transition
@@ -58,7 +59,7 @@ def main():
     morph_name_states.append(replace(base_name_state, text="Circle"))
 
     morph_states.append(
-        ArrowState(fill_color=FILL_COLOR, stroke_color=STROKE_COLOR, rotation=-45),
+        ArrowState(fill_color=FILL_COLOR, stroke_color=STROKE_COLOR, rotation=45),
     )
     morph_name_states.append(replace(base_name_state, text="Arrow"))
 
@@ -128,8 +129,8 @@ def main():
         ArcState(
             stroke_color=STROKE_COLOR,
             radius=40,
-            start_angle=10,
-            end_angle=170,
+            start_angle=-10,
+            end_angle=-170,
         )
     )
     morph_name_states.append(replace(base_name_state, text="Arc"))
@@ -209,7 +210,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.CAIROSVG,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -220,7 +221,6 @@ def main():
         framerate=30,
         png_width_px=1024,
     )
-
 
 if __name__ == "__main__":
     main()

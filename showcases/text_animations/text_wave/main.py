@@ -11,12 +11,14 @@ Usage:
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 from svan2d.font.font_glyphs import FontGlyphs
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
 
 from elements import create_wave_elements
 
@@ -58,7 +60,9 @@ def main():
         decay_end=wave_cfg.get("decay_end", 1.0),
     )
 
-    scene = VScene(width=width, height=height, background=Color(scene_cfg["background"]))
+    scene = VScene(
+        width=width, height=height, background=Color(scene_cfg["background"])
+    )
     scene = scene.add_elements(elements)
 
     exporter = VSceneExporter(
@@ -72,6 +76,7 @@ def main():
         total_frames=total_frames,
         framerate=export_cfg["framerate"],
         png_width_px=export_cfg["png_width_px"],
+        num_thumbnails=100,
     )
 
 

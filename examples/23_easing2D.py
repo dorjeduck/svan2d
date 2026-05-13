@@ -1,18 +1,25 @@
-from svan2d.component.state import CircleState, SquareState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.core.color import Color
-from svan2d.transition import easing
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
 
+
+from svan2d.transition import easing
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    SquareState,
+)
 configure_logging(level="INFO")
 
 CIRCLE_COLOR = Color("#FDBE02")
 RECTANGLE_COLOR = Color("#AA0000")
-
 
 def main():
     scene = VScene(width=256, height=256, background=Color("#000017"))
@@ -20,13 +27,13 @@ def main():
     # Create two different shapes
     circle = CircleState(
         radius=20,
-        pos=Point2D(-90, -90),
+        pos=Point2D(-90, 90),
         fill_color=CIRCLE_COLOR,
     )
 
     square = SquareState(
         size=40,
-        pos=Point2D(90, 90),
+        pos=Point2D(90, -90),
         fill_color=RECTANGLE_COLOR,
     )
 
@@ -44,26 +51,31 @@ def main():
 
     for i, eas in enumerate(easing_overrides):
 
-        vel = vel.keystate(
-            circle,
-            at=2 * i * step,
-        ).transition(
-            easing_dict={
-                "pos": easing.easing2D(
-                    easing_x=easing.linear,
-                    easing_y=eas,
-                )
-            }
-        ).keystate(
-            square,
-            at=min(1, (2 * i + 1) * step),
-        ).transition(
-            easing_dict={
-                "pos": easing.easing2D(
-                    easing_x=easing.linear,
-                    easing_y=eas,
-                )
-            }
+        vel = (
+            vel.keystate(
+                circle,
+                at=2 * i * step,
+            )
+            .transition(
+                easing_dict={
+                    "pos": easing.easing2D(
+                        easing_x=easing.linear,
+                        easing_y=eas,
+                    )
+                }
+            )
+            .keystate(
+                square,
+                at=min(1, (2 * i + 1) * step),
+            )
+            .transition(
+                easing_dict={
+                    "pos": easing.easing2D(
+                        easing_x=easing.linear,
+                        easing_y=eas,
+                    )
+                }
+            )
         )
     vel = vel.keystate(circle, at=1)
 
@@ -72,7 +84,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -83,7 +95,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

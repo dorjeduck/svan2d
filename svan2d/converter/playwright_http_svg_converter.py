@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -13,6 +13,12 @@ if TYPE_CHECKING:
     from svan2d.vscene.vscene import VScene
 
 logger = get_logger()
+
+# Per-process render timing log. Populated on every successful HTTP render with
+# the X-Render-* timing headers returned by the server. Profilers can read this
+# after a run to surface server-side breakdown without going through the logger
+# (which may be silenced in JSON-output modes).
+RENDER_TIMINGS: list[dict] = []
 
 
 class PlaywrightHttpSvgConverter(SVGConverter):
@@ -29,7 +35,7 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         self,
         host: str = "localhost",
         port: int = 4000,
-        auto_start: Optional[bool] = None,
+        auto_start: bool | None = None,
     ):
         super().__init__()
         config = get_config()
@@ -49,8 +55,8 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         self,
         scene: VScene,
         output: dict,
-        frame_time: Optional[float] = 0.0,
-        formats: Optional[list] = ["png", "pdf"],
+        frame_time: float | None = 0.0,
+        formats: list | None = ["png", "pdf"],
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,
@@ -201,7 +207,31 @@ class PlaywrightHttpSvgConverter(SVGConverter):
                     f.write(resp.content)
 
                 elapsed = time.time() - t0
-                logger.debug(f"{type_.upper()} saved to {output_path} in {elapsed:.4f}s")
+                server_timings = {
+                    k[len("X-Render-") : -len("-Ms")]: v
+                    for k, v in resp.headers.items()
+                    if k.lower().startswith("x-render-")
+                    and k.lower().endswith("-ms")
+                }
+                payload_kb = resp.headers.get("X-Render-Payload-Kb")
+                if server_timings:
+                    RENDER_TIMINGS.append(
+                        {
+                            "type": type_,
+                            "client_ms": elapsed * 1000,
+                            "payload_kb": float(payload_kb) if payload_kb else None,
+                            "server": {k: float(v) for k, v in server_timings.items()},
+                        }
+                    )
+                    parts = " ".join(f"{k}={v}ms" for k, v in server_timings.items())
+                    logger.info(
+                        f"{type_.upper()} {output_path} client={elapsed*1000:.1f}ms "
+                        f"payload={payload_kb}KB server[{parts}]"
+                    )
+                else:
+                    logger.debug(
+                        f"{type_.upper()} saved to {output_path} in {elapsed:.4f}s"
+                    )
                 return True
 
             except requests.exceptions.ConnectionError as e:

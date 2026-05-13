@@ -1,14 +1,23 @@
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
 from svan2d.transition import easing
-from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
 from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneSequence
+from svan2d.vscene import (
+    VScene,
+    VSceneSequence,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
+)
 
+from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
 
 configure_logging(level="INFO")
-
 
 def create_scene_1() -> VScene:
     """Create first scene with animated circle."""
@@ -31,7 +40,7 @@ def create_scene_1() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 1",
             font_size=24,
             fill_color=Color("#ffffff"),
@@ -40,7 +49,6 @@ def create_scene_1() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_2() -> VScene:
     """Create second scene with animated rectangle."""
@@ -67,7 +75,7 @@ def create_scene_2() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 2",
             font_size=24,
             fill_color=Color("#ffffff"),
@@ -76,7 +84,6 @@ def create_scene_2() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_3() -> VScene:
     """Create third scene with multiple circles."""
@@ -101,7 +108,7 @@ def create_scene_3() -> VScene:
     # Scene label
     label = VElement(
         state=TextState(
-            pos=Point2D(0, 100),
+            pos=Point2D(0, -100),
             text="Scene 3",
             font_size=24,
             fill_color=Color("#1a1a2e"),
@@ -110,7 +117,6 @@ def create_scene_3() -> VScene:
     scene = scene.add_element(label)
 
     return scene
-
 
 def main():
     # Create scenes
@@ -138,9 +144,7 @@ def main():
         png_width_px=800,
     )
 
-
     print("Export complete!")
-
 
 def demo_all_transitions():
     """Demo showcasing each transition type individually."""
@@ -171,9 +175,7 @@ def demo_all_transitions():
             .scene(scene2, duration=0.35)
         )
 
-
     print("All transitions exported!")
-
 
 if __name__ == "__main__":
     main()

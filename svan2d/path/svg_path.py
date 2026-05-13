@@ -1,30 +1,24 @@
-# ============================================================================
-# svan2d/paths/svg_path.py
-# ============================================================================
 """SVG Path Class with Morphing Support"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
 
 from svan2d.core.point2d import Point2D
 
-from .arc_to_bezier import (
-    arc_to_beziers,
-)  # New: Function to convert Arc to Cubic Beziers
+from .arc_to_bezier import arc_to_beziers
 from .commands import (
-    Arc,  # New
+    Arc,
     ClosePath,
     CubicBezier,
-    HorizontalLine,  # New
+    HorizontalLine,
     LineTo,
     MoveTo,
     PathCommand,
     QuadraticBezier,
-    SmoothCubicBezier,  # New
-    SmoothQuadraticBezier,  # New
-    VerticalLine,  # New
+    SmoothCubicBezier,
+    SmoothQuadraticBezier,
+    VerticalLine,
 )
 from .parser import parse_coordinates, tokenize_path
 
@@ -37,7 +31,7 @@ class SVGPath:
     than a string, enabling smooth interpolation between paths.
     """
 
-    commands: List[PathCommand]
+    commands: list[PathCommand]
     path_string: str | None = None
 
     @staticmethod
@@ -50,9 +44,6 @@ class SVGPath:
         Args:
             path_string: The raw SVG path data string.
 
-        Returns:
-            A new SVGPath instance.
-
         Raises:
             ValueError: If parsing encounters an unexpected command or missing coordinates.
         """
@@ -63,7 +54,7 @@ class SVGPath:
         if not tokens:
             return SVGPath([])
 
-        parsed_commands: List[PathCommand] = []
+        parsed_commands: list[PathCommand] = []
         # The current command letter for sequential commands (e.g., L 10 20 30 40)
         current_command_type: str = ""
 
@@ -187,28 +178,19 @@ class SVGPath:
         return SVGPath(parsed_commands, path_string)
 
     def to_string(self) -> str:
-        """Convert to SVG path data string
-
-        Returns:
-            SVG path data string (e.g., "M 0,0 L 100,100")
-        """
-        ## print types of all self.commands
+        """Convert to SVG path data string (e.g., "M 0,0 L 100,100")"""
         if self.path_string is None:
             self.path_string = " ".join(cmd.to_string() for cmd in self.commands)
         return self.path_string
 
     def to_absolute(self) -> SVGPath:
-        """Convert all commands to absolute coordinates
-
-        Returns:
-            New SVGPath with all absolute commands
-        """
+        """Convert all commands to absolute coordinates."""
         absolute_commands = []
-        current_pos = (0.0, 0.0)
+        current_pos = Point2D(0.0, 0.0)
 
         # We need to track the MoveTo position for Z commands
         # and the last control point for S and T commands
-        subpath_start_pos = (0.0, 0.0)
+        subpath_start_pos = Point2D(0.0, 0.0)
 
         for cmd in self.commands:
             abs_cmd = cmd.to_absolute(current_pos)
@@ -226,18 +208,127 @@ class SVGPath:
 
         return SVGPath(absolute_commands)
 
-    def is_compatible_for_morphing(self, other: SVGPath) -> bool:
-        """Check if two paths can be morphed
-
-        Paths are compatible if they have:
-        - Same number of commands
-        - Same command types in same order
+    def length(self, num_samples: int = 100) -> float:
+        """Calculate the total length of the path using adaptive sampling.
 
         Args:
-            other: Path to check compatibility with
+            num_samples: Number of samples per curve segment for accurate length calculation
 
         Returns:
-            True if paths can be morphed
+            Total path length in user units
+        """
+        import math
+
+        def bezier_point(t: float, points: list[Point2D]) -> Point2D:
+            """Evaluate bezier curve at parameter t using de Casteljau's algorithm."""
+            if len(points) == 1:
+                return points[0]
+            new_points = []
+            for i in range(len(points) - 1):
+                x = points[i].x + t * (points[i + 1].x - points[i].x)
+                y = points[i].y + t * (points[i + 1].y - points[i].y)
+                new_points.append(Point2D(x, y))
+            return bezier_point(t, new_points)
+
+        def curve_length(points: list[Point2D], samples: int) -> float:
+            """Calculate curve length by sampling."""
+            length = 0.0
+            prev = points[0]
+            for i in range(1, samples + 1):
+                t = i / samples
+                curr = bezier_point(t, points)
+                length += prev.distance_to(curr)
+                prev = curr
+            return length
+
+        total_length = 0.0
+        current_pos = Point2D(0.0, 0.0)
+        subpath_start = Point2D(0.0, 0.0)
+        prev_control = Point2D(0.0, 0.0)  # Track previous control point for smooth commands
+
+        # Convert to absolute for easier length calculation
+        abs_path = self.to_absolute()
+
+        for cmd in abs_path.commands:
+            if isinstance(cmd, MoveTo):
+                current_pos = cmd.pos
+                subpath_start = cmd.pos
+                prev_control = cmd.pos
+            elif isinstance(cmd, LineTo):
+                total_length += current_pos.distance_to(cmd.pos)
+                current_pos = cmd.pos
+                prev_control = cmd.pos
+            elif isinstance(cmd, HorizontalLine):
+                new_pos = Point2D(cmd.x, current_pos.y)
+                total_length += current_pos.distance_to(new_pos)
+                current_pos = new_pos
+                prev_control = new_pos
+            elif isinstance(cmd, VerticalLine):
+                new_pos = Point2D(current_pos.x, cmd.y)
+                total_length += current_pos.distance_to(new_pos)
+                current_pos = new_pos
+                prev_control = new_pos
+            elif isinstance(cmd, CubicBezier):
+                points = [current_pos, cmd.center1, cmd.center2, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center2
+            elif isinstance(cmd, QuadraticBezier):
+                points = [current_pos, cmd.center, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center
+            elif isinstance(cmd, SmoothCubicBezier):
+                # Reflect previous control point to get center1
+                reflected = Point2D(
+                    2 * current_pos.x - prev_control.x,
+                    2 * current_pos.y - prev_control.y,
+                )
+                points = [current_pos, reflected, cmd.center, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = cmd.center
+            elif isinstance(cmd, SmoothQuadraticBezier):
+                # Reflect previous control point to get the quadratic control point
+                reflected = Point2D(
+                    2 * current_pos.x - prev_control.x,
+                    2 * current_pos.y - prev_control.y,
+                )
+                points = [current_pos, reflected, cmd.pos]
+                total_length += curve_length(points, num_samples)
+                current_pos = cmd.pos
+                prev_control = reflected
+            elif isinstance(cmd, Arc):
+                # Convert arc to cubic beziers and sum their lengths
+                bezier_cmds = arc_to_beziers(
+                    current_pos,
+                    cmd.rx,
+                    cmd.ry,
+                    cmd.x_axis_rotation,
+                    cmd.large_arc_flag,
+                    cmd.sweep_flag,
+                    cmd.pos,
+                )
+                for bez_cmd in bezier_cmds:
+                    points = [current_pos, bez_cmd.center1, bez_cmd.center2, bez_cmd.pos]
+                    total_length += curve_length(points, num_samples)
+                    prev_control = bez_cmd.center2
+                    current_pos = bez_cmd.pos
+            elif isinstance(cmd, ClosePath):
+                total_length += current_pos.distance_to(subpath_start)
+                current_pos = subpath_start
+                prev_control = subpath_start
+
+        return total_length
+
+    def is_compatible_for_morphing(self, other: SVGPath) -> bool:
+        """Check if two paths can be morphed.
+
+        Paths are compatible if they have the same number of commands and the same
+        command types in the same order.
+
+        Args:
+            other: Path to check compatibility with.
         """
         if len(self.commands) != len(other.commands):
             return False
@@ -266,7 +357,7 @@ class SVGPath:
             # 1. Ensure command is absolute for easy calculation
             abs_cmd = cmd.to_absolute(current_pos)
 
-            new_commands: List[PathCommand] = [abs_cmd]  # Default is the command itself
+            new_commands: list[PathCommand] = [abs_cmd]  # Default is the command itself
 
             # 2. Handle Conversion
             if isinstance(abs_cmd, MoveTo):
@@ -449,45 +540,13 @@ class SVGPath:
         """Interpolate between two paths with automatic normalization
 
         Args:
-            path1: Starting path
-            path2: Ending path
-            t: Interpolation factor (0.0 to 1.0)
-            auto_normalize: If True, automatically normalize paths for morphing
-
-        Returns:
-            Interpolated path at time t
+            path1: Starting path.
+            path2: Ending path.
+            t: Interpolation factor (0.0 to 1.0).
+            auto_normalize: If True, automatically normalize paths for morphing.
 
         Raises:
             ValueError: If paths are incompatible and auto_normalize fails
-        """
-
-        """
-        if auto_normalize:
-            # NOTE: We are removing the external dependency on 'svan2d.paths.normalization'
-            # and using the local normalize_for_morphing() method.
-            try:
-                norm_path1, norm_path2 = path1.normalize_for_morphing(path2)
-            except ValueError as e:
-                raise ValueError(f"Cannot normalize paths for morphing: {e}")
-        else:
-            norm_path1 = path1.to_absolute()
-            norm_path2 = path2.to_absolute()
-
-        # Verify compatibility
-        if not norm_path1.is_compatible_for_morphing(norm_path2):
-            raise ValueError(
-                f"Paths are not compatible for morphing. "
-                f"Path 1 has {len(norm_path1.commands)} commands, "
-                f"Path 2 has {len(norm_path2.commands)} commands. "
-                f"Command types must match."
-            )
-
-        # Interpolate each command
-        interpolated_commands = []
-        for cmd1, cmd2 in zip(norm_path1.commands, norm_path2.commands):
-            interpolated_commands.append(cmd1.interpolate(cmd2, t))
-
-        return SVGPath(interpolated_commands)
         """
 
         from svan2d.path.morphing import polymorph_interpolate

@@ -3,23 +3,27 @@ Comprehensive showcase of all svan2d layout functions
 Demonstrates each layout's unique characteristics with animated transitions
 """
 
-from typing import List
-from svan2d.component import TextRenderer, TextState
-from svan2d.converter.converter_type import ConverterType
 from svan2d import layout
-from svan2d.core.logger import configure_logging
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.transition import segment
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import TextState
+from svan2d.primitive.renderer import TextRenderer
 from dataclasses import replace
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
+
+from svan2d.transition import segment
 
 configure_logging(level="INFO")
 
 # NOTE: This example is temporarily broken - animation module being redesigned
-
 
 def main():
     # Create the scene
@@ -41,7 +45,7 @@ def main():
         font_family="Courier New",
         font_size=14,
         fill_color=Color("#AA0000"),
-        pos=Point2D(0, 110),
+        pos=Point2D(0, -110),
     )
 
     # Define all layout transitions
@@ -120,10 +124,10 @@ def main():
         layout.bezier(
             base_states,
             control_points=[
-                Point2D(-110, -80),
-                Point2D(-60, 80),
-                Point2D(60, -80),
-                Point2D(110, 80),
+                Point2D(-110, 80),
+                Point2D(-60, -80),
+                Point2D(60, 80),
+                Point2D(110, -80),
             ],
             alignment=layout.ElementAlignment.LAYOUT,
         )
@@ -147,11 +151,11 @@ def main():
         layout.path_points(
             base_states,
             points=[
-                Point2D(-110, -100),
+                Point2D(-110, 100),
                 Point2D(-60, 0),
-                Point2D(0, 60),
+                Point2D(0, -60),
                 Point2D(60, 0),
-                Point2D(110, 100),
+                Point2D(110, -100),
             ],
             smooth=True,
             alignment=layout.ElementAlignment.LAYOUT,
@@ -194,16 +198,15 @@ def main():
     # Add all elements to the scene
     scene = scene.add_elements(elements)
 
-    texts = VElement(renderer=renderer).segment(
-        segment.fade_inout(
-            layout_name_states,
-            segment.linspace(num_states),
-            hold_duration,
-            fade_duration,
-        )
+    text_segs = segment.fade_inout(
+        layout_name_states,
+        segment.linspace(num_states),
+        hold_duration,
+        fade_duration,
     )
+    text_elements = [VElement(renderer=renderer).segment(seg) for seg in text_segs]
 
-    scene = scene.add_element(texts)
+    scene = scene.add_elements(text_elements)
 
     # Create the exporter
     exporter = VSceneExporter(
@@ -220,7 +223,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

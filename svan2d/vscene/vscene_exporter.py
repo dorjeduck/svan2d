@@ -6,10 +6,12 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from collections.abc import Generator
+from collections.abc import Callable
 
 from svan2d.converter.converter_type import ConverterType
 from svan2d.core.logger import get_logger
@@ -39,7 +41,7 @@ class VSceneExporter:
     DEFAULT_FRAME_PATTERN = "frame_{:04d}"
     DEFAULT_FRAMERATE = 30
     DEFAULT_CODEC = "libx264"
-    SUPPORTED_FORMATS = {"svg", "png", "pdf"}
+    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
 
     @staticmethod
@@ -56,17 +58,17 @@ class VSceneExporter:
     def __init__(
         self,
         scene,
-        output_dir: Optional[str] = ".",
-        converter: ConverterType = ConverterType.PLAYWRIGHT,
+        output_dir: str | None = ".",
+        converter: ConverterType = ConverterType.PLAYWRIGHT_HTTP,
         timestamp_files: bool = False,
     ) -> None:
         """Initialize exporter
 
         Args:
-            scene: The VScene to export
-            output_dir: Directory to save exported files
-            converter: ConverterType enum for PNG/PDF conversion
-            timestamp_files: Whether to prefix filenames with timestamps
+            scene: The VScene to export.
+            output_dir: Directory to save exported files.
+            converter: ConverterType enum for PNG/PDF conversion.
+            timestamp_files: Whether to prefix filenames with timestamps.
         """
         self.scene = scene
         if output_dir is None:
@@ -90,12 +92,16 @@ class VSceneExporter:
             PlaywrightHttpSvgConverter,
         )
         from svan2d.converter.playwright_svg_converter import PlaywrightSvgConverter
+        from svan2d.converter.resvg_svg_converter import ResvgSvgConverter
+        from svan2d.converter.resvg_http_svg_converter import ResvgHttpSvgConverter
 
         converter_map = {
             ConverterType.CAIROSVG: CairoSvgConverter,
             ConverterType.INKSCAPE: InkscapeSvgConverter,
             ConverterType.PLAYWRIGHT: PlaywrightSvgConverter,
             ConverterType.PLAYWRIGHT_HTTP: PlaywrightHttpSvgConverter,
+            ConverterType.RESVG: ResvgSvgConverter,
+            ConverterType.RESVG_HTTP: ResvgHttpSvgConverter,
         }
 
         converter_class = converter_map.get(converter)
@@ -110,7 +116,7 @@ class VSceneExporter:
         invalid = set(formats) - self.SUPPORTED_FORMATS
         if invalid:
             raise ValueError(
-                f"Unsupported formats: {invalid}. Supported: {self.SUPPORTED_FORMATS}"
+                f"Unsupported formats -> :  {invalid}. Supported: {self.SUPPORTED_FORMATS}"
             )
 
     def _validate_video_params(
@@ -130,10 +136,10 @@ class VSceneExporter:
 
     def _validate_dimensions(
         self,
-        png_width_px: Optional[int],
-        png_height_px: Optional[int],
-        pdf_inch_width: Optional[float],
-        pdf_inch_height: Optional[float],
+        png_width_px: int | None,
+        png_height_px: int | None,
+        pdf_inch_width: float | None,
+        pdf_inch_height: float | None,
     ) -> None:
         """Validate dimension parameters"""
         if png_width_px is not None and png_width_px < 1:
@@ -165,7 +171,8 @@ class VSceneExporter:
 
         if self.timestamp_files:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            stem = f"{path.stem}_{timestamp}"
+            suffix = uuid.uuid4().hex[:8]
+            stem = f"{path.stem}_{timestamp}_{suffix}"
         else:
             stem = path.stem
 
@@ -223,6 +230,69 @@ class VSceneExporter:
                 f"Frame generation progress: {progress:.0f}% ({frame_num}/{total_frames})"
             )
 
+    def _setup_frame_dir(
+        self,
+        base_name: str,
+        use_temp: bool,
+        prefix: str = "svan2d_frames_",
+    ) -> tuple[Path, tempfile.TemporaryDirectory | None]:
+        """Set up a frame output directory, optionally temporary.
+
+        Returns:
+            (frames_dir, temp_context) — temp_context is None if not temporary.
+            Caller must call temp_context.cleanup() when done.
+        """
+        if use_temp:
+            temp_context = tempfile.TemporaryDirectory(prefix=prefix)
+            return Path(temp_context.name), temp_context
+        frames_dir = self.output_dir / f"{base_name}_frames"
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        return frames_dir, None
+
+    def _converter_supports_parallel(self) -> bool:
+        """Check if the converter supports parallel rendering via render_svg_to_png."""
+        from svan2d.converter.svg_converter import SVGConverter
+
+        method = getattr(type(self.converter), "render_svg_to_png", None)
+        base_method = getattr(SVGConverter, "render_svg_to_png", None)
+        return method is not None and method is not base_method
+
+    def _generate_svg_frames(
+        self,
+        total_frames: int,
+        progress_callback: Callable[[int, int], None] | None,
+        *,
+        render_scale: float | None = None,
+        width: int | None = None,
+        height: int | None = None,
+    ) -> Generator[tuple[int, float, str], None, None]:
+        """Generate SVG content for each frame.
+
+        Handles pool reset, time calculation, and progress tracking.
+
+        Yields:
+            (frame_num, frame_time, svg_content) for each frame.
+        """
+        for frame_num in range(total_frames):
+            reset_point_pool()
+            t = self._calculate_frame_time(frame_num, total_frames)
+
+            if progress_callback:
+                progress_callback(frame_num, total_frames)
+            else:
+                self._log_progress(frame_num, total_frames)
+
+            kwargs: dict = {"frame_time": t, "log": False}
+            if render_scale is not None:
+                kwargs["render_scale"] = render_scale
+            if width is not None:
+                kwargs["width"] = width
+            if height is not None:
+                kwargs["height"] = height
+
+            svg_content = self.scene.to_svg(**kwargs)
+            yield frame_num, t, svg_content
+
     # ========================================================================
     # STATIC EXPORTS
     # ========================================================================
@@ -231,7 +301,7 @@ class VSceneExporter:
         self,
         filename: str,
         frame_time: float = 0.0,
-        formats: Optional[list[str]] = None,
+        formats: list[str] | None = None,
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         png_thumbnail_width_px: int | None = None,
@@ -255,6 +325,7 @@ class VSceneExporter:
         Returns:
             ExportResult with paths to exported files
         """
+
         # Validate frame_time
         if not 0.0 <= frame_time <= 1.0:
             raise ValueError(
@@ -397,7 +468,7 @@ class VSceneExporter:
         loop: int = 0,
         optimize: bool = True,
         cleanup_intermediate_files: bool = True,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """Export scene as animated GIF file.
 
@@ -433,15 +504,9 @@ class VSceneExporter:
         base_name = output_path.stem
 
         # Setup frame directory
-        if cleanup_intermediate_files:
-            # Use temporary directory
-            temp_context = tempfile.TemporaryDirectory(prefix="svan2d_gif_frames_")
-            frames_dir = Path(temp_context.name)
-        else:
-            # Use persistent directory
-            frames_dir = self.output_dir / f"{base_name}_frames"
-            frames_dir.mkdir(parents=True, exist_ok=True)
-            temp_context = None
+        frames_dir, temp_context = self._setup_frame_dir(
+            base_name, cleanup_intermediate_files, prefix="svan2d_gif_frames_"
+        )
 
         try:
             # Generate PNG frames
@@ -698,7 +763,7 @@ class VSceneExporter:
         png_width_px: int | None = None,
         png_height_px: int | None = None,
         cleanup_svg_after_png_conversion: bool = True,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
     ):
         """Export animation as frame sequence.
@@ -712,7 +777,7 @@ class VSceneExporter:
             png_height_px: Height for PNG frames
             cleanup_svg_after_png_conversion: If format is PNG, whether to delete intermediate SVG files
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
-            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires render_svg_to_png support)
 
         Yields:
             Tuple of (frame_num, frame_time) for progress tracking
@@ -733,15 +798,9 @@ class VSceneExporter:
         frames_dir.mkdir(parents=True, exist_ok=True)
 
         # Use parallel rendering for PNG if requested and converter supports it
-        # Only I/O-bound converters benefit from ThreadPoolExecutor (HTTP-based)
-        # CPU-bound converters (CairoSVG) would need ProcessPoolExecutor
         # Minimum 2 workers needed for parallelism benefit
         if format == "png" and parallel_workers >= 2:
-            from svan2d.converter.playwright_http_svg_converter import (
-                PlaywrightHttpSvgConverter,
-            )
-
-            if isinstance(self.converter, PlaywrightHttpSvgConverter):
+            if self._converter_supports_parallel():
                 yield from self._to_frames_parallel(
                     frames_dir,
                     filename_pattern,
@@ -755,42 +814,29 @@ class VSceneExporter:
             else:
                 logger.warning(
                     f"Parallel rendering not supported for {type(self.converter).__name__}, "
-                    "using sequential. Only PlaywrightHttpSvgConverter supports parallel."
+                    "using sequential. Converter must implement render_svg_to_png."
                 )
 
         logger.info(f"Generating {total_frames} frames in {format} format...")
 
         # Track intermediate files for cleanup
-        svg_files = []
+        svg_files: list[Path] = []
 
-        for frame_num in range(total_frames):
-            # Reset point pool at frame boundary to reclaim memory
-            reset_point_pool()
-
-            # Calculate frame time
-            t = self._calculate_frame_time(frame_num, total_frames)
-
-            # Progress tracking
-            if progress_callback:
-                progress_callback(frame_num, total_frames)
-            else:
-                self._log_progress(frame_num, total_frames)
-
+        for frame_num, t, svg_content in self._generate_svg_frames(
+            total_frames, progress_callback
+        ):
             filename = filename_pattern.format(frame_num)
 
             if format == "svg":
-                # Direct SVG export
                 output_file = frames_dir / f"{filename}.svg"
-                self.scene.to_svg(filename=str(output_file), frame_time=t, log=False)
+                output_file.write_text(svg_content, encoding="utf-8")
 
             elif format == "png":
-                # Export SVG first if cleanup is needed
                 if cleanup_svg_after_png_conversion:
                     svg_file = frames_dir / f"{filename}.svg"
-                    self.scene.to_svg(filename=str(svg_file), frame_time=t, log=False)
+                    svg_file.write_text(svg_content, encoding="utf-8")
                     svg_files.append(svg_file)
 
-                # Convert to PNG
                 png_file = frames_dir / f"{filename}.png"
                 self.converter.convert(
                     self.scene,
@@ -831,7 +877,7 @@ class VSceneExporter:
         png_width_px: int | None,
         png_height_px: int | None,
         parallel_workers: int,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ):
         """Generate PNG frames with parallel conversion using temp files.
 
@@ -858,54 +904,32 @@ class VSceneExporter:
 
         logger.debug(f"Writing svg to tmp dir: {svg_temp_dir}")
 
-
         # Phase 1: Generate SVGs and write to temp files immediately
         logger.info("Phase 1: Generating SVG files...")
         svg_start = time.time()
-        frame_data = (
-            []
-        )  # List of (frame_num, t, svg_path, png_path) - only paths, not content
+        frame_data: list[tuple[int, float, str, str]] = []
 
-        for frame_num in range(total_frames):
-            reset_point_pool()
-            t = self._calculate_frame_time(frame_num, total_frames)
-
-            # Progress every 10%
-            if frame_num % max(1, total_frames // 10) == 0:
-                progress_pct = (frame_num / total_frames) * 100
-                logger.info(
-                    f"  SVG generation: {frame_num}/{total_frames} ({progress_pct:.0f}%)"
-                )
-
-            # Generate SVG content
-            svg_content = self.scene.to_svg(
-                frame_time=t,
-                render_scale=scale,
-                width=width,
-                height=height,
-                log=False,
-            )
-
-            # Write to temp file immediately
+        for frame_num, t, svg_content in self._generate_svg_frames(
+            total_frames,
+            progress_callback,
+            render_scale=scale,
+            width=width,
+            height=height,
+        ):
             filename = filename_pattern.format(frame_num)
             svg_path = svg_temp_dir / f"{filename}.svg"
             png_path = frames_dir / f"{filename}.png"
 
-            with open(svg_path, "w", encoding="utf-8") as f:
-                f.write(svg_content)
-
-
-            # Only store paths, not content
+            svg_path.write_text(svg_content, encoding="utf-8")
             frame_data.append((frame_num, t, str(svg_path), str(png_path)))
-
-            # Free SVG content from memory
-            del svg_content
 
         svg_time = time.time() - svg_start
         logger.info(f"Phase 1 complete: {svg_time:.2f}s")
 
         # Phase 2: Convert all SVGs to PNGs in parallel
-        workers_info = f" with {parallel_workers} parallel workers" if parallel_workers > 1 else ""
+        workers_info = (
+            f" with {parallel_workers} parallel workers" if parallel_workers > 1 else ""
+        )
         logger.info(f"Phase 2: Converting {total_frames} SVGs to PNG{workers_info}...")
         png_start = time.time()
 
@@ -937,13 +961,8 @@ class VSceneExporter:
                 frames_done += 1
                 if progress_callback:
                     progress_callback(frames_done, total_frames)
-
-                # Progress every 10%
-                if frames_done % max(1, total_frames // 10) == 0:
-                    progress_pct = (frames_done / total_frames) * 100
-                    logger.info(
-                        f"  PNG conversion: {frames_done}/{total_frames} ({progress_pct:.0f}%)"
-                    )
+                else:
+                    self._log_progress(frames_done, total_frames)
 
         png_time = time.time() - png_start
         logger.info(f"Phase 2 complete: {png_time:.2f}s")
@@ -981,7 +1000,7 @@ class VSceneExporter:
         cleanup_intermediate_files: bool = True,
         codec: str = DEFAULT_CODEC,
         num_thumbnails: int = 0,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
     ) -> str:
         """Export scene as MP4 video file, with optional thumbnail generation.
@@ -996,7 +1015,7 @@ class VSceneExporter:
             codec: Video codec (default: libx264 for MP4)
             num_thumbnails: Number of thumbnails to generate (0 = none, 1 = middle, 2 = start/end, etc.)
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
-            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires Playwright HTTP)
+            parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires render_svg_to_png support)
 
         Returns:
             Path to the exported video file
@@ -1014,15 +1033,9 @@ class VSceneExporter:
         base_name = output_path.stem
 
         # Setup frame directory
-        if cleanup_intermediate_files:
-            # Use temporary directory
-            temp_context = tempfile.TemporaryDirectory(prefix="svan2d_frames_")
-            frames_dir = Path(temp_context.name)
-        else:
-            # Use persistent directory
-            frames_dir = self.output_dir / f"{base_name}_frames"
-            frames_dir.mkdir(parents=True, exist_ok=True)
-            temp_context = None
+        frames_dir, temp_context = self._setup_frame_dir(
+            base_name, cleanup_intermediate_files
+        )
 
         try:
             # Generate PNG frames
@@ -1136,7 +1149,15 @@ class VSceneExporter:
             "-c:v",
             codec,
             "-pix_fmt",
-            "yuv420p",  # Compatibility
+            "yuv420p",
+            "-color_range",
+            "pc",
+            "-colorspace",
+            "bt709",
+            "-color_trc",
+            "bt709",
+            "-color_primaries",
+            "bt709",
             str(output_path),
         ]
 

@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment
@@ -18,7 +18,7 @@ def polygon(
     center: Point2D = Point2D(0, 0),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states evenly distributed around a regular polygon.
@@ -29,8 +29,7 @@ def polygon(
         sides: Number of sides (vertices) of the polygon
         radius: Distance from center to each vertex
         rotation: Rotation in degrees (0° = top)
-        cx: X coordinate of polygon center
-        cy: Y coordinate of polygon center
+        center: Center point of the polygon
         alignment: How to align each element relative to the polygon.
                   PRESERVE keeps original rotation,
                   LAYOUT aligns to edge angle (or perpendicular at vertices),
@@ -38,9 +37,6 @@ def polygon(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
                            If provided, this overrides element_rotation_offset parameter.
-
-    Returns:
-        New list of states with polygon positions
     """
     if not states or sides < 3:
         return []
@@ -65,18 +61,18 @@ def polygon(
         angle1_rad = math.radians(angle1)
         angle2_rad = math.radians(angle2)
 
-        # Calculate vertex positions
-        x1 = center.x + radius * math.sin(angle1_rad)
-        y1 = center.y - radius * math.cos(angle1_rad)
-        x2 = center.x + radius * math.sin(angle2_rad)
-        y2 = center.y - radius * math.cos(angle2_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        x1 = center.x + radius * math.cos(angle1_rad)
+        y1 = center.y + radius * math.sin(angle1_rad)
+        x2 = center.x + radius * math.cos(angle2_rad)
+        y2 = center.y + radius * math.sin(angle2_rad)
 
         # Interpolate position along edge
         x = x1 + t * (x2 - x1)
         y = y1 + t * (y2 - y1)
 
-        # Calculate edge angle (direction from vertex1 to vertex2)
-        edge_angle = math.degrees(math.atan2(x2 - x1, -(y2 - y1)))
+        # Calculate edge angle (direction from vertex1 to vertex2) in Cartesian convention
+        edge_angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
 
         # Determine if we're at a vertex (t is very close to 0)
         at_vertex = t < 0.01
@@ -129,7 +125,7 @@ def polygon_in_bbox(
     rotation: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states around a regular polygon inscribed in a bounding box.
@@ -148,10 +144,7 @@ def polygon_in_bbox(
         rotation: Rotation offset in degrees
         alignment: How to align each element
         element_rotation_offset: Additional rotation offset
-        element_rotation_offset_fn: Function(edge_angle) -> rotation offset
-
-    Returns:
-        New list of states with polygon positions
+        element_rotation_offset_fn: Function(edge_angle) -> rotation offset.
 
     Raises:
         ValueError: If sides < 3

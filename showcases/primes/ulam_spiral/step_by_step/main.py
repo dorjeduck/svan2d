@@ -8,12 +8,14 @@ Demonstrates:
 
 from scipy.interpolate import PchipInterpolator
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.transition import easing
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_composite import VSceneComposite
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d import (
+    ConverterType,
+    VScene,
+    VSceneComposite,
+    VSceneExporter,
+    configure_logging,
+    easing,
+)
 
 from side_panel_scene import create_side_panel
 from square_element import create_square_element

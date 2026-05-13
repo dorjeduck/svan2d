@@ -1,41 +1,20 @@
 """Per-character quote VElements with scatter entrance animation."""
 
-import math
 import random
+import sys
 from dataclasses import replace
+from pathlib import Path
 
-from svan2d.component.state import TextPathState
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
+
+from scatter_entrance import scatter_entrance
+
+from svan2d.primitive.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-from svan2d.font.glyph_cache import get_glyph_cache
-from svan2d.font.glyph_extractor import load_font
-from svan2d.transition import curve, easing
-from svan2d.transition.easing import easing2D
+from svan2d.font import get_font_glyphs
+from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.velement import VElement
-
-
-def measure_char_widths(font_path: str, text: str, font_size: float) -> list[float]:
-    """Get pixel-space advance width for each character using the glyph cache."""
-    cache = get_glyph_cache()
-    font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm
-    scale = font_size / units_per_em
-
-    widths = []
-    for ch in text:
-        if ch == " ":
-            try:
-                g = cache.get_glyph(font_path, "n", font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.3)
-        else:
-            try:
-                g = cache.get_glyph(font_path, ch, font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.5)
-    return widths
 
 
 def create_quote_elements(
@@ -52,8 +31,8 @@ def create_quote_elements(
     """Create per-character VElements for the quote with scatter entrance."""
     line_height = font_size * 1.4
     total_text_height = (len(lines) - 1) * line_height
-    # Offset upward to leave room for author below
-    start_y = -total_text_height / 2 - font_size * 0.5
+    # Offset upward to leave room for author below (Cartesian: top = positive y)
+    start_y = total_text_height / 2 + font_size * 0.5
 
     # Count total visible chars for stagger calculation
     total_visible_chars = sum(len(ch) for line in lines for ch in line if ch != " ")
@@ -61,31 +40,24 @@ def create_quote_elements(
         return []
 
     entrance_window = entrance_end - entrance_start
-    char_stagger = entrance_window / total_visible_chars
     entrance_dur = entrance_window * 0.3
+    schedule = StaggerSchedule(total_visible_chars, t_start=entrance_start, t_end=entrance_end, overlap=0.0)
 
+    font = get_font_glyphs(font_path)
     elements: list[VElement] = []
     global_char_idx = 0
 
     for line_idx, line in enumerate(lines):
-        widths = measure_char_widths(font_path, line, font_size)
-        total_width = sum(widths)
+        x_positions = font.centered_char_x_positions(line, font_size)
 
-        # Centre each line horizontally
-        x_positions: list[float] = []
-        cursor = -total_width / 2
-        for w in widths:
-            x_positions.append(cursor + w / 2)
-            cursor += w
-
-        y = start_y + line_idx * line_height
+        y = start_y - line_idx * line_height
 
         for i, ch in enumerate(line):
             if ch == " ":
                 continue
 
             target = Point2D(x_positions[i], y)
-            appear_time = entrance_start + global_char_idx * char_stagger
+            appear_time = schedule[global_char_idx][0]
             appear_end = min(appear_time + entrance_dur, entrance_end)
 
             visible = TextPathState(
@@ -100,35 +72,17 @@ def create_quote_elements(
                 text_anchor="middle",
             )
 
-            # Scatter entrance: random origin
-            angle = rng.uniform(0, 2 * math.pi)
-            dist = rng.uniform(scatter_radius * 0.6, scatter_radius)
-            origin = Point2D(
-                target.x + math.cos(angle) * dist,
-                target.y + math.sin(angle) * dist,
+            origin, rot, easing_dict, interpolation_dict = scatter_entrance(
+                target, scatter_radius, scatter_rotation, rng
             )
-            rot = rng.uniform(-scatter_rotation, scatter_rotation)
-
             hidden = replace(visible, pos=origin, scale=0.0, opacity=0.0, rotation=rot)
-
-            # Bezier control point: perpendicular to origin→target
-            mid = Point2D((origin.x + target.x) / 2, (origin.y + target.y) / 2)
-            dx, dy = target.x - origin.x, target.y - origin.y
-            perp_scale = rng.uniform(-0.4, 0.4)
-            cp = Point2D(mid.x + (-dy) * perp_scale, mid.y + dx * perp_scale)
-
-            easing_dict = {
-                "pos": easing2D(easing.out_cubic, easing.out_back),
-                "scale": easing.out_back,
-                "opacity": easing.out_cubic,
-                "rotation": easing.out_cubic,
-            }
-            curve_dict = {"pos": curve.bezier([cp])}
 
             element = (
                 VElement()
                 .keystate(hidden, at=appear_time)
-                .transition(easing_dict=easing_dict, curve_dict=curve_dict)
+                .transition(
+                    easing_dict=easing_dict, interpolation_dict=interpolation_dict
+                )
                 .keystate(visible, at=appear_end)
                 .keystate(visible, at=1.0)
             )
@@ -145,7 +99,7 @@ def get_quote_block_bounds(
     """Return (min_y, max_y) of the quote text block, matching create_quote_elements layout."""
     line_height = font_size * 1.4
     total_text_height = (len(lines) - 1) * line_height
-    start_y = -total_text_height / 2 - font_size * 0.5
-    min_y = start_y - font_size * 0.5
-    max_y = start_y + (len(lines) - 1) * line_height + font_size * 0.5
+    start_y = total_text_height / 2 + font_size * 0.5
+    max_y = start_y + font_size * 0.5
+    min_y = start_y - (len(lines) - 1) * line_height - font_size * 0.5
     return min_y, max_y

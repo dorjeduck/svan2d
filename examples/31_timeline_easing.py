@@ -1,21 +1,25 @@
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.square import SquareState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
+
+
 from svan2d.transition import easing
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-
-
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    SquareState,
+)
 configure_logging(level="INFO")
-
 
 OUTER_COLOR = Color("#FDBE02")
 CENTER_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -52,7 +56,7 @@ def main():
     # Export
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.CAIROSVG,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -63,7 +67,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

@@ -3,7 +3,7 @@ from enum import Enum
 
 class PDFPageSizeInch(Enum):
     """
-    Standard PDF page sizes in inches (calculated from 300 DPI).
+    Standard PDF page sizes in inches.
 
     Members:
         A0, A1, A2, A3, A4, A5, A6: ISO 216 standard paper sizes.

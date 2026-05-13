@@ -7,17 +7,20 @@ rotation, and other transformations.
 Requires: pip install svan2d[font]
 """
 
-from dataclasses import replace
-
-from svan2d.component.state import TextPathState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import TextPathState
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
@@ -26,7 +29,6 @@ configure_logging(level="INFO")
 # Linux: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
 # Windows: C:/Windows/Fonts/arial.ttf
 FONT_PATH = "/System/Library/Fonts/Supplemental/Arial.ttf"
-
 
 def main():
     scene = VScene(width=400, height=400, background=Color("#1a1a2e"))
@@ -84,7 +86,7 @@ def main():
             font_path=FONT_PATH,
             font_size=40,
             fill_color=Color(color),
-            pos=Point2D(offset_x, 120),
+            pos=Point2D(offset_x, -120),
             scale=0.0,
         )
 
@@ -116,7 +118,6 @@ def main():
         png_width_px=800,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

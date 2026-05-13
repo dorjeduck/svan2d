@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Optional
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment
@@ -19,7 +19,8 @@ def spiral(
     angle_step: float = 30,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
+    angles: list[float] | None = None,
 ) -> States:
     """
     Arrange states in a spiral formation (Archimedean spiral).
@@ -30,8 +31,7 @@ def spiral(
 
     Args:
         states: List of states to arrange
-        cx: X coordinate of spiral center
-        cy: Y coordinate of spiral center
+        center: Center point of the spiral
         start_radius: Initial radius from center for first element
         radius_step: Amount to increase radius for each subsequent element
         start_angle: Initial angle in degrees for first element
@@ -42,9 +42,6 @@ def spiral(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
                            If provided, this overrides element_rotation_offset parameter.
-
-    Returns:
-        New list of states with spiral positions
     """
     if not states:
         return []
@@ -52,12 +49,12 @@ def spiral(
     result = []
     for i, state in enumerate(states):
         radius = start_radius + i * radius_step
-        angle = start_angle + i * angle_step
+        angle = angles[i] if angles is not None else start_angle + i * angle_step
         angle_rad = math.radians(angle)
 
-        # Calculate position (y is flipped for SVG)
-        x = center.x + radius * math.sin(angle_rad)
-        y = center.y - radius * math.cos(angle_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        x = center.x + radius * math.cos(angle_rad)
+        y = center.y + radius * math.sin(angle_rad)
 
         additional_rotation = (
             element_rotation_offset_fn(angle)
@@ -68,8 +65,8 @@ def spiral(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = state.rotation
         elif alignment == ElementAlignment.LAYOUT:
-            # upright to the center
-            element_angle = angle + additional_rotation
+            # Bottom faces center: element_angle = position_angle - 90
+            element_angle = angle - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:
@@ -87,10 +84,10 @@ def spiral_between_radii(
     start_radius: float = 50,
     end_radius: float = 200,
     rotation: float = 0,
-    clockwise: bool = False,
+    counter_clockwise: bool = True,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in a spiral from start radius to end radius.
@@ -101,18 +98,14 @@ def spiral_between_radii(
 
     Args:
         states: List of states to arrange
-        cx: X coordinate of spiral center
-        cy: Y coordinate of spiral center
+        center: Center point of the spiral
         start_radius: Radius for first element
         end_radius: Radius for last element
         rotation: Base rotation offset in degrees
         clockwise: If True, spiral clockwise; if False, counterclockwise
         alignment: How to align each element
         element_rotation_offset: Additional rotation offset
-        element_rotation_offset_fn: Function(angle) -> rotation offset
-
-    Returns:
-        New list of states with spiral positions
+        element_rotation_offset_fn: Function(angle) -> rotation offset.
 
     Examples:
         # Spiral outward from 50 to 200
@@ -139,7 +132,7 @@ def spiral_between_radii(
 
     # Calculate angle step based on direction
     # Use 30 degrees as default (same as spiral default)
-    angle_step = 30 if not clockwise else -30
+    angle_step = 30 if counter_clockwise else -30
 
     # Call canonical spiral function
     return spiral(

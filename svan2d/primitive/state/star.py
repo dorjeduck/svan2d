@@ -1,0 +1,37 @@
+"""Star renderer implementation using new architecture"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from svan2d.primitive.registry import renderer
+from svan2d.primitive.renderer.star import StarRenderer
+from svan2d.primitive.state.base_vertex import VertexState
+from svan2d.primitive.vertex import VertexContours, VertexStar
+from svan2d.core.point2d import Point2D
+
+
+@renderer(StarRenderer)
+@dataclass(frozen=True)
+class StarState(VertexState):
+    """State class for star elements"""
+
+    outer_radius: float = 50  # Radius to outer points
+    inner_radius: float = 20  # Radius to inner points
+    num_points_star: int = 5  # Number of points (minimum 3)
+
+    def __post_init__(self):
+        super().__post_init__()
+        self._none_color("fill_color")
+        self._none_color("stroke_color")
+
+    def _generate_contours(self) -> VertexContours:
+        """Generate star vertices"""
+        assert self._num_vertices is not None
+        star = VertexStar(
+            center=Point2D(),
+            outer_radius=self.outer_radius,
+            inner_radius=self.inner_radius,
+            num_points=self.num_points_star,
+            num_vertices=self._num_vertices,
+        )
+        return VertexContours(outer=star, holes=None)

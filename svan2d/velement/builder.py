@@ -6,17 +6,14 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
-    Dict,
-    List,
-    Optional,
+    NamedTuple,
     Sequence,
-    Tuple,
     TypeVar,
-    Union,
 )
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.keystate_parser import (
     AttributeKeyStatesDict,
@@ -30,21 +27,24 @@ if TYPE_CHECKING:
 
 T = TypeVar("T", bound="KeystateBuilder")
 
-# Type alias for keystate tuple
-KeystateTuple = Tuple[
-    State, Optional[State], Optional[float], Optional[TransitionConfig], int | None
-]
+class KeystateTuple(NamedTuple):
+    state: State
+    outgoing_state: State | None
+    time: float | None
+    transition_config: TransitionConfig | None
+    render_index: int | None
 
 
 @dataclass(frozen=True)
 class BuilderState:
     """Internal state for chainable builder methods (immutable)."""
 
-    # Tuple: (state, outgoing_state, time, transition_config, render_index)
-    keystates: Tuple[KeystateTuple, ...] = field(default_factory=tuple)
-    pending_transition: Optional[TransitionConfig] = None
-    default_transition: Optional[TransitionConfig] = None
-    curve_dict: Optional[Dict[str, CurveFunction]] = None
+    keystates: tuple[KeystateTuple, ...] = field(default_factory=tuple)
+    pending_transition: TransitionConfig | None = None
+    default_transition: TransitionConfig | None = None
+    interpolation_dict: dict[str, Any] | None = None
+    frame_fn: Callable | None = None
+    frame_base_state: Any = None
 
     def with_keystate(self, keystate: KeystateTuple) -> "BuilderState":
         """Return new BuilderState with keystate added."""
@@ -52,7 +52,7 @@ class BuilderState:
             keystates=self.keystates + (keystate,),
             pending_transition=None,  # Reset pending after adding keystate
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
     def with_pending_transition(self, transition: TransitionConfig) -> "BuilderState":
@@ -61,7 +61,7 @@ class BuilderState:
             keystates=self.keystates,
             pending_transition=transition,
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
     def with_default_transition(self, transition: TransitionConfig) -> "BuilderState":
@@ -70,38 +70,40 @@ class BuilderState:
             keystates=self.keystates,
             pending_transition=self.pending_transition,
             default_transition=transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
-    def with_curve_dict(self, curve_dict: Dict[str, CurveFunction]) -> "BuilderState":
-        """Return new BuilderState with curve_dict set."""
+    def with_interpolation_dict(
+        self, interpolation_dict: dict[str, Any]
+    ) -> "BuilderState":
+        """Return new BuilderState with interpolation_dict set."""
         return BuilderState(
             keystates=self.keystates,
             pending_transition=self.pending_transition,
             default_transition=self.default_transition,
-            curve_dict=curve_dict,
+            interpolation_dict=interpolation_dict,
         )
 
     def with_last_keystate_updated(
-        self, transition: Optional[TransitionConfig]
+        self, transition: TransitionConfig | None
     ) -> "BuilderState":
         """Return new BuilderState with last keystate's transition updated."""
         if not self.keystates:
             return self
 
-        prev_state, prev_outgoing, prev_time, _, prev_render_index = self.keystates[-1]
-        updated_keystate = (
-            prev_state,
-            prev_outgoing,
-            prev_time,
+        prev = self.keystates[-1]
+        updated_keystate = KeystateTuple(
+            prev.state,
+            prev.outgoing_state,
+            prev.time,
             transition,
-            prev_render_index,
+            prev.render_index,
         )
         return BuilderState(
             keystates=self.keystates[:-1] + (updated_keystate,),
             pending_transition=None,
             default_transition=self.default_transition,
-            curve_dict=self.curve_dict,
+            interpolation_dict=self.interpolation_dict,
         )
 
 
@@ -116,9 +118,9 @@ class KeystateBuilder:
     - Call _finalize_build() to convert builder state to final keystates
     """
 
-    _builder: Optional[BuilderState]
-    _attribute_easing: Optional[Dict[str, EasingFunction]]
-    _attribute_keystates: Optional[AttributeKeyStatesDict]
+    _builder: BuilderState | None
+    _attribute_easing: dict[str, EasingFunction] | None
+    _attribute_keystates: AttributeKeyStatesDict | None
 
     @abstractmethod
     def _replace_builder(self: T, new_builder: BuilderState) -> T:
@@ -132,8 +134,8 @@ class KeystateBuilder:
     def _replace_attributes(
         self: T,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> T:
         """Return a new instance with updated builder and attribute settings.
 
@@ -201,7 +203,7 @@ class KeystateBuilder:
                 )
 
         # Add new keystate
-        new_keystate: KeystateTuple = (
+        new_keystate = KeystateTuple(
             incoming_state,
             outgoing_state,
             at,
@@ -215,9 +217,9 @@ class KeystateBuilder:
     def keystates(
         self: T,
         states: Sequence[State],
-        between: Optional[List[float]] = None,
+        between: list[float] | None = None,
         extend: bool = False,
-        at: Optional[List[float]] = None,
+        at: list[float] | None = None,
     ) -> T:
         """Add multiple keystates with automatic timing.
 
@@ -269,18 +271,32 @@ class KeystateBuilder:
 
     def transition(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
-        morphing_config: Optional["MorphingConfig"] = None,
+        easing: EasingFunction | None = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        morphing_config: "MorphingConfig | None" = None,
+        exact_rotation: bool = False,
+        state_interpolation: Callable | None = None,
+        covers_boundaries: bool = False,
     ) -> T:
         """Configure the transition between the previous and next keystate.
 
         Multiple consecutive transition() calls merge their configurations.
 
         Args:
+            easing: Blanket easing function applied to all fields. Overridden
+                    by easing_dict entries for specific fields.
             easing_dict: Per-field easing functions for this segment
-            curve_dict: Per-field path functions for this segment
+            interpolation_dict: Per-field interpolation functions {field_name: func}
+                              - Point2D: (p1, p2, t) -> Point2D
+                              - Rotation: (r1, r2, t) -> float
             morphing_config: Morphing configuration for vertex state transitions
+            exact_rotation: If True, rotation uses the exact angle value — no shortest-arc optimization. Use to force direction or for multi-revolution rotation.
+            state_interpolation: Optional callable (start_state, end_state, t) -> State that
+                                bypasses all per-field interpolation. t is raw segment t (0→1).
+            covers_boundaries: If True and state_interpolation is set, state_interpolation
+                              is called even at exact boundary t (segment start/end) instead
+                              of returning the keystate directly.
 
         Returns:
             New instance with transition configured
@@ -294,18 +310,29 @@ class KeystateBuilder:
         # Merge with pending transition if exists
         if self._builder.pending_transition is None:
             new_transition = TransitionConfig(
+                easing=easing,
                 easing_dict=easing_dict,
-                curve_dict=curve_dict,
+                interpolation_dict=interpolation_dict,
                 morphing_config=morphing_config,
+                exact_rotation=exact_rotation,
+                state_interpolation=state_interpolation,
+                covers_boundaries=covers_boundaries,
             )
         else:
+            # easing: new call overrides pending
+            merged_easing_blanket = (
+                easing
+                if easing is not None
+                else self._builder.pending_transition.easing
+            )
+
             merged_easing = self._builder.pending_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
 
-            merged_path = self._builder.pending_transition.curve_dict or {}
-            if curve_dict:
-                merged_path = {**merged_path, **curve_dict}
+            merged_path = self._builder.pending_transition.interpolation_dict or {}
+            if interpolation_dict:
+                merged_path = {**merged_path, **interpolation_dict}
 
             merged_morphing = (
                 morphing_config
@@ -313,27 +340,93 @@ class KeystateBuilder:
                 else self._builder.pending_transition.morphing_config
             )
 
+            # exact_rotation: new call overrides pending
+            merged_exact_rotation = (
+                exact_rotation
+                if exact_rotation
+                else self._builder.pending_transition.exact_rotation
+            )
+
+            # state_interpolation: new call overrides pending
+            merged_state_interpolation = (
+                state_interpolation
+                if state_interpolation is not None
+                else self._builder.pending_transition.state_interpolation
+            )
+
+            # covers_boundaries: new call overrides pending
+            merged_covers_boundaries = (
+                covers_boundaries
+                if covers_boundaries
+                else self._builder.pending_transition.covers_boundaries
+            )
+
             new_transition = TransitionConfig(
+                easing=merged_easing_blanket,
                 easing_dict=merged_easing if merged_easing else None,
-                curve_dict=merged_path if merged_path else None,
+                interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
+                exact_rotation=merged_exact_rotation,
+                state_interpolation=merged_state_interpolation,
+                covers_boundaries=merged_covers_boundaries,
             )
 
         new_builder = self._builder.with_pending_transition(new_transition)
         return self._replace_builder(new_builder)
 
+    def frame_fn(
+        self: T,
+        fn: Callable,
+        base_state: Any = None,
+    ) -> T:
+        """Define an element via a per-frame function independent of keystates.
+
+        fn is called with (base_state, t) for every frame and returns the full state.
+        base_state is None if not provided. This bypasses the keystate/interpolation
+        system entirely.
+
+        Args:
+            fn: Callable (base_state, t: float) -> State.
+            base_state: Optional base state passed to fn on every call.
+
+        Returns:
+            New instance with frame_fn set.
+        """
+        if self._builder is None:
+            raise RuntimeError(
+                "Cannot modify element after the element has been built. "
+                "Any call to render(), render_at_frame_time(), get_frame(), or "
+                "is_animatable() triggers the build. Call frame_fn() before any of these."
+            )
+
+        new_builder = BuilderState(
+            keystates=self._builder.keystates,
+            pending_transition=self._builder.pending_transition,
+            default_transition=self._builder.default_transition,
+            interpolation_dict=self._builder.interpolation_dict,
+            frame_fn=fn,
+            frame_base_state=base_state,
+        )
+        return self._replace_builder(new_builder)
+
     def default_transition(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
-        morphing: Optional["MorphingConfig"] = None,
+        easing: EasingFunction | None = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        morphing: "MorphingConfig | None" = None,
+        state_interpolation: Callable | None = None,
     ) -> T:
         """Set default transition parameters for all subsequent segments.
 
         Args:
+            easing: Blanket easing function applied to all fields. Overridden
+                    by easing_dict entries for specific fields.
             easing_dict: Per-field easing functions to use as default
-            curve_dict: Per-field path functions to use as default
+            interpolation_dict: Per-field path functions to use as default
             morphing: Morphing configuration to use as default
+            state_interpolation: Optional callable (start_state, end_state, t) -> State that
+                                bypasses all per-field interpolation. t is raw segment t (0→1).
 
         Returns:
             New instance with default transition set
@@ -343,16 +436,27 @@ class KeystateBuilder:
 
         if self._builder.default_transition is None:
             new_default = TransitionConfig(
-                easing_dict=easing_dict, curve_dict=curve_dict, morphing_config=morphing
+                easing=easing,
+                easing_dict=easing_dict,
+                interpolation_dict=interpolation_dict,
+                morphing_config=morphing,
+                state_interpolation=state_interpolation,
             )
         else:
+            # easing: new call overrides existing
+            merged_easing_blanket = (
+                easing
+                if easing is not None
+                else self._builder.default_transition.easing
+            )
+
             merged_easing = self._builder.default_transition.easing_dict or {}
             if easing_dict:
                 merged_easing = {**merged_easing, **easing_dict}
 
-            merged_path = self._builder.default_transition.curve_dict or {}
-            if curve_dict:
-                merged_path = {**merged_path, **curve_dict}
+            merged_path = self._builder.default_transition.interpolation_dict or {}
+            if interpolation_dict:
+                merged_path = {**merged_path, **interpolation_dict}
 
             merged_morphing = (
                 morphing
@@ -360,10 +464,19 @@ class KeystateBuilder:
                 else self._builder.default_transition.morphing_config
             )
 
+            # state_interpolation: new call overrides pending
+            merged_state_interpolation = (
+                state_interpolation
+                if state_interpolation is not None
+                else self._builder.default_transition.state_interpolation
+            )
+
             new_default = TransitionConfig(
+                easing=merged_easing_blanket,
                 easing_dict=merged_easing if merged_easing else None,
-                curve_dict=merged_path if merged_path else None,
+                interpolation_dict=merged_path if merged_path else None,
                 morphing_config=merged_morphing,
+                state_interpolation=merged_state_interpolation,
             )
 
         new_builder = self._builder.with_default_transition(new_default)
@@ -371,15 +484,15 @@ class KeystateBuilder:
 
     def attributes(
         self: T,
-        easing_dict: Optional[Dict[str, EasingFunction]] = None,
-        curve_dict: Optional[Dict[str, CurveFunction]] = None,
-        keystates_dict: Optional[AttributeKeyStatesDict] = None,
+        easing_dict: dict[str, EasingFunction] | None = None,
+        interpolation_dict: dict[str, Any] | None = None,
+        keystates_dict: AttributeKeyStatesDict | None = None,
     ) -> T:
         """Set element-level attribute configuration.
 
         Args:
             easing_dict: Per-field easing functions {field_name: easing_func}
-            curve_dict: Per-field path functions {field_name: path_func}
+            interpolation_dict: Per-field path functions {field_name: path_func}
             keystates_dict: Per-field keystate timelines {field_name: [values]}
 
         Returns:
@@ -394,38 +507,41 @@ class KeystateBuilder:
 
         if easing_dict is not None:
             new_easing = easing_dict
-        if curve_dict is not None:
-            new_builder = new_builder.with_curve_dict(curve_dict)
+        if interpolation_dict is not None:
+            new_builder = new_builder.with_interpolation_dict(interpolation_dict)
         if keystates_dict is not None:
             new_keystates = keystates_dict
 
         return self._replace_attributes(new_builder, new_easing, new_keystates)
 
     def _merge_element_path_into_transition(
-        self, transition_config: Optional[TransitionConfig]
-    ) -> Optional[TransitionConfig]:
+        self, transition_config: TransitionConfig | None
+    ) -> TransitionConfig | None:
         """Merge element-level path config into segment transition."""
-        if self._builder is None or self._builder.curve_dict is None:
+        if self._builder is None or self._builder.interpolation_dict is None:
             return transition_config
 
         if transition_config is None:
-            return TransitionConfig(curve_dict=self._builder.curve_dict)
+            return TransitionConfig(interpolation_dict=self._builder.interpolation_dict)
 
         # Segment path takes precedence, element path fills gaps
-        segment_path = transition_config.curve_dict or {}
-        merged_path = {**self._builder.curve_dict, **segment_path}
+        segment_path = transition_config.interpolation_dict or {}
+        merged_path = {**self._builder.interpolation_dict, **segment_path}
 
         return TransitionConfig(
+            easing=transition_config.easing,
             easing_dict=transition_config.easing_dict,
             morphing_config=transition_config.morphing_config,
-            curve_dict=merged_path if merged_path else None,
+            interpolation_dict=merged_path if merged_path else None,
+            exact_rotation=transition_config.exact_rotation,
+            state_interpolation=transition_config.state_interpolation,
         )
 
-    def _finalize_build(self) -> Tuple[List[KeyState], Dict]:
-        """Convert builder state to final keystates and attribute_keystates.
+    def _finalize_build(self) -> tuple[list[KeyState], dict]:
+        """Convert builder state to final keystates and attribute timelines.
 
         Returns:
-            Tuple of (keystates list, attribute_keystates dict)
+            Tuple of (keystates list, attribute_timelines dict)
 
         Raises:
             ValueError: If no keystates or orphan transition
@@ -440,11 +556,11 @@ class KeystateBuilder:
             )
 
         # Validate compatible state types (ShapeCollectionState cannot mix with others)
-        from svan2d.component.state.state_collection import StateCollectionState
+        from svan2d.primitive.state.state_collection import StateCollectionState
 
         for i in range(len(self._builder.keystates) - 1):
-            state1 = self._builder.keystates[i][0]
-            state2 = self._builder.keystates[i + 1][0]
+            state1 = self._builder.keystates[i].state
+            state2 = self._builder.keystates[i + 1].state
             is_collection1 = isinstance(state1, StateCollectionState)
             is_collection2 = isinstance(state2, StateCollectionState)
 
@@ -465,16 +581,20 @@ class KeystateBuilder:
                 "Remove the trailing transition() call."
             )
 
-        # Check for duplicate keystate times
-        times = [ks[2] for ks in self._builder.keystates if ks[2] is not None]
-        seen = set()
-        for t in times:
-            # if t in seen:
-            #    raise ValueError(f"Duplicate keystate time {t} detected.")
-            seen.add(t)
+        # Auto-expand: single keystate with implicit time → duplicate to span [0, 1].
+        # VElement(state=s) should persist across entire timeline, not just t=0.
+        # Explicit at= is preserved (user intentionally pinned to one time point).
+        if len(self._builder.keystates) == 1 and self._builder.keystates[0].time is None:
+            ks = self._builder.keystates[0]
+            self._builder = BuilderState(
+                keystates=(ks, ks),
+                pending_transition=self._builder.pending_transition,
+                default_transition=self._builder.default_transition,
+                interpolation_dict=self._builder.interpolation_dict,
+            )
 
         # Convert internal keystates to KeyState objects
-        keystates: List[KeyState] = []
+        keystates: list[KeyState] = []
         for (
             state,
             outgoing_state,
@@ -495,15 +615,15 @@ class KeystateBuilder:
                 )
             )
 
-        # Parse attribute keystates
-        attribute_keystates = {}
+        # Parse attribute keystates into per-field timelines
+        attribute_timelines = {}
         if self._attribute_keystates:
             for field_name, timeline in self._attribute_keystates.items():
                 if not timeline:
                     raise ValueError(f"Empty timeline for field '{field_name}'")
-                attribute_keystates[field_name] = parse_attribute_keystates(timeline)
+                attribute_timelines[field_name] = parse_attribute_keystates(timeline)
 
         # Clear builder state
         self._builder = None
 
-        return parse_element_keystates(keystates), attribute_keystates  # type: ignore[arg-type]
+        return parse_element_keystates(keystates), attribute_timelines  # type: ignore[arg-type]

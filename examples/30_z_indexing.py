@@ -1,21 +1,26 @@
-from dataclasses import replace
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.number import NumberFormat, NumberState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.point2d import Point2D
-from svan2d.core.logger import configure_logging
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
-
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    NumberFormat,
+    NumberState,
+    RectangleState,
+)
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
 CENTER_CIRCLE = Color("#FDBE02")
 SURROUNDING_CIRCLES = Color("#AA0000")
-
 
 def main():
 
@@ -28,13 +33,13 @@ def main():
     center_element = VElement().keystates([center_circle_start, center_circle_end])
 
     c1 = CircleState(
-        radius=40, pos=Point2D(0, -70), z_index=1, fill_color=SURROUNDING_CIRCLES
+        radius=40, pos=Point2D(0, 70), z_index=1, fill_color=SURROUNDING_CIRCLES
     )
     c2 = replace(c1, pos=Point2D(70, 0), z_index=2)
-    c3 = replace(c1, pos=Point2D(0, 70), z_index=3)
+    c3 = replace(c1, pos=Point2D(0, -70), z_index=3)
     c4 = replace(c1, pos=Point2D(-70, 0), z_index=4)
 
-    surrounding_elements = [VElement().keystates([s, s]) for s in [c1, c2, c3, c4]]
+    surrounding_elements = [VElement(state=s) for s in [c1, c2, c3, c4]]
 
     scene = scene.add_element(center_element)
     scene = scene.add_elements(surrounding_elements)
@@ -44,7 +49,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -55,7 +60,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

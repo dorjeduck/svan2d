@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment
@@ -16,12 +16,12 @@ def ellipse(
     ry: float = 50,
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     start_angle: float = 0,
-    angles: Optional[List[float]] = None,
+    angles: list[float] | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in an elliptical formation.
@@ -34,10 +34,9 @@ def ellipse(
         states: List of states to arrange
         rx: Horizontal radius of the ellipse
         ry: Vertical radius of the ellipse
-        rotation: Rotation in degrees (0° = top, 90° = right)
-        cx: X coordinate of ellipse center
-        cy: Y coordinate of ellipse center
-        clockwise: If True, arrange clockwise; if False, counterclockwise.
+        rotation: Rotation in degrees (0° = East)
+        center: Center point of the ellipse
+        counter_clockwise: If True, arrange counter-clockwise; if False, clockwise.
                   Only used when angles is None.
         angles: Optional list of specific angles in degrees for each element.
                If provided, overrides automatic distribution and clockwise parameter.
@@ -48,9 +47,6 @@ def ellipse(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
                            If provided, this overrides element_rotation_offset parameter.
-
-    Returns:
-        New list of states with elliptical positions
     """
     if not states:
         return []
@@ -67,12 +63,10 @@ def ellipse(
     else:
         num_elements = len(states)
         angle_step = 360 / num_elements
-        if clockwise:
-            element_angles = [start_angle + i * angle_step for i in range(num_elements)]
-        else:
-            element_angles = [
-                start_angle + 360 - i * angle_step for i in range(num_elements)
-            ]
+        element_angles = [
+            start_angle + (i if counter_clockwise else -i) * angle_step
+            for i in range(num_elements)
+        ]
 
     rot_rad = math.radians(rotation)
     cos_rot = math.cos(rot_rad)
@@ -82,9 +76,9 @@ def ellipse(
         angle = element_angles[i]
         angle_rad = math.radians(angle)
 
-        # Position on unrotated ellipse
-        ex = rx * math.sin(angle_rad)
-        ey = -ry * math.cos(angle_rad)
+        # Cartesian coordinates: 0° = East, counter-clockwise positive
+        ex = rx * math.cos(angle_rad)
+        ey = ry * math.sin(angle_rad)
 
         # Rotate ellipse axes by 'rotation'
         x = center.x + ex * cos_rot - ey * sin_rot
@@ -99,8 +93,8 @@ def ellipse(
         if alignment == ElementAlignment.PRESERVE:
             element_angle = (state.rotation or 0) + additional_rotation
         elif alignment == ElementAlignment.LAYOUT:
-            # Tangent to ellipse includes the ellipse's rotation
-            element_angle = angle + rotation + additional_rotation
+            # Bottom faces center: element_angle = position_angle - 90
+            element_angle = angle + rotation - 90 + additional_rotation
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
 
@@ -116,12 +110,12 @@ def ellipse_in_bbox(
     width: float,
     height: float,
     rotation: float = 0,
-    clockwise: bool = True,
+    counter_clockwise: bool = True,
     start_angle: float = 0,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-    angles: Optional[List[float]] = None,
-    element_rotation_offset_fn: Optional[Callable[[float], float]] = None,
+    angles: list[float] | None = None,
+    element_rotation_offset_fn: Callable[[float], float] | None = None,
 ) -> States:
     """
     Arrange states in an elliptical formation within a bounding box.
@@ -131,12 +125,11 @@ def ellipse_in_bbox(
 
     Args:
         states: List of states to arrange
-        x: X coordinate of bounding box top-left corner
-        y: Y coordinate of bounding box top-left corner
+        center: Top-left corner of the bounding box.
         width: Width of bounding box
         height: Height of bounding box
-        rotation: Rotation in degrees (0° = top, 90° = right)
-        clockwise: If True, arrange clockwise; if False, counterclockwise
+        rotation: Rotation in degrees (0° = East)
+        counter_clockwise: If True, arrange counter-clockwise; if False, clockwise
         start_angle: Starting angle in degrees for first element
         alignment: How to align each element relative to the ellipse.
                   PRESERVE keeps original rotation, LAYOUT aligns tangent to ellipse,
@@ -145,9 +138,6 @@ def ellipse_in_bbox(
         angles: Optional list of specific angles in degrees for each element.
                If provided, overrides automatic distribution.
         element_rotation_offset_fn: Function that takes position angle (degrees) and returns rotation offset.
-
-    Returns:
-        New list of states with elliptical positions
 
     Raises:
         ValueError: If width or height is zero or negative
@@ -188,7 +178,7 @@ def ellipse_in_bbox(
         ry=ry,
         rotation=rotation,
         center=Point2D(cx, cy),
-        clockwise=clockwise,
+        counter_clockwise=counter_clockwise,
         start_angle=start_angle,
         angles=angles,
         alignment=alignment,

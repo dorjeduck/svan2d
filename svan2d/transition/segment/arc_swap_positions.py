@@ -2,9 +2,9 @@
 
 import math
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.transition.curve.arc import arc_clockwise, arc_counterclockwise
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
@@ -15,10 +15,10 @@ def arc_swap_positions(
     state_2: State,
     t_start: float,
     t_end: float,
-    clockwise: bool = True,
+    counter_clockwise: bool = False,
     arc_radius: float | None = None,
-    easing: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Tuple[List[KeyState], List[KeyState]]:
+    easing: dict[str, Callable[[float], float]] | None = None,
+) -> tuple[list[KeyState], list[KeyState]]:
     """Swaps the positions of two elements along arc paths.
 
     Both elements travel along parallel arcs in the same direction to avoid
@@ -29,7 +29,7 @@ def arc_swap_positions(
         state_2: The base State of the second element.
         t_start: Start time of the swap.
         t_end: End time of the swap.
-        clockwise: Arc direction (default True).
+        counter_clockwise: Arc direction (default False = clockwise).
         arc_radius: Arc radius. If None, defaults to distance between points.
         easing: Optional easing dict for position transitions.
 
@@ -57,11 +57,13 @@ def arc_swap_positions(
         radius = max(arc_radius, min_radius)
 
     # Select arc direction (both elements use same direction to avoid collision)
-    arc_func = arc_clockwise if clockwise else arc_counterclockwise
+    arc_func = arc_counterclockwise if counter_clockwise else arc_clockwise
     path_func = arc_func(radius)
 
     # Build transition config
-    transition = TransitionConfig(easing_dict=easing, curve_dict={"pos": path_func})
+    transition = TransitionConfig(
+        easing_dict=easing, interpolation_dict={"pos": path_func}
+    )
 
     # Final states with swapped positions
     s1_final = replace(state_1, pos=state_2.pos)

@@ -1,20 +1,16 @@
-# ============================================================================
-# svan2d/paths/normalization.py
-# ============================================================================
 """
 Complete path normalization system for morphing
 
 Integrates robust subdivision with smart path analysis.
 """
 
-from typing import Tuple
 
 from svan2d.core.point2d import Point2D
 from svan2d.path.subdivision import analyze_path_curves, subdivide_path_to_count
 from svan2d.path.svg_path import SVGPath
 
 
-def equalize_curve_counts(path1: SVGPath, path2: SVGPath) -> Tuple[SVGPath, SVGPath]:
+def equalize_curve_counts(path1: SVGPath, path2: SVGPath) -> tuple[SVGPath, SVGPath]:
     """Equalize the number of curves in two paths through smart subdivision
 
     Strategy:
@@ -70,10 +66,7 @@ def normalize_path_structure(path: SVGPath) -> SVGPath:
     - All curves converted to cubic Beziers
 
     Args:
-        path: Path to normalize
-
-    Returns:
-        Structurally normalized path
+        path: Path to normalize.
     """
     from ..commands import ClosePath, CubicBezier, LineTo, MoveTo
 
@@ -117,7 +110,7 @@ def normalize_path_structure(path: SVGPath) -> SVGPath:
 
 def smart_normalize(
     path1: SVGPath, path2: SVGPath, force_cubic: bool = True
-) -> Tuple[SVGPath, SVGPath]:
+) -> tuple[SVGPath, SVGPath]:
     """Complete normalization for morphing any two paths
 
     Full pipeline:
@@ -189,7 +182,7 @@ def smart_normalize(
 
 def normalize_paths_for_morphing(
     path1: SVGPath, path2: SVGPath
-) -> Tuple[SVGPath, SVGPath]:
+) -> tuple[SVGPath, SVGPath]:
     """Normalize two paths for optimal morphing compatibility
 
     This is an alias for smart_normalize for backward compatibility.

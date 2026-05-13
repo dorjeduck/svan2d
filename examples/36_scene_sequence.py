@@ -8,22 +8,31 @@ Demonstrates VSceneSequence with various scene transition effects:
 - Iris: Circular reveal
 """
 
-from svan2d.component import CircleState, RectangleState, TextState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core import Color, Point2D
-from svan2d.core.logger import configure_logging
 from svan2d.transition import easing
-from svan2d.transition.scene import Fade, Wipe
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene, VSceneExporter, VSceneSequence
-
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+    VSceneSequence,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    RectangleState,
+    TextState,
+)
+from svan2d.transition.scene import Fade, Wipe
 
 configure_logging(level="INFO")
 
 # Base colors
 COLOR_1 = Color("#FDBE02")
 COLOR_2 = Color("#AA0000")
-
 
 def create_scene_1() -> VScene:
     """Create first scene with animated circle."""
@@ -45,16 +54,15 @@ def create_scene_1() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 1",
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.25),
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_2() -> VScene:
     """Create second scene with animated rectangle."""
@@ -80,16 +88,15 @@ def create_scene_2() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 2",
         font_size=28,
         fill_color=COLOR_1.interpolate(COLOR_2, 0.75),
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene
-
 
 def create_scene_3() -> VScene:
     """Create third scene with multiple circles."""
@@ -117,16 +124,15 @@ def create_scene_3() -> VScene:
 
     # Scene label
     label_state = TextState(
-        pos=Point2D(0, 130),
+        pos=Point2D(0, -130),
         text="Scene 3",
         font_size=28,
         fill_color=COLOR_2,
     )
-    label = VElement().keystates([label_state, label_state])
+    label = VElement(state=label_state)
     scene = scene.add_element(label)
 
     return scene
-
 
 def main():
     # Create scenes
@@ -163,7 +169,6 @@ def main():
     )
 
     print("Export complete!")
-
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,8 @@
 """Camera state for animated scene-level transforms."""
 
 from dataclasses import dataclass
-from typing import Optional
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.point2d import Point2D
 
 

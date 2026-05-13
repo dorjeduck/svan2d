@@ -8,7 +8,6 @@ but may benefit from path reversal if oriented in opposite directions.
 from __future__ import annotations
 
 import math
-from typing import List, Tuple
 
 from svan2d.core.point2d import Point2D, Points2D
 
@@ -53,7 +52,7 @@ class SequentialAligner(VertexAligner):
         verts2: Points2D,
         context: AlignmentContext,
         rotation_target: float | None = None,
-    ) -> Tuple[Points2D, Points2D]:
+    ) -> tuple[Points2D, Points2D]:
         if len(verts1) != len(verts2):
             raise ValueError(
                 f"Vertex lists must have same length: {len(verts1)} != {len(verts2)}"

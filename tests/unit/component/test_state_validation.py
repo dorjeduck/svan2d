@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from svan2d.component.state import (
+from svan2d.primitive.state import (
     # Simple states
     ArcState,
     ArrowState,

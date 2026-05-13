@@ -1,0 +1,64 @@
+"""Square ring state implementation using VertexContours"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from svan2d.primitive.registry import renderer
+from svan2d.primitive.renderer.square_ring import SquareRingRenderer
+from svan2d.primitive.vertex import VertexContours, VertexSquare, rotate_vertices
+from svan2d.core.point2d import Point2D
+
+from .base_vertex import VertexState
+
+
+@renderer(SquareRingRenderer)
+@dataclass(frozen=True)
+class SquareRingState(VertexState):
+    """State class for square ring elements (square with square hole)
+
+    The inner square can be rotated independently using inner_rotation.
+    Rotation follows svan2d convention: 0° = North (up), 90° = East (right)
+    """
+
+    inner_size: float = 50
+    outer_size: float = 70
+    inner_rotation: float = 0  # Rotation of inner square in degrees
+
+    def _generate_contours(self) -> VertexContours:
+        """Generate square ring contours with outer and inner squares
+
+        Returns VertexContours with:
+        - Outer: larger square (counter-clockwise)
+        - Hole: smaller square (clockwise, creates the hole)
+
+        The inner square can be rotated using inner_rotation.
+        """
+        assert self._num_vertices is not None
+        # Generate outer square (counter-clockwise winding)
+        outer_square = VertexSquare(
+            center=Point2D(),
+            size=self.outer_size,
+            num_vertices=self._num_vertices,
+        )
+
+        # Generate inner square as a hole (clockwise winding)
+        # We achieve clockwise by reversing the vertices
+        inner_square = VertexSquare(
+            center=Point2D(),
+            size=self.inner_size,
+            num_vertices=self._num_vertices,
+        )
+
+        # Apply rotation to inner square if specified
+        if self.inner_rotation != 0:
+            rotated_vertices = rotate_vertices(
+                inner_square.vertices, self.inner_rotation
+            )
+            from svan2d.primitive.vertex import VertexLoop
+
+            inner_square = VertexLoop(rotated_vertices, closed=True)
+
+        inner_square_reversed = inner_square.reverse()
+
+        return VertexContours(outer=outer_square, holes=[inner_square_reversed])

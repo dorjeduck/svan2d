@@ -1,0 +1,41 @@
+"""Perforated circle state - circle with  holes"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from svan2d.primitive.vertex import VertexCircle, VertexLoop
+from svan2d.core.point2d import Point2D
+
+from .base import PerforatedVertexState
+
+
+@dataclass(frozen=True)
+class PerforatedCircleState(PerforatedVertexState):
+    """Circle with  holes
+
+    A circular outer shape with zero or more vertex loops of arbitrary shapes.
+
+    Args:
+        radius: Circle radius
+         holes : List of Shape objects specifying hole geometry and positions
+
+    Example:
+        PerforatedCircleState(
+            radius=100,
+             holes =[
+                Circle(radius=20, x=-30, y=0),
+                Star(outer_radius=15, inner_radius=7, num_points=5, x=30, y=0),
+            ],
+            fill_color=Color("#4ECDC4"),
+        )
+    """
+
+    radius: float = 100
+
+    def _generate_outer_contour(self) -> VertexLoop:
+        """Generate circular outer contour"""
+        assert self._num_vertices is not None
+        return VertexCircle(
+            Point2D(0, 0), radius=self.radius, num_vertices=self._num_vertices
+        )

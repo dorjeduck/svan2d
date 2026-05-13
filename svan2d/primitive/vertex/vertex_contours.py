@@ -1,0 +1,147 @@
+"""VertexContours class - outer contour with optional holes"""
+
+from __future__ import annotations
+
+
+from svan2d.core.point2d import Point2D, Points2D
+
+from .vertex_loop import VertexLoop
+
+
+class VertexContours:
+    """A shape defined by an outer contour and optional holes
+
+    This represents a potentially multi-contour shape:
+    - outer: The outer boundary (VertexLoop, must be closed)
+    - holes: List of inner boundaries that create vertex loops (all must be closed)
+
+    The outer contour should have counter-clockwise winding (positive area).
+    vertex loops should have clockwise winding (negative area).
+    """
+
+    def __init__(self, outer: VertexLoop, holes: list[VertexLoop] | None = None):
+        """Initialize vertex contours
+
+        Args:
+            outer: Outer boundary loop (must be closed)
+            holes: Optional list of hole loops (all must be closed)
+        """
+        if not outer.closed and (holes is not None and len(holes) > 0):
+            raise ValueError("Outer contour must be closed")
+
+        if holes:
+            for i, hole in enumerate(holes):
+                if not hole.closed:
+                    raise ValueError(f"Hole {i} must be closed")
+
+        # Normalize outer to CCW in std math (positive area)
+        if outer.area() < 0:
+            outer = outer.reverse()
+
+        # Normalize holes to CW in std math (negative area)
+        normalized_holes: list[VertexLoop] = []
+        if holes:
+            for hole in holes:
+                if hole.area() > 0:
+                    hole = hole.reverse()
+                normalized_holes.append(hole)
+
+        self._outer = outer
+        self._holes = normalized_holes
+
+    @property
+    def outer(self) -> VertexLoop:
+        """Get the outer contour"""
+        return self._outer
+
+    @property
+    def holes(self) -> list[VertexLoop]:
+        """Get the list of holes"""
+        return self._holes.copy()
+
+    @property
+    def has_holes(self) -> bool:
+        """Check if this shape has any holes"""
+        return len(self._holes) > 0
+
+    def num_holes(self) -> int:
+        """Get the number of holes"""
+        return len(self._holes)
+
+    def all_loops(self) -> list[VertexLoop]:
+        """Get all loops (outer + holes) as a list"""
+        return [self._outer] + self._holes
+
+    def total_vertices(self) -> int:
+        """Get total number of vertices across all contours"""
+        return sum(len(loop) for loop in self.all_loops())
+
+    def bounds(self) -> tuple[float, float, float, float]:
+        """Calculate bounding box of the entire shape (min_x, min_y, max_x, max_y)"""
+        return self._outer.bounds()
+
+    def centroid(self) -> Point2D:
+        """Calculate centroid of the outer contour"""
+        return self._outer.centroid()
+
+    def translate(self, dx: float, dy: float) -> VertexContours:
+        """Returns a new VertexContours with all contours translated by (dx, dy)."""
+        new_outer = self._outer.translate(dx, dy)
+        new_holes = [hole.translate(dx, dy) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
+
+    def scale(self, sx: float, sy: float | None = None) -> VertexContours:
+        """Returns a new VertexContours with all contours scaled by (sx, sy).
+
+        If sy is None, uses sx for both dimensions (uniform scaling).
+        """
+        new_outer = self._outer.scale(sx, sy)
+        new_holes = [hole.scale(sx, sy) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
+
+    def rotate(
+        self, angle_degrees: float, center: Point2D | None = None
+    ) -> VertexContours:
+        """Returns a new VertexContours with all contours rotated around center.
+
+        Args:
+            angle_degrees: Rotation angle in degrees (positive = counter-clockwise)
+            center: Center of rotation (default is origin)
+        """
+        new_outer = self._outer.rotate(angle_degrees, center)
+        new_holes = [hole.rotate(angle_degrees, center) for hole in self._holes]
+        return VertexContours(new_outer, new_holes if new_holes else None)
+
+    @classmethod
+    def from_single_loop(
+        cls, vertices: Points2D, closed: bool = True
+    ) -> VertexContours:
+        """Create VertexContours from a single loop (no holes)
+
+        Convenience method for simple shapes without holes.
+        """
+        loop = VertexLoop(vertices, closed=closed)
+        return cls(loop, holes=None)
+
+    @classmethod
+    def from_vertices_lists(
+        cls, outer_vertices: Points2D, holes_vertices: list[Points2D] | None = None
+    ) -> VertexContours:
+        """Create VertexContours from lists of vertex tuples
+
+        Args:
+            outer_vertices: Vertices for outer contour
+             holes_vertices: Optional list of vertex lists for holes
+        """
+        outer_loop = VertexLoop(outer_vertices, closed=True)
+
+        holes_loops = None
+        if holes_vertices:
+            holes_loops = [
+                VertexLoop(hole_verts, closed=True) for hole_verts in holes_vertices
+            ]
+
+        return cls(outer_loop, holes_loops)
+
+    def __repr__(self) -> str:
+        return f"VertexContours(outer={len(self._outer)} vertices, holes={len(self._holes)})"

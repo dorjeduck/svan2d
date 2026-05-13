@@ -1,6 +1,6 @@
 """Configuration for Game of Life pattern showcase."""
 
-from svan2d.core.color import Color
+from svan2d import Color
 
 # Cell display
 CELL_SIZE = 60  # Pixels per cell (used as max, scales down for large grids)

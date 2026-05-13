@@ -1,0 +1,51 @@
+"""VertexCircle - circle approximation as a VertexLoop"""
+
+from __future__ import annotations
+
+import math
+
+from svan2d.core.point2d import Point2D
+
+from .vertex_loop import VertexLoop
+
+
+class VertexCircle(VertexLoop):
+    """Circle approximation as a VertexLoop
+
+    Generates a circle with a specified number of vertices.
+    The num_vertices parameter is crucial for morphing - shapes with the same
+    num_vertices can morph smoothly between each other.
+    """
+
+    def __init__(
+        self,
+        center: Point2D = Point2D(0, 0),
+        radius: float = 50.0,
+        num_vertices: int = 128,
+        start_angle: float = 0.0,
+    ):
+        """Create a circle as a vertex loop
+
+        Args:
+            center: Center point
+            radius: Circle radius
+            num_vertices: Number of vertices to generate (important for morphing!)
+            start_angle: Starting angle in degrees (0 = East, counter-clockwise positive)
+        """
+        if num_vertices < 3:
+            raise ValueError("Circle requires at least 3 vertices")
+
+        vertices = []
+        start_rad = math.radians(start_angle)
+
+        # Generate num_vertices - 1 distinct positions
+        for i in range(num_vertices - 1):
+            angle = start_rad + 2 * math.pi * i / (num_vertices - 1)
+            x = center.x + radius * math.cos(angle)
+            y = center.y - radius * math.sin(angle)  # Negate: local SVG Y-down, user Y-up
+            vertices.append(Point2D(x, y))
+
+        # Last vertex equals first to close the loop
+        vertices.append(vertices[0])
+
+        super().__init__(vertices, closed=True)

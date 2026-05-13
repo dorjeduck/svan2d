@@ -11,13 +11,17 @@ import random
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
+from svan2d import (
+    Color,
+    ConverterType,
+    Point2D,
+    VScene,
+    VSceneExporter,
+    VSceneSequence,
+    configure_logging,
+    easing,
+)
 from svan2d.transition.scene import Fade
-from svan2d.vscene import VScene, VSceneExporter, VSceneSequence
 
 from word_element import create_word_char_elements
 
@@ -48,7 +52,7 @@ def build_scene(
 
     line_height = font_size * 1.4
     total_text_height = (len(words) - 1) * line_height
-    start_y = -total_text_height / 2
+    start_y = total_text_height / 2
 
     total_chars = sum(len(w.replace(" ", "")) for w in words)
 
@@ -69,7 +73,7 @@ def build_scene(
 
     for word_idx, word in enumerate(words):
         color = palette[word_idx % len(palette)]
-        y = start_y + word_idx * line_height
+        y = start_y - word_idx * line_height
         word_center = Point2D(0, y)
 
         char_elements = create_word_char_elements(
@@ -115,7 +119,7 @@ def main():
 
     entrance_modes = style_cfg["entrance_modes"]
 
-    transition = Fade(duration=0.01)
+    # transition = Fade(duration=0.01)
 
     # Build one scene per entrance mode
     scenes = []
@@ -133,9 +137,9 @@ def main():
         scenes.append(sc)
 
     # Assemble sequence
-    sequence = VSceneSequence().scene(scenes[0], duration=1)
-    for i in range(1, len(scenes)):
-        sequence = sequence.transition(transition)
+    sequence = VSceneSequence()
+    for i in range(len(scenes)):
+        # sequence = sequence.transition(transition)
         sequence = sequence.scene(scenes[i], duration=1)
 
     exporter = VSceneExporter(

@@ -7,11 +7,13 @@ with automatic interval adjustment and fade transitions.
 import math
 from dataclasses import dataclass
 
-from svan2d.component.state.text import TextState
-from svan2d.component.state.rectangle import RectangleState
-from svan2d.core.color import Color
-from svan2d.core.point2d import Point2D
-from svan2d.velement.velement import VElement
+from svan2d import (
+    Color,
+    Point2D,
+    RectangleState,
+    TextState,
+    VElement,
+)
 
 
 def get_tick_interval(max_value: float, target_tick_count: int = 5) -> float:
@@ -113,8 +115,8 @@ class AxisConfig:
 
     left_x: float = -200.0
     width: float = 400.0
-    label_y: float = -220.0
-    line_top_y: float = -210.0
+    label_y: float = 220.0
+    line_top_y: float = 210.0
     line_height: float = 430.0
     target_tick_count: int = 5
     font_family: str = "IBM Plex Mono"
@@ -188,7 +190,7 @@ def create_tick_line_state(
     """
     if is_zero:
         return RectangleState(
-            pos=Point2D(x, top_y + height / 2),
+            pos=Point2D(x, top_y - height / 2),
             width=config.zero_line_width,
             height=height,
             fill_color=config.zero_line_color,
@@ -196,7 +198,7 @@ def create_tick_line_state(
         )
     else:
         return RectangleState(
-            pos=Point2D(x, top_y + height / 2),
+            pos=Point2D(x, top_y - height / 2),
             width=config.line_width,
             height=height,
             fill_color=config.line_color,

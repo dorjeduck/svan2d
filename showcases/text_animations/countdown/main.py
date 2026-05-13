@@ -9,16 +9,19 @@ Usage:
 import tomllib
 from pathlib import Path
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    Color,
+    ConverterType,
+    MorphingConfig,
+    VElement,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 from svan2d.font import FontGlyphs
 from svan2d.transition.mapping.explicit import ExplicitMapper
 from svan2d.transition.vertex_alignment.angular import AngularAligner
-from svan2d.velement import VElement
-from svan2d.velement.morphing import MorphingConfig
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d.utils.schedule import WeightedSchedule
 
 
 def load_config():
@@ -43,7 +46,9 @@ def build_states(cfg):
     for i, item in enumerate(sequence):
         color = colors[i % len(colors)]
         if len(item) == 1:
-            state = font.get_state(item, height=font_cfg["digit_size"], fill_color=color)
+            state = font.get_state(
+                item, height=font_cfg["digit_size"], fill_color=color
+            )
         else:
             state = font.get_word(item, height=font_cfg["go_size"], fill_color=color)
         states.append(state)
@@ -58,23 +63,13 @@ def compute_timeline(n_items, hold_ratio, morph_ratio):
     Layout: hold0 | morph0 | hold1 | morph1 | ... | holdN
     Returns list of (hold_start, hold_end) for each item.
     """
-    total_parts = n_items * hold_ratio + (n_items - 1) * morph_ratio
-    hold_norm = hold_ratio / total_parts
-    morph_norm = morph_ratio / total_parts
-
-    times = []
-    cursor = 0.0
+    weights = {}
     for i in range(n_items):
-        hold_start = cursor
-        hold_end = cursor + hold_norm
-        times.append((hold_start, hold_end))
-        cursor = hold_end
+        weights[f"hold_{i}"] = hold_ratio
         if i < n_items - 1:
-            cursor += morph_norm
-
-    # Snap last hold_end to 1.0 to avoid float drift
-    times[-1] = (times[-1][0], 1.0)
-    return times
+            weights[f"morph_{i}"] = morph_ratio
+    schedule = WeightedSchedule(weights)
+    return [schedule[f"hold_{i}"] for i in range(n_items)]
 
 
 def build_element(states, timeline):
@@ -135,6 +130,7 @@ def main():
         total_frames=export_cfg["total_frames"],
         framerate=export_cfg["framerate"],
         png_width_px=export_cfg["png_width_px"],
+        num_thumbnails=100,
     )
 
 

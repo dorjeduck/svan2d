@@ -1,0 +1,33 @@
+[scene]
+width = 1024
+height = 600
+background = "#0a0a1a"
+timeline_easing = "in_out_quad"       # scene-level easing (e.g. "in_out", "in_out_cubic")
+reverse = false
+
+[pendulum]
+count = 24
+arm_length = 270
+bob_radius = 8
+max_angle = 40          # degrees
+base_oscillations = 10  # pendulum 1 does this many full swings
+freq_step = 1.0            # frequency increment per pendulum
+quantize_freq = false      # stop each pendulum after its last full cycle
+spacing = 24
+arm_color = "#555555"
+arm_width = 2
+bob_color_start = "#FDBE02"  # first bob
+bob_color_end = "#AA0000"     # rightmost bob
+pivot_y = -150
+
+[bar]
+color = "#666666"
+width = 3
+
+[export]
+output_dir = "output/"
+filename = "pendulum_waves"
+converter = "playwright_http"
+total_frames = 600
+framerate = 30
+png_width_px = 1600

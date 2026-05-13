@@ -6,9 +6,6 @@ from pathlib import Path
 import click
 
 from svan2d.config import ConfigKey, get_config
-from svan2d.core.logger import get_logger
-
-logger = get_logger()
 
 
 @click.command(name="serve")

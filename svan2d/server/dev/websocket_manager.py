@@ -4,8 +4,6 @@ WebSocket connection management for development server.
 Manages multiple WebSocket connections and broadcasts updates to all clients.
 """
 
-from typing import Set
-
 from fastapi import WebSocket
 
 
@@ -16,7 +14,7 @@ class ConnectionManager:
 
     def __init__(self):
         """Initialize connection manager with empty connection set."""
-        self.active_connections: Set[WebSocket] = set()
+        self.active_connections: set[WebSocket] = set()
 
     async def connect(self, websocket: WebSocket):
         """

@@ -3,8 +3,8 @@
 import drawsvg as dw
 import pytest
 
-from svan2d.component.registry import get_renderer_class_for_state
-from svan2d.component.renderer import (
+from svan2d.primitive.registry import get_renderer_class_for_state
+from svan2d.primitive.renderer import (
     CircleRenderer,
     EllipseRenderer,
     PolygonRenderer,
@@ -12,7 +12,7 @@ from svan2d.component.renderer import (
     TextRenderer,
     TriangleRenderer,
 )
-from svan2d.component.state import (
+from svan2d.primitive.state import (
     CircleState,
     EllipseState,
     LineState,
@@ -339,6 +339,69 @@ class TestVertexRenderer:
         element = renderer.render(state)
 
         assert element is not None
+
+    def test_draw_progress_limits_stroke_vertices(self):
+        """Test that draw_progress < 1.0 reduces stroke vertex count"""
+        from svan2d.primitive.renderer.base_vertex import VertexRenderer
+
+        num_verts = 20
+        state_full = LineState(
+            length=100,
+            _num_vertices=num_verts,
+            stroke_color=Color("#FF0000"),
+            stroke_width=2.0,
+            draw_progress=1.0,
+        )
+        state_half = LineState(
+            length=100,
+            _num_vertices=num_verts,
+            stroke_color=Color("#FF0000"),
+            stroke_width=2.0,
+            draw_progress=0.5,
+        )
+
+        renderer = VertexRenderer()
+        elem_full = renderer.render(state_full)
+        elem_half = renderer.render(state_half)
+
+        # Embed in drawing to get SVG string
+        d = dw.Drawing(100, 100)
+        d.append(elem_full)
+        svg_full = d.as_svg()
+
+        d2 = dw.Drawing(100, 100)
+        d2.append(elem_half)
+        svg_half = d2.as_svg()
+
+        l_count_full = svg_full.count(" L")
+        l_count_half = svg_half.count(" L")
+
+        # Half progress should have roughly half the L commands
+        assert l_count_full == num_verts - 1  # 19 L commands for 20 vertices
+        expected_half_verts = int(0.5 * num_verts)  # 10
+        assert l_count_half == expected_half_verts - 1  # 9 L commands
+
+    def test_draw_progress_zero_renders_single_vertex(self):
+        """Test that draw_progress=0.0 renders at least 1 vertex (M only)"""
+        from svan2d.primitive.renderer.base_vertex import VertexRenderer
+
+        state = LineState(
+            length=100,
+            _num_vertices=20,
+            stroke_color=Color("#FF0000"),
+            stroke_width=2.0,
+            draw_progress=0.0,
+        )
+        renderer = VertexRenderer()
+        elem = renderer.render(state)
+
+        d = dw.Drawing(100, 100)
+        d.append(elem)
+        svg = d.as_svg()
+
+        # Should have M but no L commands (single vertex)
+        assert "M" in svg
+        assert " L" not in svg
 
 
 @pytest.mark.unit

@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
@@ -23,25 +24,23 @@ logger = get_logger()
 
 
 class RenderRequest(BaseModel):
-    """Request model for /render endpoint"""
+    """Request model for /render endpoint supporting SVG, HTML, and Assets"""
 
-    svg: str
-    type: Literal["png", "pdf"]
+    svg: Optional[str] = None
+    html: Optional[str] = None
+    type: Literal["png", "pdf", "svg_fragment"]
     width: int
     height: int
+    assets: Optional[Dict[str, str]] = None
 
 
 class BrowserPool:
-    """Manages a persistent browser with a pool of reusable pages.
-
-    Pages are created on-demand up to max_pages, then reused via an async queue.
-    This eliminates browser launch overhead and reduces page creation overhead.
-    """
+    """Manages a persistent browser with a pool of reusable pages."""
 
     def __init__(self, max_pages: int = 4):
         self.max_pages = max_pages
-        self._playwright: Optional[Playwright] = None
-        self._browser: Optional[Browser] = None
+        self._playwright: Playwright | None = None
+        self._browser: Browser | None = None
         self._page_pool: asyncio.Queue[Page] = asyncio.Queue()
         self._pages_created = 0
         self._lock = asyncio.Lock()
@@ -67,20 +66,12 @@ class BrowserPool:
 
     @asynccontextmanager
     async def acquire_page(self):
-        """Acquire a page from the pool, creating one if needed.
-
-        Usage:
-            async with pool.acquire_page() as page:
-                await page.set_content(...)
-                png = await page.screenshot()
-        """
+        """Acquire a page from the pool, creating one if needed."""
         page = None
         try:
-            # Try to get an existing page from pool (non-blocking)
             try:
                 page = self._page_pool.get_nowait()
             except asyncio.QueueEmpty:
-                # No page available, create one if under limit
                 assert self._browser is not None
                 async with self._lock:
                     if self._pages_created < self.max_pages:
@@ -90,27 +81,24 @@ class BrowserPool:
                             f"Created new page ({self._pages_created}/{self.max_pages})"
                         )
                     else:
-                        # At limit, wait for a page to be returned
                         page = await self._page_pool.get()
 
             yield page
 
         finally:
-            # Return page to pool for reuse
             if page:
                 try:
-                    # Clear page state for next use
+                    # Clear page and routes for reuse
+                    await page.unroute("**/*")
                     await page.set_content("<html><body></body></html>")
                     await self._page_pool.put(page)
                 except Exception as e:
-                    # Page is broken, create fresh one next time
                     logger.warning(f"Failed to reset page, discarding: {e}")
                     async with self._lock:
                         self._pages_created -= 1
 
     @property
     def stats(self) -> dict:
-        """Return pool statistics."""
         return {
             "pages_created": self._pages_created,
             "max_pages": self.max_pages,
@@ -118,15 +106,12 @@ class BrowserPool:
         }
 
 
-# Global browser pool instance
-# Max pages configurable via environment variable
 _max_pages = int(os.environ.get("SVAN2D_PLAYWRIGHT_MAX_PAGES", "4"))
 browser_pool = BrowserPool(max_pages=_max_pages)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage browser lifecycle with FastAPI lifespan."""
     await browser_pool.start()
     yield
     await browser_pool.stop()
@@ -134,29 +119,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Svan2D Playwright Render Server",
-    description="HTTP server for rendering SVG to PNG/PDF using Playwright (pooled)",
-    version="2.0.0",
+    description="HTTP server for rendering SVG/HTML using Playwright (pooled)",
+    version="2.1.0",
     lifespan=lifespan,
 )
 
 
 @app.post("/render")
 async def render(request: RenderRequest) -> Response:
-    """Render SVG to PNG or PDF using pooled browser page.
+    """Render content using pooled browser page with explicit asset mapping."""
 
-    Args:
-        request: RenderRequest with svg content, type, width, height
-
-    Returns:
-        Binary PNG or PDF data
-
-    Raises:
-        HTTPException: If rendering fails or invalid type provided
-    """
-    if not request.svg or not request.type or not request.width or not request.height:
-        raise HTTPException(
-            status_code=400, detail="Missing svg, type, width, or height"
-        )
+    if not (request.svg or request.html):
+        raise HTTPException(status_code=400, detail="Missing svg or html content")
 
     timestamp = datetime.now().isoformat()
     logger.debug(
@@ -164,20 +138,66 @@ async def render(request: RenderRequest) -> Response:
     )
 
     try:
+        timings: dict[str, float] = {}
+        t_total0 = time.perf_counter()
+
+        t0 = time.perf_counter()
         async with browser_pool.acquire_page() as page:
-            # Set viewport and load SVG content
+            timings["acquire_page"] = (time.perf_counter() - t0) * 1000
+
+            # 1. Setup asset interception
+            t0 = time.perf_counter()
+            if request.assets:
+                for pattern, local_path in request.assets.items():
+
+                    def create_handler(path):
+                        async def handle_route(route):
+                            try:
+                                await route.fulfill(
+                                    path=path,
+                                    headers={
+                                        "Access-Control-Allow-Origin": "*",
+                                        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                                        "Access-Control-Allow-Headers": "*",
+                                    },
+                                )
+                            except Exception as e:
+                                logger.error(f"Failed to fulfill route for {path}: {e}")
+                                await route.abort()
+
+                        return handle_route
+
+                    await page.route(pattern, create_handler(local_path))
+            timings["asset_routes"] = (time.perf_counter() - t0) * 1000
+
+            # 2. Set viewport size
+            t0 = time.perf_counter()
             await page.set_viewport_size(
                 {"width": request.width, "height": request.height}
             )
-            html_content = (
-                f'<html><body style="margin:0;padding:0;">{request.svg}</body></html>'
-            )
-            await page.set_content(html_content)
-            await page.wait_for_load_state("domcontentloaded")
+            timings["set_viewport"] = (time.perf_counter() - t0) * 1000
 
-            # Render based on type
+            # 3. Load content
+            t0 = time.perf_counter()
+            html_content = (
+                request.html
+                if request.html
+                else f'<html><body style="margin:0;padding:0;">{request.svg}</body></html>'
+            )
+            payload_kb = len(html_content.encode("utf-8")) / 1024
+            await page.set_content(html_content)
+            timings["set_content"] = (time.perf_counter() - t0) * 1000
+
+            # 4. Wait for assets/scripts to finish
+            t0 = time.perf_counter()
+            wait_until = "networkidle" if request.assets else "domcontentloaded"
+            await page.wait_for_load_state(wait_until)
+            timings["wait_load"] = (time.perf_counter() - t0) * 1000
+
+            # 5. Execute Render
+            t0 = time.perf_counter()
             if request.type == "png":
-                buffer = await page.screenshot(full_page=True)
+                buffer = await page.screenshot(full_page=True, omit_background=True)
                 content_type = "image/png"
             elif request.type == "pdf":
                 buffer = await page.pdf(
@@ -187,50 +207,53 @@ async def render(request: RenderRequest) -> Response:
                     margin={"top": "0", "bottom": "0", "left": "0", "right": "0"},
                 )
                 content_type = "application/pdf"
+            elif request.type == "svg_fragment":
+                fragment = await page.eval_on_selector("#globe", "el => el.innerHTML")
+                buffer = fragment.encode("utf-8")
+                content_type = "text/plain"
             else:
-                raise HTTPException(
-                    status_code=400, detail=f"Unknown render type: {request.type}"
-                )
+                raise HTTPException(status_code=400, detail="Invalid render type")
+            timings["render"] = (time.perf_counter() - t0) * 1000
 
-        return Response(content=buffer, media_type=content_type)
+        timings["total"] = (time.perf_counter() - t_total0) * 1000
+        timings_str = " ".join(f"{k}={v:.1f}ms" for k, v in timings.items())
+        logger.info(
+            f"render {request.type} {request.width}x{request.height} "
+            f"payload={payload_kb:.1f}KB {timings_str}"
+        )
+
+        headers = {f"X-Render-{k}-Ms": f"{v:.2f}" for k, v in timings.items()}
+        headers["X-Render-Payload-Kb"] = f"{payload_kb:.2f}"
+        return Response(content=buffer, media_type=content_type, headers=headers)
 
     except Exception as err:
-        timestamp_error = datetime.now().isoformat()
-        logger.error(f"[{timestamp_error}] Render error: {err}")
+        logger.error(f"Render error: {err}")
         raise HTTPException(status_code=500, detail=str(err))
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for monitoring server status."""
-    return {
-        "status": "ok",
-        "service": "playwright-render-server",
-        "pool": browser_pool.stats,
-    }
+    return {"status": "ok", "pool": browser_pool.stats}
 
 
 @app.get("/stats")
 async def pool_stats():
-    """Return detailed pool statistics."""
     return browser_pool.stats
 
 
-def create_server(host: str = "localhost", port: int = 4000):
-    """Create and configure the FastAPI server.
-
-    Args:
-        host: Host to bind to (default: localhost)
-        port: Port to listen on (default: 4000)
-
-    Returns:
-        Configured FastAPI app
+def create_server(host: str = "localhost", port: int = 4000, log_level: str = "info"):
     """
-    return app
+    Factory function required by svan2d.cli.playwright_server_commands.
+    """
+    import uvicorn
+
+    config = uvicorn.Config(
+        app, host=host, port=port, log_level=log_level, loop="asyncio"
+    )
+    return uvicorn.Server(config)
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Run server directly for testing
     uvicorn.run(app, host="localhost", port=4000, log_level="info")

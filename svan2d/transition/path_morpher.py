@@ -1,7 +1,7 @@
 """SVG path morphing with automatic method selection."""
 
-from svan2d.component.state.base import State
-from svan2d.component.state.path import MorphMethod
+from svan2d.primitive.state.base import State
+from svan2d.primitive.state.path import MorphMethod
 from svan2d.path import SVGPath
 from svan2d.transition.morpher import FlubberMorpher, NativeMorpher
 

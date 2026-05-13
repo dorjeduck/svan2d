@@ -1,12 +1,12 @@
 """Interpolator for State objects (recursive state interpolation)."""
 
 from dataclasses import replace
-from typing import Any, Optional
+from typing import Any
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 
 
-class StateInterpolator:
+class NestedStateInterpolator:
     """Handles interpolation between State objects."""
 
     def __init__(self, engine: Any):
@@ -23,8 +23,8 @@ class StateInterpolator:
         start_value: State,
         end_value: State,
         eased_t: float,
-        mapper: Optional[Any] = None,
-        vertex_aligner: Optional[Any] = None,
+        mapper: Any | None = None,
+        vertex_aligner: Any | None = None,
     ) -> State:
         """
         Interpolate between two State objects.
@@ -35,15 +35,12 @@ class StateInterpolator:
         Args:
             start_value: Starting state
             end_value: Ending state
-            eased_t: Eased interpolation parameter (0.0 to 1.0)
-            mapper: Optional mapper for M→N matching
-            vertex_aligner: Optional vertex aligner for shape morphing
-
-        Returns:
-            Interpolated state
+            eased_t: Eased interpolation parameter (0.0 to 1.0).
+            mapper: Optional mapper for M→N matching.
+            vertex_aligner: Optional vertex aligner for shape morphing.
         """
         # Check if this is a morph between different VertexState types
-        from svan2d.component.state.base_vertex import VertexState
+        from svan2d.primitive.state.base_vertex import VertexState
 
         start_state = start_value
         end_state = end_value
@@ -83,6 +80,6 @@ class StateInterpolator:
             segment_easing_overrides=None,
             attribute_keystates_fields=set(),
             vertex_buffer=None,
-            segment_path_config=None,
+            segment_interpolation_config=None,
             morphing_config=morphing_config,
         )

@@ -1,9 +1,7 @@
 """Grid layout state function"""
 
 from dataclasses import replace
-from typing import Optional
-
-from svan2d.component.state.base import States
+from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
 
 from .enums import ElementAlignment
@@ -33,15 +31,11 @@ def grid(
         cols: Number of columns in the grid (optional)
         spacing_h: Horizontal spacing between elements
         spacing_v: Vertical spacing between elements
-        cx: X coordinate of grid center
-        cy: Y coordinate of grid center
+        center: Center point of the grid
         alignment: How to align each element relative to the grid.
                   PRESERVE keeps original rotation, LAYOUT aligns with grid axes,
                   UPRIGHT starts from vertical position.
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
-
-    Returns:
-        New list of states with grid positions
     """
     if not states:
         return []
@@ -67,7 +61,7 @@ def grid(
         grid_width = (cols - 1) * spacing_h
         grid_height = (rows - 1) * spacing_v
         x = center.x + (col * spacing_h - grid_width / 2)
-        y = center.y + (row * spacing_v - grid_height / 2)
+        y = center.y - (row * spacing_v - grid_height / 2)
 
         # Calculate element rotation based on alignment mode
         if alignment == ElementAlignment.PRESERVE:
@@ -112,10 +106,7 @@ def grid_in_bbox(
         rows: Number of rows in the grid (optional, auto-calculated if not provided)
         cols: Number of columns in the grid (optional, auto-calculated if not provided)
         alignment: How to align each element relative to the grid
-        element_rotation_offset: Additional rotation in degrees added to the alignment base
-
-    Returns:
-        New list of states with grid positions
+        element_rotation_offset: Additional rotation in degrees added to the alignment base.
 
     Raises:
         ValueError: If width or height is zero or negative

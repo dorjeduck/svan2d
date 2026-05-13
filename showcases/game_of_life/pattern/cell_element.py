@@ -3,10 +3,12 @@
 from dataclasses import replace
 from typing import List
 
-from svan2d.component.state import SquareState
-from svan2d.core.point2d import Point2D
-from svan2d.transition import easing
-from svan2d.velement import VElement
+from svan2d import (
+    Point2D,
+    SquareState,
+    VElement,
+    easing,
+)
 
 from config import (
     BIRTH_DURATION,
@@ -45,7 +47,7 @@ def create_cell_element(
 
     pos = Point2D(
         offset + grid_x * cell_spacing,
-        offset + grid_y * cell_spacing,
+        -(offset + grid_y * cell_spacing),
     )
 
     # Base states (both scale and opacity differ)

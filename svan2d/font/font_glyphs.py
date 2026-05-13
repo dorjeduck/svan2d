@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
-from typing import List, Optional, Union
 
-from svan2d.component.registry import renderer
-from svan2d.component.state.base_vertex import VertexState
-from svan2d.component.state.state_collection import StateCollectionState
-from svan2d.component.vertex.vertex_contours import VertexContours
+from svan2d.primitive.registry import renderer
+from svan2d.primitive.state.base_vertex import VertexState
+from svan2d.primitive.state.state_collection import StateCollectionState
+from svan2d.primitive.vertex.vertex_contours import VertexContours
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 
@@ -16,90 +16,63 @@ from .contour_classifier import classify_contours
 from .glyph_extractor import FONTTOOLS_AVAILABLE, extract_glyph_outline, load_font
 
 
+def _map_contour_vertices(
+    contours: VertexContours,
+    func: Callable[[Point2D], Point2D],
+) -> VertexContours:
+    """Apply a vertex transform function to all contours (outer + holes)."""
+    from svan2d.primitive.vertex.vertex_loop import VertexLoop
+
+    new_outer = VertexLoop(
+        [func(v) for v in contours.outer.vertices],
+        closed=contours.outer.closed,
+    )
+    new_holes = None
+    if contours.has_holes:
+        new_holes = [
+            VertexLoop([func(v) for v in hole.vertices], closed=hole.closed)
+            for hole in contours.holes
+        ]
+    return VertexContours(new_outer, new_holes)
+
+
 def _transform_contours(
     contours: VertexContours, scale: float, center: bool = True, cursor_x: float = 0.0
 ) -> VertexContours:
-    """Transform contours: scale and optionally center.
+    """Scale contours and optionally center at origin.
 
-    Creates new VertexContours with transformed vertices (Point2D is immutable).
-    Position is NOT baked in - that's handled by the state's pos field during rendering.
+    Y is flipped (font coords have Y up, SVG has Y down).
 
     Args:
         contours: Source contours
         scale: Scale factor
-        center: If True, center glyph at origin. If False, position at cursor_x for text layout.
+        center: If True, center glyph at origin. If False, position at cursor_x.
         cursor_x: X position for text layout (only used when center=False)
     """
-    from svan2d.component.vertex.vertex_loop import VertexLoop
-
     if center:
-        # Center at origin (for single letters)
         centroid = contours.centroid()
-        offset_x = -centroid.x
-        offset_y = -centroid.y
+        ox, oy = -centroid.x, -centroid.y
+
+        def xform(v: Point2D) -> Point2D:
+            return Point2D((v.x + ox) * scale, -(v.y + oy) * scale)
     else:
-        # Text layout: position glyph at cursor_x, baseline at y=0
-        offset_x = 0
-        offset_y = 0
+        def xform(v: Point2D) -> Point2D:
+            return Point2D(v.x * scale + cursor_x, -v.y * scale)
 
-    def transform_vertices(vertices):
-        """Scale vertices and translate.
-
-        Note: Y is flipped because font coordinates have Y pointing up,
-        while SVG/screen coordinates have Y pointing down.
-        """
-        result = []
-        for v in vertices:
-            if center:
-                new_x = (v.x + offset_x) * scale
-                new_y = -(v.y + offset_y) * scale
-            else:
-                # For text: glyph origin at cursor_x, scale from there
-                new_x = v.x * scale + cursor_x
-                new_y = -v.y * scale  # Flip Y, baseline at y=0
-            result.append(Point2D(new_x, new_y))
-        return result
-
-    # Transform outer contour
-    new_outer_vertices = transform_vertices(contours.outer.vertices)
-    new_outer = VertexLoop(new_outer_vertices, closed=contours.outer.closed)
-
-    # Transform holes
-    new_holes = None
-    if contours.has_holes:
-        new_holes = []
-        for hole in contours.holes:
-            new_hole_vertices = transform_vertices(hole.vertices)
-            new_holes.append(VertexLoop(new_hole_vertices, closed=hole.closed))
-
-    return VertexContours(new_outer, new_holes)
+    return _map_contour_vertices(contours, xform)
 
 
 def _offset_contours(
     contours: VertexContours, offset_x: float, offset_y: float
 ) -> VertexContours:
     """Offset all vertices in contours by (offset_x, offset_y)."""
-    from svan2d.component.vertex.vertex_loop import VertexLoop
-
-    new_outer_vertices = [
-        Point2D(v.x + offset_x, v.y + offset_y) for v in contours.outer.vertices
-    ]
-    new_outer = VertexLoop(new_outer_vertices, closed=contours.outer.closed)
-
-    new_holes = None
-    if contours.has_holes:
-        new_holes = []
-        for hole in contours.holes:
-            new_hole_vertices = [
-                Point2D(v.x + offset_x, v.y + offset_y) for v in hole.vertices
-            ]
-            new_holes.append(VertexLoop(new_hole_vertices, closed=hole.closed))
-
-    return VertexContours(new_outer, new_holes)
+    return _map_contour_vertices(
+        contours, lambda v: Point2D(v.x + offset_x, v.y + offset_y)
+    )
 
 
 def _get_glyph_renderer():
-    from svan2d.component.renderer.base_vertex import VertexRenderer
+    from svan2d.primitive.renderer.base_vertex import VertexRenderer
 
     return VertexRenderer
 
@@ -113,7 +86,7 @@ class GlyphState(VertexState):
     GlyphState holds pre-computed VertexContours from font extraction.
     """
 
-    _contours: Optional[VertexContours] = None
+    _contours: VertexContours | None = None
 
     def need_morph(self, state) -> bool:
         """Always morph between glyphs since they have different contours."""
@@ -155,15 +128,15 @@ class FontGlyphs:
         # Cache glyph metrics for layout
         self._units_per_em = self._font["head"].unitsPerEm
 
-    def _resolve_scale(self, height: Optional[float], scale: Optional[float]) -> float:
+        # Populated by measure_char_widths, get_word, get_letters
+        self.last_char_widths: list[float] = []
+
+    def _resolve_scale(self, height: float | None, scale: float | None) -> float:
         """Resolve scale from height or scale parameter.
 
         Args:
-            height: Desired height in scene units (takes precedence)
-            scale: Direct scale factor
-
-        Returns:
-            Scale factor to use
+            height: Desired height in scene units (takes precedence).
+            scale: Direct scale factor.
         """
         if height is not None:
             # Calculate scale from desired height
@@ -182,8 +155,8 @@ class FontGlyphs:
         height: float | None = None,
         scale: float | None = None,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
         _center: bool = True,
         _cursor_x: float = 0.0,
@@ -264,6 +237,67 @@ class FontGlyphs:
         outline = extract_glyph_outline(self._font, char)
         return outline.advance_width
 
+    def measure_char_widths(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> list[float]:
+        """Get scaled advance width for each character in text.
+
+        Args:
+            text: String to measure.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+
+        Returns:
+            List of widths, one per character. Spaces use "n" width as fallback.
+        """
+        scale = font_size / self._units_per_em
+        widths: list[float] = []
+        for ch in text:
+            if ch == " ":
+                widths.append(self.get_advance_width("n") * scale * letter_spacing)
+            else:
+                widths.append(self.get_advance_width(ch) * scale * letter_spacing)
+        self.last_char_widths = widths
+        return widths
+
+    def measure_text_width(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> float:
+        """Get total scaled width of text.
+
+        Args:
+            text: String to measure.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+        """
+        return sum(self.measure_char_widths(text, font_size, letter_spacing))
+
+    def centered_char_x_positions(
+        self, text: str, font_size: float, letter_spacing: float = 1.0
+    ) -> list[float]:
+        """Return the centred x position for each character in text.
+
+        Positions are relative to the text block's horizontal centre (0.0),
+        so the full block spans [-total_width/2, total_width/2]. Each value
+        is the centre x of that character's advance cell.
+
+        Args:
+            text: String to lay out.
+            font_size: Font size in scene units.
+            letter_spacing: Multiplier for character widths (1.0 = normal).
+
+        Returns:
+            List of x positions, one per character (including spaces).
+        """
+        widths = self.measure_char_widths(text, font_size, letter_spacing)
+        total_width = sum(widths)
+        positions: list[float] = []
+        cursor = -total_width / 2
+        for w in widths:
+            positions.append(cursor + w / 2)
+            cursor += w
+        return positions
+
     def get_word(
         self,
         text: str,
@@ -272,8 +306,8 @@ class FontGlyphs:
         scale: float | None = None,
         letter_spacing: float = 1.0,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
     ) -> StateCollectionState:
         """Get a StateCollectionState for a word.
@@ -310,16 +344,17 @@ class FontGlyphs:
 
         target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
 
+        # Pre-compute char widths (also populates last_char_widths)
+        equiv_font_size = resolved_scale * self._units_per_em
+        char_widths = self.measure_char_widths(text, equiv_font_size, letter_spacing)
+
         # First pass: collect glyphs with text layout positioning in vertices
         all_glyph_states = []
         cursor_x = 0.0
 
-        for char in text:
+        for i, char in enumerate(text):
             if char == " ":
-                space_width = (
-                    self.get_advance_width("n") * resolved_scale * letter_spacing
-                )
-                cursor_x += space_width
+                cursor_x += char_widths[i]
                 continue
 
             char_state = self.get_state(
@@ -335,8 +370,7 @@ class FontGlyphs:
             )
             all_glyph_states.extend(char_state.states)
 
-            advance = self.get_advance_width(char) * resolved_scale * letter_spacing
-            cursor_x += advance
+            cursor_x += char_widths[i]
 
         if not all_glyph_states:
             return StateCollectionState(states=[])
@@ -398,8 +432,8 @@ class FontGlyphs:
         scale: float | None = None,
         letter_spacing: float = 1.0,
         pos: Point2D | None = None,
-        fill_color: Optional[Color] = None,
-        stroke_color: Optional[Color] = None,
+        fill_color: Color | None = None,
+        stroke_color: Color | None = None,
         stroke_width: float = 0.0,
     ) -> list[StateCollectionState]:
         """Get individually-animatable letter states with shared baseline alignment.
@@ -438,18 +472,19 @@ class FontGlyphs:
 
         target_pos: Point2D = pos if pos is not None else Point2D(0, 0)
 
+        # Pre-compute char widths (also populates last_char_widths)
+        equiv_font_size = resolved_scale * self._units_per_em
+        char_widths = self.measure_char_widths(text, equiv_font_size, letter_spacing)
+
         # First pass: collect glyphs with text layout positioning,
         # tracking which glyph states belong to which character
         char_glyph_groups: list[list[GlyphState]] = []
         all_glyph_states: list[GlyphState] = []
         cursor_x = 0.0
 
-        for char in text:
+        for i, char in enumerate(text):
             if char == " ":
-                space_width = (
-                    self.get_advance_width("n") * resolved_scale * letter_spacing
-                )
-                cursor_x += space_width
+                cursor_x += char_widths[i]
                 continue
 
             char_state = self.get_state(
@@ -466,8 +501,7 @@ class FontGlyphs:
             char_glyph_groups.append(list(char_state.states))
             all_glyph_states.extend(char_state.states)
 
-            advance = self.get_advance_width(char) * resolved_scale * letter_spacing
-            cursor_x += advance
+            cursor_x += char_widths[i]
 
         if not all_glyph_states:
             return []
@@ -533,3 +567,13 @@ class FontGlyphs:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
+
+
+_font_glyphs_cache: dict[str, FontGlyphs] = {}
+
+
+def get_font_glyphs(font_path: str) -> FontGlyphs:
+    """Get a cached FontGlyphs instance for the given font path."""
+    if font_path not in _font_glyphs_cache:
+        _font_glyphs_cache[font_path] = FontGlyphs(font_path)
+    return _font_glyphs_cache[font_path]

@@ -3,11 +3,13 @@
 Displays various Game of Life patterns from simple to complex.
 """
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
+from svan2d import (
+    ConverterType,
+    VSceneExporter,
+    VSceneSequence,
+    configure_logging,
+)
 from svan2d.transition.scene import Fade, Iris, Slide, Wipe, Zoom
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.vscene.vscene_sequence import VSceneSequence
 
 from config import (
     FPS,

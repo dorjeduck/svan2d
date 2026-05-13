@@ -1,9 +1,9 @@
-from math import acos, ceil, cos, hypot, pi, radians, sin, sqrt, tan
-from typing import List, Tuple
+"""Convert SVG arc commands to cubic Bezier curves"""
 
+from math import acos, ceil, cos, hypot, pi, radians, sin, sqrt, tan
 from svan2d.core.point2d import Point2D
 
-from .commands import CubicBezier, PathCommand  # Import needed command
+from .commands import CubicBezier
 
 # Based on principles from SVG specifications and various open-source path libraries
 
@@ -16,12 +16,9 @@ def arc_to_beziers(
     large_arc_flag: int,
     sweep_flag: int,
     pos2: Point2D,
-) -> List[CubicBezier]:
+) -> list[CubicBezier]:
     """
     Converts a single SVG Elliptical Arc (A) command into a list of CubicBezier commands.
-
-    Returns:
-        A list of CubicBezier objects.
     """
 
     try:
@@ -157,7 +154,7 @@ def _get_center_and_angles(
     x_axis_rotation: float,
     large_arc_flag: int,
     sweep_flag: int,
-) -> Tuple[Point2D, float, float, float, float, float]:
+) -> tuple[Point2D, float, float, float, float, float]:
     """Calculates the center (cx, cy) and start/end angles (theta1, theta2) of the arc."""
 
     # 1. Ensure rx, ry are non-negative

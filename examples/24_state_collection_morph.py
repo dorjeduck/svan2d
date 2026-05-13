@@ -1,20 +1,24 @@
-from svan2d.component.state import (
-    StateCollectionState,
-    TriangleState,
-    SquareState,
+
+
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
     EllipseState,
     RectangleState,
+    SquareState,
+    StateCollectionState,
+    TriangleState,
 )
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
-
 configure_logging(level="INFO")
-
 
 def main():
     # Create the scene
@@ -23,27 +27,27 @@ def main():
     state1 = StateCollectionState(
         states=[
             TriangleState(
-                pos=Point2D(-70, -50),
+                pos=Point2D(-70, 50),
                 size=30,
                 fill_color=Color("#F3B700"),
             ),
             TriangleState(
-                pos=Point2D(0, -50),
+                pos=Point2D(0, 50),
                 size=30,
                 fill_color=Color("#FAA300"),
             ),
             TriangleState(
-                pos=Point2D(70, -50),
+                pos=Point2D(70, 50),
                 size=30,
                 fill_color=Color("#E57C04"),
             ),
             SquareState(
-                pos=Point2D(-50, 50),
+                pos=Point2D(-50, -50),
                 size=40,
                 fill_color=Color("#F63E02"),
             ),
             SquareState(
-                pos=Point2D(50, 50),
+                pos=Point2D(50, -50),
                 size=40,
                 fill_color=Color("#FF0000"),
             ),
@@ -53,13 +57,13 @@ def main():
     state2 = StateCollectionState(
         states=[
             EllipseState(
-                pos=Point2D(0, -60),
+                pos=Point2D(0, 60),
                 rx=70,
                 ry=30,
                 fill_color=Color("#FDBE02"),
             ),
             RectangleState(
-                pos=Point2D(70, 50),
+                pos=Point2D(70, -50),
                 width=50,
                 height=30,
                 fill_color=Color("#FDBE02"),
@@ -80,7 +84,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -92,7 +96,6 @@ def main():
         png_width_px=1024,
         num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

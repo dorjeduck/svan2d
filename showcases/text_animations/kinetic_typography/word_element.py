@@ -2,40 +2,22 @@
 
 import math
 import random
+import sys
 from dataclasses import replace
+from pathlib import Path
 
-from svan2d.component.state import TextPathState
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
+
+from scatter_entrance import scatter_entrance as _scatter_entrance
+
+from svan2d.primitive.state import TextPathState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
-from svan2d.font.glyph_cache import get_glyph_cache
-from svan2d.font.glyph_extractor import load_font
+from svan2d.font import get_font_glyphs
 from svan2d.transition import curve, easing
 from svan2d.transition.easing import easing2D
+from svan2d.utils.stagger_schedule import StaggerSchedule
 from svan2d.velement import VElement
-
-
-def measure_char_widths(font_path: str, text: str, font_size: float) -> list[float]:
-    """Get pixel-space advance width for each character using the glyph cache."""
-    cache = get_glyph_cache()
-    font = load_font(font_path)
-    units_per_em = font["head"].unitsPerEm
-    scale = font_size / units_per_em
-
-    widths = []
-    for ch in text:
-        if ch == " ":
-            try:
-                g = cache.get_glyph(font_path, "n", font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.3)
-        else:
-            try:
-                g = cache.get_glyph(font_path, ch, font=font)
-                widths.append(g.advance_width * scale)
-            except ValueError:
-                widths.append(font_size * 0.5)
-    return widths
 
 
 def create_word_char_elements(
@@ -58,16 +40,11 @@ def create_word_char_elements(
 
     Characters are positioned so the word is horizontally centred at *word_center*.
     """
-    widths = measure_char_widths(font_path, text, font_size)
-    total_width = sum(widths)
+    x_positions = get_font_glyphs(font_path).centered_char_x_positions(text, font_size)
 
-    # x positions: left-aligned then shifted so the block is centred
-    x_positions: list[float] = []
-    cursor = -total_width / 2
-    for w in widths:
-        # centre of this character cell
-        x_positions.append(cursor + w / 2)
-        cursor += w
+    n = len(text)
+    entrance_sched = StaggerSchedule(n, t_start=first_char_time, t_end=first_char_time + n * char_stagger, overlap=0.0)
+    exit_sched = StaggerSchedule(n, t_start=exit_at, t_end=exit_at + n * char_stagger, overlap=0.0)
 
     elements: list[VElement] = []
     for i, ch in enumerate(text):
@@ -75,7 +52,6 @@ def create_word_char_elements(
             continue
 
         target = Point2D(word_center.x + x_positions[i], word_center.y)
-        appear_at = first_char_time + char_stagger * i
 
         element = _build_char_element(
             ch=ch,
@@ -83,9 +59,9 @@ def create_word_char_elements(
             color=color,
             font_path=font_path,
             font_size=font_size,
-            appear_at=appear_at,
+            appear_at=entrance_sched[i][0],
             entrance_duration=entrance_duration,
-            exit_at=exit_at + char_stagger * i,
+            exit_at=exit_sched[i][0],
             exit_duration=exit_duration,
             entrance=entrance,
             scatter_radius=scatter_radius,
@@ -140,7 +116,7 @@ def _build_char_element(
     # Entrance transition — curve + easing
     trans_kwargs: dict = {"easing_dict": enter_easing}
     if enter_curve:
-        trans_kwargs["curve_dict"] = enter_curve
+        trans_kwargs["interpolation_dict"] = enter_curve
     builder = builder.transition(**trans_kwargs)
 
     builder = builder.keystate(visible, at=appear_end)
@@ -151,7 +127,7 @@ def _build_char_element(
     # Exit transition
     exit_trans: dict = {"easing_dict": enter_easing}
     if exit_curve:
-        exit_trans["curve_dict"] = exit_curve
+        exit_trans["interpolation_dict"] = exit_curve
     builder = builder.transition(**exit_trans)
 
     builder = builder.keystate(exit_hidden, at=exit_end)
@@ -163,6 +139,7 @@ def _build_char_element(
 # Entrance strategies
 # ---------------------------------------------------------------------------
 
+
 def _entrance_state(
     visible: TextPathState,
     target: Point2D,
@@ -171,7 +148,7 @@ def _entrance_state(
     scatter_rotation: float,
     rng: random.Random,
 ) -> tuple[TextPathState, dict, dict | None]:
-    """Return (hidden_state, easing_dict, curve_dict | None)."""
+    """Return (hidden_state, easing_dict, interpolation_dict | None)."""
 
     if entrance == "scatter":
         return _entrance_scatter(visible, target, scatter_radius, scatter_rotation, rng)
@@ -187,35 +164,15 @@ def _entrance_state(
 
 def _entrance_scatter(visible, target, radius, max_rot, rng):
     """Characters fly in from random positions along bezier arcs."""
-    angle = rng.uniform(0, 2 * math.pi)
-    dist = rng.uniform(radius * 0.6, radius)
-    origin = Point2D(target.x + math.cos(angle) * dist,
-                     target.y + math.sin(angle) * dist)
-    rot = rng.uniform(-max_rot, max_rot)
-
+    origin, rot, easing_dict, interpolation_dict = _scatter_entrance(target, radius, max_rot, rng)
     hidden = replace(visible, pos=origin, scale=0.0, opacity=0.0, rotation=rot)
-
-    # Bezier control point: perpendicular to the line origin→target
-    mid = Point2D((origin.x + target.x) / 2, (origin.y + target.y) / 2)
-    dx, dy = target.x - origin.x, target.y - origin.y
-    perp_scale = rng.uniform(-0.4, 0.4)
-    cp = Point2D(mid.x + (-dy) * perp_scale, mid.y + dx * perp_scale)
-
-    easing_dict = {
-        "pos": easing2D(easing.out_cubic, easing.out_back),
-        "scale": easing.out_back,
-        "opacity": easing.out_cubic,
-        "rotation": easing.out_cubic,
-    }
-    curve_dict = {"pos": curve.bezier([cp])}
-
-    return hidden, easing_dict, curve_dict
+    return hidden, easing_dict, interpolation_dict
 
 
 def _entrance_rain(visible, target, radius, rng):
     """Characters drop in from above with slight horizontal drift."""
     x_drift = rng.uniform(-60, 60)
-    origin = Point2D(target.x + x_drift, target.y - radius)
+    origin = Point2D(target.x + x_drift, target.y + radius)
 
     hidden = replace(visible, pos=origin, opacity=0.0, scale=0.6)
 
@@ -247,8 +204,9 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
     base_angle = rng.uniform(0, 2 * math.pi)
     angle = base_angle + rng.uniform(-0.3, 0.3)
     dist = rng.uniform(radius * 0.9, radius * 1.2)
-    origin = Point2D(target.x + math.cos(angle) * dist,
-                     target.y + math.sin(angle) * dist)
+    origin = Point2D(
+        target.x + math.cos(angle) * dist, target.y + math.sin(angle) * dist
+    )
 
     # Consistent positive rotation for unified spin direction
     rot = rng.uniform(max_rot * 0.6, max_rot)
@@ -257,7 +215,7 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
 
     # Wide arc for a pronounced spiral trajectory
     arc_radius = dist * 1.8
-    curve_dict = {"pos": curve.arc_clockwise(arc_radius)}
+    interpolation_dict = {"pos": curve.arc_clockwise(arc_radius)}
 
     easing_dict = {
         "pos": easing2D(easing.out_cubic, easing.out_back),
@@ -265,12 +223,13 @@ def _entrance_spiral(visible, target, radius, max_rot, rng):
         "opacity": easing.out_cubic,
         "rotation": easing.out_cubic,
     }
-    return hidden, easing_dict, curve_dict
+    return hidden, easing_dict, interpolation_dict
 
 
 # ---------------------------------------------------------------------------
 # Exit helper
 # ---------------------------------------------------------------------------
+
 
 def _exit_state(hidden, enter_curve, _target, _rng):
     """Build exit hidden state and curve (mirror of entrance)."""

@@ -1,19 +1,25 @@
-from dataclasses import replace
-
-
-from svan2d.component.effect.filter.drop_shadow import DropShadowFilter
-from svan2d.component.effect.gradient.gradient_stop import GradientStop
-from svan2d.component.effect.gradient.linear import LinearGradient
-from svan2d.component.effect.pattern.checkerboard import CheckerboardPattern
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.square import SquareState
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.logger import configure_logging
-from svan2d.core.point2d import Point2D
+from svan2d.core import (
+    Color,
+    Point2D,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
 from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import (
+    CircleState,
+    SquareState,
+)
+from svan2d.primitive.effect.gradient import (
+    GradientStop,
+    LinearGradient,
+)
+from svan2d.primitive.effect.pattern import CheckerboardPattern
+from svan2d.primitive.effect.filter import DropShadowFilter
+from dataclasses import replace
 
 configure_logging(level="INFO")
 
@@ -53,19 +59,18 @@ checker_pattern_1 = CheckerboardPattern(
 checker_pattern_2 = replace(checker_pattern_1, square_size=25, color1=Color("#ff0000"))
 
 start_states = [
-    SquareState(size=40, pos=Point2D(-70, -70), fill_gradient=linear_grad_1),
+    SquareState(size=40, pos=Point2D(-70, 70), fill_gradient=linear_grad_1),
     SquareState(size=40, pos=Point2D(-70, 0), fill_pattern=checker_pattern_1),
     SquareState(
-        size=40, pos=Point2D(-70, 70), fill_color=START_COLOR_1, filter=shadow_filter_1
+        size=40, pos=Point2D(-70, -70), fill_color=START_COLOR_1, filter=shadow_filter_1
     ),
 ]
 
-
 end_states = [
-    CircleState(radius=20, pos=Point2D(70, -70), fill_gradient=linear_grad_2),
+    CircleState(radius=20, pos=Point2D(70, 70), fill_gradient=linear_grad_2),
     CircleState(radius=20, pos=Point2D(70, 0), fill_pattern=checker_pattern_2),
     CircleState(
-        radius=20, pos=Point2D(70, 70), fill_color=END_COLOR_1, filter=shadow_filter_2
+        radius=20, pos=Point2D(70, -70), fill_color=END_COLOR_1, filter=shadow_filter_2
     ),
 ]
 
@@ -77,7 +82,7 @@ scene = scene.add_elements(elements)
 # Create the exporter
 exporter = VSceneExporter(
     scene=scene,
-    converter=ConverterType.PLAYWRIGHT,
+    converter=ConverterType.PLAYWRIGHT_HTTP,
     output_dir="output/",
 )
 

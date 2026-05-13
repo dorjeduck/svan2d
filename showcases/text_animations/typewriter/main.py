@@ -12,7 +12,9 @@ from svan2d.core.color import Color
 from svan2d.core.logger import configure_logging
 from svan2d.vscene import VScene, VSceneExporter
 
-from elements import create_char_elements, create_cursor_element, measure_char_width
+from svan2d.font import get_font_glyphs
+
+from elements import create_char_elements, create_cursor_element
 
 
 def main():
@@ -44,8 +46,8 @@ def main():
     cursor_width = style_cfg["cursor_width"]
     cursor_height = font_size * style_cfg["cursor_height_ratio"]
 
-    # Measure monospace character width
-    char_width = measure_char_width(font_path, font_size)
+    # Measure monospace character width (use "M" for monospace assumption)
+    char_width = get_font_glyphs(font_path).measure_char_widths("M", font_size)[0]
 
     # Text layout (center origin)
     padding = 40

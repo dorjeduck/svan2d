@@ -1,15 +1,15 @@
 """Type-specific interpolation handlers for primitive and common types."""
 
 from dataclasses import fields
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.core.scalar_functions import angle, lerp, step
 
 # Type alias for easing result - can be scalar (normal) or tuple (2D easing)
-EasedT = Union[float, Tuple[float, float]]
+EasedT = float | tuple[float, float]
 
 
 class TypeInterpolators:
@@ -22,52 +22,31 @@ class TypeInterpolators:
             return eased_t
         return (eased_t[0] + eased_t[1]) / 2
 
-    def __init__(self, path_resolver=None):
-        """
-        Initialize type interpolators.
-
-        Args:
-            path_resolver: PathResolver instance for Point2D path functions (optional)
-        """
-        self.path_resolver = path_resolver
-
     def interpolate_point2d(
         self,
         start_value: Point2D,
         end_value: Point2D,
         eased_t: EasedT,
-        field_name: str,
-        segment_path_config: Optional[Dict[str, Callable]] = None,
     ) -> Point2D:
         """
         Interpolate between two Point2D values.
 
         Supports:
-        - Path functions for custom trajectories
         - 2D easing (separate easing for x and y)
         - Standard linear interpolation
+
+        Custom path functions are handled upstream by the interpolation_dict
+        check in InterpolationEngine.interpolate_value().
 
         Args:
             start_value: Starting Point2D
             end_value: Ending Point2D
             eased_t: Eased interpolation parameter (scalar or 2D tuple)
-            field_name: Name of the field being interpolated
-            segment_path_config: Optional per-field path config dict
 
         Returns:
             Interpolated Point2D
         """
-        # Check for path function for this specific field
-        if self.path_resolver and segment_path_config is not None:
-            path_func = self.path_resolver.get_path_for_field(
-                field_name, segment_path_config
-            )
-            # Only use path if one was configured for this field
-            if segment_path_config.get(field_name) is not None:
-                scalar_t = self._extract_scalar_t(eased_t)
-                return path_func(start_value, end_value, scalar_t)
-
-        # 2D easing (when no explicit path set for this field)
+        # 2D easing
         if isinstance(eased_t, tuple):
             tx, ty = eased_t
             return Point2D(
@@ -118,8 +97,8 @@ class TypeInterpolators:
 
     def interpolate_numeric(
         self,
-        start_value: Union[int, float],
-        end_value: Union[int, float],
+        start_value: int | float,
+        end_value: int | float,
         eased_t: EasedT,
     ) -> float:
         """

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 import drawsvg as dw
 
-from svan2d.component.state.base import State
-from svan2d.velement.base_velement import BaseVElement
+from svan2d.primitive.state.base import State
+from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
 from svan2d.velement.builder import BuilderState, KeystateBuilder
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.transition import EasingFunction
@@ -31,6 +31,8 @@ class VElementGroupState(State):
 
 
 class VElementGroup(BaseVElement, KeystateBuilder):
+    _HAS_FREEZE_CACHE = True
+
     """Element transform group with complete SVG transform capabilities.
 
     Uses chainable builder pattern for animation construction. All methods
@@ -58,15 +60,16 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
     def __init__(
         self,
-        elements: Optional[List[VElement]] = None,
-        group_easing: Optional[Callable[[float], float]] = None,
+        state: State | None = None,
+        elements: list[VElement] | None = None,
+        group_easing: Callable[[float], float] | None = None,
         *,
         # Private params for _replace - don't use directly
-        _builder: Optional[BuilderState] = None,
-        _clip_elements: Optional[List[VElement]] = None,
-        _mask_element: Optional[VElement] = None,
-        _attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        _attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        _builder: BuilderState | None = None,
+        _clip_elements: list[VElement] | None = None,
+        _mask_element: VElement | None = None,
+        _attribute_easing: dict[str, EasingFunction] | None = None,
+        _attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> None:
         """Initialize an element group with builder pattern.
 
@@ -74,46 +77,82 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             elements: Optional initial list of child elements
             group_easing: Optional easing function applied to the group's animation time
         """
-        self.elements: List[VElement] = list(elements) if elements else []
+        self.elements: list[VElement] = list(elements) if elements else []
         self.group_easing = group_easing
 
         # Clip/mask elements
-        self.clip_elements: List[VElement] = _clip_elements if _clip_elements is not None else []
-        self.mask_element: Optional[VElement] = _mask_element
+        self.clip_elements: list[VElement] = (
+            _clip_elements if _clip_elements is not None else []
+        )
+        self.mask_element: VElement | None = _mask_element
 
         # Builder state (from KeystateBuilder mixin)
-        self._builder: Optional[BuilderState] = _builder if _builder is not None else BuilderState()
-        self._attribute_easing: Optional[Dict[str, EasingFunction]] = _attribute_easing
-        self._attribute_keystates: Optional[AttributeKeyStatesDict] = _attribute_keystates
+        self._builder: BuilderState | None = (
+            _builder if _builder is not None else BuilderState()
+        )
+        self._attribute_easing: dict[str, EasingFunction] | None = _attribute_easing
+        self._attribute_keystates: AttributeKeyStatesDict | None = _attribute_keystates
 
         # Interpolator (created on first render)
-        self._interpolator: Optional[StateInterpolator] = None
+        self._interpolator: StateInterpolator | None = None
+
+        # frame_fn bypass slots (populated in _ensure_built)
+        self._frame_fn: Callable | None = None
+        self._frame_base_state: VElementGroupState | None = None
 
         # Cache last frame time for render_state (set by get_frame)
         self._last_frame_time: float = 0.0
 
+        # Frozen render: set when the group state and all child states are
+        # is_final, and the rendered <g> is safe to reuse. Cleared by _replace.
+        self._frozen_render: dw.Group | None = None
+        self._frozen_state: VElementGroupState | None = None
+
+        # Handle static state convenience parameter
+        if state is not None:
+            # Chain immutably - replace self with new instance
+            new_self = self.keystate(state)
+            # Copy all attributes from new_self to self
+            self._builder = new_self._builder
+            self._attribute_easing = new_self._attribute_easing
+            self._attribute_keystates = new_self._attribute_keystates
+            self.clip_elements = new_self.clip_elements
+            self.mask_element = new_self.mask_element
+
     def _replace(
         self,
         *,
-        elements: Optional[List[VElement]] = None,
-        group_easing: Optional[Callable[[float], float]] = ...,  # type: ignore[assignment]
-        clip_elements: Optional[List[VElement]] = None,
-        mask_element: Optional[VElement] = ...,  # type: ignore[assignment]
-        builder: Optional[BuilderState] = None,
-        attribute_easing: Optional[Dict[str, EasingFunction]] = None,
-        attribute_keystates: Optional[AttributeKeyStatesDict] = None,
+        elements: list[VElement] | None = None,
+        group_easing: Callable[[float], float] | None | _Unset = _UNSET,
+        clip_elements: list[VElement] | None = None,
+        mask_element: VElement | None | _Unset = _UNSET,
+        builder: BuilderState | None = None,
+        attribute_easing: dict[str, EasingFunction] | None = None,
+        attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> "VElementGroup":
         """Return a new VElementGroup with specified attributes replaced."""
         new = VElementGroup.__new__(VElementGroup)
         new.elements = elements if elements is not None else self.elements.copy()
-        new.group_easing = self.group_easing if group_easing is ... else group_easing
-        new.clip_elements = clip_elements if clip_elements is not None else self.clip_elements.copy()
-        new.mask_element = self.mask_element if mask_element is ... else mask_element
+        new.group_easing = self.group_easing if group_easing is _UNSET else group_easing
+        new.clip_elements = (
+            clip_elements if clip_elements is not None else self.clip_elements.copy()
+        )
+        new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new._builder = builder if builder is not None else self._builder
-        new._attribute_easing = attribute_easing if attribute_easing is not None else self._attribute_easing
-        new._attribute_keystates = attribute_keystates if attribute_keystates is not None else self._attribute_keystates
+        new._attribute_easing = (
+            attribute_easing if attribute_easing is not None else self._attribute_easing
+        )
+        new._attribute_keystates = (
+            attribute_keystates
+            if attribute_keystates is not None
+            else self._attribute_keystates
+        )
         new._interpolator = None
+        new._frame_fn = None
+        new._frame_base_state = None
         new._last_frame_time = 0.0
+        new._frozen_render = None
+        new._frozen_state = None
         return new
 
     def _replace_builder(self, new_builder: BuilderState) -> "VElementGroup":
@@ -123,8 +162,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     def _replace_attributes(
         self,
         new_builder: BuilderState,
-        new_easing: Optional[Dict[str, EasingFunction]],
-        new_keystates: Optional[AttributeKeyStatesDict],
+        new_easing: dict[str, EasingFunction] | None,
+        new_keystates: AttributeKeyStatesDict | None,
     ) -> "VElementGroup":
         """Return a new VElementGroup with updated builder and attribute settings."""
         return self._replace(
@@ -138,32 +177,35 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         if self._builder is None:
             return
 
+        # frame_fn bypasses the keystate/interpolation system entirely
+        if self._builder.frame_fn is not None:
+            self._frame_fn = self._builder.frame_fn
+            self._frame_base_state = self._builder.frame_base_state
+            self._builder = None
+            return
+
         # Auto-create identity keystates if group_easing is set but no keystates defined
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
             # Tuple format: (state, outgoing_state, time, transition_config, render_index)
-            self._builder.keystates.append((identity, None, 0.0, None, None))
-            self._builder.keystates.append((identity, None, 1.0, None, None))
+            ###TODO ### new_keystates  = self._builder.keystates + ((identity, None, 0.0, None, None)) + (identity, None, 1.0, None, None)
 
         # Use builder mixin to finalize
-        keystates, attribute_keystates = self._finalize_build()
+        keystates, attribute_timelines = self._finalize_build()
 
         # Initialize interpolation systems
         from svan2d.transition.easing_resolver import EasingResolver
         from svan2d.transition.interpolation_engine import InterpolationEngine
-        from svan2d.transition.path_resolver import PathResolver
 
         easing_resolver = EasingResolver(self._attribute_easing)
-        path_resolver = PathResolver()
-        interpolation_engine = InterpolationEngine(easing_resolver, path_resolver)
+        interpolation_engine = InterpolationEngine(easing_resolver)
 
         # Store keystates and create interpolator (no vertex aligner for groups)
         self._keystates_list = keystates
-        self.attribute_keystates = attribute_keystates
 
         self._interpolator = StateInterpolator(
             keystates=keystates,
-            attribute_keystates=attribute_keystates,
+            attribute_timelines=attribute_timelines,
             easing_resolver=easing_resolver,
             interpolation_engine=interpolation_engine,
             # No vertex_aligner - groups don't morph shapes
@@ -190,7 +232,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         """Add a child element to the group. Returns new VElementGroup."""
         return self._replace(elements=self.elements + [child])
 
-    def add_elements(self, elements: List["VElement"]) -> "VElementGroup":
+    def add_elements(self, elements: list["VElement"]) -> "VElementGroup":
         """Add multiple child elements to the group. Returns new VElementGroup."""
         return self._replace(elements=self.elements + list(elements))
 
@@ -204,7 +246,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         """Remove all child elements from the group. Returns new VElementGroup."""
         return self._replace(elements=[])
 
-    def get_elements(self) -> List["VElement"]:
+    def get_elements(self) -> list["VElement"]:
         """Get the list of child elements."""
         return self.elements.copy()
 
@@ -216,99 +258,119 @@ class VElementGroup(BaseVElement, KeystateBuilder):
     # Rendering
     # =========================================================================
 
-    def render(self) -> Optional[dw.Group]:
+    def render(self) -> dw.Group | None:
         """Render the element group in its initial state."""
         return self.render_at_frame_time(0.0)
 
     def render_at_frame_time(
-        self, t: float, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.Group]:
+        self, t: float, drawing: dw.Drawing | None = None
+    ) -> dw.Group | None:
         """Render the element transform group at a specific animation time."""
+        if self._frozen_render is not None:
+            return self._frozen_render
+
         self._ensure_built()
-        assert self._interpolator is not None
 
         if self.group_easing is not None:
             t = self.group_easing(t)
 
-        group_state, _ = self._interpolator.get_state_at_time(t)
+        if self._frame_fn is not None:
+            group_state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            group_state = self._interpolator.get_state_at_time(t)
 
         if group_state is None:
             return None
 
-        group_state = cast(VElementGroupState, group_state)
+        return self._render_group_state(cast(VElementGroupState, group_state), t)
 
-        # Apply clip/mask if present
-        if self.clip_elements or self.mask_element:
-            group_state = self._apply_velement_clips(group_state, t)
+    def get_frame(self, t: float) -> VElementGroupState | None:
+        """Get the interpolated state at a specific time.
 
-        transform_string = self._build_transform_string(group_state)
+        For VElementGroup, the AND-rule applies: the returned state is_final
+        only if the group's own interpolated state is final AND every child's
+        state at this frame is also final and cache-safe. This keeps the
+        VScene-level freeze gate consistent without having VScene reach into
+        group internals.
+        """
+        if self._frozen_state is not None:
+            return self._frozen_state
 
-        if transform_string:
-            group = dw.Group(transform=transform_string)
-        else:
-            group = dw.Group()
-
-        # Sort children by z_index (stable sort preserves insertion order for equal z_index)
-        def get_z_index(element: "VElement") -> float:
-            if hasattr(element, "get_frame"):
-                state = element.get_frame(t)
-                if state is not None:
-                    return state.z_index
-            return 0.0
-
-        sorted_children = sorted(self.elements, key=get_z_index)
-
-        for child in sorted_children:
-            child_element = None
-            if hasattr(child, "render_at_frame_time") and child.is_animatable():
-                child_element = child.render_at_frame_time(t)
-            else:
-                child_element = child.render()
-
-            if child_element is not None:
-                group.append(child_element)
-
-        if group_state.opacity != 1.0:
-            group.opacity = group_state.opacity  # type: ignore[attr-defined]
-
-        return group
-
-    def get_frame(self, t: float) -> Optional[VElementGroupState]:
-        """Get the interpolated state at a specific time."""
         self._ensure_built()
-        assert self._interpolator is not None
 
         if self.group_easing is not None:
             t = self.group_easing(t)
 
         self._last_frame_time = t  # Cache for render_state
-        state, _ = self._interpolator.get_state_at_time(t)
-        return cast(VElementGroupState, state) if state is not None else None
+
+        if self._frame_fn is not None:
+            state = self._frame_fn(self._frame_base_state, t)
+        else:
+            assert self._interpolator is not None
+            state = self._interpolator.get_state_at_time(t)
+
+        if state is None:
+            return None
+
+        if getattr(state, "is_final", False):
+            from svan2d.velement.velement import is_cache_safe
+            for child in self.elements:
+                if not hasattr(child, "get_frame"):
+                    state = replace(state, is_final=False)
+                    break
+                cs = child.get_frame(t)
+                if (
+                    cs is None
+                    or not getattr(cs, "is_final", False)
+                    or not is_cache_safe(cs)
+                ):
+                    state = replace(state, is_final=False)
+                    break
+
+        return cast(VElementGroupState, state)
 
     def render_state(
-        self, state: VElementGroupState, drawing: Optional[dw.Drawing] = None
-    ) -> Optional[dw.Group]:
+        self, state: VElementGroupState, drawing: dw.Drawing | None = None
+    ) -> dw.Group | None:
         """Render a pre-computed state directly (avoids re-interpolation).
 
         Uses _last_frame_time (set by get_frame) to render children at the correct time.
         """
+        if self._frozen_render is not None:
+            return self._frozen_render
         if state is None:
             return None
+        return self._render_group_state(state, self._last_frame_time)
 
-        t = self._last_frame_time
+    def is_animatable(self) -> bool:
+        """Check if this group can be animated."""
+        self._ensure_built()
+        if self._frame_fn is not None:
+            return True
+        return len(self._keystates_list) > 1 or bool(self._attribute_keystates)
 
+    def _render_group_state(
+        self, state: VElementGroupState, t: float
+    ) -> dw.Group | None:
+        """Build the dw.Group for a given group state at time t.
+
+        Shared by render_at_frame_time (interpolator and frame_fn paths) and render_state.
+        """
         # Apply clip/mask if present
         if self.clip_elements or self.mask_element:
             state = self._apply_velement_clips(state, t)
 
         transform_string = self._build_transform_string(state)
 
+        kwargs = {}
         if transform_string:
-            group = dw.Group(transform=transform_string)
-        else:
-            group = dw.Group()
+            kwargs["transform"] = transform_string
+        if state.opacity is not None and state.opacity != 1.0:
+            kwargs["opacity"] = state.opacity
+        group = dw.Group(**kwargs)
 
-        # Sort children by z_index
+        # Sort children by z_index (stable sort preserves insertion order for equal z_index)
         def get_z_index(element: "VElement") -> float:
             if hasattr(element, "get_frame"):
                 child_state = element.get_frame(t)
@@ -319,7 +381,12 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         sorted_children = sorted(self.elements, key=get_z_index)
 
         for child in sorted_children:
-            child_element = None
+            # Reuse a child's frozen render when available
+            child_frozen = getattr(type(child), "_HAS_FREEZE_CACHE", False) and child._frozen_render
+            if child_frozen:
+                group.append(child._frozen_render)
+                continue
+
             if hasattr(child, "render_at_frame_time") and child.is_animatable():
                 child_element = child.render_at_frame_time(t)
             else:
@@ -328,15 +395,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             if child_element is not None:
                 group.append(child_element)
 
-        if state.opacity != 1.0:
-            group.opacity = state.opacity  # type: ignore[attr-defined]
-
         return group
-
-    def is_animatable(self) -> bool:
-        """Check if this group can be animated."""
-        self._ensure_built()
-        return len(self._keystates_list) > 1 or bool(self.attribute_keystates)
 
     # =========================================================================
     # Internal helpers
@@ -358,8 +417,8 @@ class VElementGroup(BaseVElement, KeystateBuilder):
 
         return replace(
             state,
-            mask_state=mask_state_at_t or state.mask_state,
-            clip_states=clip_states_at_t or state.clip_states,
+            mask_state=mask_state_at_t if mask_state_at_t is not None else state.mask_state,
+            clip_states=clip_states_at_t if clip_states_at_t is not None else state.clip_states,
         )
 
     def _build_transform_string(self, state: VElementGroupState) -> str:
@@ -380,11 +439,12 @@ class VElementGroup(BaseVElement, KeystateBuilder):
                 f"translate({state.transform_origin_x}, {state.transform_origin_y})"
             )
 
-        if state.x != 0 or state.y != 0:
-            transform_parts.append(f"translate({state.x}, {state.y})")
+        if state.pos and (state.pos.x != 0 or state.pos.y != 0):  # type: ignore
+            transform_parts.append(f"translate({state.pos.x}, {-state.pos.y})")
 
         if state.rotation != 0:
-            transform_parts.append(f"rotate({state.rotation})")
+
+            transform_parts.append(f"rotate({-state.rotation})") # type: ignore #t
 
         if state.scale != 1.0 and (state.scale_x == 1.0 and state.scale_y == 1.0):
             transform_parts.append(f"scale({state.scale})")

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from svan2d.component.state import CircleState, RectangleState, StarState, TextState
+from svan2d.primitive.state import CircleState, RectangleState, StarState, TextState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.velement import VElement

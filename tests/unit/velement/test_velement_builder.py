@@ -2,9 +2,9 @@
 
 import pytest
 
-from svan2d.component.renderer.circle import CircleRenderer
-from svan2d.component.state.circle import CircleState
-from svan2d.component.state.rectangle import RectangleState
+from svan2d.primitive.renderer.circle import CircleRenderer
+from svan2d.primitive.state.circle import CircleState
+from svan2d.primitive.state.rectangle import RectangleState
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.transition import easing
@@ -135,7 +135,7 @@ class TestVElementBuilderPath:
         element = (
             VElement()
             .keystate(state1, at=0.0)
-            .transition(curve_dict={"pos": bezier([Point2D(0, 100)])})
+            .transition(interpolation_dict={"pos": bezier([Point2D(0, 100)])})
             .keystate(state2, at=1.0)
         )
 
@@ -144,7 +144,7 @@ class TestVElementBuilderPath:
 
         transition = element._keystates_list[0].transition_config
         assert transition is not None
-        assert "pos" in transition.curve_dict
+        assert "pos" in transition.interpolation_dict
 
     def test_path_merging_in_transitions(self):
         """Consecutive transitions should merge paths"""
@@ -156,7 +156,7 @@ class TestVElementBuilderPath:
             .keystate(state1, at=0.0)
             .transition(
                 easing_dict={"pos": easing.in_out},
-                curve_dict={"pos": bezier([Point2D(0, 100)])},
+                interpolation_dict={"pos": bezier([Point2D(0, 100)])},
             )
             .keystate(state2, at=1.0)
         )
@@ -167,7 +167,7 @@ class TestVElementBuilderPath:
         transition = element._keystates_list[0].transition_config
         assert transition is not None
         assert "pos" in transition.easing_dict
-        assert "pos" in transition.curve_dict
+        assert "pos" in transition.interpolation_dict
 
 
 class TestVElementBuilderMorphing:
@@ -241,9 +241,10 @@ class TestVElementBuilderAttributes:
         # Trigger build
         element.get_frame(0.0)
 
-        # Check that attribute_easing was passed
-        assert element.easing_resolver.attribute_easing is not None
-        assert "pos" in element.easing_resolver.attribute_easing
+        # Check that attribute_easing was passed through to the interpolator
+        assert element._interpolator is not None
+        assert element._interpolator.easing_resolver.attribute_easing is not None
+        assert "pos" in element._interpolator.easing_resolver.attribute_easing
 
     def test_attributes_path(self):
         """Attributes should set element-level path"""
@@ -252,7 +253,7 @@ class TestVElementBuilderAttributes:
 
         element = (
             VElement()
-            .attributes(curve_dict={"pos": bezier([Point2D(50, 50)])})
+            .attributes(interpolation_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=1.0)
         )
@@ -262,7 +263,7 @@ class TestVElementBuilderAttributes:
 
         # Element-level path should be merged into each keystate's transition
         assert element._keystates_list[0].transition_config is not None
-        assert "pos" in element._keystates_list[0].transition_config.curve_dict
+        assert "pos" in element._keystates_list[0].transition_config.interpolation_dict
 
     def test_attributes_keystates(self):
         """Attributes should set attribute keystates"""
@@ -281,7 +282,7 @@ class TestVElementBuilderAttributes:
         # Trigger build
         element.get_frame(0.0)
 
-        assert "fill_color" in element.attribute_keystates
+        assert element._attribute_keystates is not None and "fill_color" in element._attribute_keystates
 
 
 class TestVElementBuilderClipMask:
@@ -551,7 +552,7 @@ class TestVElementBuilderDefaultTransition:
 
         element = (
             VElement()
-            .default_transition(curve_dict={"pos": bezier([Point2D(50, 50)])})
+            .default_transition(interpolation_dict={"pos": bezier([Point2D(50, 50)])})
             .keystate(state1, at=0.0)
             .keystate(state2, at=0.5)
             .keystate(state3, at=1.0)
@@ -560,11 +561,11 @@ class TestVElementBuilderDefaultTransition:
         # Trigger build
         element.get_frame(0.0)
 
-        # Both segments should have the curve_dict
+        # Both segments should have the interpolation_dict
         assert element._keystates_list[0].transition_config is not None
-        assert "pos" in element._keystates_list[0].transition_config.curve_dict
+        assert "pos" in element._keystates_list[0].transition_config.interpolation_dict
         assert element._keystates_list[1].transition_config is not None
-        assert "pos" in element._keystates_list[1].transition_config.curve_dict
+        assert "pos" in element._keystates_list[1].transition_config.interpolation_dict
 
     def test_default_transition_before_first_keystate(self):
         """default_transition can be called before first keystate"""
@@ -631,3 +632,13 @@ class TestVElementConvenienceConstructor:
 
         with pytest.raises(RuntimeError, match="Cannot modify"):
             element.keystate(CircleState(radius=150))
+
+
+class TestFrameFnAnimatable:
+    """Tests for frame_fn path of VElement (Finding #3)."""
+
+    def test_frame_fn_element_is_animatable(self):
+        """A VElement constructed via frame_fn should report is_animatable() as True
+        without raising AttributeError on _keystates_list."""
+        elem = VElement().frame_fn(lambda base, t: None)
+        assert elem.is_animatable() is True

@@ -7,7 +7,7 @@ the overhead of rendering, rasterization, and video encoding.
 import time
 import tracemalloc
 from svan2d.velement import VElement
-from svan2d.component import CircleState, SquareState
+from svan2d.primitive import CircleState, SquareState
 
 
 def benchmark_interpolation_only(total_frames: int = 120):

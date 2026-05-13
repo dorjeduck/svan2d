@@ -1,9 +1,9 @@
 """Crossfade segment function (multi-element)."""
 
 from dataclasses import replace
-from typing import Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
 
-from svan2d.component.state.base import State
+from svan2d.primitive.state.base import State
 from svan2d.velement.keystate import KeyState
 from svan2d.velement.transition import TransitionConfig
 
@@ -13,9 +13,9 @@ def crossfade(
     s_in: State,
     t_start: float,
     t_end: float,
-    delay: Optional[float] = 0,
-    easing_dict: Optional[Dict[str, Callable[[float], float]]] = None,
-) -> Tuple[List[KeyState], List[KeyState]]:
+    delay: float | None = 0,
+    easing_dict: dict[str, Callable[[float], float]] | None = None,
+) -> tuple[list[KeyState], list[KeyState]]:
     """Fades one element out while fading a second element in simultaneously.
 
     Args:
@@ -37,7 +37,9 @@ def crossfade(
     keystates_in = [
         # Start invisible
         KeyState(
-            state=s_in_gone, time=max(0, t_start + (delay or 0)), transition_config=transition
+            state=s_in_gone,
+            time=max(0, t_start + (delay or 0)),
+            transition_config=transition,
         ),
         # End visible
         KeyState(state=s_in, time=min(1, t_end)),

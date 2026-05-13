@@ -4,19 +4,24 @@ Animated bar chart showing electric vehicle sales by country over time.
 Data source: IEA Global EV Data 2024.
 """
 
+import sys
 import tomllib
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
 
 from axis import create_axis_elements, AxisConfig
 from bar import create_bar_elements, BarConfig, estimate_label_reserve
 from data_prep import get_company_data, InterpolationMethod
 from year import create_year_element
 
-from svan2d.converter.converter_type import ConverterType
-from svan2d.core.color import Color
-from svan2d.core.logger import configure_logging
-from svan2d.vscene.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
+from svan2d import (
+    Color,
+    ConverterType,
+    VScene,
+    VSceneExporter,
+    configure_logging,
+)
 
 configure_logging(level="INFO")
 
@@ -132,6 +137,8 @@ def create_scene() -> VScene:
         value_color=Color(cfg["bars"]["value_color"]),
         label_gap=cfg["bars"]["label_gap"],
         label_reserve=label_reserve,
+        label_h_offset=cfg["bars"]["label_gap"],  # labels outside bar, offset = label_gap
+        label_anchor="start",
     )
 
     bar_elements, name_elements, value_elements = create_bar_elements(

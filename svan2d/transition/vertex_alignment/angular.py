@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import inspect
 import math
-from typing import List, Optional, Tuple, Union
 
-from svan2d.component.vertex import (
+from svan2d.primitive.vertex import (
     angle_distance,
     angle_from_centroid,
     centroid,
 )
-from svan2d.component.vertex.vertex_utils import rotate_list, rotate_vertices
+from svan2d.primitive.vertex.vertex_utils import rotate_list, rotate_vertices
 from svan2d.core.point2d import Point2D, Points2D
 
 from .base import AlignmentContext, VertexAligner
@@ -41,7 +40,7 @@ class AngularAligner(VertexAligner):
     """
 
     def __init__(
-        self, norm: Union[str, AlignmentNorm, AngularDistanceFn] = AlignmentNorm.L1
+        self, norm: str | AlignmentNorm | AngularDistanceFn = AlignmentNorm.L1
     ):
         """
         Initialize angular aligner with distance norm.
@@ -73,7 +72,7 @@ class AngularAligner(VertexAligner):
             )
 
     def _resolve_distance_function(
-        self, norm: Union[str, AlignmentNorm]
+        self, norm: str | AlignmentNorm
     ) -> AngularDistanceFn:
         """Convert norm spec to actual distance function"""
         # Normalize string to enum
@@ -96,7 +95,7 @@ class AngularAligner(VertexAligner):
             raise ValueError(f"Unknown norm: {norm}")
 
     def _l1_distance(
-        self, angles1: List[float], angles2: List[float], offset: int
+        self, angles1: list[float], angles2: list[float], offset: int
     ) -> float:
         """Sum of absolute angular differences (L1 norm)"""
         n = len(angles1)
@@ -105,7 +104,7 @@ class AngularAligner(VertexAligner):
         )
 
     def _l2_distance(
-        self, angles1: List[float], angles2: List[float], offset: int
+        self, angles1: list[float], angles2: list[float], offset: int
     ) -> float:
         """Root mean square angular distance (L2 norm)"""
         n = len(angles1)
@@ -117,7 +116,7 @@ class AngularAligner(VertexAligner):
         )
 
     def _linf_distance(
-        self, angles1: List[float], angles2: List[float], offset: int
+        self, angles1: list[float], angles2: list[float], offset: int
     ) -> float:
         """Maximum angular difference (L∞ norm, minimax)"""
         n = len(angles1)
@@ -131,7 +130,7 @@ class AngularAligner(VertexAligner):
         verts2: Points2D,
         context: AlignmentContext,
         rotation_target: float | None = None,
-    ) -> Tuple[Points2D, Points2D]:
+    ) -> tuple[Points2D, Points2D]:
         if len(verts1) != len(verts2):
             raise ValueError(
                 f"Vertex lists must have same length: {len(verts1)} != {len(verts2)}"

@@ -1,17 +1,22 @@
-from svan2d.component import TextRenderer, TextState
-from svan2d.converter.converter_type import ConverterType
-from svan2d import layout
-from svan2d.core.logger import configure_logging
-from svan2d.velement import VElement
-from svan2d.vscene import VScene
-from svan2d.vscene.vscene_exporter import VSceneExporter
-from svan2d.core.color import Color
 
+
+from svan2d import layout
+from svan2d.core import (
+    Color,
+    configure_logging,
+)
+from svan2d.converter import ConverterType
+from svan2d.velement import VElement
+from svan2d.vscene import (
+    VScene,
+    VSceneExporter,
+)
+from svan2d.primitive.state import TextState
+from svan2d.primitive.renderer import TextRenderer
 configure_logging(level="INFO")
 
 START_COLOR = Color("#FDBE02")
 END_COLOR = Color("#AA0000")
-
 
 def main():
 
@@ -31,28 +36,36 @@ def main():
     ]
 
     def east_west(angle):
-        if angle == 0:
+        if angle == 90:
             return 0
-        elif angle > 180:
-            return 90
-        else:
+        elif angle > 90 and angle < 270:
             return -90
+        else:
+            return 90
 
     all_states = [
         layout.circle(
-            base_states, radius=100, alignment=layout.ElementAlignment.UPRIGHT
-        ),
-        layout.circle(
-            base_states, radius=100, alignment=layout.ElementAlignment.LAYOUT
+            base_states,
+            rotation=90,
+            radius=100,
+            alignment=layout.ElementAlignment.UPRIGHT,
         ),
         layout.circle(
             base_states,
+            rotation=90,
             radius=100,
             alignment=layout.ElementAlignment.LAYOUT,
-            element_rotation_offset=90,
         ),
         layout.circle(
             base_states,
+            rotation=90,
+            radius=100,
+            alignment=layout.ElementAlignment.LAYOUT,
+            element_rotation_offset=-90,
+        ),
+        layout.circle(
+            base_states,
+            rotation=90,
             radius=100,
             alignment=layout.ElementAlignment.LAYOUT,
             element_rotation_offset_fn=east_west,
@@ -80,7 +93,7 @@ def main():
     # Create the exporter
     exporter = VSceneExporter(
         scene=scene,
-        converter=ConverterType.PLAYWRIGHT,
+        converter=ConverterType.PLAYWRIGHT_HTTP,
         output_dir="output/",
     )
 
@@ -90,8 +103,8 @@ def main():
         total_frames=210,
         framerate=30,
         png_width_px=1024,
+        num_thumbnails=100,
     )
-
 
 if __name__ == "__main__":
     main()

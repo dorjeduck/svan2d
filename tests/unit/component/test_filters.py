@@ -2,7 +2,7 @@
 
 import pytest
 
-from svan2d.component.effect.filter import (
+from svan2d.primitive.effect.filter import (
     GaussianBlurFilter,
     DropShadowFilter,
     MorphologyFilter,

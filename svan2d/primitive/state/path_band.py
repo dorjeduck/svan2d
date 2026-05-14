@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.effect.gradient.base import Gradient
 from svan2d.primitive.registry import renderer
 from svan2d.primitive.renderer.path_band import PathBandRenderer
 from svan2d.primitive.state.base_color import ColorState
@@ -29,6 +30,7 @@ class PathBandState(ColorState):
     stroke_opacities: tuple[float, ...] | None = None
     stroke_widths: tuple[float, ...] | None = None
     stroke_colors: tuple[Color, ...] | None = None
+    stroke_gradients: tuple[Gradient | None, ...] | None = None
 
     stroke_linecap: StrokeLinecap | str = StrokeLinecap.BUTT
     stroke_linejoin: StrokeLinejoin | str = StrokeLinejoin.MITER
@@ -40,6 +42,7 @@ class PathBandState(ColorState):
             "stroke_opacities",
             "stroke_widths",
             "stroke_colors",
+            "stroke_gradients",
         ]
     )
 
@@ -54,6 +57,8 @@ class PathBandState(ColorState):
             self._set_field("stroke_widths", tuple(self.stroke_widths))
         if self.stroke_colors is not None and not isinstance(self.stroke_colors, tuple):
             self._set_field("stroke_colors", tuple(self.stroke_colors))
+        if self.stroke_gradients is not None and not isinstance(self.stroke_gradients, tuple):
+            self._set_field("stroke_gradients", tuple(self.stroke_gradients))
 
         n = len(self.segments)
         if self.stroke_opacities is not None and len(self.stroke_opacities) != n:
@@ -67,4 +72,8 @@ class PathBandState(ColorState):
         if self.stroke_colors is not None and len(self.stroke_colors) != n:
             raise ValueError(
                 f"stroke_colors length {len(self.stroke_colors)} != segments length {n}"
+            )
+        if self.stroke_gradients is not None and len(self.stroke_gradients) != n:
+            raise ValueError(
+                f"stroke_gradients length {len(self.stroke_gradients)} != segments length {n}"
             )

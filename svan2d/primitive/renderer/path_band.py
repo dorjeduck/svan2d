@@ -37,10 +37,14 @@ class PathBandRenderer(Renderer):
         opacities = state.stroke_opacities
         widths = state.stroke_widths
         colors = state.stroke_colors
+        gradients = state.stroke_gradients
 
         for i, (a, b) in enumerate(state.segments):
             line_kwargs = dict(shared)
-            if colors is not None and i < len(colors):
+            grad = gradients[i] if gradients is not None and i < len(gradients) else None
+            if grad is not None:
+                line_kwargs["stroke"] = grad.to_drawsvg()
+            elif colors is not None and i < len(colors):
                 c = colors[i]
                 if c is not None and c != Color.NONE:
                     line_kwargs["stroke"] = c.to_rgb_string()

@@ -33,6 +33,17 @@ class State(ABC):
     skew_y: float = 0
     z_index: float = 0.0
 
+    # Coordinate convention for this state's own geometry (path data, vertex
+    # lists, raw-svg coordinates). `pos` is always Y-up (the renderer negates
+    # pos.y). Geometry coordinates, however, default to SVG-native Y-down, so
+    # glyph/shape outlines (baked Y-down on purpose) render upright. Set
+    # y_up=True when the geometry coordinates are themselves Y-up *world*
+    # coordinates (e.g. a polyline through projected world points): the
+    # renderer reflects the geometry so it shares the same Y-up frame as
+    # pos-placed elements. For RawSvgState this additionally counter-flips
+    # <text>/<image> nodes so they stay upright.
+    y_up: bool = False
+
     # Clipping and masking support
     clip_state: State | None = None
     mask_state: State | None = None
@@ -50,7 +61,9 @@ class State(ABC):
     is_final: bool = field(default=False, compare=False)
 
     # Attributes that should not be interpolated (structural/configuration attributes)
-    NON_INTERPOLATABLE_FIELDS: frozenset[str] = frozenset(["NON_INTERPOLATABLE_FIELDS"])
+    NON_INTERPOLATABLE_FIELDS: frozenset[str] = frozenset(
+        ["NON_INTERPOLATABLE_FIELDS", "y_up"]
+    )
 
     # Subclasses can override is_angle() to mark additional fields as angles,
     # which enables shortest-path interpolation for those fields.

@@ -49,6 +49,13 @@ class Renderer(ABC):
             transforms.append(f"skewX({-state.skew_x})")
         if state.skew_y:
             transforms.append(f"skewY({-state.skew_y})")
+        # Y-up geometry: reflect the element's own coordinates across the X
+        # axis so they share the Y-up frame that pos already uses. Appended
+        # last → rightmost in the SVG transform list → applied to the geometry
+        # first (before pos/rotate), giving world point (x, y) the same screen
+        # mapping a pos=(x, y) element gets.
+        if getattr(state, "y_up", False):
+            transforms.append("scale(1,-1)")
         return " ".join(transforms) if transforms else None
 
     @staticmethod

@@ -42,7 +42,7 @@ class ImageSkiaRenderer(SkiaRenderer):
         if cached is not None:
             return cached
         if state.data is not None:
-            img = skia.Image.MakeFromEncoded(skia.Data.MakeWithBytes(state.data))
+            img = skia.Image.MakeFromEncoded(skia.Data.MakeWithCopy(state.data))
         else:
             img = skia.Image.open(state.href)
         if img is None:

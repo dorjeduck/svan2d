@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass
 from enum import StrEnum
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.number import NumberRenderer
 from svan2d.primitive.state.text import TextState
 
@@ -31,6 +31,7 @@ class NumberFormat(StrEnum):
     FIXED_ALIGNED = "fixed_aligned"  # Like FIXED but keeps decimal point position fixed
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.number:NumberSkiaRenderer")
 @renderer(NumberRenderer)
 @dataclass(frozen=True)
 class NumberState(TextState):

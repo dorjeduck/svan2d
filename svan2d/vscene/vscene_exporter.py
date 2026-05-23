@@ -94,6 +94,7 @@ class VSceneExporter:
         from svan2d.converter.playwright_svg_converter import PlaywrightSvgConverter
         from svan2d.converter.resvg_svg_converter import ResvgSvgConverter
         from svan2d.converter.resvg_http_svg_converter import ResvgHttpSvgConverter
+        from svan2d.converter.skia_svg_converter import SkiaSvgConverter
 
         converter_map = {
             ConverterType.CAIROSVG: CairoSvgConverter,
@@ -102,6 +103,7 @@ class VSceneExporter:
             ConverterType.PLAYWRIGHT_HTTP: PlaywrightHttpSvgConverter,
             ConverterType.RESVG: ResvgSvgConverter,
             ConverterType.RESVG_HTTP: ResvgHttpSvgConverter,
+            ConverterType.SKIA: SkiaSvgConverter,
         }
 
         converter_class = converter_map.get(converter)
@@ -379,7 +381,7 @@ class VSceneExporter:
             if conv_results:
                 files.update(conv_results)
                 for fmt, path in conv_results.items():
-                    if fmt.upper() != "SUCCESS":
+                    if fmt.upper() != "SUCCESS" and path:
                         logger.info(f'{fmt.upper()} exported to "{path}"')
 
         return ExportResult(success=True, files=files)

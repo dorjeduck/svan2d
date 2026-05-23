@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.path_text import PathTextRenderer
 from svan2d.path import SVGPath
 
 from .text import TextState
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.path_text:PathTextSkiaRenderer")
 @renderer(PathTextRenderer)
 @dataclass(frozen=True)
 class PathTextState(TextState):

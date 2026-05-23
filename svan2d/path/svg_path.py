@@ -20,7 +20,7 @@ from .commands import (
     SmoothQuadraticBezier,
     VerticalLine,
 )
-from .parser import parse_coordinates, tokenize_path
+from .parser import parse_coordinates, parse_flag, tokenize_path
 
 
 @dataclass
@@ -143,15 +143,13 @@ class SVGPath:
                 )
 
             elif cmd_type == "A":  # New: Arc
-                # A/a requires 7 args (rx, ry, x_rot, large_arc, sweep, x, y)
-                coords, tokens = parse_coordinates(tokens, 7)
-                rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x, y = coords
-
-                # The flags must be integers (0 or 1) in the path data
-                if large_arc_flag not in (0, 1) or sweep_flag not in (0, 1):
-                    raise ValueError(
-                        "Arc flags (large_arc_flag, sweep_flag) must be 0 or 1."
-                    )
+                # A/a args: rx ry x_rot large_arc_flag sweep_flag x y. The two
+                # flags are single characters and may be glued to neighbouring
+                # numbers, so they are parsed separately from the coordinates.
+                (rx, ry, x_axis_rotation), tokens = parse_coordinates(tokens, 3)
+                large_arc_flag, tokens = parse_flag(tokens)
+                sweep_flag, tokens = parse_flag(tokens)
+                (x, y), tokens = parse_coordinates(tokens, 2)
 
                 parsed_commands.append(
                     Arc(

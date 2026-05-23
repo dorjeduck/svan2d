@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.ring import RingRenderer
 from svan2d.primitive.vertex import VertexCircle, VertexContours
 from svan2d.core.point2d import Point2D
@@ -12,6 +12,7 @@ from svan2d.core.point2d import Point2D
 from .base_vertex import VertexState
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.ring:RingSkiaRenderer")
 @renderer(RingRenderer)
 @dataclass(frozen=True)
 class RingState(VertexState):

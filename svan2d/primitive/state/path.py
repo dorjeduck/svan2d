@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.path import PathRenderer
 from svan2d.primitive.state.base_color import ColorState
 from svan2d.core.color import Color
@@ -68,6 +68,7 @@ class FillRule(StrEnum):
     EVENODD = "evenodd"
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.path:PathSkiaRenderer")
 @renderer(PathRenderer)
 @dataclass(frozen=True)
 class PathState(ColorState):

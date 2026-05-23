@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
 from svan2d.primitive.effect.gradient.base import Gradient
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.path_band import PathBandRenderer
 from svan2d.primitive.state.base_color import ColorState
 from svan2d.primitive.state.path import StrokeLinecap, StrokeLinejoin
@@ -14,6 +14,7 @@ from svan2d.primitive.state.path import StrokeLinecap, StrokeLinejoin
 Segment = tuple[Point2D, Point2D]
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.path_band:PathBandSkiaRenderer")
 @renderer(PathBandRenderer)
 @dataclass(frozen=True)
 class PathBandState(ColorState):

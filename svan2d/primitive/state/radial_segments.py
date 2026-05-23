@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections.abc import Callable
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.radial_segments import RadialSegmentsRenderer
 from svan2d.primitive.state.base_color import ColorState
 from svan2d.core.color import Color
@@ -13,6 +13,7 @@ from svan2d.core.color import Color
 from .base import State
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.radial_segments:RadialSegmentsSkiaRenderer")
 @renderer(RadialSegmentsRenderer)
 @dataclass(frozen=True)
 class RadialSegmentsState(ColorState):

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.text import TextRenderer
 from svan2d.primitive.state.base_color import ColorState
 
@@ -19,6 +19,7 @@ class TextRendering(Enum):
     GEOMETRIC_PRECISION = "geometricPrecision"
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.text:TextSkiaRenderer")
 @renderer(TextRenderer)
 @dataclass(frozen=True)
 class TextState(ColorState):

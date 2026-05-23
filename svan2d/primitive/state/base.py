@@ -124,6 +124,14 @@ class State(ABC):
         # Subclasses can override to return a specific renderer class
         return None
 
+    def get_skia_renderer_class(self) -> type | None:
+        """Get the Skia renderer class for this state (None = use the registry).
+
+        Mirrors get_renderer_class() for the optional Skia backend. Subclasses
+        may override to return a specific SkiaRenderer subclass.
+        """
+        return None
+
     def get_vertex_renderer_class(self):
         """Get the vertex renderer class for morphing transitions.
 

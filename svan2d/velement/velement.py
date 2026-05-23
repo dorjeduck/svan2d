@@ -80,6 +80,7 @@ class VElement(BaseVElement, KeystateBuilder):
 
     __slots__ = (
         "_renderer",
+        "_skia_renderer",
         "mask_element",
         "clip_elements",
         "_vertex_buffer_cache",
@@ -104,6 +105,7 @@ class VElement(BaseVElement, KeystateBuilder):
         renderer: Renderer | None = None,
         state: State | None = None,
         *,
+        skia_renderer: "object | None" = None,
         # Private params for _replace - don't use directly
         _builder: BuilderState | None = None,
         _clip_elements: list["VElement"] | None = None,
@@ -112,6 +114,8 @@ class VElement(BaseVElement, KeystateBuilder):
         _attribute_keystates: AttributeKeyStatesDict | None = None,
     ) -> None:
         self._renderer = renderer
+        # Optional element-level Skia renderer (used only by the Skia backend).
+        self._skia_renderer = skia_renderer
 
         # Clip/mask elements
         self.mask_element: VElement | None = _mask_element
@@ -182,6 +186,7 @@ class VElement(BaseVElement, KeystateBuilder):
         """
         new = VElement.__new__(VElement)
         new._renderer = renderer if renderer is not None else self._renderer
+        new._skia_renderer = self._skia_renderer
         new.mask_element = self.mask_element if mask_element is _UNSET else mask_element
         new.clip_elements = (
             clip_elements if clip_elements is not None else self.clip_elements.copy()
@@ -266,6 +271,12 @@ class VElement(BaseVElement, KeystateBuilder):
     def renderer(self, renderer: Renderer) -> "VElement":
         """Set the renderer for this element. Returns new VElement."""
         return self._replace(renderer=renderer)
+
+    def skia_renderer(self, skia_renderer: object) -> "VElement":
+        """Set the element-level Skia renderer (Skia backend only). Returns new VElement."""
+        new = self._replace()
+        new._skia_renderer = skia_renderer
+        return new
 
     def clip(self, velement: "VElement") -> "VElement":
         """Add a clip element. Can be called multiple times. Returns new VElement."""

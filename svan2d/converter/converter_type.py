@@ -15,6 +15,10 @@ class ConverterType(StrEnum):
         IMAGEMAGICK: Uses ImageMagick command-line tool.
         RESVG: Uses the Rust `resvg` library via `resvg-py` (PNG only).
         RESVG_HTTP: Uses the resvg HTTP render server (PNG only).
+        SKIA: Renders via the Skia canvas backend, bypassing SVG (PNG only).
+            Stops with a detailed error for scenes using unsupported features;
+            there is no automatic fallback (choosing another converter is the
+            caller's decision).
     """
 
     PLAYWRIGHT_HTTP = "playwright_http"
@@ -24,3 +28,4 @@ class ConverterType(StrEnum):
     IMAGEMAGICK = "imagemagick"
     RESVG = "resvg"
     RESVG_HTTP = "resvg_http"
+    SKIA = "skia"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.triangle import TriangleRenderer
 from svan2d.primitive.vertex import VertexContours
 from svan2d.core.point2d import Point2D
@@ -12,6 +12,7 @@ from svan2d.core.point2d import Point2D
 from .base_vertex import VertexState
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.triangle:TriangleSkiaRenderer")
 @renderer(TriangleRenderer)
 @dataclass(frozen=True)
 class TriangleState(VertexState):
@@ -27,18 +28,17 @@ class TriangleState(VertexState):
     def _generate_contours(self) -> VertexContours:
         """Generate triangle vertices distributed along perimeter
 
-        Triangle points right with first vertex at:
-        - Right: 0° (East)
-        - Upper-left: 120°
-        - Lower-left: 240°
+        Apex points up, matching TriangleRenderer. The three corners are:
+        - Apex (top):    90°
+        - Lower-left:   210°
+        - Lower-right:  330°
 
-        Generates num_points vertices that form a complete closed loop.
-        The last vertex equals the first vertex to properly close the shape.
+        The last vertex equals the first to close the loop.
         """
-        # Calculate triangle vertices (pointing up, Svan2D coordinate system)
+        # Corners apex-up so contours match what TriangleRenderer draws.
         triangle_verts = []
         for i in range(3):
-            angle = math.radians(i * 120)
+            angle = math.radians(90 + i * 120)
             triangle_verts.append(
                 Point2D(self.size * math.cos(angle), -self.size * math.sin(angle))
             )

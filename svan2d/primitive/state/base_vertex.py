@@ -5,10 +5,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass
 
+from svan2d.primitive.registry import skia_renderer
 from svan2d.primitive.state.base_color import ColorState
 from svan2d.primitive.vertex import VertexContours
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.base_vertex:VertexSkiaRenderer")
 @dataclass(frozen=True)
 class VertexState(ColorState):
     """Base state for vertex-based morphable shapes with multi-contour support

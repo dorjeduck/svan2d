@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.text_path import TextPathRenderer
 from svan2d.primitive.state.base_color import ColorState
 
@@ -18,6 +18,7 @@ def _load_font_cached(font_path: str):
     return load_font(font_path)
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.text_path:TextPathSkiaRenderer")
 @renderer(TextPathRenderer)
 @dataclass(frozen=True)
 class TextPathState(ColorState):

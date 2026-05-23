@@ -3,7 +3,7 @@ import re
 # Regex to match a command letter or a number (including signs, decimals, and exponents)
 # This handles the complex, comma-less, space-optional SVG syntax like M100-20L10,30
 COMMAND_OR_COORD_RE = re.compile(
-    r"([MLHVZCQSTAmlhvzcqst])|((?:[-+]?)(?:[0-9]*\.)?[0-9]+(?:[eE][-+]?[0-9]+)?)"
+    r"([MLHVZCQSTAmlhvzcqsta])|((?:[-+]?)(?:[0-9]*\.)?[0-9]+(?:[eE][-+]?[0-9]+)?)"
 )
 
 
@@ -69,3 +69,28 @@ def parse_coordinates(
             )
 
     return coords, remaining_tokens
+
+
+def parse_flag(tokens: list[str]) -> tuple[int, list[str]]:
+    """Read one SVG arc flag (a single '0' or '1') from the token stream.
+
+    In arc commands the large-arc and sweep flags are each exactly one digit and
+    may be glued to the following number (e.g. ``0150`` means flag 0, flag 1,
+    then ``50``). This peels one flag character, pushing any remainder back as
+    the next token.
+
+    Returns:
+        (flag, remaining_tokens)
+    """
+    if not tokens:
+        raise ValueError("Unexpected end of path data: expected an arc flag (0 or 1)")
+
+    token = tokens[0]
+    if not token or token[0] not in "01":
+        raise ValueError(f"Arc flag must be 0 or 1, got '{token}'")
+
+    flag = int(token[0])
+    remainder = token[1:]
+    if remainder:
+        return flag, [remainder, *tokens[1:]]
+    return flag, tokens[1:]

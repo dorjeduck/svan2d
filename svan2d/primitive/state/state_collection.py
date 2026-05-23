@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.state.base import State
 
 
@@ -15,6 +15,9 @@ def _get_renderer():
     return StateCollectionRenderer
 
 
+@skia_renderer(
+    "svan2d.primitive.renderer.skia.state_collection:StateCollectionSkiaRenderer"
+)
 @renderer(_get_renderer)
 @dataclass(frozen=True)
 class StateCollectionState(State):

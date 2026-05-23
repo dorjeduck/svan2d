@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.ellipse import EllipseRenderer
 from svan2d.primitive.state.base_vertex import VertexState
 from svan2d.primitive.vertex import VertexContours, VertexEllipse
 from svan2d.core.point2d import Point2D
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.ellipse:EllipseSkiaRenderer")
 @renderer(EllipseRenderer)
 @dataclass(frozen=True)
 class EllipseState(VertexState):

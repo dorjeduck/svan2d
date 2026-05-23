@@ -2,7 +2,9 @@
 
 import pytest
 
-from svan2d.path.parser import parse_coordinates, tokenize_path
+from svan2d.path.commands import Arc
+from svan2d.path.parser import parse_coordinates, parse_flag, tokenize_path
+from svan2d.path.svg_path import SVGPath
 
 
 @pytest.mark.unit
@@ -139,3 +141,42 @@ class TestParseCoordinates:
         parse_coordinates(original, 2)
         # Original should not be modified (we use a copy)
         assert original == ["10", "20", "30"]
+
+
+@pytest.mark.unit
+class TestArcParsing:
+    """Arc commands: lowercase 'a' and packed flags (regression for parser bug)."""
+
+    def test_lowercase_arc_is_tokenized(self):
+        # Bug: 'a' was missing from the tokenizer regex, so relative arcs were dropped.
+        assert tokenize_path("a40,40 0 1,0 80,0")[0] == "a"
+
+    def test_lowercase_arc_parses_as_arc(self):
+        cmds = SVGPath.from_string("M0,0 a40,40 0 1,0 80,0").commands
+        assert [type(c).__name__ for c in cmds] == ["MoveTo", "Arc"]
+
+    def test_uppercase_arc_parses_as_arc(self):
+        cmds = SVGPath.from_string("M0,0 A40,40 0 1 0 80,0").commands
+        assert isinstance(cmds[1], Arc)
+
+    def test_arc_flag_values(self):
+        arc = SVGPath.from_string("M0,0 a25,25 -30 1,0 50,-25").commands[1]
+        assert arc.rx == 25 and arc.ry == 25 and arc.x_axis_rotation == -30
+        assert arc.large_arc_flag == 1 and arc.sweep_flag == 0
+        assert (arc.pos.x, arc.pos.y) == (50, -25)
+
+    def test_packed_flags_glued_to_coordinate(self):
+        # SVG allows the two flags + next number to run together: 0150 -> 0,1,50.
+        arc = SVGPath.from_string("M0,0 a25,25 -30 0150,-25").commands[1]
+        assert arc.large_arc_flag == 0 and arc.sweep_flag == 1
+        assert (arc.pos.x, arc.pos.y) == (50, -25)
+
+    def test_parse_flag_peels_single_char(self):
+        flag, rest = parse_flag(["0150", "-25"])
+        assert flag == 0 and rest == ["150", "-25"]
+        flag, rest = parse_flag(["1", "50"])
+        assert flag == 1 and rest == ["50"]
+
+    def test_parse_flag_rejects_non_flag(self):
+        with pytest.raises(ValueError):
+            parse_flag(["50"])

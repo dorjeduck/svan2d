@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.astroid import AstroidRenderer
 from svan2d.primitive.vertex import VertexAstroid, VertexContours
 from svan2d.core.point2d import Point2D
@@ -12,6 +12,7 @@ from svan2d.core.point2d import Point2D
 from .base_vertex import VertexState
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.astroid:AstroidSkiaRenderer")
 @renderer(AstroidRenderer)
 @dataclass(frozen=True)
 class AstroidState(VertexState):

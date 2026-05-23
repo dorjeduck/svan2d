@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.square import SquareRenderer
 from svan2d.primitive.vertex import VertexContours, VertexRectangle
 from svan2d.core.point2d import Point2D
@@ -12,6 +12,7 @@ from svan2d.core.point2d import Point2D
 from .base_vertex import VertexState
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.square:SquareSkiaRenderer")
 @renderer(SquareRenderer)
 @dataclass(frozen=True)
 class SquareState(VertexState):

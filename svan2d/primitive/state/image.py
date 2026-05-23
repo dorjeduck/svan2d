@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.image import ImageRenderer, ImageFitMode
 from svan2d.core.color import Color
 
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from PIL import Image as PILImage
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.image:ImageSkiaRenderer")
 @renderer(ImageRenderer)
 @dataclass(frozen=True)
 class ImageState(State):

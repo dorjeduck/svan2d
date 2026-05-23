@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from svan2d.primitive.registry import renderer
+from svan2d.primitive.registry import renderer, skia_renderer
 from svan2d.primitive.renderer.star import StarRenderer
 from svan2d.primitive.state.base_vertex import VertexState
 from svan2d.primitive.vertex import VertexContours, VertexStar
 from svan2d.core.point2d import Point2D
 
 
+@skia_renderer("svan2d.primitive.renderer.skia.star:StarSkiaRenderer")
 @renderer(StarRenderer)
 @dataclass(frozen=True)
 class StarState(VertexState):

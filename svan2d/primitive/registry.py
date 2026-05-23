@@ -20,6 +20,7 @@ Usage:
                 return FancyCircleRenderer
 """
 
+import importlib
 from typing import Any, Type
 
 # Maps state classes → renderer classes
@@ -119,3 +120,101 @@ def get_all_registered_state_renderer_pairs():
 def clear_renderer_cache():
     """Clear all cached renderer instances (useful for testing)."""
     _renderer_cache.clear()
+
+
+# ---------------------------------------------------------------------------
+# Skia backend registry (parallel to the drawsvg registry above)
+#
+# Lives here, alongside @renderer, because it must be importable WITHOUT pulling
+# in the optional `skia` package: a state declares its Skia renderer with a
+# dotted "module:Class" path that is imported only when the Skia backend
+# resolves it. Importing this module never imports skia.
+# ---------------------------------------------------------------------------
+
+# Maps state class → dotted "module:Class" path, or the resolved renderer class
+# once first looked up.
+_skia_registry: dict[Type, "str | Type"] = {}
+
+# Singleton cache for stateless skia renderer instances
+_skia_cache: dict[Type, Any] = {}
+
+# Sentinel a state's get_skia_renderer_class() may return to declare itself
+# explicitly unsupported by the Skia backend, short-circuiting the MRO walk that
+# would otherwise inherit a base class's renderer. check_scene then reports it
+# and the scene falls back to the SVG route.
+SKIA_UNSUPPORTED: Any = object()
+
+
+def skia_renderer(path: str):
+    """Decorator placed ON A STATE CLASS to assign its default Skia renderer.
+
+    ``path`` is a dotted "module:Class" import string, resolved lazily on first
+    use so importing the state never imports the optional ``skia`` package.
+
+    Example:
+        @skia_renderer("svan2d.primitive.renderer.skia.circle:CircleSkiaRenderer")
+        @renderer(CircleRenderer)
+        @dataclass(frozen=True)
+        class CircleState(VertexState):
+            ...
+    """
+
+    def decorator(state_class: Type) -> Type:
+        if state_class in _skia_registry:
+            raise RuntimeError(
+                f"State '{state_class.__name__}' already has a Skia renderer "
+                f"({_skia_registry[state_class]!r})."
+            )
+        _skia_registry[state_class] = path
+        return state_class
+
+    return decorator
+
+
+def _resolve_skia(entry: "str | Type") -> Type:
+    """Import a dotted "module:Class" path to a class; pass classes through."""
+    if isinstance(entry, str):
+        module_path, _, attr = entry.partition(":")
+        return getattr(importlib.import_module(module_path), attr)
+    return entry
+
+
+def get_skia_renderer_class_for_state(state: Any) -> Type | None:
+    """Resolve the Skia renderer class for a state, or None if unregistered.
+
+    Walks the state's MRO so subclasses inherit a base class's renderer. State
+    subclasses may override ``get_skia_renderer_class()`` to bypass the registry.
+    """
+    override = state.get_skia_renderer_class()
+    if override is SKIA_UNSUPPORTED:
+        return None
+    if override is not None:
+        return override
+    for klass in type(state).__mro__:
+        entry = _skia_registry.get(klass)
+        if entry is not None:
+            renderer_class = _resolve_skia(entry)
+            _skia_registry[klass] = renderer_class  # cache resolved class
+            return renderer_class
+    return None
+
+
+def get_skia_renderer_for_state(state: Any) -> Any:
+    """Return a cached Skia renderer instance for the state, or None.
+
+    A state mid-morph carries _aligned_contours; the SVG path renders such
+    states via VertexRenderer, so the Skia path uses VertexSkiaRenderer to match.
+    """
+    if getattr(state, "_aligned_contours", None) is not None:
+        from svan2d.primitive.renderer.skia.base_vertex import VertexSkiaRenderer
+
+        renderer_class = VertexSkiaRenderer
+    else:
+        renderer_class = get_skia_renderer_class_for_state(state)
+    if renderer_class is None:
+        return None
+    inst = _skia_cache.get(renderer_class)
+    if inst is None:
+        inst = renderer_class()
+        _skia_cache[renderer_class] = inst
+    return inst

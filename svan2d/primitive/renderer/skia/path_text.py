@@ -61,7 +61,9 @@ class PathTextSkiaRenderer(SkiaRenderer):
     def _draw_text(self, canvas, text, offset, pm, length, font, paint, state) -> None:
         spacing = state.letter_spacing or 0
         advances = [font.measureText(c) for c in text]
-        total = sum(advances) + spacing * (len(text) - 1) if text else 0.0
+        # CSS letter-spacing counts the trailing gap after the last glyph in the
+        # width used for text-anchor; include it so anchored text matches the browser.
+        total = sum(advances) + spacing * len(text) if text else 0.0
         baseline = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
 
         cursor = offset * length + self._anchor_offset(total, state.text_anchor)

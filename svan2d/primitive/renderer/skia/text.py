@@ -28,7 +28,10 @@ class TextSkiaRenderer(SkiaRenderer):
     def _draw_line(self, canvas, text, y, font, paint, state: TextState) -> None:
         spacing = state.letter_spacing or 0
         if spacing:
-            total = sum(font.measureText(c) + spacing for c in text) - spacing
+            # CSS letter-spacing adds spacing after every glyph, including the
+            # last; the browser counts that trailing gap in the text width used
+            # for text-anchor. Mirror that so anchored text aligns identically.
+            total = sum(font.measureText(c) + spacing for c in text)
             x = self._anchor_offset(total, state.text_anchor)
             for c in text:
                 canvas.drawString(c, x, y, font, paint)

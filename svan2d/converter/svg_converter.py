@@ -28,12 +28,15 @@ class SVGConverter(ABC):
         png_thumb_height_px: int | None = None,
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
+        webp_quality: int | None = None,
     ) -> dict:
         if formats is None:
             if output_file.lower().endswith(".png"):
                 formats = ["png"]
             elif output_file.lower().endswith(".pdf"):
                 formats = ["pdf"]
+            elif output_file.lower().endswith(".webp"):
+                formats = ["webp"]
             else:
                 formats = ["png", "pdf"]
 
@@ -54,6 +57,7 @@ class SVGConverter(ABC):
             png_height_px=png_height_px,
             pdf_inch_width=pdf_inch_width,
             pdf_inch_height=pdf_inch_height,
+            webp_quality=webp_quality,
         )
 
         if "png" in formats and do_thumb:
@@ -93,6 +97,7 @@ class SVGConverter(ABC):
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
+        webp_quality: int | None = None,
     ) -> dict:
         if formats is None:
             formats = ["png", "pdf"]
@@ -100,6 +105,7 @@ class SVGConverter(ABC):
         success = True
         _pdf: dict | None = None
         _png: dict | None = None
+        _webp: dict | None = None
 
         ret = {}
 
@@ -141,11 +147,32 @@ class SVGConverter(ABC):
                     f"PNG exported to {_png['output']} ({self.__class__.__name__})"
                 )
 
+        if "webp" in formats:
+            width_px, height_px = self._infer_dimensions(
+                scene, png_width_px, png_height_px
+            )
+
+            _webp = self._convert_to_webp(
+                scene,
+                output["webp"],
+                frame_time,
+                width_px=width_px,
+                height_px=height_px,
+                quality=webp_quality,
+            )
+            success = success and _webp["success"]
+            if _webp["success"]:
+                ret["webp"] = _webp["output"]
+                logger.debug(
+                    f"WebP exported to {_webp['output']} ({self.__class__.__name__})"
+                )
+
         if success:
             return {
                 "success": True,
                 "png": ret.get("png"),
                 "pdf": ret.get("pdf"),
+                "webp": ret.get("webp"),
             }
         else:
             errors = ""
@@ -155,6 +182,9 @@ class SVGConverter(ABC):
             if _png is not None:
                 if not _png.get("success", False):
                     errors += f"PNG Error: {_png.get('error', 'Unknown error')}\n"
+            if _webp is not None:
+                if not _webp.get("success", False):
+                    errors += f"WebP Error: {_webp.get('error', 'Unknown error')}\n"
             logger.error(f"SVG export error {errors}")
             return {"success": False, "error": errors}
 
@@ -177,6 +207,18 @@ class SVGConverter(ABC):
         frame_time: float | None = 0.0,
         inch_width: int | None = None,
         inch_height: int | None = None,
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def _convert_to_webp(
+        self,
+        scene: VScene,
+        output_file: str,
+        frame_time: float | None = 0.0,
+        width_px: int | None = None,
+        height_px: int | None = None,
+        quality: int | None = None,
     ) -> dict:
         pass
 

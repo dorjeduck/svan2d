@@ -77,6 +77,20 @@ class ResvgHttpSvgConverter(SVGConverter):
             "error": "ResvgHttpSvgConverter does not support PDF; use Cairo or Playwright.",
         }
 
+    def _convert_to_webp(
+        self,
+        scene: VScene,
+        output_file: str,
+        frame_time: float | None = 0.0,
+        width_px: int | None = None,
+        height_px: int | None = None,
+        quality: int | None = None,
+    ) -> dict:
+        return {
+            "success": False,
+            "error": "ResvgHttpSvgConverter does not support WebP; use the Skia converter.",
+        }
+
     def render_svg_to_png(
         self,
         svg_content: str,

@@ -61,9 +61,15 @@ class PlaywrightHttpSvgConverter(SVGConverter):
         png_height_px: int | None = None,
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
+        webp_quality: int | None = None,
     ) -> dict:
         if formats is None:
             formats = ["png", "pdf"]
+        if "webp" in formats:
+            return {
+                "success": False,
+                "error": "PlaywrightHttpSvgConverter does not support WebP; use the Skia converter.",
+            }
         if frame_time is None:
             frame_time = 0.0
         ret = {"success": False}
@@ -262,6 +268,12 @@ class PlaywrightHttpSvgConverter(SVGConverter):
 
     def _convert_to_pdf(self, *args, **kwargs) -> dict:
         return {}
+
+    def _convert_to_webp(self, *args, **kwargs) -> dict:
+        return {
+            "success": False,
+            "error": "PlaywrightHttpSvgConverter does not support WebP; use the Skia converter.",
+        }
 
     def render_svg_to_png(
         self,

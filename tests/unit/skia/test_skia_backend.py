@@ -519,3 +519,62 @@ def test_converter_stops_with_detail_on_unsupported(tmp_path):
     with pytest.raises(SkiaUnsupported) as exc:
         SkiaSvgConverter()._convert_to_png(scene, str(tmp_path / "x.png"), 0.0, 100, 100)
     assert "filter" in str(exc.value)
+
+
+# --------------------------------------------------------------------------
+# WebP export
+# --------------------------------------------------------------------------
+
+
+def _webp_fourcc(path: str) -> bytes:
+    """Return the WebP container fourcc: b'VP8L' (lossless) or b'VP8 ' (lossy)."""
+    with open(path, "rb") as f:
+        header = f.read(16)
+    assert header[:4] == b"RIFF" and header[8:12] == b"WEBP", "not a WebP file"
+    return header[12:16]
+
+
+def _webp_scene() -> VScene:
+    return VScene(width=200, height=200, background=Color("#000000")).add_element(
+        VElement(state=CircleState(radius=60, fill_color=Color("#ff0000")))
+    )
+
+
+@pytest.mark.integration
+def test_skia_webp_lossless_default(tmp_path):
+    out = str(tmp_path / "out.webp")
+    res = SkiaSvgConverter()._convert_to_webp(_webp_scene(), out, 0.0, 200, 200)
+    assert res["success"], res
+    assert _webp_fourcc(out) == b"VP8L"  # quality None -> lossless
+
+
+@pytest.mark.integration
+def test_skia_webp_lossy_quality(tmp_path):
+    out = str(tmp_path / "out.webp")
+    res = SkiaSvgConverter()._convert_to_webp(
+        _webp_scene(), out, 0.0, 200, 200, quality=80
+    )
+    assert res["success"], res
+    assert _webp_fourcc(out) == b"VP8 "  # quality < 100 -> lossy
+
+
+@pytest.mark.integration
+def test_export_to_webp_via_exporter(tmp_path):
+    from svan2d.vscene import VSceneExporter
+    from svan2d.converter.converter_type import ConverterType
+
+    exporter = VSceneExporter(
+        _webp_scene(), output_dir=str(tmp_path), converter=ConverterType.SKIA
+    )
+    path = exporter.to_webp("circle.webp")
+    assert path.endswith(".webp")
+    assert _webp_fourcc(path) == b"VP8L"
+
+
+@pytest.mark.unit
+def test_non_skia_backend_reports_webp_unsupported():
+    from svan2d.converter.cairo_svg_converter import CairoSvgConverter
+
+    res = CairoSvgConverter()._convert_to_webp(_webp_scene(), "x.webp", 0.0, 100, 100)
+    assert res["success"] is False
+    assert "WebP" in res["error"]

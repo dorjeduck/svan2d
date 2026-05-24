@@ -60,6 +60,9 @@ class TestSVGConverterBase:
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
 
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
+
         converter = TestConverter()
         width, height = converter._infer_dimensions(mock_scene, None, None)
         assert width == 800
@@ -74,6 +77,9 @@ class TestSVGConverterBase:
 
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
+
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
 
         converter = TestConverter()
         width, height = converter._infer_dimensions(mock_scene, 400, None)
@@ -90,6 +96,9 @@ class TestSVGConverterBase:
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
 
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
+
         converter = TestConverter()
         width, height = converter._infer_dimensions(mock_scene, None, 300)
         assert width == 400  # 300 * (800/600)
@@ -105,6 +114,9 @@ class TestSVGConverterBase:
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
 
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
+
         converter = TestConverter()
         width, height = converter._infer_dimensions(mock_scene, 1000, 500)
         assert width == 1000
@@ -119,6 +131,9 @@ class TestSVGConverterBase:
 
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
+
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
 
         converter = TestConverter()
         svg_content = "<svg>test</svg>"
@@ -143,6 +158,9 @@ class TestSVGConverterConvert:
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
 
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
+
         converter = TestConverter()
         with patch.object(converter, '_convert') as mock_convert:
             mock_convert.return_value = {"png": "test.png"}
@@ -161,6 +179,9 @@ class TestSVGConverterConvert:
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
 
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
+
         converter = TestConverter()
         with patch.object(converter, '_convert') as mock_convert:
             mock_convert.return_value = {"pdf": "test.pdf"}
@@ -177,6 +198,9 @@ class TestSVGConverterConvert:
 
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
+
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
 
         converter = TestConverter()
         with patch.object(converter, '_convert') as mock_convert:
@@ -201,6 +225,9 @@ class TestSVGConverterGetWriteScaledContent:
 
             def _convert_to_pdf(self, *args, **kwargs):
                 return {"success": True, "output": "test.pdf"}
+
+            def _convert_to_webp(self, *args, **kwargs):
+                return {"success": True, "output": "test.webp"}
 
         converter = TestConverter()
         converter._get_write_scaled_svg_content(

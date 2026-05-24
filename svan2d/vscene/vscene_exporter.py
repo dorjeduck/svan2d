@@ -41,7 +41,7 @@ class VSceneExporter:
     DEFAULT_FRAME_PATTERN = "frame_{:04d}"
     DEFAULT_FRAMERATE = 30
     DEFAULT_CODEC = "libx264"
-    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb"}
+    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb", "webp"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
 
     @staticmethod
@@ -218,6 +218,8 @@ class VSceneExporter:
             return ["png"]
         elif ext == "pdf":
             return ["pdf"]
+        elif ext == "webp":
+            return ["webp"]
         else:
             raise ValueError(
                 f"Unsupported file extension '.{ext}'. "
@@ -310,6 +312,7 @@ class VSceneExporter:
         png_thumbnail_height_px: int | None = None,
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
+        webp_quality: int | None = None,
     ) -> ExportResult:
         """Export scene at specific time point to various formats.
 
@@ -323,6 +326,8 @@ class VSceneExporter:
             png_thumbnail_height_px: Height for PNG thumbnail
             pdf_inch_width: Width in inches for PDF export
             pdf_inch_height: Height in inches for PDF export
+            webp_quality: WebP quality 0-100 (None = lossless). WebP is only
+                supported by the Skia converter.
 
         Returns:
             ExportResult with paths to exported files
@@ -376,6 +381,7 @@ class VSceneExporter:
                 png_thumb_height_px=png_thumbnail_height_px,
                 pdf_inch_width=pdf_inch_width,
                 pdf_inch_height=pdf_inch_height,
+                webp_quality=webp_quality,
             )
 
             if conv_results:
@@ -455,6 +461,45 @@ class VSceneExporter:
         pdf_path = result.files.get("pdf")
         assert pdf_path is not None
         return pdf_path
+
+    def to_webp(
+        self,
+        filename: str,
+        frame_time: float = 0.0,
+        png_width_px: int | None = None,
+        png_height_px: int | None = None,
+        webp_quality: int | None = None,
+    ) -> str:
+        """Export scene to WebP at specific time point.
+
+        Convenience method for WebP-only export. Only the Skia converter
+        supports WebP.
+
+        Args:
+            filename: Output filename
+            frame_time: Time point to render (0.0 to 1.0)
+            png_width_px: Width in pixels
+            png_height_px: Height in pixels
+            webp_quality: WebP quality 0-100 (None = lossless)
+
+        Returns:
+            Path to exported WebP file
+        """
+        result = self.export(
+            filename,
+            frame_time=frame_time,
+            formats=["webp"],
+            png_width_px=png_width_px,
+            png_height_px=png_height_px,
+            webp_quality=webp_quality,
+        )
+
+        if not result.success:
+            raise RuntimeError(f"WebP export failed: {result.error}")
+
+        webp_path = result.files.get("webp")
+        assert webp_path is not None
+        return webp_path
 
     # ========================================================================
     # ANIMATION EXPORTS

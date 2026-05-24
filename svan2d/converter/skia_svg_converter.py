@@ -1,10 +1,13 @@
-"""PNG converter that renders via the Skia canvas backend (bypassing SVG).
+"""Raster converter that renders via the Skia canvas backend (bypassing SVG).
 
-Opt-in (ConverterType.SKIA), PNG-only. The Skia backend renders a scene only if
-it can render it completely. Before drawing, the scene is validated once; if any
-primitive or feature is unsupported, conversion stops with a detailed error
-listing exactly what Skia cannot render. There is no fallback here — choosing a
-different converter is the caller's decision.
+Opt-in (ConverterType.SKIA). Outputs PNG or WebP (no PDF). The Skia backend
+renders a scene only if it can render it completely. Before drawing, the scene
+is validated once; if any primitive or feature is unsupported, conversion stops
+with a detailed error listing exactly what Skia cannot render. There is no
+fallback here — choosing a different converter is the caller's decision.
+
+WebP quality: None encodes lossless (Skia maps quality 100 to lossless VP8L);
+an int 0–100 encodes lossy at that quality.
 """
 
 from __future__ import annotations
@@ -57,6 +60,24 @@ class SkiaSvgConverter(SVGConverter):
         image = render_scene_to_image(scene, frame_time or 0.0, width_px, height_px)
         with open(output_file, "wb") as f:
             f.write(bytes(image.encodeToData(skia.kPNG, 100)))
+        return {"success": True, "output": output_file}
+
+    def _convert_to_webp(
+        self,
+        scene: "VScene",
+        output_file: str,
+        frame_time: float | None = 0.0,
+        width_px: int | None = None,
+        height_px: int | None = None,
+        quality: int | None = None,
+    ) -> dict:
+        assert width_px is not None and height_px is not None
+        self._ensure_supported(scene)
+        image = render_scene_to_image(scene, frame_time or 0.0, width_px, height_px)
+        # Skia maps WebP quality 100 to lossless (VP8L); None means lossless.
+        webp_quality = 100 if quality is None else quality
+        with open(output_file, "wb") as f:
+            f.write(bytes(image.encodeToData(skia.kWEBP, webp_quality)))
         return {"success": True, "output": output_file}
 
     def _convert_to_pdf(

@@ -37,16 +37,12 @@ class RenderRequest(BaseModel):
 class BrowserPool:
     """Manages a persistent browser with a pool of reusable pages."""
 
-    def __init__(self, max_pages: int = 4, max_page_renders: int = 100):
+    def __init__(self, max_pages: int = 4):
         self.max_pages = max_pages
-        # Recycle a page after this many renders to bound Chromium memory
-        # growth. 0 disables recycling.
-        self.max_page_renders = max_page_renders
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._page_pool: asyncio.Queue[Page] = asyncio.Queue()
         self._pages_created = 0
-        self._render_counts: dict[Page, int] = {}
         self._lock = asyncio.Lock()
 
     async def start(self):
@@ -80,7 +76,6 @@ class BrowserPool:
                 except asyncio.QueueEmpty:
                     break
             self._pages_created = 0
-            self._render_counts.clear()
             if self._playwright is None:
                 self._playwright = await async_playwright().start()
             self._browser = await self._playwright.chromium.launch(
@@ -112,7 +107,6 @@ class BrowserPool:
 
                 if candidate is not None:
                     if candidate.is_closed():
-                        self._render_counts.pop(candidate, None)
                         async with self._lock:
                             self._pages_created -= 1
                         continue
@@ -130,7 +124,6 @@ class BrowserPool:
                 if page is None:  # pool full, wait for a returned page
                     page = await self._page_pool.get()
                     if page.is_closed():
-                        self._render_counts.pop(page, None)
                         async with self._lock:
                             self._pages_created -= 1
                         page = None
@@ -141,30 +134,15 @@ class BrowserPool:
             if page is not None:
                 try:
                     if page.is_closed():
-                        self._render_counts.pop(page, None)
                         async with self._lock:
                             self._pages_created -= 1
                     else:
-                        count = self._render_counts.get(page, 0) + 1
-                        if self.max_page_renders and count >= self.max_page_renders:
-                            # Recycle the page to bound Chromium memory growth.
-                            self._render_counts.pop(page, None)
-                            try:
-                                await page.close()
-                            except Exception:
-                                pass
-                            async with self._lock:
-                                self._pages_created -= 1
-                            logger.debug(f"Recycled page after {count} renders")
-                        else:
-                            self._render_counts[page] = count
-                            # Clear page and routes for reuse
-                            await page.unroute("**/*")
-                            await page.set_content("<html><body></body></html>")
-                            await self._page_pool.put(page)
+                        # Clear page and routes for reuse
+                        await page.unroute("**/*")
+                        await page.set_content("<html><body></body></html>")
+                        await self._page_pool.put(page)
                 except Exception as e:
                     logger.warning(f"Failed to reset page, discarding: {e}")
-                    self._render_counts.pop(page, None)
                     try:
                         await page.close()
                     except Exception:
@@ -186,8 +164,7 @@ class BrowserPool:
 
 
 _max_pages = int(os.environ.get("SVAN2D_PLAYWRIGHT_MAX_PAGES", "4"))
-_max_page_renders = int(os.environ.get("SVAN2D_PLAYWRIGHT_MAX_PAGE_RENDERS", "100"))
-browser_pool = BrowserPool(max_pages=_max_pages, max_page_renders=_max_page_renders)
+browser_pool = BrowserPool(max_pages=_max_pages)
 
 
 @asynccontextmanager

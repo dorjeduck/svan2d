@@ -142,3 +142,51 @@ def test_acquire_page_closes_page_when_reset_fails():
     bad_page.close.assert_awaited_once()
     assert pool._pages_created == 0
     assert pool._page_pool.empty()
+
+
+def test_page_recycled_after_render_threshold():
+    pool, _ = make_pool()
+    live = make_browser(connected=True)
+    page = make_page()
+    live.new_page = AsyncMock(return_value=page)  # same page reused each render
+    pool._browser = live
+    pool.max_page_renders = 3
+
+    async def render_once():
+        async with pool.acquire_page():
+            pass
+
+    for _ in range(2):
+        asyncio.run(render_once())
+
+    # Below threshold: reused, still pooled, not closed.
+    page.close.assert_not_awaited()
+    assert pool._pages_created == 1
+    assert pool._page_pool.qsize() == 1
+
+    asyncio.run(render_once())  # 3rd render hits the threshold
+
+    # Recycled: closed, counter decremented, dropped from the pool.
+    page.close.assert_awaited_once()
+    assert pool._pages_created == 0
+    assert pool._page_pool.empty()
+
+
+def test_recycle_disabled_when_threshold_zero():
+    pool, _ = make_pool()
+    live = make_browser(connected=True)
+    page = make_page()
+    live.new_page = AsyncMock(return_value=page)
+    pool._browser = live
+    pool.max_page_renders = 0  # disabled
+
+    async def render_once():
+        async with pool.acquire_page():
+            pass
+
+    for _ in range(5):
+        asyncio.run(render_once())
+
+    page.close.assert_not_awaited()
+    assert pool._pages_created == 1
+    assert pool._page_pool.qsize() == 1

@@ -10,7 +10,7 @@ from .path_points import path_points
 from .polygon import polygon, polygon_in_bbox
 from .radial_grid import radial_grid, radial_grid_between_radii
 from .scatter import scatter, scatter_in_bbox
-from .spiral import spiral, spiral_between_radii
+from .spiral import spiral, spiral_between_radii, spiral_equidistant
 from .utils import make_cosine_radius_fn
 from .wave import wave, wave_between_points
 
@@ -36,6 +36,7 @@ __all__ = [
     "circle_through_points",
     "radial_grid_between_radii",
     "spiral_between_radii",
+    "spiral_equidistant",
     "polygon_in_bbox",
     # Enums and utilities
     "ElementAlignment",

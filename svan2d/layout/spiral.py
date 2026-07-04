@@ -146,3 +146,96 @@ def spiral_between_radii(
         element_rotation_offset=element_rotation_offset,
         element_rotation_offset_fn=element_rotation_offset_fn,
     )
+
+
+def spiral_equidistant(
+    states: States,
+    center: Point2D = Point2D(0, 0),
+    start_radius: float = 50,
+    end_radius: float = 200,
+    total_angle: float = 360,
+    start_angle: float = 0,
+    alignment: ElementAlignment = ElementAlignment.PRESERVE,
+    element_rotation_offset: float = 0,
+    samples: int = 2000,
+) -> States:
+    """
+    Arrange states along an Archimedean spiral with equal spacing by arc length.
+
+    Unlike ``spiral`` (constant angle between elements), this keeps the distance
+    between consecutive elements constant: elements are placed at equal
+    arc-length intervals along a spiral whose radius varies linearly from
+    ``start_radius`` (at ``start_angle``) to ``end_radius`` (at
+    ``start_angle + total_angle``). Preserves all other state attributes while
+    modifying position and rotation.
+
+    Args:
+        states: List of states to arrange
+        center: Center point of the spiral
+        start_radius: Radius at the first element
+        end_radius: Radius at the last element
+        total_angle: Signed angular sweep in degrees (+ counter-clockwise, − clockwise)
+        start_angle: Angle in degrees of the first element
+        alignment: How to align each element relative to the spiral.
+                  PRESERVE keeps original rotation, LAYOUT aligns tangent to spiral
+                  (bottom faces center), UPRIGHT keeps elements upright.
+        element_rotation_offset: Additional rotation in degrees added to the alignment base.
+        samples: Number of segments used to approximate the spiral arc length.
+    """
+    if not states:
+        return []
+
+    n = len(states)
+
+    def point_at(t: float) -> tuple[float, float, float]:
+        """Position and Cartesian angle (degrees) at fraction t in [0, 1]."""
+        angle = start_angle + total_angle * t
+        radius = start_radius + (end_radius - start_radius) * t
+        angle_rad = math.radians(angle)
+        x = center.x + radius * math.cos(angle_rad)
+        y = center.y + radius * math.sin(angle_rad)
+        return x, y, angle
+
+    if n == 1:
+        x, y, angle = point_at(0.0)
+        positions = [(x, y, angle)]
+    else:
+        # Densely sample the spiral and build a cumulative arc-length table.
+        steps = max(samples, n)
+        pts = [point_at(k / steps) for k in range(steps + 1)]
+        cumulative = [0.0]
+        for k in range(1, steps + 1):
+            dx = pts[k][0] - pts[k - 1][0]
+            dy = pts[k][1] - pts[k - 1][1]
+            cumulative.append(cumulative[-1] + math.hypot(dx, dy))
+        total_length = cumulative[-1]
+
+        # Walk the table, emitting a position at each equal arc-length target.
+        positions = []
+        seg = 0
+        for i in range(n):
+            target = total_length * i / (n - 1)
+            # Stop at steps - 1 so seg + 1 stays in range; floating-point may put
+            # the final target a hair beyond total_length.
+            while seg < steps - 1 and cumulative[seg + 1] < target:
+                seg += 1
+            span = cumulative[seg + 1] - cumulative[seg]
+            frac = 0.0 if span == 0 else (target - cumulative[seg]) / span
+            frac = min(max(frac, 0.0), 1.0)
+            x0, y0, a0 = pts[seg]
+            x1, y1, a1 = pts[seg + 1]
+            positions.append(
+                (x0 + (x1 - x0) * frac, y0 + (y1 - y0) * frac, a0 + (a1 - a0) * frac)
+            )
+
+    result = []
+    for state, (x, y, angle) in zip(states, positions):
+        if alignment == ElementAlignment.LAYOUT:
+            element_angle = angle - 90 + element_rotation_offset
+        elif alignment == ElementAlignment.UPRIGHT:
+            element_angle = element_rotation_offset
+        else:
+            element_angle = state.rotation
+        result.append(replace(state, pos=Point2D(x, y), rotation=element_angle))
+
+    return result

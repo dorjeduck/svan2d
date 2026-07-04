@@ -55,6 +55,35 @@ class BrowserPool:
         )
         logger.info(f"Browser pool ready (max_pages={self.max_pages})")
 
+    async def _ensure_browser(self):
+        """Relaunch the browser (and reset the pool) if it has died."""
+        if self._browser is not None and self._browser.is_connected():
+            return
+        async with self._lock:
+            # Re-check under lock; another coroutine may have healed it.
+            if self._browser is not None and self._browser.is_connected():
+                return
+            logger.warning("Browser is down — relaunching pool")
+            if self._browser is not None:
+                try:
+                    await self._browser.close()
+                except Exception:
+                    pass
+            # Drain now-dead pages and reset the counter.
+            while not self._page_pool.empty():
+                try:
+                    self._page_pool.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+            self._pages_created = 0
+            if self._playwright is None:
+                self._playwright = await async_playwright().start()
+            self._browser = await self._playwright.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage"],
+            )
+            logger.info("Browser relaunched")
+
     async def stop(self):
         """Clean up browser on server shutdown."""
         logger.info("Stopping browser pool...")
@@ -67,12 +96,23 @@ class BrowserPool:
     @asynccontextmanager
     async def acquire_page(self):
         """Acquire a page from the pool, creating one if needed."""
+        await self._ensure_browser()
         page = None
         try:
-            try:
-                page = self._page_pool.get_nowait()
-            except asyncio.QueueEmpty:
-                assert self._browser is not None
+            while page is None:
+                try:
+                    candidate = self._page_pool.get_nowait()
+                except asyncio.QueueEmpty:
+                    candidate = None
+
+                if candidate is not None:
+                    if candidate.is_closed():
+                        async with self._lock:
+                            self._pages_created -= 1
+                        continue
+                    page = candidate
+                    break
+
                 async with self._lock:
                     if self._pages_created < self.max_pages:
                         page = await self._browser.new_page()
@@ -80,22 +120,39 @@ class BrowserPool:
                         logger.debug(
                             f"Created new page ({self._pages_created}/{self.max_pages})"
                         )
-                    else:
-                        page = await self._page_pool.get()
+
+                if page is None:  # pool full, wait for a returned page
+                    page = await self._page_pool.get()
+                    if page.is_closed():
+                        async with self._lock:
+                            self._pages_created -= 1
+                        page = None
 
             yield page
 
         finally:
-            if page:
+            if page is not None:
                 try:
-                    # Clear page and routes for reuse
-                    await page.unroute("**/*")
-                    await page.set_content("<html><body></body></html>")
-                    await self._page_pool.put(page)
+                    if page.is_closed():
+                        async with self._lock:
+                            self._pages_created -= 1
+                    else:
+                        # Clear page and routes for reuse
+                        await page.unroute("**/*")
+                        await page.set_content("<html><body></body></html>")
+                        await self._page_pool.put(page)
                 except Exception as e:
                     logger.warning(f"Failed to reset page, discarding: {e}")
+                    try:
+                        await page.close()
+                    except Exception:
+                        pass
                     async with self._lock:
                         self._pages_created -= 1
+
+    @property
+    def is_healthy(self) -> bool:
+        return self._browser is not None and self._browser.is_connected()
 
     @property
     def stats(self) -> dict:
@@ -233,6 +290,8 @@ async def render(request: RenderRequest) -> Response:
 
 @app.get("/health")
 async def health_check():
+    if not browser_pool.is_healthy:
+        raise HTTPException(status_code=503, detail="browser not connected")
     return {"status": "ok", "pool": browser_pool.stats}
 
 

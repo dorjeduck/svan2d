@@ -288,6 +288,11 @@ class VSceneComposite:
             group = dw.Group(transform=transform)
             for elem in child_drawing.elements:
                 group.append(elem)
+            # Carry over the child's defs (e.g. scene-level clip/mask paths):
+            # they live in a separate registry, so copying only .elements would
+            # leave clip-path/mask references dangling and unclipped.
+            for child_def in child_drawing.other_defs:
+                drawing.append_def(child_def)
             drawing.append(group)
 
         return drawing

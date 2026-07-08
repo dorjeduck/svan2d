@@ -39,11 +39,11 @@ class Renderer(ABC):
         """
 
         transforms = []
-        if state.pos != None and (state.pos.x != 0 or state.pos.y != 0):
+        if state.pos is not None and (state.pos.x != 0 or state.pos.y != 0):
             transforms.append(f"translate({state.pos.x},{-state.pos.y})")
         if state.rotation is not None and state.rotation != 0:
             transforms.append(f"rotate({-state.rotation})")
-        if state.scale != 1.0 and state.scale != None:
+        if state.scale is not None and state.scale != 1.0:
             transforms.append(f"scale({state.scale})")
         if state.skew_x:
             transforms.append(f"skewX({-state.skew_x})")

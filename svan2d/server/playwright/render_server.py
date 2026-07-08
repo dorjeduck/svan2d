@@ -11,7 +11,7 @@ import os
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Literal, Dict, Optional
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
@@ -26,12 +26,12 @@ logger = get_logger()
 class RenderRequest(BaseModel):
     """Request model for /render endpoint supporting SVG, HTML, and Assets"""
 
-    svg: Optional[str] = None
-    html: Optional[str] = None
+    svg: str | None = None
+    html: str | None = None
     type: Literal["png", "pdf", "svg_fragment"]
     width: int
     height: int
-    assets: Optional[Dict[str, str]] = None
+    assets: dict[str, str] | None = None
 
 
 class BrowserPool:

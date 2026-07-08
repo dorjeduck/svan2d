@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from svan2d.velement import VElement
     from svan2d.vscene.vscene import VScene
 
 
-PauseOverlay = Union["VElement", "VScene"]
+PauseOverlay: TypeAlias = "VElement | VScene"
 
 
 @dataclass(frozen=True)

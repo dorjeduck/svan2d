@@ -7,9 +7,10 @@ stop-with-detail behaviour on unsupported scenes.
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
-import skia
+
+np = pytest.importorskip("numpy")
+skia = pytest.importorskip("skia")
 
 from svan2d.core import Color
 from svan2d.velement import VElement
@@ -31,7 +32,7 @@ from svan2d.primitive.renderer.skia import (
 )
 
 
-def _render(scene: VScene, tmp_path, w=200, h=200, name="out.png") -> np.ndarray:
+def _render(scene: VScene, tmp_path, w=200, h=200, name="out.png"):
     out = str(tmp_path / name)
     res = SkiaSvgConverter()._convert_to_png(scene, out, 0.0, w, h)
     assert res["success"], res
@@ -247,7 +248,7 @@ def test_curve_renderers_resolve_to_dedicated():
     assert get_skia_renderer_class_for_state(AstroidState()) is AstroidSkiaRenderer
 
 
-def _resvg_render(scene, tmp_path, w, h, name) -> np.ndarray:
+def _resvg_render(scene, tmp_path, w, h, name):
     from svan2d.converter.resvg_svg_converter import ResvgSvgConverter
 
     out = str(tmp_path / name)

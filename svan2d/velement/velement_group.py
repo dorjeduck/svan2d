@@ -283,7 +283,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         if group_state is None:
             return None
 
-        return self._render_group_state(cast(VElementGroupState, group_state), t)
+        return self._render_group_state(
+            cast(VElementGroupState, group_state), t, drawing
+        )
 
     def get_frame(self, t: float) -> VElementGroupState | None:
         """Get the interpolated state at a specific time.
@@ -341,7 +343,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             return self._frozen_render
         if state is None:
             return None
-        return self._render_group_state(state, self._last_frame_time)
+        return self._render_group_state(state, self._last_frame_time, drawing)
 
     def is_animatable(self) -> bool:
         """Check if this group can be animated."""
@@ -351,11 +353,15 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         return len(self._keystates_list) > 1 or bool(self._attribute_keystates)
 
     def _render_group_state(
-        self, state: VElementGroupState, t: float
+        self, state: VElementGroupState, t: float, drawing: dw.Drawing | None = None
     ) -> dw.Group | None:
         """Build the dw.Group for a given group state at time t.
 
         Shared by render_at_frame_time (interpolator and frame_fn paths) and render_state.
+
+        *drawing* is threaded down to the children: clips, masks, filters, patterns
+        and gradients are emitted as <defs> on that specific drawing and referenced
+        by ID, so a child rendered without it silently loses them.
         """
         # Apply clip/mask if present
         if self.clip_elements or self.mask_element:
@@ -387,10 +393,11 @@ class VElementGroup(BaseVElement, KeystateBuilder):
                 group.append(child._frozen_render)
                 continue
 
-            if hasattr(child, "render_at_frame_time") and child.is_animatable():
-                child_element = child.render_at_frame_time(t)
-            else:
-                child_element = child.render()
+            # Static children render at t=0.0 — the same thing child.render()
+            # does, but render() has no way to take the drawing.
+            child_element = child.render_at_frame_time(
+                t if child.is_animatable() else 0.0, drawing
+            )
 
             if child_element is not None:
                 group.append(child_element)

@@ -18,6 +18,7 @@ class CircleState(VertexState):
     """State class for circle elements"""
 
     radius: float = 50
+    stroke_dasharray: str | None = None  # For dashed outlines, e.g., "5,5"
 
     def _generate_contours(self) -> VertexContours:
         """Generate circle contours

@@ -25,20 +25,23 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
 
     PATH_VARIANTS: dict[str, dict[str, Any]] = {}
 
-    def __init__(self, variant: str | None = None) -> None:
-        if not self.PATH_VARIANTS:
+    @classmethod
+    def variant_data(cls, state) -> dict[str, Any]:
+        """The entry of PATH_VARIANTS the state asks for; mirrors the SVG base."""
+        if not cls.PATH_VARIANTS:
             raise NotImplementedError("Subclass must define PATH_VARIANTS dictionary")
+        variant = state.variant
         if variant is None:
-            variant = next(iter(self.PATH_VARIANTS))
-        if variant not in self.PATH_VARIANTS:
-            available = list(self.PATH_VARIANTS)
+            return next(iter(cls.PATH_VARIANTS.values()))
+        if variant not in cls.PATH_VARIANTS:
+            available = list(cls.PATH_VARIANTS)
             raise ValueError(f"Unknown variant '{variant}'. Available: {available}")
-        self.variant = variant
-        self.data = self.PATH_VARIANTS[variant]
+        return cls.PATH_VARIANTS[variant]
 
     def draw_core(self, canvas, state, ctx: SkiaContext) -> None:
-        cx, cy = self.data["center"]
-        scale_factor = state.size / self.data["viewbox"]
+        variant_data = self.variant_data(state)
+        cx, cy = variant_data["center"]
+        scale_factor = state.size / variant_data["viewbox"]
 
         canvas.save()
         canvas.scale(scale_factor, scale_factor)
@@ -58,7 +61,7 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
         stroke = self._scaled(self.stroke_paint(state), state.opacity)
         if fill is None and stroke is None:
             return
-        data = self.data["path"]
+        data = self.variant_data(state)["path"]
         paths = data if isinstance(data, list) else [data]
         for path_string in paths:
             path = _svgpath_to_skia(SVGPath.from_string(path_string))
@@ -70,14 +73,15 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
     # ---- text ---------------------------------------------------------------
 
     def _draw_text(self, canvas, state, ctx: SkiaContext) -> None:
-        text = self.data["text"]
+        variant_data = self.variant_data(state)
+        text = variant_data["text"]
         if not text:
             return
         color = state.text_color if state.text_color and not state.text_color.is_none() else state.fill_color
         if color is None or color.is_none():
             return
 
-        text_x, text_y = self.data["text_position"]
+        text_x, text_y = variant_data["text_position"]
         font = skia.Font(
             ctx.typeface(state.font_family, state.font_weight), float(state.font_size)
         )

@@ -15,6 +15,8 @@ class PathAndTextVariantsState(ColorState):
     """Base state class for multi-path renderers with text labels"""
 
     size: float = 500
+    # Which of the renderer's PATH_VARIANTS to draw; None takes the first one.
+    variant: str | None = None
 
     # Text attributes
     font_size: float = 35

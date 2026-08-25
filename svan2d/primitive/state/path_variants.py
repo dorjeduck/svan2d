@@ -16,6 +16,8 @@ class PathVariantsState(ColorState):
 
     size: float = 50
     case_sensitive: bool = False
+    # Which of the renderer's PATH_VARIANTS to draw; None takes the first one.
+    variant: str | None = None
 
     def __post_init__(self):
         super().__post_init__()

@@ -29,25 +29,24 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
     # Subclasses must define this
     PATH_VARIANTS: dict[str, dict[str, Any]] = {}
 
-    def __init__(self, variant: str | None = None) -> None:
-        """Initialize multi-path text renderer
+    @classmethod
+    def variant_data(cls, state: "PathAndTextVariantsState") -> dict[str, Any]:
+        """The entry of PATH_VARIANTS the state asks for.
 
-        Args:
-            variant: Path variant name. If None, uses first available variant
+        The variant lives on the state, not the renderer, so one renderer
+        instance serves every variant and the registry can resolve it from the
+        state like any other.
         """
-        if not self.PATH_VARIANTS:
+        if not cls.PATH_VARIANTS:
             raise NotImplementedError("Subclass must define PATH_VARIANTS dictionary")
 
-        # Use first variant as default if none specified
+        variant = state.variant
         if variant is None:
-            variant = list(self.PATH_VARIANTS.keys())[0]
-
-        if variant not in self.PATH_VARIANTS:
-            available = list(self.PATH_VARIANTS.keys())
+            return next(iter(cls.PATH_VARIANTS.values()))
+        if variant not in cls.PATH_VARIANTS:
+            available = list(cls.PATH_VARIANTS)
             raise ValueError(f"Unknown variant '{variant}'. Available: {available}")
-
-        self.variant = variant
-        self.data = self.PATH_VARIANTS[variant]
+        return cls.PATH_VARIANTS[variant]
 
     def _render_core(
         self, state: "PathAndTextVariantsState", drawing: dw.Drawing | None = None
@@ -68,11 +67,12 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
         )
 
         # Get the path variant data - can be single path or list of paths
-        data = self.data["path"]
-        text_content = self.data["text"]
-        text_x, text_y = self.data["text_position"]
-        viewbox_size = self.data["viewbox"]
-        cx, cy = self.data["center"]
+        variant_data = self.variant_data(state)
+        data = variant_data["path"]
+        text_content = variant_data["text"]
+        text_x, text_y = variant_data["text_position"]
+        viewbox_size = variant_data["viewbox"]
+        cx, cy = variant_data["center"]
 
         # Create main group to hold everything
 
@@ -135,23 +135,3 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
     def get_available_variants(cls) -> list[str]:
         """Get list of available variants for this renderer"""
         return list(cls.PATH_VARIANTS.keys())
-
-    def get_current_variant(self) -> str:
-        """Get the currently selected variant"""
-        return self.variant
-
-    def set_variant(self, variant: str) -> None:
-        """Set the current variant
-
-        Args:
-            variant: Path variant name to set
-
-        Raises:
-            ValueError: If variant is not available
-        """
-        if variant not in self.PATH_VARIANTS:
-            available = list(self.PATH_VARIANTS.keys())
-            raise ValueError(f"Unknown variant '{variant}'. Available: {available}")
-
-        self.variant = variant
-        self.data = self.PATH_VARIANTS[variant]

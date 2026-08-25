@@ -423,10 +423,10 @@ class _DemoSkiaRenderer(PathVariantsSkiaRenderer):
 
 
 def _demo_element():
-    state = _DemoState(size=50, fill_color=Color("#ffffff"))
+    state = _DemoState(size=50, fill_color=Color("#ffffff"), variant="square")
     return (
-        VElement(state=state, renderer=_DemoRenderer(variant="square"))
-        .skia_renderer(_DemoSkiaRenderer(variant="square"))
+        VElement(state=state, renderer=_DemoRenderer())
+        .skia_renderer(_DemoSkiaRenderer())
     )
 
 
@@ -485,10 +485,12 @@ class _LabelSkiaRenderer(PathAndTextVariantsSkiaRenderer):
 
 
 def _label_element():
-    state = _LabelState(size=400, fill_color=Color("#ffffff"), text_color=Color("#ffffff"))
+    state = _LabelState(
+        size=400, fill_color=Color("#ffffff"), text_color=Color("#ffffff"), variant="box"
+    )
     return (
-        VElement(state=state, renderer=_LabelRenderer(variant="box"))
-        .skia_renderer(_LabelSkiaRenderer(variant="box"))
+        VElement(state=state, renderer=_LabelRenderer())
+        .skia_renderer(_LabelSkiaRenderer())
     )
 
 

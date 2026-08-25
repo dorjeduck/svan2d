@@ -346,6 +346,51 @@ class VScene:
         )
         return self._replace(pauses=self._pauses + [descriptor])
 
+    def add_pauses(
+        self,
+        timeline_length: float,
+        pauses: Sequence[tuple[float, float]],
+    ) -> "VScene":
+        """Add a batch of pauses expressed in the caller's own units.
+
+        `add_pause` speaks in normalized terms, which forces every caller to
+        derive the same conversion: a pause's share of the *final* timeline
+        depends on the length of every other pause, since they all lengthen it.
+        This method takes the timeline in whatever unit the caller thinks in —
+        days, seconds, beats — and does that conversion once for the batch.
+
+        With a timeline of length `L` and pause lengths summing to `W`, the
+        rendered timeline is `L + W` long, so a pause of length `w` at position
+        `p` becomes `at = p / L` and `fraction = w / (L + W)`.
+
+        Args:
+            timeline_length: Length of the unpaused timeline. Must be > 0.
+            pauses: `(position, length)` pairs in the same unit. Each position
+                must lie in [0, timeline_length] and each length be > 0.
+
+        Returns:
+            New VScene with every pause added.
+        """
+        if timeline_length <= 0:
+            raise ValueError(f"timeline_length must be > 0, got {timeline_length}")
+        for position, length in pauses:
+            if not 0 <= position <= timeline_length:
+                raise ValueError(
+                    f"pause position must lie in [0, {timeline_length}], got {position}"
+                )
+            if length <= 0:
+                raise ValueError(f"pause length must be > 0, got {length}")
+
+        rendered_length = timeline_length + sum(length for _, length in pauses)
+
+        scene = self
+        for position, length in pauses:
+            scene = scene.add_pause(
+                at=position / timeline_length,
+                fraction=length / rendered_length,
+            )
+        return scene
+
     def set_motion_speeds(self, motion_speeds: list[float] | None) -> "VScene":
         """Assign relative speeds to motion segments between pauses. Returns new VScene.
 

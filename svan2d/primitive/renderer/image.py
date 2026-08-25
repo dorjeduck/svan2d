@@ -40,26 +40,25 @@ if TYPE_CHECKING:
 class ImageRenderer(Renderer):
     """Renderer class for rendering image elements"""
 
-    def _apply_random_transforms(self, img: Image.Image) -> Image.Image:
-        """Apply random rotation and flips to image for diversity
+    def _apply_random_transforms(
+        self,
+        img: Image.Image,
+        rotation: "Image.Transpose | None",
+    ) -> Image.Image:
+        """Apply the given rotation and random flips to an image for diversity
+
+        The rotation is chosen by the caller, not here: a quarter turn swaps
+        the image's axes, so the crop window has to be cut to match it.
 
         Args:
             img: PIL Image to transform
+            rotation: Rotation to apply, or None to leave the image upright
 
         Returns:
             Transformed PIL Image
         """
-        # Random 90-degree rotation (0, 90, 180, or 270 degrees)
-        rotation_choice = random.choice(
-            [
-                None,
-                Image.Transpose.ROTATE_90,
-                Image.Transpose.ROTATE_180,
-                Image.Transpose.ROTATE_270,
-            ]
-        )
-        if rotation_choice is not None:
-            img = img.transpose(rotation_choice)
+        if rotation is not None:
+            img = img.transpose(rotation)
 
         # Random horizontal flip (50% chance)
         if random.random() > 0.5:
@@ -85,8 +84,29 @@ class ImageRenderer(Renderer):
         """
         img_width, img_height = img.size
 
-        crop_width = min(int(target_width), img_width)
-        crop_height = min(int(target_height), img_height)
+        # A quarter turn swaps the axes, so cut a window that lands on the
+        # target size once it has been turned — otherwise the renderer draws a
+        # portrait crop into a landscape box and the picture is stretched.
+        rotation = random.choice(
+            [
+                None,
+                Image.Transpose.ROTATE_90,
+                Image.Transpose.ROTATE_180,
+                Image.Transpose.ROTATE_270,
+            ]
+        )
+        quarter_turn = rotation in (
+            Image.Transpose.ROTATE_90,
+            Image.Transpose.ROTATE_270,
+        )
+        window_width, window_height = (
+            (int(target_height), int(target_width))
+            if quarter_turn
+            else (int(target_width), int(target_height))
+        )
+
+        crop_width = min(window_width, img_width)
+        crop_height = min(window_height, img_height)
 
         if crop_width < img_width or crop_height < img_height:
             left = random.randint(0, img_width - crop_width)
@@ -94,10 +114,10 @@ class ImageRenderer(Renderer):
             img = img.crop((left, top, left + crop_width, top + crop_height))
         else:
             logging.warning(
-                f"Image {source_label} ({img_width}x{img_height}) is smaller than target crop size ({target_width}x{target_height}). Using full image."
+                f"Image {source_label} ({img_width}x{img_height}) is smaller than target crop size ({window_width}x{window_height}). Using full image."
             )
 
-        img = self._apply_random_transforms(img)
+        img = self._apply_random_transforms(img, rotation)
 
         buffer = io.BytesIO()
         img_format = img.format if img.format else "PNG"

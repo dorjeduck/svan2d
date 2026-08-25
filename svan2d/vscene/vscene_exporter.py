@@ -8,6 +8,7 @@ import tempfile
 import time
 import uuid
 from dataclasses import dataclass
+from importlib import import_module
 from datetime import datetime
 from pathlib import Path
 from collections.abc import Generator
@@ -83,35 +84,34 @@ class VSceneExporter:
     # INITIALIZATION & VALIDATION
     # ========================================================================
 
+    # Where each converter lives, so only the chosen one is ever imported: they
+    # each pull in their own optional dependency, and a missing cairosvg must
+    # not stop a render that asked for playwright.
+    CONVERTER_MODULES = {
+        ConverterType.CAIROSVG: ("cairo_svg_converter", "CairoSvgConverter"),
+        ConverterType.INKSCAPE: ("inkscape_svg_converter", "InkscapeSvgConverter"),
+        ConverterType.PLAYWRIGHT: ("playwright_svg_converter", "PlaywrightSvgConverter"),
+        ConverterType.PLAYWRIGHT_HTTP: (
+            "playwright_http_svg_converter",
+            "PlaywrightHttpSvgConverter",
+        ),
+        ConverterType.RESVG: ("resvg_svg_converter", "ResvgSvgConverter"),
+        ConverterType.RESVG_HTTP: ("resvg_http_svg_converter", "ResvgHttpSvgConverter"),
+        ConverterType.SKIA: ("skia_svg_converter", "SkiaSvgConverter"),
+    }
+
     def _init_converter(self, converter: ConverterType):
         """Initialize converter instance based on type"""
-        # Lazy imports to avoid importing optional dependencies at module load time
-        from svan2d.converter.cairo_svg_converter import CairoSvgConverter
-        from svan2d.converter.inkscape_svg_converter import InkscapeSvgConverter
-        from svan2d.converter.playwright_http_svg_converter import (
-            PlaywrightHttpSvgConverter,
-        )
-        from svan2d.converter.playwright_svg_converter import PlaywrightSvgConverter
-        from svan2d.converter.resvg_svg_converter import ResvgSvgConverter
-        from svan2d.converter.resvg_http_svg_converter import ResvgHttpSvgConverter
-        from svan2d.converter.skia_svg_converter import SkiaSvgConverter
+        entry = self.CONVERTER_MODULES.get(converter)
+        if entry is None:
+            logger.warning(
+                f"Unrecognized converter '{converter}', defaulting to CairoSVG"
+            )
+            entry = self.CONVERTER_MODULES[ConverterType.CAIROSVG]
 
-        converter_map = {
-            ConverterType.CAIROSVG: CairoSvgConverter,
-            ConverterType.INKSCAPE: InkscapeSvgConverter,
-            ConverterType.PLAYWRIGHT: PlaywrightSvgConverter,
-            ConverterType.PLAYWRIGHT_HTTP: PlaywrightHttpSvgConverter,
-            ConverterType.RESVG: ResvgSvgConverter,
-            ConverterType.RESVG_HTTP: ResvgHttpSvgConverter,
-            ConverterType.SKIA: SkiaSvgConverter,
-        }
-
-        converter_class = converter_map.get(converter)
-        if converter_class:
-            return converter_class()
-
-        logger.warning(f"Unrecognized converter '{converter}', defaulting to CairoSVG")
-        return CairoSvgConverter()
+        module_name, class_name = entry
+        module = import_module(f"svan2d.converter.{module_name}")
+        return getattr(module, class_name)()
 
     def _validate_formats(self, formats: list[str]) -> None:
         """Validate that requested formats are supported"""

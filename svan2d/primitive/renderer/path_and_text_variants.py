@@ -69,7 +69,9 @@ class PathAndTextVariantsRenderer(Renderer, ABC):
         # Get the path variant data - can be single path or list of paths
         variant_data = self.variant_data(state)
         data = variant_data["path"]
-        text_content = variant_data["text"]
+        text_content = (
+            state.text if state.text is not None else variant_data["text"]
+        )
         text_x, text_y = variant_data["text_position"]
         viewbox_size = variant_data["viewbox"]
         cx, cy = variant_data["center"]

@@ -19,6 +19,8 @@ class PathAndTextVariantsState(ColorState):
     variant: str | None = None
 
     # Text attributes
+    # The label to draw; None takes the variant's own text.
+    text: str | None = None
     font_size: float = 35
     letter_spacing: float = 0
     font_family: str = "Comfortaa"

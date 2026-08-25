@@ -74,7 +74,7 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
 
     def _draw_text(self, canvas, state, ctx: SkiaContext) -> None:
         variant_data = self.variant_data(state)
-        text = variant_data["text"]
+        text = state.text if state.text is not None else variant_data["text"]
         if not text:
             return
         color = state.text_color if state.text_color and not state.text_color.is_none() else state.fill_color

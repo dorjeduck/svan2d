@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Literal,
     Sequence,
     TypeAlias,
 )
@@ -440,6 +441,46 @@ class VScene:
     # ========================================================================
     # Camera Animation
     # ========================================================================
+
+    def camera_framing(
+        self,
+        region: tuple[float, float, float, float],
+        fit: Literal["contain", "cover"] = "contain",
+    ) -> CameraState:
+        """Camera state that frames a region of the scene. Applies nothing.
+
+        The camera is expressed as a magnification and an offset; this is the
+        other way of saying it — name the rectangle you want to see and get
+        back the state that shows it. Feed it to ``camera_keystate`` to hold
+        there, or read ``scale`` and ``pos`` off it to drive ``animate_camera``
+        with your own functions of time.
+
+        A camera has one scale, so a region whose aspect differs from the
+        scene's cannot fill it exactly: "contain" shows all of the region and
+        leaves scene visible beyond it, "cover" fills the scene and lets the
+        region overflow.
+
+        Args:
+            region: (min_x, min_y, max_x, max_y) in scene coordinates, as
+                    ``scene_bounds_at`` reports them.
+            fit: "contain" to fit the region inside the scene, "cover" to fill
+                 the scene with it.
+
+        Returns:
+            CameraState framing the region.
+        """
+        min_x, min_y, max_x, max_y = region
+        width, height = max_x - min_x, max_y - min_y
+        if width <= 0 or height <= 0:
+            raise ValueError(f"region must have positive extent, got {region}")
+        if fit not in ("contain", "cover"):
+            raise ValueError(f"fit must be 'contain' or 'cover', got {fit!r}")
+
+        scales = (self.width / width, self.height / height)
+        return CameraState(
+            scale=min(scales) if fit == "contain" else max(scales),
+            pos=Point2D((min_x + max_x) / 2, (min_y + max_y) / 2),
+        )
 
     def camera_keystate(self, state: CameraState, at: float) -> "VScene":
         """Add a camera keystate at the specified time. Returns new VScene.

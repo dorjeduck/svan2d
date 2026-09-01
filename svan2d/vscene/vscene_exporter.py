@@ -208,6 +208,32 @@ class VSceneExporter:
         """
         return frame_num / (total_frames - 1) if total_frames > 1 else 0.0
 
+    def _frames_in_range(
+        self, total_frames: int, time_range: tuple[float, float]
+    ) -> list[int]:
+        """Which of a film's frames fall inside a slice of its timeline.
+
+        The frames keep the times they have in the whole film, so a slice
+        shows exactly what the finished film shows there and plays at the same
+        speed. Rendering a slice is a way of seeing part of a film sooner, not
+        a way of making a different one.
+        """
+        start, end = time_range
+        return [
+            frame_num
+            for frame_num in range(total_frames)
+            if start <= self._calculate_frame_time(frame_num, total_frames) <= end
+        ]
+
+    @staticmethod
+    def _validate_time_range(time_range: tuple[float, float]) -> None:
+        """Check a requested slice of the timeline is one the scene has"""
+        start, end = time_range
+        if not 0.0 <= start <= end <= 1.0:
+            raise ValueError(
+                f"time_range must be a rising pair inside 0..1, got {time_range}"
+            )
+
     def _infer_formats_from_extension(self, extension: str) -> list[str]:
         """Infer export formats from file extension"""
         ext = extension.lower().lstrip(".")
@@ -266,6 +292,7 @@ class VSceneExporter:
         total_frames: int,
         progress_callback: Callable[[int, int], None] | None,
         *,
+        time_range: tuple[float, float] = (0.0, 1.0),
         render_scale: float | None = None,
         width: int | None = None,
         height: int | None = None,
@@ -277,14 +304,15 @@ class VSceneExporter:
         Yields:
             (frame_num, frame_time, svg_content) for each frame.
         """
-        for frame_num in range(total_frames):
+        frames = self._frames_in_range(total_frames, time_range)
+        for output_num, frame_num in enumerate(frames):
             reset_point_pool()
             t = self._calculate_frame_time(frame_num, total_frames)
 
             if progress_callback:
-                progress_callback(frame_num, total_frames)
+                progress_callback(output_num, len(frames))
             else:
-                self._log_progress(frame_num, total_frames)
+                self._log_progress(output_num, len(frames))
 
             kwargs: dict = {"frame_time": t, "log": False}
             if render_scale is not None:
@@ -295,7 +323,7 @@ class VSceneExporter:
                 kwargs["height"] = height
 
             svg_content = self.scene.to_svg(**kwargs)
-            yield frame_num, t, svg_content
+            yield output_num, t, svg_content
 
     # ========================================================================
     # STATIC EXPORTS
@@ -516,6 +544,7 @@ class VSceneExporter:
         optimize: bool = True,
         cleanup_intermediate_files: bool = True,
         progress_callback: Callable[[int, int], None] | None = None,
+        time_range: tuple[float, float] = (0.0, 1.0),
     ) -> str:
         """Export scene as animated GIF file.
 
@@ -529,6 +558,9 @@ class VSceneExporter:
             optimize: Optimize GIF file size
             cleanup_intermediate_files: Whether to delete frame images after encoding
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
+            time_range: Slice of the 0..1 timeline to render. Only the frames
+                falling inside it are made, at the times they have in the
+                whole film, so the result is that stretch of the film
 
         Returns:
             Path to the exported GIF file
@@ -568,6 +600,7 @@ class VSceneExporter:
                 png_height_px=png_height_px,
                 cleanup_svg_after_png_conversion=True,
                 progress_callback=progress_callback,
+                time_range=time_range,
             ):
                 pass
 
@@ -616,6 +649,7 @@ class VSceneExporter:
         framerate: int = DEFAULT_FRAMERATE,
         interactive: bool = True,
         embeddable: bool = False,
+        time_range: tuple[float, float] = (0.0, 1.0),
     ) -> str:
         """Export scene as self-contained HTML file.
 
@@ -631,6 +665,9 @@ class VSceneExporter:
             embeddable: If True, exports only the content (no <html>, <head>, <body> tags)
                        for direct embedding into existing webpages. If False, exports
                        a complete standalone HTML document.
+            time_range: Slice of the 0..1 timeline to render. Only the frames
+                falling inside it are made, at the times they have in the
+                whole film, so the result is that stretch of the film
 
         Returns:
             Path to the exported HTML file
@@ -638,6 +675,7 @@ class VSceneExporter:
         from svan2d.vscene.preview import PreviewRenderer
 
         # Validation
+        self._validate_time_range(time_range)
         if total_frames < 2:
             raise ValueError(f"total_frames must be >= 2, got {total_frames}")
         if framerate < 1:
@@ -647,7 +685,10 @@ class VSceneExporter:
         output_path = self._generate_output_path(filename, ".html")
 
         # Generate times for frames
-        times = [i / (total_frames - 1) for i in range(total_frames)]
+        times = [
+            self._calculate_frame_time(i, total_frames)
+            for i in self._frames_in_range(total_frames, time_range)
+        ]
 
         # Calculate play interval from framerate
         play_interval_ms = int(1000 / framerate)
@@ -812,6 +853,7 @@ class VSceneExporter:
         cleanup_svg_after_png_conversion: bool = True,
         progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
+        time_range: tuple[float, float] = (0.0, 1.0),
     ):
         """Export animation as frame sequence.
 
@@ -825,11 +867,15 @@ class VSceneExporter:
             cleanup_svg_after_png_conversion: If format is PNG, whether to delete intermediate SVG files
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
             parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires render_svg_to_png support)
+            time_range: Slice of the 0..1 timeline to render. Only the frames
+                falling inside it are made, at the times they have in the
+                whole film, so the result is that stretch of the film.
 
         Yields:
             Tuple of (frame_num, frame_time) for progress tracking
         """
         # Validation
+        self._validate_time_range(time_range)
         if total_frames < 1:
             raise ValueError(f"total_frames must be >= 1, got {total_frames}")
         if format not in self.SUPPORTED_FORMATS:
@@ -856,6 +902,7 @@ class VSceneExporter:
                     png_height_px,
                     parallel_workers,
                     progress_callback,
+                    time_range,
                 )
                 return
             else:
@@ -870,7 +917,7 @@ class VSceneExporter:
         svg_files: list[Path] = []
 
         for frame_num, t, svg_content in self._generate_svg_frames(
-            total_frames, progress_callback
+            total_frames, progress_callback, time_range=time_range
         ):
             filename = filename_pattern.format(frame_num)
 
@@ -925,6 +972,7 @@ class VSceneExporter:
         png_height_px: int | None,
         parallel_workers: int,
         progress_callback: Callable[[int, int], None] | None = None,
+        time_range: tuple[float, float] = (0.0, 1.0),
     ):
         """Generate PNG frames with parallel conversion using temp files.
 
@@ -959,6 +1007,7 @@ class VSceneExporter:
         for frame_num, t, svg_content in self._generate_svg_frames(
             total_frames,
             progress_callback,
+            time_range=time_range,
             render_scale=scale,
             width=width,
             height=height,
@@ -1049,6 +1098,7 @@ class VSceneExporter:
         num_thumbnails: int = 0,
         progress_callback: Callable[[int, int], None] | None = None,
         parallel_workers: int = 0,
+        time_range: tuple[float, float] = (0.0, 1.0),
     ) -> str:
         """Export scene as MP4 video file, with optional thumbnail generation.
 
@@ -1063,6 +1113,9 @@ class VSceneExporter:
             num_thumbnails: Number of thumbnails to generate (0 = none, 1 = middle, 2 = start/end, etc.)
             progress_callback: Optional callback(frame_num, total_frames) for progress tracking
             parallel_workers: Number of parallel workers for PNG conversion (0=sequential, requires render_svg_to_png support)
+            time_range: Slice of the 0..1 timeline to render. Only the frames
+                falling inside it are made, at the times they have in the
+                whole film, so the result is that stretch of the film
 
         Returns:
             Path to the exported video file
@@ -1099,6 +1152,7 @@ class VSceneExporter:
                 cleanup_svg_after_png_conversion=False,  # Keep frames for ffmpeg
                 progress_callback=progress_callback,
                 parallel_workers=parallel_workers,
+                time_range=time_range,
             ):
                 frame_times.append(t)
 

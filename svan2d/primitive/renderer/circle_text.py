@@ -10,6 +10,20 @@ if TYPE_CHECKING:
     from ..state.circle_text import CircleTextState
 
 
+def _circle_path_id(radius: float, text_facing_inward: bool) -> str:
+    """A name for the circle the text runs along.
+
+    The path is described entirely by its radius and which way the text faces,
+    so the name is made from those two. Naming it after the renderer instead
+    would give every ring in a scene the same name: renderers are cached one
+    per state class, so they are all the same object. Two rings that really do
+    share a circle share this name too, and referring to one definition of it
+    is what they want.
+    """
+    facing = "in" if text_facing_inward else "out"
+    return f"circle_path_{facing}_{radius:g}".replace(".", "_").replace("-", "m")
+
+
 class CircleTextRenderer(Renderer):
     """Renderer for text laid out along a circular path."""
 
@@ -25,7 +39,7 @@ class CircleTextRenderer(Renderer):
         circle_path = self._create_circle_path(
             text_facing_inward=state.text_facing_inward,
             radius=state.radius,
-            path_id=f"circle_path_{id(self)}",  # Unique ID for this instance
+            path_id=_circle_path_id(state.radius, state.text_facing_inward),
         )
 
         # Create a group to hold the text elements

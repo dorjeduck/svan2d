@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from hashlib import blake2b
 from typing import TYPE_CHECKING
 
 import drawsvg as dw
@@ -10,6 +11,18 @@ from .base import Renderer
 
 if TYPE_CHECKING:
     from ..state.path_text import PathTextState
+
+
+def _text_path_id(path_string: str) -> str:
+    """A name for the path the text runs along.
+
+    The path string describes the path completely, so the name is made from
+    it. Naming it after the renderer instead would give every path in a scene
+    the same name: renderers are cached one per state class, so they are all
+    the same object. Two texts really following one path share this name too,
+    and referring to one definition of it is what they want.
+    """
+    return f"text_path_{blake2b(path_string.encode(), digest_size=8).hexdigest()}"
 
 
 class PathTextRenderer(Renderer):
@@ -27,9 +40,7 @@ class PathTextRenderer(Renderer):
         from svan2d.path.svg_path import SVGPath
         assert isinstance(state.data, SVGPath), "state.data should be SVGPath after __post_init__"
         path_string = state.data.to_string()
-        text_path = dw.Path(
-            d=path_string, id=f"text_path_{id(self)}"  # Unique ID for this instance
-        )
+        text_path = dw.Path(d=path_string, id=_text_path_id(path_string))
 
         # Create a group to hold the text elements
         group = dw.Group()

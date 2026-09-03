@@ -8,6 +8,7 @@ dependencies = [
     "drawsvg",
     "click>=8.1.0",
     "Pillow",
+    "fonttools",
 ]
 
 [project.optional-dependencies]

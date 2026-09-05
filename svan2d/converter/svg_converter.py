@@ -60,6 +60,12 @@ class SVGConverter(ABC):
             webp_quality=webp_quality,
         )
 
+        # A conversion that failed carries an error and no files, so there is
+        # nothing to make a thumbnail from — hand the error back rather than
+        # reaching for a PNG that was never written.
+        if not result.get("success"):
+            return result
+
         if "png" in formats and do_thumb:
 
             try:

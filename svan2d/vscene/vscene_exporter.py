@@ -413,6 +413,17 @@ class VSceneExporter:
             )
 
             if conv_results:
+                # The converter reports its own outcome in the same dictionary
+                # it returns the files in. A failure there is a failure here:
+                # passing it off as success leaves the caller to discover the
+                # missing files on its own.
+                if not conv_results.get("success", True):
+                    return ExportResult(
+                        success=False,
+                        files={},
+                        error=conv_results.get("error") or "conversion failed",
+                    )
+
                 files.update(conv_results)
                 for fmt, path in conv_results.items():
                     if fmt.upper() != "SUCCESS" and path:

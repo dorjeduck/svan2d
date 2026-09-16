@@ -685,8 +685,10 @@ class VScene:
 
         drawing = dw.Drawing(ww, hh, origin=self.origin)
 
-        # Add background
-        if self.background is not None and self.background_opacity > 0.0:
+        # Add background. `if self.background` rather than `is not None`: the
+        # default background is Color.NONE, which is an object but falsy, and
+        # would otherwise append a fill="none" rectangle to every drawing.
+        if self.background and self.background_opacity > 0.0:
             if self.origin == Origin.CENTER:
                 bg_x, bg_y = -ww / 2, -hh / 2
             else:  # top-left

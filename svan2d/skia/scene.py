@@ -41,8 +41,10 @@ def render_scene_to_image(
     canvas = surface.getCanvas()
     canvas.clear(skia.Color4f.kTransparent)
 
-    # Background
-    if scene.background is not None and scene.background_opacity > 0.0:
+    # Background. `if scene.background` rather than `is not None`: the default
+    # background is Color.NONE, which is an object but falsy, and painting it
+    # would fill the canvas with opaque black instead of leaving it transparent.
+    if scene.background and scene.background_opacity > 0.0:
         bg = skia.Paint(Color=skia_color(scene.background, scene.background_opacity))
         canvas.drawRect(skia.Rect.MakeWH(width_px, height_px), bg)
 

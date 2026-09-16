@@ -143,6 +143,9 @@ class VertexAligner:
         if state1.rotation == state2.rotation:
             return state1, state2  # Use static preprocessing instead
 
+        if not state1.need_morph(state2):
+            return state1, state2  # Rotation alone is a transform, not a morph
+
         # Compute current rotation for optimal alignment
         assert state1.rotation is not None and state2.rotation is not None
         rotation_target = (

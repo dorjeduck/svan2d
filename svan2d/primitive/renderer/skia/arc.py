@@ -21,13 +21,23 @@ class ArcSkiaRenderer(SkiaRenderer):
         # Y negated: local SVG Y-down vs user Y-up (mirrors ArcRenderer).
         start = (r * math.cos(start_rad), -r * math.sin(start_rad))
         end = (r * math.cos(end_rad), -r * math.sin(end_rad))
-        large = skia.Path.ArcSize.kLarge_ArcSize if abs(end_rad - start_rad) > math.pi \
+        angle_diff = end_rad - start_rad
+        large = skia.Path.ArcSize.kLarge_ArcSize if abs(angle_diff) > math.pi \
             else skia.Path.ArcSize.kSmall_ArcSize
+        # Y is negated, so a positive angle sweeps CCW on screen: SVG sweep flag 0 == kCCW.
+        direction = skia.PathDirection.kCCW if angle_diff > 0 else skia.PathDirection.kCW
 
         path = skia.Path()
         path.moveTo(*start)
-        # sweep flag 1 in SVG (positive angle, Y-down) == kCW in skia.
-        path.arcTo(r, r, 0.0, large, skia.PathDirection.kCW, *end)
+        if abs(angle_diff) >= 2 * math.pi:
+            # Coincident endpoints make a single arc degenerate: draw two half arcs.
+            mid_rad = start_rad + (math.pi if angle_diff > 0 else -math.pi)
+            mid = (r * math.cos(mid_rad), -r * math.sin(mid_rad))
+            small = skia.Path.ArcSize.kSmall_ArcSize
+            path.arcTo(r, r, 0.0, small, direction, *mid)
+            path.arcTo(r, r, 0.0, small, direction, *start)
+        else:
+            path.arcTo(r, r, 0.0, large, direction, *end)
 
         fill = self.fill_paint(state)
         if fill is not None:

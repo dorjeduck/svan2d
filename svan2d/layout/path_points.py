@@ -40,7 +40,7 @@ def path_points(
     num_elements = len(states)
 
     # --- FIX: Padding points for Catmull-Rom to use full path ---
-    working_points = points
+    working_points = list(points)
     if smooth and len(points) >= 2:
         p_start = working_points[0]
         p_next = working_points[1]

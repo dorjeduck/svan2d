@@ -167,7 +167,14 @@ def wave_between_points(
         element_rotation_offset: Additional rotation in degrees added to the alignment base.
         distances: Optional list of specific distances from center for each element.
                   If provided, overrides automatic distribution.
-        element_rotation_offset_fn: Optional function to calculate rotation offset dynamically.
+        element_rotation_offset_fn: Currently unused. ``wave()`` has no such
+                  parameter, so there is nothing to forward this to. Making it
+                  live means first deciding what it receives: the other layouts
+                  pass a position angle, which a wave does not have. The useful
+                  candidates are the wave's local tangent angle (which would also
+                  let LAYOUT follow the curve instead of the straight base line),
+                  the distance along the base line, or t in 0-1. Left as-is until
+                  that is decided.
 
     Raises:
         ValueError: If start and end points are identical (zero-length base line)
@@ -207,7 +214,8 @@ def wave_between_points(
     rotation = math.degrees(math.atan2(dy, dx))
     spacing = length / (len(states) - 1) if len(states) > 1 else 0
 
-    # Call canonical wave function
+    # Call canonical wave function. element_rotation_offset_fn is deliberately
+    # not passed: wave() takes no such argument. See the docstring.
     return wave(
         states,
         amplitude=amplitude,

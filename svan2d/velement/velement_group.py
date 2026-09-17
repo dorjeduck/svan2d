@@ -376,6 +376,19 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             kwargs["opacity"] = state.opacity
         group = dw.Group(**kwargs)
 
+        # Children go into an inner group when the state carries a clip or mask,
+        # so the clip sits *inside* the transform — the same nesting a VElement
+        # gets, where Renderer.render() clips the core geometry and puts the
+        # transform on the group around it. Without a clip the output is
+        # unchanged: children are appended to `group` directly.
+        has_clip_or_mask = drawing is not None and (
+            state.clip_state is not None
+            or state.clip_states
+            or state.mask_state is not None
+            or state.mask_states
+        )
+        content = dw.Group() if has_clip_or_mask else group
+
         # Sort children by z_index (stable sort preserves insertion order for equal z_index)
         def get_z_index(element: "VElement") -> float:
             if hasattr(element, "get_frame"):
@@ -390,7 +403,7 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             # Reuse a child's frozen render when available
             child_frozen = getattr(type(child), "_HAS_FREEZE_CACHE", False) and child._frozen_render
             if child_frozen:
-                group.append(child._frozen_render)
+                content.append(child._frozen_render)
                 continue
 
             # Static children render at t=0.0 — the same thing child.render()
@@ -400,7 +413,14 @@ class VElementGroup(BaseVElement, KeystateBuilder):
             )
 
             if child_element is not None:
-                group.append(child_element)
+                content.append(child_element)
+
+        if has_clip_or_mask:
+            from svan2d.primitive.renderer.base import Renderer
+
+            group.append(
+                Renderer._apply_clipping_and_masking(content, state, drawing)
+            )
 
         return group
 

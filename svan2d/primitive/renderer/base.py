@@ -134,8 +134,9 @@ class Renderer(ABC):
 
         return elem
 
+    @staticmethod
     def _apply_clipping_and_masking(
-        self, elem: dw.DrawingElement, state: State, drawing: dw.Drawing
+        elem: dw.DrawingElement, state: State, drawing: dw.Drawing
     ) -> dw.DrawingElement:
         """Apply clip-path and mask to element based on state
 
@@ -174,23 +175,22 @@ class Renderer(ABC):
 
         # Apply masks first (innermost)
         for mask_state in mask_states:
-            mask_id = self._create_mask_def(mask_state, drawing)
+            mask_id = Renderer._create_mask_def(mask_state, drawing)
             masked_group = dw.Group(mask=f"url(#{mask_id})")
             masked_group.append(result)
             result = masked_group
 
         # Apply clips
         if len(clip_states) > 0:
-            clip_id = self._create_clip_path_def(clip_states, drawing)
+            clip_id = Renderer._create_clip_path_def(clip_states, drawing)
             clipped_group = dw.Group(clip_path=f"url(#{clip_id})")
             clipped_group.append(result)
             result = clipped_group
 
         return result
 
-    def _create_clip_path_def(
-        self, clip_states: list[State], drawing: dw.Drawing
-    ) -> str:
+    @staticmethod
+    def _create_clip_path_def(clip_states: list[State], drawing: dw.Drawing) -> str:
         """Create ClipPath def from a state and add to drawing
 
         Args:
@@ -213,9 +213,9 @@ class Renderer(ABC):
             if fill_color is None or fill_color == Color.NONE:
                 clip_state = replace(clip_state, fill_color=Color("#000000"))
 
-            clip_elem = self._render_state_element(clip_state, drawing=drawing)
+            clip_elem = Renderer._render_state_element(clip_state, drawing=drawing)
 
-            transform = self._build_transform_string(clip_state)
+            transform = Renderer._build_transform_string(clip_state)
             # Extract paths from group if needed (VertexRenderer returns a group)
             if isinstance(clip_elem, dw.Group) and hasattr(clip_elem, "children"):
                 for child in clip_elem.children:
@@ -232,7 +232,8 @@ class Renderer(ABC):
 
         return clip_id
 
-    def _create_mask_def(self, mask_state: State, drawing: dw.Drawing) -> str:
+    @staticmethod
+    def _create_mask_def(mask_state: State, drawing: dw.Drawing) -> str:
         """Create Mask def from a state and add to drawing
 
         Masks use opacity/grayscale for gradual transparency.
@@ -257,7 +258,7 @@ class Renderer(ABC):
         if fill_color is None or fill_color == Color.NONE:
             mask_state = replace(mask_state, fill_color=Color("#FFFFFF"))
 
-        mask_elem = self._render_state_element(mask_state, drawing=drawing)
+        mask_elem = Renderer._render_state_element(mask_state, drawing=drawing)
 
         # Extract paths from group if needed (VertexRenderer returns a group)
         if isinstance(mask_elem, dw.Group) and hasattr(mask_elem, "children"):
@@ -266,7 +267,7 @@ class Renderer(ABC):
             elements = [mask_elem]
 
         # Apply transforms and opacity directly
-        transform = self._build_transform_string(mask_state)
+        transform = Renderer._build_transform_string(mask_state)
 
         if transform or mask_state.opacity != 1.0:
             mask_group = dw.Group(opacity=mask_state.opacity)

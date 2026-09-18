@@ -112,7 +112,6 @@ __all__ = [
     "TriangleState",
     "FlowerState",
     "HeartState",
-    "InfinityState",
     "SpiralState",
     "WaveState",
     "StateCollectionState",

@@ -23,6 +23,12 @@ def test_all_names_exist(package):
     assert missing == []
 
 
+@pytest.mark.parametrize("package", PACKAGES)
+def test_all_has_no_duplicates(package):
+    names = importlib.import_module(package).__all__
+    assert sorted({name for name in names if names.count(name) > 1}) == []
+
+
 def test_primitive_lists_every_state_export():
     """svan2d.primitive star-imports svan2d.primitive.state; its __all__ passes all of it on."""
     primitive = importlib.import_module("svan2d.primitive")

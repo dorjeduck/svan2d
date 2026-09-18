@@ -28,8 +28,6 @@ from .vertex import *
 from .effect import *
 
 __all__ = [
-    "Renderer",
-    "State",
     # Submodules
     "renderer",
     "state",
@@ -117,7 +115,6 @@ __all__ = [
     "CircleTextRenderer",
     "EllipseRenderer",
     "ImageRenderer",
-    "LineRenderer",
     "PathRenderer",
     "PathTextRenderer",
     "PerforatedPrimitiveRenderer",

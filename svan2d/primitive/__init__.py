@@ -63,6 +63,7 @@ __all__ = [
     "Star",
     "Astroid",
     # States (alphabetically sorted)
+    "ArcState",
     "AstroidState",
     "CircleState",
     "CircleTextState",

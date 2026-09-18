@@ -162,6 +162,18 @@ class TestElastic:
         assert easing.in_out_elastic(0.0) == 0.0
         assert easing.in_out_elastic(1.0) == 1.0
 
+    @pytest.mark.parametrize(
+        "func", [easing.in_elastic, easing.out_elastic, easing.in_out_elastic]
+    )
+    def test_elastic_continuous_at_endpoints(self, func):
+        """The t == 0 and t == 1 special cases match the formula's limits.
+
+        The 2^-10 envelope leaves a residual of about 1e-3 at the ends, which the
+        special cases absorb; a jump beyond that is a wrong formula.
+        """
+        assert func(1e-9) == pytest.approx(func(0.0), abs=1e-2)
+        assert func(1 - 1e-9) == pytest.approx(func(1.0), abs=1e-2)
+
     def test_elastic_oscillates(self):
         """Elastic functions oscillate around target."""
         # Sample multiple points to verify non-monotonic behavior

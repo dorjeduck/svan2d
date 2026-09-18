@@ -6,7 +6,7 @@ def in_elastic(t: float) -> float:
     building tension before accelerating toward the target. The elastic effect creates a
     spring-like anticipation that makes the final movement feel more impactful.
 
-    Mathematical form: Uses -2^(10(t-1)) * sin((t-1) * 2π/3) for oscillating decay
+    Mathematical form: Uses -2^(10t-10) * sin((10t-10.75) * 2π/3) for oscillating decay
 
     Use cases:
     - UI elements that need playful, bouncy character
@@ -37,4 +37,4 @@ def in_elastic(t: float) -> float:
     if t == 1:
         return 1
     c4 = (2 * math.pi) / 3
-    return -pow(2, 10 * (t - 1)) * math.sin((t - 1) * c4 - c4)
+    return -pow(2, 10 * t - 10) * math.sin((10 * t - 10.75) * c4)

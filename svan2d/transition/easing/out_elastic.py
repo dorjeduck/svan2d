@@ -6,7 +6,7 @@ def out_elastic(t: float) -> float:
     position with decreasing amplitude until settling. The elastic effect makes arrivals
     feel lively and energetic rather than mechanical.
 
-    Mathematical form: Uses 2^(-10t) * sin(t * 2π/3) + 1 for damped oscillation
+    Mathematical form: Uses 2^(-10t) * sin((10t-0.75) * 2π/3) + 1 for damped oscillation
 
     Use cases:
     - UI elements appearing with playful character
@@ -37,4 +37,4 @@ def out_elastic(t: float) -> float:
     if t == 1:
         return 1
     c4 = (2 * math.pi) / 3
-    return pow(2, -10 * t) * math.sin(t * c4 - c4) + 1
+    return pow(2, -10 * t) * math.sin((10 * t - 0.75) * c4) + 1

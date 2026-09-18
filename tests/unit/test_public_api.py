@@ -23,6 +23,13 @@ def test_all_names_exist(package):
     assert missing == []
 
 
+def test_primitive_lists_every_state_export():
+    """svan2d.primitive star-imports svan2d.primitive.state; its __all__ passes all of it on."""
+    primitive = importlib.import_module("svan2d.primitive")
+    state = importlib.import_module("svan2d.primitive.state")
+    assert [name for name in state.__all__ if name not in primitive.__all__] == []
+
+
 def test_star_renderer_exported():
     """renderer/star.py defines StarRenderer; the package exports it like every other renderer."""
     renderer = importlib.import_module("svan2d.primitive.renderer")

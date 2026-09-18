@@ -34,6 +34,7 @@ from .ring import RingRenderer
 from .spiral import SpiralRenderer
 from .square import SquareRenderer
 from .square_ring import SquareRingRenderer
+from .star import StarRenderer
 from .state_collection import StateCollectionRenderer
 from .text import TextRenderer
 from .triangle import TriangleRenderer
@@ -71,6 +72,7 @@ __all__ = [
     "SpiralRenderer",
     "SquareRenderer",
     "SquareRingRenderer",
+    "StarRenderer",
     "TextRenderer",
     "TriangleRenderer",
     "WaveRenderer",

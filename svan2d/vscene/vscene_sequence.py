@@ -52,6 +52,22 @@ class _TimeSegment:
     scene_in_range: tuple[float, float] | None = None
 
 
+@dataclass
+class _Frame:
+    """What one moment of the sequence shows: a scene at its local time, or a
+    transition between two scenes at theirs, with the transition's eased
+    progress. The SVG and the Skia route both draw from it."""
+
+    scene: "VScene | None" = None
+    time: float = 0.0
+    transition: SceneTransition | None = None
+    scene_out: "VScene | None" = None
+    scene_in: "VScene | None" = None
+    progress: float = 0.0
+    time_out: float = 0.0
+    time_in: float = 0.0
+
+
 class VSceneSequence:
     """Sequence of VScenes with transitions between them.
 
@@ -384,6 +400,37 @@ class VSceneSequence:
             ValueError: If the sequence is empty or frame_time is invalid
         """
         _ = width, height  # Unused, for API compatibility
+        frame = self._frame_at(frame_time)
+
+        if frame.transition is not None:
+            assert frame.scene_out is not None and frame.scene_in is not None
+            ctx = RenderContext(
+                width=self.width,
+                height=self.height,
+                render_scale=render_scale,
+                origin=self.origin,
+            )
+            return frame.transition.composite(
+                scene_out=frame.scene_out,
+                scene_in=frame.scene_in,
+                progress=frame.progress,
+                time_out=frame.time_out,
+                time_in=frame.time_in,
+                ctx=ctx,
+            )
+
+        assert frame.scene is not None
+        return frame.scene.to_drawing(
+            frame_time=frame.time,
+            render_scale=render_scale,
+        )
+
+    def _frame_at(self, frame_time: float) -> _Frame:
+        """Work out what the sequence shows at frame_time.
+
+        Raises:
+            ValueError: If the sequence is empty or frame_time is invalid
+        """
         if not self._entries:
             raise ValueError("Cannot render empty sequence. Add scenes first.")
 
@@ -396,15 +443,7 @@ class VSceneSequence:
         if segment is None:
             raise ValueError("No segment found for frame_time")
 
-        ctx = RenderContext(
-            width=self.width,
-            height=self.height,
-            render_scale=render_scale,
-            origin=self.origin,
-        )
-
         if segment.is_transition:
-            # Render transition
             assert segment.transition is not None
             assert segment.scene_out is not None
             assert segment.scene_in is not None
@@ -444,22 +483,20 @@ class VSceneSequence:
                 time_out = 1.0
                 time_in = 0.0
 
-            return segment.transition.composite(
+            return _Frame(
+                transition=segment.transition,
                 scene_out=segment.scene_out,
                 scene_in=segment.scene_in,
                 progress=eased_progress,
                 time_out=time_out,
                 time_in=time_in,
-                ctx=ctx,
             )
-        else:
-            # Render scene directly
-            assert segment.scene is not None
-            scene_time = self._map_time_to_scene(frame_time, segment)
-            return segment.scene.to_drawing(
-                frame_time=scene_time,
-                render_scale=render_scale,
-            )
+
+        assert segment.scene is not None
+        return _Frame(
+            scene=segment.scene,
+            time=self._map_time_to_scene(frame_time, segment),
+        )
 
     def to_svg(
         self,

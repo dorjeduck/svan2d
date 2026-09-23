@@ -390,8 +390,9 @@ class VSceneSequence:
         Args:
             frame_time: Time point to render (0.0 to 1.0)
             render_scale: Scale factor for rendering
-            width: Unused, for VSceneExporter compatibility
-            height: Unused, for VSceneExporter compatibility
+            width: Output width in pixels, as for VScene.to_drawing: the
+                scenes and transitions fill it (default: width * render_scale)
+            height: Output height in pixels, likewise
 
         Returns:
             A drawsvg Drawing
@@ -399,14 +400,17 @@ class VSceneSequence:
         Raises:
             ValueError: If the sequence is empty or frame_time is invalid
         """
-        _ = width, height  # Unused, for API compatibility
         frame = self._frame_at(frame_time)
 
         if frame.transition is not None:
             assert frame.scene_out is not None and frame.scene_in is not None
+            # The transition works over the whole output picture, in scene
+            # units.
+            ww = width if width is not None else self.width * render_scale
+            hh = height if height is not None else self.height * render_scale
             ctx = RenderContext(
-                width=self.width,
-                height=self.height,
+                width=ww / render_scale,
+                height=hh / render_scale,
                 render_scale=render_scale,
                 origin=self.origin,
             )
@@ -423,6 +427,8 @@ class VSceneSequence:
         return frame.scene.to_drawing(
             frame_time=frame.time,
             render_scale=render_scale,
+            width=width,
+            height=height,
         )
 
     def _frame_at(self, frame_time: float) -> _Frame:
@@ -512,16 +518,18 @@ class VSceneSequence:
         Args:
             frame_time: Time point to render (0.0 to 1.0)
             render_scale: Scale factor for rendering
-            width: Unused, for VSceneExporter compatibility
-            height: Unused, for VSceneExporter compatibility
+            width: Output width in pixels, as for VScene.to_drawing: the
+                scenes and transitions fill it (default: width * render_scale)
+            height: Output height in pixels, likewise
             filename: Optional filename to save SVG to
             log: Whether to log the save operation
 
         Returns:
             SVG string
         """
-        _ = width, height  # Unused, for API compatibility
-        drawing = self.to_drawing(frame_time=frame_time, render_scale=render_scale)
+        drawing = self.to_drawing(
+            frame_time=frame_time, render_scale=render_scale, width=width, height=height
+        )
         svg_string: str = drawing.as_svg()  # type: ignore[assignment]
 
         if filename:

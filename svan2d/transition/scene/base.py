@@ -132,13 +132,15 @@ class SceneTransition(ABC):
     ) -> None:
         """Render a scene at frame_time into target, its defs into drawing.
 
-        A scene's clips, masks, gradients and patterns are defs of its own
-        drawing; copying only its elements would leave their references
-        dangling.
+        The scene fills the transition's whole picture. A scene's clips,
+        masks, gradients and patterns are defs of its own drawing; copying
+        only its elements would leave their references dangling.
         """
         scene_drawing = scene.to_drawing(
             frame_time=frame_time,
             render_scale=ctx.render_scale,
+            width=ctx.width * ctx.render_scale,
+            height=ctx.height * ctx.render_scale,
         )
         for child in scene_drawing.elements:
             target.append(child)

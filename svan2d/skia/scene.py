@@ -79,7 +79,7 @@ def draw_scene(
     if isinstance(scene, VSceneComposite):
         _draw_composite(canvas, scene, frame_time, ctx, render_scale, width, height)
     elif isinstance(scene, VSceneSequence):
-        _draw_sequence(canvas, scene, frame_time, ctx, render_scale)
+        _draw_sequence(canvas, scene, frame_time, ctx, render_scale, width, height)
     else:
         _draw_vscene(canvas, scene, frame_time, ctx, render_scale, width, height)
 
@@ -225,19 +225,21 @@ def _draw_composite(
 
 def _draw_sequence(
     canvas, sequence: "VSceneSequence", frame_time: float, ctx: SkiaContext,
-    render_scale: float,
+    render_scale: float, width: float | None, height: float | None,
 ) -> None:
     """VSceneSequence.to_drawing: a scene at its time, or a transition drawn by
-    its Skia version. Like to_drawing, it takes no width or height."""
+    its Skia version, either filling the whole output picture."""
     frame = sequence._frame_at(frame_time)
 
     if frame.transition is None:
-        draw_scene(canvas, frame.scene, frame.time, ctx, render_scale)
+        draw_scene(canvas, frame.scene, frame.time, ctx, render_scale, width, height)
         return
 
+    ww = width if width is not None else sequence.width * render_scale
+    hh = height if height is not None else sequence.height * render_scale
     render_ctx = RenderContext(
-        width=sequence.width,
-        height=sequence.height,
+        width=ww / render_scale,
+        height=hh / render_scale,
         render_scale=render_scale,
         origin=sequence.origin,
     )
@@ -246,8 +248,8 @@ def _draw_sequence(
         frame.transition,
         frame.scene_out,
         frame.scene_in,
-        lambda: draw_scene(canvas, frame.scene_out, frame.time_out, ctx, render_scale),
-        lambda: draw_scene(canvas, frame.scene_in, frame.time_in, ctx, render_scale),
+        lambda: draw_scene(canvas, frame.scene_out, frame.time_out, ctx, render_scale, ww, hh),
+        lambda: draw_scene(canvas, frame.scene_in, frame.time_in, ctx, render_scale, ww, hh),
         frame.progress,
         render_ctx,
     )

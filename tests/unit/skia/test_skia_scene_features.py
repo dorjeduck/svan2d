@@ -482,3 +482,27 @@ def test_nested_group_easing(tmp_path, t):
     inner = VElementGroup(elements=[_moving_child(30)], group_easing=easing.out_cubic)
     outer = VElementGroup(elements=[inner, _moving_child(-30)], group_easing=easing.in_cubic)
     assert_matches_resvg(_scene().add_element(outer), tmp_path, t=t)
+
+
+# --------------------------------------------------------------------------
+# A sequence at another aspect than its own
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("transition", [
+    Fade(duration=0.4),
+    Iris(direction="open", duration=0.4),
+    Slide(direction="left", duration=0.4),
+    Wipe(direction="up", duration=0.4),
+    Zoom(direction="in", duration=0.4),
+], ids=repr)
+@pytest.mark.parametrize("size", [(300, 200), (200, 320)])
+@pytest.mark.parametrize("t", [0.1, 0.5])
+def test_sequence_fills_another_aspect(tmp_path, transition, size, t):
+    w, h = size
+    sequence = _sequence(transition)
+    assert_matches_resvg(sequence, tmp_path, t=t, w=w, h=h)
+    # Scenes and transitions fill the whole picture, as a VScene does.
+    got = _png(SkiaSvgConverter(), sequence, tmp_path, "fill.png", t, w, h)
+    assert (got[:, :, 3] == 255).all()

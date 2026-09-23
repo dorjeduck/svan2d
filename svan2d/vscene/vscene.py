@@ -705,11 +705,23 @@ class VScene:
                 )
             )
 
+        # A scene clip/mask is in scene units, and it sits outside the camera.
+        # With one, the output scale goes on a group around the clip and the
+        # camera group carries the camera alone; without, the camera group
+        # carries both.
+        clipped = self.clip_state is not None or self.mask_state is not None
+        camera_scale = 1.0 if clipped else render_scale
+
         # Create global transform group (use animated camera if available)
         camera_state = self._get_camera_state_at_time(frame_time)
         needs_centering = self.origin != Origin.CENTER and self._camera_offset_func is not None
         vp_w, vp_h = (ww, hh) if needs_centering else (0.0, 0.0)
-        transform = camera_mod.build_camera_transform(camera_state, render_scale, vp_w, vp_h)
+        transform = camera_mod.build_camera_transform(
+            camera_state,
+            camera_scale,
+            vp_w * camera_scale / render_scale,
+            vp_h * camera_scale / render_scale,
+        )
         group = dw.Group(transform=transform) if transform else dw.Group()
 
         # Pre-compute interpolated states once for all elements.
@@ -757,10 +769,14 @@ class VScene:
                         element._frozen_state = state
 
         # Apply scene-level clipping/masking
-        if self.clip_state or self.mask_state:
+        if clipped:
             group = rendering_mod.apply_scene_clipping(
                 group, drawing, self.clip_state, self.mask_state
             )
+            if render_scale != 1.0:
+                scaled = dw.Group(transform=f"scale({render_scale})")
+                scaled.append(group)
+                group = scaled
 
         drawing.append(group)
 

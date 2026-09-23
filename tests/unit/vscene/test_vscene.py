@@ -327,3 +327,11 @@ class TestVSceneClipping:
         svg = self._svg(mask_state=True)
         mask = svg[svg.index("<mask"):svg.index("</mask>")]
         assert 'transform="translate(20,-30) rotate(-10)"' in mask
+
+    def test_clip_scales_with_the_output(self):
+        from svan2d.primitive.state.circle import CircleState
+
+        scene = VScene(width=200, height=200, clip_state=CircleState(radius=60))
+        svg = scene.to_svg(render_scale=2.0, log=False)
+        body = svg[svg.index("</defs>"):]
+        assert body.index('transform="scale(2.0)"') < body.index("clip-path=")

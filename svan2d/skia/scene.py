@@ -272,10 +272,14 @@ def _draw_children(canvas, elements, frame_time: float, ctx: SkiaContext) -> Non
 
 
 def _draw_group(canvas, group, group_state, frame_time: float, ctx: SkiaContext) -> None:
+    # The children run on the group's own time: get_frame has applied the
+    # group's easing to frame_time and kept the result.
+    frame_time = group._last_frame_time
+
     # A group applies its .clip()/.mask() attachments when it renders (its
     # get_frame leaves them out), at the time its children are drawn at.
     if group.clip_elements or group.mask_element:
-        group_state = group._apply_velement_clips(group_state, group._last_frame_time)
+        group_state = group._apply_velement_clips(group_state, frame_time)
 
     canvas.save()
     try:

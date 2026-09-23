@@ -447,3 +447,38 @@ def test_image_opacity_applies_once(tmp_path):
         centre = _png(converter, scene, tmp_path, "centre.png", 0.0, W, H)[H // 2, W // 2]
         # Half of white over the #102030 background.
         assert abs(centre[0] - (255 + 0x10) / 2) <= 2, (type(converter).__name__, centre)
+
+
+# --------------------------------------------------------------------------
+# Group easing
+# --------------------------------------------------------------------------
+
+
+def _moving_child(y=0):
+    return (
+        VElement()
+        .keystate(CircleState(radius=15, pos=Point2D(-70, y), fill_color=Color("#ffffff")), at=0.0)
+        .keystate(CircleState(radius=15, pos=Point2D(70, y), fill_color=Color("#ffffff")), at=1.0)
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("own_keystate", [True, False])
+@pytest.mark.parametrize("t", [0.3, 0.6, 0.9])
+def test_group_easing(tmp_path, own_keystate, t):
+    from svan2d.transition import easing
+
+    group = VElementGroup(elements=[_moving_child()], group_easing=easing.in_cubic)
+    if own_keystate:
+        group = group.keystate(VElementGroupState())
+    assert_matches_resvg(_scene().add_element(group), tmp_path, t=t)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("t", [0.3, 0.7])
+def test_nested_group_easing(tmp_path, t):
+    from svan2d.transition import easing
+
+    inner = VElementGroup(elements=[_moving_child(30)], group_easing=easing.out_cubic)
+    outer = VElementGroup(elements=[inner, _moving_child(-30)], group_easing=easing.in_cubic)
+    assert_matches_resvg(_scene().add_element(outer), tmp_path, t=t)

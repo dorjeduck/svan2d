@@ -6,7 +6,7 @@ here State -> SkiaRenderer -> skia.Canvas draw calls -> PNG, bypassing SVG entir
 This is much faster for image-heavy scenes (resvg-py spends ~1s per embedded image;
 skia draws it in ~2ms). It is selected explicitly via ConverterType.SKIA and is NOT
 the default. When a scene uses a feature the Skia backend does not implement
-(filters, clip/mask, or an unregistered state), the converter falls back to the SVG
+(filters, gradients, or an unregistered state), the converter falls back to the SVG
 route and prints an info message.
 
 A state declares its default Skia renderer with @skia_renderer("module:Class")

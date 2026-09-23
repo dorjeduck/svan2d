@@ -5,13 +5,16 @@ from __future__ import annotations
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import skia
+
+from svan2d.skia.clipping import clip_states_of, draw_clipped, mask_states_of
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color
     from svan2d.primitive.state.base import State
+    from svan2d.transition.scene.base import RenderContext, SceneTransition
 
 
 class SkiaUnsupported(Exception):
@@ -62,10 +65,12 @@ class SkiaRenderer(ABC):
     """
 
     def draw(self, canvas: skia.Canvas, state: "State", ctx: SkiaContext) -> None:
-        """Apply transform + opacity, then draw the geometry.
+        """Apply transform + opacity, then draw the geometry, clipped and masked.
 
-        No capability checks here: the scene was validated once up front
-        (svan2d.skia.support.check_scene), so the render loop is check-free.
+        The clip and mask sit inside the transform and opacity, as in
+        Renderer.render. No capability checks here: the scene was validated once
+        up front (svan2d.skia.support.check_scene), so the render loop is
+        check-free.
         """
         canvas.save()
         try:
@@ -73,12 +78,17 @@ class SkiaRenderer(ABC):
             opacity = state.opacity if state.opacity is not None else 1.0
             if opacity < 1.0:
                 canvas.saveLayerAlpha(None, int(round(opacity * 255)))
-                try:
-                    self.draw_core(canvas, state, ctx)
-                finally:
+            try:
+                draw_clipped(
+                    canvas,
+                    lambda: self.draw_core(canvas, state, ctx),
+                    clip_states_of(state),
+                    mask_states_of(state),
+                    ctx,
+                )
+            finally:
+                if opacity < 1.0:
                     canvas.restore()
-            else:
-                self.draw_core(canvas, state, ctx)
         finally:
             canvas.restore()
 
@@ -137,3 +147,28 @@ class SkiaRenderer(ABC):
         )
         paint.setColor(skia_color(color, opacity))
         return paint
+
+
+class SkiaSceneTransition(ABC):
+    """Abstract base for a scene transition's Skia version — the canvas
+    analogue of SceneTransition.composite.
+
+    draw() finds the canvas at the transition drawing's origin, in output
+    pixels, as composite() builds its drawing; ctx is the same RenderContext.
+    draw_out and draw_in draw the outgoing and the incoming scene at their
+    times and at ctx.render_scale, as composite() appends their drawings.
+    """
+
+    @abstractmethod
+    def draw(
+        self,
+        canvas: skia.Canvas,
+        transition: "SceneTransition",
+        scene_out,
+        scene_in,
+        draw_out: "Callable[[], None]",
+        draw_in: "Callable[[], None]",
+        progress: float,
+        ctx: "RenderContext",
+    ) -> None:
+        """Draw the transition at progress (already eased)."""

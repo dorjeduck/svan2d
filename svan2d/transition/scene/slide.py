@@ -9,6 +9,7 @@ import drawsvg as dw
 from svan2d.transition.easing import linear
 
 from .base import RenderContext, SceneTransition
+from .registry import skia_transition
 
 if TYPE_CHECKING:
     from svan2d.vscene import VScene
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 SlideDirection = Literal["left", "right", "up", "down"]
 
 
+@skia_transition("svan2d.transition.scene.skia.slide:SlideSkia")
 class Slide(SceneTransition):
     """Slide transition using transform translations.
 

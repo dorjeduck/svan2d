@@ -11,6 +11,7 @@ import drawsvg as dw
 from svan2d.transition.easing import linear
 
 from .base import RenderContext, SceneTransition
+from .registry import skia_transition
 
 if TYPE_CHECKING:
     from svan2d.vscene import VScene
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 IrisDirection = Literal["open", "close"]
 
 
+@skia_transition("svan2d.transition.scene.skia.iris:IrisSkia")
 class Iris(SceneTransition):
     """Iris transition using circular clip paths.
 

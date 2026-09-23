@@ -14,14 +14,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from svan2d.primitive.registry import get_skia_renderer_class_for_state
+from svan2d.skia.clipping import clip_states_of, mask_states_of
 
 if TYPE_CHECKING:
     from svan2d.primitive.state.base import State
     from svan2d.vscene.vscene import VScene
 
 
-def check_scene(scene: "VScene") -> list[str]:
-    """Return reasons the scene cannot be rendered by Skia (empty == fully supported)."""
+def check_scene(scene) -> list[str]:
+    """Return reasons the scene cannot be rendered by Skia (empty == fully supported).
+
+    Takes a VScene, VSceneComposite or VSceneSequence; composites and sequences
+    are checked scene by scene, and every transition needs a Skia version.
+    """
     reasons: list[str] = []
     seen: set[str] = set()
 
@@ -30,18 +35,41 @@ def check_scene(scene: "VScene") -> list[str]:
             seen.add(reason)
             reasons.append(reason)
 
+    _check_any_scene(scene, add)
+    return reasons
+
+
+def _check_any_scene(scene, add) -> None:
+    from svan2d.transition.scene.registry import get_skia_transition_class
+    from svan2d.vscene.vscene_composite import VSceneComposite
+    from svan2d.vscene.vscene_sequence import VSceneSequence, _TransitionEntry
+
+    if isinstance(scene, VSceneComposite):
+        for child in scene.scenes:
+            _check_any_scene(child, add)
+    elif isinstance(scene, VSceneSequence):
+        for entry in scene._entries:
+            if isinstance(entry, _TransitionEntry):
+                if get_skia_transition_class(entry.transition) is None:
+                    add(f"no Skia version of transition {type(entry.transition).__name__}")
+            else:
+                _check_any_scene(entry.scene, add)
+    else:
+        _check_vscene(scene, add)
+
+
+def _check_vscene(scene: "VScene", add) -> None:
     # Scene-level features.
-    if scene.clip_state is not None or scene.mask_state is not None:
-        add("scene-level clip/mask")
+    _check_clips_and_masks(
+        [scene.clip_state] if scene.clip_state is not None else [],
+        [scene.mask_state] if scene.mask_state is not None else [],
+        add,
+    )
     if getattr(scene, "_pauses", None):
         add("scene pauses/overlays")
-    if getattr(scene, "_camera_offset_func", None) is not None:
-        add("animated camera")
 
     for element in scene.elements:
         _check_element(element, add)
-
-    return reasons
 
 
 def _check_element(element, add) -> None:
@@ -50,15 +78,12 @@ def _check_element(element, add) -> None:
         group_state = _safe_frame(element)
         if group_state is not None:
             _check_state_features(group_state, add)
+        _check_attachments(element, add)
         for child in element.elements:
             _check_element(child, add)
         return
 
-    # Element-level clip/mask attachments.
-    if getattr(element, "clip_elements", None):
-        add("element clip")
-    if getattr(element, "mask_element", None) is not None:
-        add("element mask")
+    _check_attachments(element, add)
 
     # An explicit per-element Skia renderer (e.g. a PathVariantsSkiaRenderer
     # carrying its variant) satisfies the renderer requirement on its own, the
@@ -83,10 +108,7 @@ def _check_state(state: "State", add, has_renderer: bool = False) -> None:
 def _check_state_features(state: "State", add) -> None:
     if getattr(state, "filter", None) is not None:
         add(f"{type(state).__name__}: filter")
-    if state.clip_state is not None or state.clip_states:
-        add(f"{type(state).__name__}: clip")
-    if state.mask_state is not None or state.mask_states:
-        add(f"{type(state).__name__}: mask")
+    _check_clips_and_masks(clip_states_of(state), mask_states_of(state), add)
     if getattr(state, "fill_gradient", None) is not None or getattr(state, "stroke_gradient", None) is not None:
         add(f"{type(state).__name__}: gradient")
     # PathBandState carries per-segment gradients (a tuple) rather than a single one.
@@ -95,6 +117,27 @@ def _check_state_features(state: "State", add) -> None:
         add(f"{type(state).__name__}: gradient")
     if getattr(state, "fill_pattern", None) is not None or getattr(state, "stroke_pattern", None) is not None:
         add(f"{type(state).__name__}: pattern")
+
+
+def _check_attachments(element, add) -> None:
+    """Clips and a mask attached to a VElement or VElementGroup (.clip()/.mask())."""
+    for clip_element in getattr(element, "clip_elements", None) or []:
+        for state in _element_states(clip_element):
+            _check_clips_and_masks([state], [], add)
+    mask_element = getattr(element, "mask_element", None)
+    if mask_element is not None:
+        for state in _element_states(mask_element):
+            _check_clips_and_masks([], [state], add)
+
+
+def _check_clips_and_masks(clips, masks, add) -> None:
+    """A clip shape counts only as geometry, so it needs no more than a renderer;
+    a mask shape is drawn as it is, so it must be fully supported."""
+    for clip in clips:
+        if get_skia_renderer_class_for_state(clip) is None:
+            add(f"no Skia renderer for {type(clip).__name__} (clip shape)")
+    for mask in masks:
+        _check_state(mask, add)
 
 
 def _element_states(element):

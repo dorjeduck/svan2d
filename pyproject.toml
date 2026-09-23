@@ -37,6 +37,10 @@ dev = [
     "pytest-benchmark>=4.0.0",
     "pytest-xdist>=3.3.0",
     "ruff>=0.4.0",
+    # The Skia backend's tests draw with skia and compare against resvg
+    "skia-python",
+    "resvg-py",
+    "numpy",
 ]
 
 # Font-to-vertex conversion

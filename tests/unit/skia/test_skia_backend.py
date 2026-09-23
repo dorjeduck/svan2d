@@ -645,9 +645,9 @@ def test_export_to_webp_via_exporter(tmp_path):
 
 @pytest.mark.unit
 def test_non_skia_backend_reports_webp_unsupported():
-    from svan2d.converter.cairo_svg_converter import CairoSvgConverter
+    from svan2d.converter.resvg_svg_converter import ResvgSvgConverter
 
-    res = CairoSvgConverter()._convert_to_webp(_webp_scene(), "x.webp", 0.0, 100, 100)
+    res = ResvgSvgConverter()._convert_to_webp(_webp_scene(), "x.webp", 0.0, 100, 100)
     assert res["success"] is False
     assert "WebP" in res["error"]
 

@@ -32,13 +32,18 @@ if TYPE_CHECKING:
 
 
 def render_scene_to_image(
-    scene, frame_time: float, width_px: int, height_px: int
+    scene,
+    frame_time: float,
+    width_px: int,
+    height_px: int,
+    ctx: SkiaContext | None = None,
 ) -> skia.Image:
     """Render one frame of a VScene, VSceneComposite or VSceneSequence to a
     skia.Image.
 
     The scene is fitted into the image at one scale, the smaller of the two,
-    as SVGConverter does.
+    as SVGConverter does. Passing the same ctx for every frame keeps fonts and
+    images loaded from one frame to the next.
     """
     if not 0.0 <= frame_time <= 1.0:
         raise ValueError(f"frame_time must be in [0,1], got {frame_time}")
@@ -50,7 +55,9 @@ def render_scene_to_image(
     render_scale = min(width_px / scene.width, height_px / scene.height)
     if scene.origin == Origin.CENTER:
         canvas.translate(width_px / 2, height_px / 2)
-    draw_scene(canvas, scene, frame_time, SkiaContext(), render_scale, width_px, height_px)
+    ctx = ctx if ctx is not None else SkiaContext()
+    draw_scene(canvas, scene, frame_time, ctx, render_scale, width_px, height_px)
+    ctx.end_frame()
 
     return surface.makeImageSnapshot()
 

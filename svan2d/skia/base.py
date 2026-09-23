@@ -33,11 +33,31 @@ class SkiaContext:
     """
 
     typefaces: dict[tuple[str, int], skia.Typeface] = field(default_factory=dict)
-    images: dict[int, skia.Image] = field(default_factory=dict)
+    # Decoded images by what they were made from, kept across frames while
+    # frames keep drawing them: end_frame() drops those the frame did not use.
+    images: dict[object, skia.Image] = field(default_factory=dict)
+    images_used: set = field(default_factory=set)
     # Scene size in world units; raw_svg uses it as the SVGDOM container size so
     # percentage-based coordinates resolve the same way the SVG backend sees them.
     scene_width: float = 0.0
     scene_height: float = 0.0
+
+    def image(self, key: object, load: "Callable[[], skia.Image | None]") -> "skia.Image | None":
+        """The cached image for key, loaded on first use; None if it cannot be."""
+        img = self.images.get(key)
+        if img is None:
+            img = load()
+            if img is None:
+                return None
+            self.images[key] = img
+        self.images_used.add(key)
+        return img
+
+    def end_frame(self) -> None:
+        """Forget the images this frame did not draw."""
+        for key in [k for k in self.images if k not in self.images_used]:
+            del self.images[key]
+        self.images_used.clear()
 
     def typeface(self, family: str, weight: str) -> skia.Typeface:
         """The family at the weight the browser would use for this CSS

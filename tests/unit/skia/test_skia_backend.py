@@ -650,3 +650,71 @@ def test_non_skia_backend_reports_webp_unsupported():
     res = CairoSvgConverter()._convert_to_webp(_webp_scene(), "x.webp", 0.0, 100, 100)
     assert res["success"] is False
     assert "WebP" in res["error"]
+
+
+# --------------------------------------------------------------------------
+# Image cache across frames
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_context_keeps_images_while_frames_use_them():
+    from svan2d.skia.base import SkiaContext
+
+    ctx = SkiaContext()
+    loads = []
+
+    def load():
+        loads.append(1)
+        return skia.Surface(4, 4).makeImageSnapshot()
+
+    first = ctx.image("a", load)
+    ctx.end_frame()
+    assert ctx.image("a", load) is first
+    ctx.end_frame()
+    assert len(loads) == 1
+
+    ctx.end_frame()  # a frame that does not draw it
+    assert "a" not in ctx.images
+    ctx.image("a", load)
+    assert len(loads) == 2
+
+
+def _png_file(path, color):
+    surface = skia.Surface(8, 8)
+    surface.getCanvas().clear(color)
+    surface.makeImageSnapshot().save(str(path), skia.kPNG)
+
+
+@pytest.mark.integration
+def test_converter_reuses_an_image_across_frames(tmp_path):
+    from dataclasses import replace
+
+    from svan2d.primitive.state.image import ImageState
+
+    picture = tmp_path / "picture.png"
+    _png_file(picture, skia.ColorRED)
+    # A state rebuilt every frame, as a frame_fn element makes it.
+    element = VElement().frame_fn(
+        lambda state, t: replace(state, href=str(picture), opacity=1.0),
+        base_state=ImageState(width=100, height=100),
+    )
+    scene = VScene(width=100, height=100).add_element(element)
+    converter = SkiaSvgConverter()
+
+    def render(t):
+        converter._convert_to_png(scene, str(tmp_path / "out.png"), t, 100, 100)
+        (image,) = converter._ctx.images.values()
+        return image
+
+    first = render(0.0)
+    assert render(0.5) is first
+
+    # The same name written again is read again.
+    import os, time
+
+    time.sleep(0.01)
+    _png_file(picture, skia.ColorBLUE)
+    os.utime(picture)
+    assert render(1.0) is not first
+    assert skia.Image.open(str(tmp_path / "out.png")).toarray()[50, 50, 2] > 200

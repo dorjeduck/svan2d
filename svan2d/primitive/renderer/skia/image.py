@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import skia
 
 from svan2d.primitive.renderer.image import ImageFitMode
@@ -37,15 +39,19 @@ class ImageSkiaRenderer(SkiaRenderer):
 
     @staticmethod
     def _image(state: ImageState, ctx: SkiaContext) -> skia.Image:
-        key = id(state)
-        cached = ctx.images.get(key)
-        if cached is not None:
-            return cached
+        # Keyed by what the image is made from, so a state rebuilt every frame
+        # still finds it: the bytes themselves, or the file as it is now (a
+        # file rewritten under the same name is read again).
         if state.data is not None:
-            img = skia.Image.MakeFromEncoded(skia.Data.MakeWithCopy(state.data))
+            data = state.data
+            key = ("data", data)
+            load = lambda: skia.Image.MakeFromEncoded(skia.Data.MakeWithCopy(data))
         else:
-            img = skia.Image.open(state.href)
+            href = state.href
+            stat = os.stat(href)
+            key = ("file", os.path.abspath(href), stat.st_mtime_ns, stat.st_size)
+            load = lambda: skia.Image.open(href)
+        img = ctx.image(key, load)
         if img is None:
             raise SkiaUnsupported(f"Image could not be decoded by Skia: {state.href!r}")
-        ctx.images[key] = img
         return img

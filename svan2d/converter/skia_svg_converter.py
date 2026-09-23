@@ -18,7 +18,7 @@ import skia
 
 from svan2d.converter.svg_converter import SVGConverter
 from svan2d.core.logger import get_logger
-from svan2d.skia.base import SkiaUnsupported
+from svan2d.skia.base import SkiaContext, SkiaUnsupported
 from svan2d.skia.scene import render_scene_to_image
 from svan2d.skia.support import check_scene
 
@@ -34,6 +34,9 @@ class SkiaSvgConverter(SVGConverter):
     def __init__(self) -> None:
         super().__init__()
         self._validated_scene_id: int | None = None
+        # One context for every frame this converter renders, so fonts and
+        # images stay loaded between frames.
+        self._ctx = SkiaContext()
 
     def _ensure_supported(self, scene: "VScene") -> None:
         """Validate the scene once per instance. Raises SkiaUnsupported with detail."""
@@ -57,7 +60,9 @@ class SkiaSvgConverter(SVGConverter):
     ) -> dict:
         assert width_px is not None and height_px is not None
         self._ensure_supported(scene)
-        image = render_scene_to_image(scene, frame_time or 0.0, width_px, height_px)
+        image = render_scene_to_image(
+            scene, frame_time or 0.0, width_px, height_px, self._ctx
+        )
         with open(output_file, "wb") as f:
             f.write(bytes(image.encodeToData(skia.kPNG, 100)))
         return {"success": True, "output": output_file}
@@ -73,7 +78,9 @@ class SkiaSvgConverter(SVGConverter):
     ) -> dict:
         assert width_px is not None and height_px is not None
         self._ensure_supported(scene)
-        image = render_scene_to_image(scene, frame_time or 0.0, width_px, height_px)
+        image = render_scene_to_image(
+            scene, frame_time or 0.0, width_px, height_px, self._ctx
+        )
         # Skia maps WebP quality 100 to lossless (VP8L); None means lossless.
         webp_quality = 100 if quality is None else quality
         with open(output_file, "wb") as f:

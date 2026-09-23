@@ -376,6 +376,8 @@ class VElement(BaseVElement, KeystateBuilder):
         else:
             assert self._interpolator is not None
             state = self._interpolator.get_state_at_time(t)
+        if state is not None and (self.mask_element or self.clip_elements):
+            state = self._apply_velement_clips(state, t)
         self._cache_frame_time = t
         self._cache_state = state
         return state

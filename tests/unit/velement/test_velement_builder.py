@@ -340,6 +340,23 @@ class TestVElementBuilderClipMask:
 
         assert element.mask_element is mask_element
 
+    def test_clip_and_mask_reach_scene_svg(self):
+        """A scene draws frames via get_frame, so the clip and mask must be on it"""
+        from svan2d.vscene import VScene
+
+        element = (
+            VElement(state=RectangleState(width=80, height=80))
+            .clip(VElement(state=CircleState(radius=10)))
+            .mask(VElement(state=CircleState(radius=20)))
+        )
+        frame = element.get_frame(0.0)
+        assert frame.clip_states is not None and len(frame.clip_states) == 1
+        assert frame.mask_state is not None
+
+        svg = VScene(width=100, height=100).add_element(element).to_svg(log=False)
+        assert "clip-path=" in svg
+        assert "mask=" in svg
+
 
 class TestVElementBuilderAutoTiming:
     """Tests for auto-timing behavior"""

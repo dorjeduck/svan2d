@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import skia
 
+from svan2d.primitive.renderer.skia._common import svg_whitespace
 from svan2d.primitive.renderer.skia.text import TextSkiaRenderer
 from svan2d.primitive.state.number import NumberState
 from svan2d.skia.base import SkiaContext
@@ -43,6 +44,7 @@ class NumberSkiaRenderer(TextSkiaRenderer):
             self._draw_at(canvas, dec_text, "start", y, font, fill, state)
 
     def _draw_at(self, canvas, text, anchor, y, font, paint, state: NumberState) -> None:
+        text = svg_whitespace(text)
         spacing = state.letter_spacing or 0
         if spacing:
             total = sum(font.measureText(c) + spacing for c in text) - spacing

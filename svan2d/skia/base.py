@@ -40,14 +40,35 @@ class SkiaContext:
     scene_height: float = 0.0
 
     def typeface(self, family: str, weight: str) -> skia.Typeface:
-        bold = str(weight).lower() in ("bold", "700", "800", "900")
-        key = (family, 1 if bold else 0)
+        """The family at the weight the browser would use for this CSS
+        font-weight. The font manager picks the nearest face and sets a
+        variable font's weight axis, clamped to the font's range."""
+        numeric = css_font_weight(weight)
+        key = (family, numeric)
         tf = self.typefaces.get(key)
         if tf is None:
-            style = skia.FontStyle.Bold() if bold else skia.FontStyle.Normal()
+            style = skia.FontStyle(
+                numeric, skia.FontStyle.kNormal_Width, skia.FontStyle.kUpright_Slant
+            )
             tf = skia.Typeface(family, style)
             self.typefaces[key] = tf
         return tf
+
+
+# Keywords of CSS font-weight. lighter and bolder are relative to the inherited
+# weight, which for svan2d text is always the default 400.
+_CSS_FONT_WEIGHTS = {"normal": 400, "bold": 700, "lighter": 100, "bolder": 700}
+
+
+def css_font_weight(weight) -> int:
+    """A CSS font-weight (keyword or number) as the number it stands for."""
+    text = str(weight).strip().lower()
+    if text in _CSS_FONT_WEIGHTS:
+        return _CSS_FONT_WEIGHTS[text]
+    try:
+        return max(1, min(1000, int(float(text))))
+    except ValueError:
+        return 400  # an invalid value is ignored, leaving the default
 
 
 def skia_color(color: "Color", opacity: float = 1.0) -> int:

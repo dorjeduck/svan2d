@@ -222,6 +222,75 @@ def test_text_renders_without_error(tmp_path):
     assert (arr[:, :, 0] > 200).sum() > 50
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize("raw, laid_out", [
+    ("crater  ·  85 km", "crater · 85 km"),
+    ("  lead and trail  ", "lead and trail"),
+    ("tab\there", "tab here"),
+    ("line\nbreak", "line\nbreak"),
+])
+def test_svg_whitespace(raw, laid_out):
+    from svan2d.primitive.renderer.skia._common import svg_whitespace
+
+    assert svg_whitespace(raw) == laid_out
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("weight, numeric", [
+    ("normal", 400), ("bold", 700), ("lighter", 100), ("bolder", 700),
+    ("300", 300), (600, 600), ("nonsense", 400),
+])
+def test_css_font_weight(weight, numeric):
+    from svan2d.skia.base import css_font_weight
+
+    assert css_font_weight(weight) == numeric
+
+
+@pytest.mark.integration
+def test_typeface_follows_the_weight():
+    from svan2d.skia.base import SkiaContext
+
+    ctx = SkiaContext()
+    family = "Helvetica Neue"
+    if ctx.typeface(family, "normal").getFamilyName() != family:
+        pytest.skip(f"{family} not installed")
+    weights = [ctx.typeface(family, w).fontStyle().weight() for w in ("lighter", "normal", "bold")]
+    assert weights[0] < weights[1] < weights[2]
+
+
+def _text_states(text):
+    from svan2d.primitive.state.circle_text import CircleTextState
+    from svan2d.primitive.state.number import NumberState
+    from svan2d.primitive.state.path_text import PathTextState
+
+    white = Color("#ffffff")
+    return [
+        TextState(text=text, font_size=30, fill_color=white),
+        TextState(text=[text, text], font_size=30, fill_color=white),
+        NumberState(value=1.5, prefix=text, format="auto_aligned", font_size=30, fill_color=white),
+        CircleTextState(text=text, radius=90, font_size=20, fill_color=white),
+        PathTextState(text=text, data="M -140 0 L 140 0", font_size=20, fill_color=white),
+    ]
+
+
+@pytest.mark.integration
+def test_text_collapses_spaces_as_svg_does(tmp_path):
+    # SVG lays text out with runs of spaces made one, so Skia must draw the
+    # spaced string exactly as the single-spaced one.
+    for spaced, single in zip(_text_states("a  ·  b"), _text_states("a · b")):
+        arrays = [
+            _render(
+                VScene(width=300, height=200, background=Color("#000000")).add_element(
+                    VElement(state=state)
+                ),
+                tmp_path, w=300, h=200, name=name,
+            )
+            for state, name in ((spaced, "spaced.png"), (single, "single.png"))
+        ]
+        assert (arrays[1][:, :, 0] > 200).sum() > 20, type(single).__name__
+        assert np.array_equal(arrays[0], arrays[1]), type(single).__name__
+
+
 # --------------------------------------------------------------------------
 # Stop-with-detail
 # --------------------------------------------------------------------------

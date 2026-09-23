@@ -17,7 +17,7 @@ import math
 import skia
 
 from svan2d.path.svg_path import SVGPath
-from svan2d.primitive.renderer.skia._common import _svgpath_to_skia
+from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
 from svan2d.primitive.state.path_text import PathTextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
 
@@ -59,6 +59,7 @@ class PathTextSkiaRenderer(SkiaRenderer):
             self._draw_text(canvas, str(state.text), state.offset, pm, length, font, fill, state)
 
     def _draw_text(self, canvas, text, offset, pm, length, font, paint, state) -> None:
+        text = svg_whitespace(text)
         spacing = state.letter_spacing or 0
         advances = [font.measureText(c) for c in text]
         # CSS letter-spacing counts the trailing gap after the last glyph in the

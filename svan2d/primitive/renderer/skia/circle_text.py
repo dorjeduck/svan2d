@@ -15,7 +15,7 @@ import math
 import skia
 
 from svan2d.path.svg_path import SVGPath
-from svan2d.primitive.renderer.skia._common import _svgpath_to_skia
+from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
 from svan2d.primitive.state.circle_text import CircleTextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
 
@@ -71,6 +71,7 @@ class CircleTextSkiaRenderer(SkiaRenderer):
         )
 
     def _draw_text(self, canvas, text, offset, pm, length, font, paint, state) -> None:
+        text = svg_whitespace(text)
         # CircleTextRenderer maps the 0-1 offset onto the middle of the double loop.
         mapped = 0.25 + offset * 0.5
         spacing = state.letter_spacing or 0

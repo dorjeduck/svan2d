@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import skia
 
+from svan2d.primitive.renderer.skia._common import svg_whitespace
 from svan2d.primitive.state.text import TextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
 
@@ -26,6 +27,7 @@ class TextSkiaRenderer(SkiaRenderer):
             self._draw_line(canvas, str(line), base + i * line_h, font, fill, state)
 
     def _draw_line(self, canvas, text, y, font, paint, state: TextState) -> None:
+        text = svg_whitespace(text)
         spacing = state.letter_spacing or 0
         if spacing:
             # CSS letter-spacing adds spacing after every glyph, including the

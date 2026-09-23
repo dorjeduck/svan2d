@@ -16,7 +16,7 @@ from typing import Any
 import skia
 
 from svan2d.path.svg_path import SVGPath
-from svan2d.primitive.renderer.skia._common import _svgpath_to_skia
+from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
 from svan2d.skia.base import SkiaContext, SkiaRenderer, skia_color
 
 
@@ -75,6 +75,7 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
     def _draw_text(self, canvas, state, ctx: SkiaContext) -> None:
         variant_data = self.variant_data(state)
         text = state.text if state.text is not None else variant_data["text"]
+        text = svg_whitespace(text) if text else text
         if not text:
             return
         color = state.text_color if state.text_color and not state.text_color.is_none() else state.fill_color

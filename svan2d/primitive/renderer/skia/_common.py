@@ -7,6 +7,8 @@ individual renderer files in this submodule.
 
 from __future__ import annotations
 
+import re
+
 import skia
 
 from svan2d.path.commands import ClosePath, CubicBezier, MoveTo
@@ -24,6 +26,14 @@ _JOIN = {
     "round": skia.Paint.kRound_Join,
     "bevel": skia.Paint.kBevel_Join,
 }
+
+
+def svg_whitespace(text: str) -> str:
+    """A line of text as SVG lays it out by default (xml:space="default"):
+    tabs become spaces, runs of spaces become one, and spaces at either end
+    are dropped. Newlines are left alone: drawsvg splits text into lines on
+    them before any renderer sees it."""
+    return re.sub(r" {2,}", " ", text.replace("\t", " ")).strip(" ")
 
 
 def _parse_dash(spec: str) -> list[float]:

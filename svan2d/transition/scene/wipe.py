@@ -109,23 +109,13 @@ class Wipe(SceneTransition):
         drawing.append_def(clip_in)
 
         # Render outgoing scene with clip
-        out_drawing = scene_out.to_drawing(
-            frame_time=time_out,
-            render_scale=ctx.render_scale,
-        )
         out_group = dw.Group(clip_path=f"url(#{clip_out_id})")
-        for child in out_drawing.elements:
-            out_group.append(child)
+        self._append_scene(drawing, out_group, scene_out, time_out, ctx)
         drawing.append(out_group)
 
         # Render incoming scene with clip
-        in_drawing = scene_in.to_drawing(
-            frame_time=time_in,
-            render_scale=ctx.render_scale,
-        )
         in_group = dw.Group(clip_path=f"url(#{clip_in_id})")
-        for child in in_drawing.elements:
-            in_group.append(child)
+        self._append_scene(drawing, in_group, scene_in, time_in, ctx)
         drawing.append(in_group)
 
         return drawing

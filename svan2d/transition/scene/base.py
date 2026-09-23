@@ -122,6 +122,29 @@ class SceneTransition(ABC):
         height = ctx.height * ctx.render_scale
         return dw.Drawing(width, height, origin=ctx.origin)
 
+    def _append_scene(
+        self,
+        drawing: dw.Drawing,
+        target: dw.Drawing | dw.Group,
+        scene: "VScene",
+        frame_time: float,
+        ctx: RenderContext,
+    ) -> None:
+        """Render a scene at frame_time into target, its defs into drawing.
+
+        A scene's clips, masks, gradients and patterns are defs of its own
+        drawing; copying only its elements would leave their references
+        dangling.
+        """
+        scene_drawing = scene.to_drawing(
+            frame_time=frame_time,
+            render_scale=ctx.render_scale,
+        )
+        for child in scene_drawing.elements:
+            target.append(child)
+        for child_def in scene_drawing.other_defs:
+            drawing.append_def(child_def)
+
     def _get_background_rect(
         self, ctx: RenderContext
     ) -> tuple[float, float, float, float]:

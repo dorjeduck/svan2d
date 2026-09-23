@@ -85,25 +85,15 @@ class Slide(SceneTransition):
         out_offset, in_offset = self._calculate_offsets(progress, width, height)
 
         # Render outgoing scene with offset
-        out_drawing = scene_out.to_drawing(
-            frame_time=time_out,
-            render_scale=ctx.render_scale,
-        )
         out_transform = f"translate({out_offset[0]},{out_offset[1]})"
         out_group = dw.Group(transform=out_transform)
-        for child in out_drawing.elements:
-            out_group.append(child)
+        self._append_scene(drawing, out_group, scene_out, time_out, ctx)
         drawing.append(out_group)
 
         # Render incoming scene with offset
-        in_drawing = scene_in.to_drawing(
-            frame_time=time_in,
-            render_scale=ctx.render_scale,
-        )
         in_transform = f"translate({in_offset[0]},{in_offset[1]})"
         in_group = dw.Group(transform=in_transform)
-        for child in in_drawing.elements:
-            in_group.append(child)
+        self._append_scene(drawing, in_group, scene_in, time_in, ctx)
         drawing.append(in_group)
 
         return drawing

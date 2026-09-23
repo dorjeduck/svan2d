@@ -103,26 +103,16 @@ class Zoom(SceneTransition):
 
         # Render outgoing scene with zoom
         if opacity_out > 0:
-            out_drawing = scene_out.to_drawing(
-                frame_time=time_out,
-                render_scale=ctx.render_scale,
-            )
             out_transform = self._build_zoom_transform(center_x, center_y, out_scale)
             out_group = dw.Group(transform=out_transform, opacity=opacity_out)
-            for child in out_drawing.elements:
-                out_group.append(child)
+            self._append_scene(drawing, out_group, scene_out, time_out, ctx)
             drawing.append(out_group)
 
         # Render incoming scene with zoom
         if opacity_in > 0:
-            in_drawing = scene_in.to_drawing(
-                frame_time=time_in,
-                render_scale=ctx.render_scale,
-            )
             in_transform = self._build_zoom_transform(center_x, center_y, in_scale)
             in_group = dw.Group(transform=in_transform, opacity=opacity_in)
-            for child in in_drawing.elements:
-                in_group.append(child)
+            self._append_scene(drawing, in_group, scene_in, time_in, ctx)
             drawing.append(in_group)
 
         return drawing

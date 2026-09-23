@@ -106,50 +106,30 @@ class Iris(SceneTransition):
             # Circle expands to reveal incoming scene
             radius = max_radius * progress
             # Draw outgoing scene as background
-            out_drawing = scene_out.to_drawing(
-                frame_time=time_out,
-                render_scale=ctx.render_scale,
-            )
-            for child in out_drawing.elements:
-                drawing.append(child)
+            self._append_scene(drawing, drawing, scene_out, time_out, ctx)
 
             # Draw incoming scene clipped by expanding circle
             clip = dw.ClipPath(id=clip_id)
             clip.append(dw.Circle(center_x, center_y, radius))
             drawing.append_def(clip)
 
-            in_drawing = scene_in.to_drawing(
-                frame_time=time_in,
-                render_scale=ctx.render_scale,
-            )
             in_group = dw.Group(clip_path=f"url(#{clip_id})")
-            for child in in_drawing.elements:
-                in_group.append(child)
+            self._append_scene(drawing, in_group, scene_in, time_in, ctx)
             drawing.append(in_group)
 
         else:  # close
             # Circle shrinks to hide outgoing scene
             radius = max_radius * (1 - progress)
             # Draw incoming scene as background
-            in_drawing = scene_in.to_drawing(
-                frame_time=time_in,
-                render_scale=ctx.render_scale,
-            )
-            for child in in_drawing.elements:
-                drawing.append(child)
+            self._append_scene(drawing, drawing, scene_in, time_in, ctx)
 
             # Draw outgoing scene clipped by shrinking circle
             clip = dw.ClipPath(id=clip_id)
             clip.append(dw.Circle(center_x, center_y, radius))
             drawing.append_def(clip)
 
-            out_drawing = scene_out.to_drawing(
-                frame_time=time_out,
-                render_scale=ctx.render_scale,
-            )
             out_group = dw.Group(clip_path=f"url(#{clip_id})")
-            for child in out_drawing.elements:
-                out_group.append(child)
+            self._append_scene(drawing, out_group, scene_out, time_out, ctx)
             drawing.append(out_group)
 
         return drawing

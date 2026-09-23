@@ -77,3 +77,24 @@ class TestGroupClipping:
         assert "<clipPath" not in svg
         assert "clip-path=" not in svg
         assert svg.count("<g") == 1
+
+
+class TestGroupEasing:
+    def test_group_easing_alone_eases_the_children(self):
+        from svan2d.core.point2d import Point2D
+        from svan2d.primitive.state.circle import CircleState
+        from svan2d.transition import easing
+        from svan2d.velement import VElement
+
+        child = (
+            VElement()
+            .keystate(CircleState(radius=5, pos=Point2D(0, 0)), at=0.0)
+            .keystate(CircleState(radius=5, pos=Point2D(100, 0)), at=1.0)
+        )
+        group = VElementGroup(elements=[child], group_easing=easing.in_cubic)
+        group.get_frame(0.5)
+        assert group._last_frame_time == easing.in_cubic(0.5)
+        from svan2d.vscene import VScene
+
+        svg = VScene(width=200, height=100).add_element(group).to_svg(frame_time=0.5, log=False)
+        assert f"translate({100 * easing.in_cubic(0.5)}," in svg

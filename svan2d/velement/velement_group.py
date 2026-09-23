@@ -9,7 +9,7 @@ import drawsvg as dw
 
 from svan2d.primitive.state.base import State
 from svan2d.velement.base_velement import _UNSET, BaseVElement, _Unset
-from svan2d.velement.builder import BuilderState, KeystateBuilder
+from svan2d.velement.builder import BuilderState, KeystateBuilder, KeystateTuple
 from svan2d.velement.keystate_parser import AttributeKeyStatesDict
 from svan2d.velement.transition import EasingFunction
 from svan2d.velement.state_interpolator import StateInterpolator
@@ -187,8 +187,9 @@ class VElementGroup(BaseVElement, KeystateBuilder):
         # Auto-create identity keystates if group_easing is set but no keystates defined
         if self.group_easing is not None and len(self._builder.keystates) == 0:
             identity = VElementGroupState()
-            # Tuple format: (state, outgoing_state, time, transition_config, render_index)
-            ###TODO ### new_keystates  = self._builder.keystates + ((identity, None, 0.0, None, None)) + (identity, None, 1.0, None, None)
+            self._builder = self._builder.with_keystate(
+                KeystateTuple(identity, None, 0.0, None, 0)
+            ).with_keystate(KeystateTuple(identity, None, 1.0, None, 0))
 
         # Use builder mixin to finalize
         keystates, attribute_timelines = self._finalize_build()

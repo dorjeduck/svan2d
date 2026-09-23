@@ -46,72 +46,24 @@ def apply_scene_clipping(
 ) -> dw.Group:
     """Apply scene-level clip/mask to root group.
 
-    Uses the same clipping logic as Renderer._apply_clipping_and_masking
-    but at the scene level.
+    Builds the clip and mask exactly as Renderer._apply_clipping_and_masking
+    does for an element: the same shapes, fills and placement, only around the
+    whole scene.
     """
-    import uuid
-
-    from svan2d.primitive import get_renderer_instance_for_state
+    from svan2d.primitive.renderer.base import Renderer
 
     result = group
 
     # Apply mask first (innermost)
     if mask_state is not None:
-        mask_id = f"mask-{uuid.uuid4().hex[:8]}"
-        mask = dw.Mask(id=mask_id)
-
-        renderer = get_renderer_instance_for_state(mask_state)
-        mask_elem = renderer._render_core(mask_state, drawing=drawing)
-
-        transforms = []
-        if mask_state.x != 0 or mask_state.y != 0:
-            transforms.append(f"translate({mask_state.x},{mask_state.y})")
-        if mask_state.rotation != 0:
-            transforms.append(f"rotate({mask_state.rotation})")
-        if mask_state.scale != 1.0:
-            transforms.append(f"scale({mask_state.scale})")
-
-        mask_group = dw.Group(opacity=mask_state.opacity)
-        if transforms:
-            mask_group.args["transform"] = " ".join(transforms)
-        mask_group.append(mask_elem)
-        mask.append(mask_group)
-
-        drawing.append_def(mask)
-
+        mask_id = Renderer._create_mask_def(mask_state, drawing)
         masked_group = dw.Group(mask=f"url(#{mask_id})")
         masked_group.append(result)
         result = masked_group
 
     # Apply clip
     if clip_state is not None:
-        clip_id = f"clip-{uuid.uuid4().hex[:8]}"
-        clip_path = dw.ClipPath(id=clip_id)
-
-        renderer = get_renderer_instance_for_state(clip_state)
-        clip_elem = renderer._render_core(clip_state, drawing=drawing)
-
-        if (
-            clip_state.x != 0
-            or clip_state.y != 0
-            or clip_state.rotation != 0
-            or clip_state.scale != 1.0
-        ):
-            transforms = []
-            if clip_state.x != 0 or clip_state.y != 0:
-                transforms.append(f"translate({clip_state.x},{clip_state.y})")
-            if clip_state.rotation != 0:
-                transforms.append(f"rotate({clip_state.rotation})")
-            if clip_state.scale != 1.0:
-                transforms.append(f"scale({clip_state.scale})")
-            clip_group = dw.Group(transform=" ".join(transforms))
-            clip_group.append(clip_elem)
-            clip_path.append(clip_group)
-        else:
-            clip_path.append(clip_elem)
-
-        drawing.append_def(clip_path)
-
+        clip_id = Renderer._create_clip_path_def([clip_state], drawing)
         clipped_group = dw.Group(clip_path=f"url(#{clip_id})")
         clipped_group.append(result)
         result = clipped_group

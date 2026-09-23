@@ -299,3 +299,31 @@ class TestVSceneRepr:
         assert "VScene" in repr_str
         assert "800" in repr_str
         assert "600" in repr_str
+
+
+@pytest.mark.unit
+class TestVSceneClipping:
+    """Scene-level clip and mask are built as an element's are."""
+
+    def _svg(self, **kwargs) -> str:
+        from svan2d.primitive.state.circle import CircleState
+        from svan2d.primitive.state.rectangle import RectangleState
+        from svan2d.velement import VElement
+
+        shape = CircleState(radius=60, pos=Point2D(20, 30), rotation=10)
+        scene = VScene(width=200, height=200, **{k: shape for k in kwargs})
+        scene = scene.add_element(VElement(state=RectangleState(width=100, height=100)))
+        return scene.to_svg(log=False)
+
+    def test_offset_clip_shape_sits_directly_in_clip_path(self):
+        # A <g> is not allowed inside <clipPath>; renderers drop it and the
+        # whole scene is clipped away.
+        svg = self._svg(clip_state=True)
+        clip = svg[svg.index("<clipPath"):svg.index("</clipPath>")]
+        assert "<g" not in clip
+        assert 'transform="translate(20,-30) rotate(-10)"' in clip
+
+    def test_mask_shape_uses_element_placement(self):
+        svg = self._svg(mask_state=True)
+        mask = svg[svg.index("<mask"):svg.index("</mask>")]
+        assert 'transform="translate(20,-30) rotate(-10)"' in mask

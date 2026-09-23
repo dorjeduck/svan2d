@@ -705,23 +705,14 @@ class VScene:
                 )
             )
 
-        # A scene clip/mask is in scene units, and it sits outside the camera.
-        # With one, the output scale goes on a group around the clip and the
-        # camera group carries the camera alone; without, the camera group
-        # carries both.
-        clipped = self.clip_state is not None or self.mask_state is not None
-        camera_scale = 1.0 if clipped else render_scale
-
-        # Create global transform group (use animated camera if available)
+        # Create global transform group (use animated camera if available).
+        # It is built in scene units: the output scale goes on a group around
+        # everything, so the camera's pivot and the scene's clip/mask, which
+        # sits outside the camera, are scaled with the rest.
         camera_state = self._get_camera_state_at_time(frame_time)
         needs_centering = self.origin != Origin.CENTER and self._camera_offset_func is not None
-        vp_w, vp_h = (ww, hh) if needs_centering else (0.0, 0.0)
-        transform = camera_mod.build_camera_transform(
-            camera_state,
-            camera_scale,
-            vp_w * camera_scale / render_scale,
-            vp_h * camera_scale / render_scale,
-        )
+        vp_w, vp_h = (ww / render_scale, hh / render_scale) if needs_centering else (0.0, 0.0)
+        transform = camera_mod.build_camera_transform(camera_state, 1.0, vp_w, vp_h)
         group = dw.Group(transform=transform) if transform else dw.Group()
 
         # Pre-compute interpolated states once for all elements.
@@ -769,14 +760,15 @@ class VScene:
                         element._frozen_state = state
 
         # Apply scene-level clipping/masking
-        if clipped:
+        if self.clip_state is not None or self.mask_state is not None:
             group = rendering_mod.apply_scene_clipping(
                 group, drawing, self.clip_state, self.mask_state
             )
-            if render_scale != 1.0:
-                scaled = dw.Group(transform=f"scale({render_scale})")
-                scaled.append(group)
-                group = scaled
+
+        if render_scale != 1.0:
+            scaled = dw.Group(transform=f"scale({render_scale})")
+            scaled.append(group)
+            group = scaled
 
         drawing.append(group)
 

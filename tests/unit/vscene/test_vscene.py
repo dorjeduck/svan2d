@@ -335,3 +335,17 @@ class TestVSceneClipping:
         svg = scene.to_svg(render_scale=2.0, log=False)
         body = svg[svg.index("</defs>"):]
         assert body.index('transform="scale(2.0)"') < body.index("clip-path=")
+
+
+@pytest.mark.unit
+class TestVSceneOutputScale:
+    """The output scale wraps the scene; the camera stays in scene units."""
+
+    def test_pivot_camera_is_the_same_at_every_output_scale(self):
+        camera = CameraState(scale=1.4, pos=Point2D(15, -10), rotation=20, pivot=Point2D(40, 30))
+        scene = VScene(width=200, height=200).camera_keystate(camera, at=0.0)
+        at_one = scene.to_svg(render_scale=1.0, log=False)
+        camera_transform = at_one[at_one.index("<g transform="):].split(">")[0]
+        at_two = scene.to_svg(render_scale=2.0, log=False)
+        assert '<g transform="scale(2.0)">' in at_two
+        assert camera_transform in at_two

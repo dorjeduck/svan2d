@@ -410,3 +410,40 @@ def test_transition_without_skia_version_is_reported():
     sequence = VSceneSequence().scene(_moving("#000"), 0.5).transition(
         Custom(duration=0.2)).scene(_moving("#111"), 0.5)
     assert check_scene(sequence) == ["no Skia version of transition Custom"]
+
+
+# --------------------------------------------------------------------------
+# Image opacity
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_image_opacity_is_written_once(tmp_path):
+    from svan2d.primitive.state.image import ImageState
+
+    white = tmp_path / "white.png"
+    surface = skia.Surface(20, 20)
+    surface.getCanvas().clear(skia.ColorWHITE)
+    surface.makeImageSnapshot().save(str(white), skia.kPNG)
+    svg = VScene(width=100, height=100).add_element(
+        VElement(state=ImageState(href=str(white), width=80, height=80, opacity=0.5))
+    ).to_svg(log=False)
+    assert svg.count('opacity="0.5"') == 1
+
+
+@pytest.mark.integration
+def test_image_opacity_applies_once(tmp_path):
+    from svan2d.primitive.state.image import ImageState
+
+    white = tmp_path / "white.png"
+    surface = skia.Surface(20, 20)
+    surface.getCanvas().clear(skia.ColorWHITE)
+    surface.makeImageSnapshot().save(str(white), skia.kPNG)
+    scene = _scene().add_element(
+        VElement(state=ImageState(href=str(white), width=80, height=80, opacity=0.5))
+    )
+    assert_matches_resvg(scene, tmp_path)
+    for converter in (SkiaSvgConverter(), ResvgSvgConverter()):
+        centre = _png(converter, scene, tmp_path, "centre.png", 0.0, W, H)[H // 2, W // 2]
+        # Half of white over the #102030 background.
+        assert abs(centre[0] - (255 + 0x10) / 2) <= 2, (type(converter).__name__, centre)

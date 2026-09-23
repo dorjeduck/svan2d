@@ -21,8 +21,6 @@ class ImageSkiaRenderer(SkiaRenderer):
         th = state.height if state.height is not None else ih
 
         paint = skia.Paint(AntiAlias=True)
-        if state.opacity < 1.0:
-            paint.setAlphaf(state.opacity)
         sampling = skia.SamplingOptions(skia.FilterMode.kLinear)
         src = skia.Rect.MakeWH(iw, ih)
 

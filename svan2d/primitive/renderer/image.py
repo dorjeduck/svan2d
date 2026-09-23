@@ -292,7 +292,6 @@ class ImageRenderer(Renderer):
                 "y": final_image_y,
                 "width": final_width,
                 "height": final_height,
-                "opacity": state.opacity,
                 "data": image_data,  # Pass raw bytes - drawsvg will handle base64 encoding
                 "mime_type": mime_type,
             }

@@ -875,13 +875,6 @@ class VScene:
     # Helper Methods
     # ========================================================================
 
-    def _build_transform(self, render_scale: float) -> str:
-        """Build SVG transform string from scene transforms."""
-
-        return rendering_mod.build_scene_transform(
-            self.scale, self.rotation, self.offset_x, self.offset_y, render_scale
-        )
-
     def get_animation_time_range(self) -> tuple[float, float]:
         """Get the time range covered by all elements
 

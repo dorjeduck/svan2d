@@ -10,34 +10,6 @@ if TYPE_CHECKING:
     from svan2d.primitive.state.base import State
 
 
-def build_scene_transform(
-    scale: float,
-    rotation: float,
-    offset_x: float,
-    offset_y: float,
-    render_scale: float,
-) -> str:
-    """Build SVG transform string from scene transforms.
-
-    Returns:
-        SVG transform string, or empty string if no transforms needed
-    """
-    transforms = []
-
-    total_scale = scale * render_scale
-    if total_scale != 1.0:
-        transforms.append(f"scale({total_scale})")
-
-    if rotation != 0.0:
-        transforms.append(f"rotate({rotation})")
-
-    if offset_x != 0.0 or offset_y != 0.0:
-        transforms.append(f"translate({offset_x},{offset_y})")
-
-
-    return " ".join(transforms)
-
-
 def apply_scene_clipping(
     group: dw.Group,
     drawing: dw.Drawing,

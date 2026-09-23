@@ -169,38 +169,6 @@ class TestVSceneRendering:
 
 
 @pytest.mark.unit
-class TestVSceneTransforms:
-    """Tests for VScene transform building."""
-
-    def test_build_transform_empty(self):
-        scene = VScene()
-        transform = scene._build_transform(1.0)
-        assert transform == ""
-
-    def test_build_transform_with_scale(self):
-        scene = VScene(scale=2.0)
-        transform = scene._build_transform(1.0)
-        assert "scale(2.0)" in transform
-
-    def test_build_transform_with_rotation(self):
-        scene = VScene(rotation=45)
-        transform = scene._build_transform(1.0)
-        assert "rotate(45)" in transform
-
-    def test_build_transform_with_offset(self):
-        scene = VScene(offset_x=10, offset_y=20)
-        transform = scene._build_transform(1.0)
-        assert "translate(10,20)" in transform
-
-    def test_build_transform_combined(self):
-        scene = VScene(scale=2.0, rotation=45, offset_x=10, offset_y=20)
-        transform = scene._build_transform(1.0)
-        assert "scale" in transform
-        assert "rotate" in transform
-        assert "translate" in transform
-
-
-@pytest.mark.unit
 class TestVSceneCameraAnimation:
     """Tests for camera animation methods."""
 

@@ -21,6 +21,7 @@ from svan2d.core.enums import Origin
 from svan2d.skia.base import SkiaContext, SkiaRenderer, skia_color
 from svan2d.skia.clipping import clip_states_of, draw_clipped, mask_states_of
 from svan2d.primitive.registry import get_skia_renderer_for_state
+from svan2d.transition.pause import local_pause_t, pause_opacity
 from svan2d.transition.scene.base import RenderContext
 from svan2d.transition.scene.registry import get_skia_transition
 
@@ -102,7 +103,9 @@ def _draw_vscene(
         raise ValueError(f"frame_time must be in [0,1], got {frame_time}")
     if scene.reverse:
         frame_time = 1.0 - frame_time
-    effective_easing, _ = scene._resolve_pause_easing()
+    # Raw (un-eased) time is kept for the pause overlays, as in to_drawing.
+    raw_t = frame_time
+    effective_easing, pause_windows = scene._resolve_pause_easing()
     if effective_easing is not None:
         frame_time = effective_easing(frame_time)
 
@@ -141,6 +144,38 @@ def _draw_vscene(
         )
     finally:
         canvas.restore()
+
+    _draw_pause_overlays(canvas, scene, raw_t, pause_windows, ctx, render_scale)
+
+
+def _draw_pause_overlays(
+    canvas, scene: "VScene", raw_t: float, windows, ctx: SkiaContext,
+    render_scale: float,
+) -> None:
+    """to_drawing's overlay pass: on top of everything, each overlay whose
+    pause window holds raw_t, at the pause's local time, faded in and out."""
+    for descriptor, window in zip(scene._pauses, windows):
+        if descriptor.overlay is None:
+            continue
+        start, end = window
+        if raw_t < start or raw_t > end:
+            continue
+        opacity = pause_opacity(raw_t, window, descriptor.fade)
+        if opacity <= 0.0:
+            continue
+        local_t = local_pause_t(raw_t, window)
+        canvas.saveLayerAlpha(None, int(round(opacity * 255)))
+        try:
+            if hasattr(descriptor.overlay, "to_drawing"):
+                # A sub-scene at the output scale, as to_drawing(render_scale=)
+                # renders it.
+                draw_scene(canvas, descriptor.overlay, local_t, ctx, render_scale)
+            else:
+                # An element unscaled: to_drawing appends it outside the
+                # render-scale group.
+                _draw_children(canvas, [descriptor.overlay], local_t, ctx)
+        finally:
+            canvas.restore()
 
 
 def _apply_camera(canvas, state: "CameraState", viewport_w: float, viewport_h: float) -> None:

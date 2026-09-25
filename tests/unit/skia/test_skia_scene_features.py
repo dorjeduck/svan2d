@@ -506,3 +506,42 @@ def test_sequence_fills_another_aspect(tmp_path, transition, size, t):
     # Scenes and transitions fill the whole picture, as a VScene does.
     got = _png(SkiaSvgConverter(), sequence, tmp_path, "fill.png", t, w, h)
     assert (got[:, :, 3] == 255).all()
+
+
+# --------------------------------------------------------------------------
+# Pauses and their overlays
+# --------------------------------------------------------------------------
+
+
+def _overlay_element():
+    return VElement(state=RectangleState(width=80, height=40, pos=Point2D(0, -60),
+                                         fill_color=Color("#00c0ff")))
+
+
+def _overlay_scene():
+    return VScene(width=W, height=H).add_element(
+        VElement()
+        .keystate(TriangleState(size=40, pos=Point2D(-60, 60), fill_color=Color("#ff00aa")), at=0.0)
+        .keystate(TriangleState(size=60, pos=Point2D(60, 60), fill_color=Color("#ff00aa")), at=1.0)
+    )
+
+
+# The pause holds the raw window [0.3, 0.7]; with fade 0.25 the overlay fades
+# in over [0.3, 0.4], so 0.35 is half way in.
+@pytest.mark.integration
+@pytest.mark.parametrize("overlay", [None, "element", "scene"])
+@pytest.mark.parametrize("t", [0.2, 0.35, 0.5, 0.75])
+@pytest.mark.parametrize("scale", [1, 2])
+def test_pause_overlay(tmp_path, overlay, t, scale):
+    content = {None: None, "element": _overlay_element(), "scene": _overlay_scene()}[overlay]
+    scene = _moving("#203040").add_pause(at=0.5, fraction=0.4, overlay=content, fade=0.25)
+    assert_matches_resvg(scene, tmp_path, t=t, w=W * scale, h=H * scale)
+
+
+def test_check_scene_reports_unsupported_overlay():
+    from svan2d.primitive.effect.filter.gaussian_blur import GaussianBlurFilter
+
+    blurred = VElement(state=CircleState(radius=20, fill_color=Color("#ffffff"),
+                                         filter=GaussianBlurFilter(std_deviation=2)))
+    scene = _scene().add_pause(at=0.5, fraction=0.2, overlay=blurred)
+    assert any("filter" in r for r in check_scene(scene))

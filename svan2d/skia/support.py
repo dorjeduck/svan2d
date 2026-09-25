@@ -65,8 +65,16 @@ def _check_vscene(scene: "VScene", add) -> None:
         [scene.mask_state] if scene.mask_state is not None else [],
         add,
     )
-    if getattr(scene, "_pauses", None):
-        add("scene pauses/overlays")
+    # A pause is only a time mapping; what it can bring is an overlay, whose
+    # content must be supported like the rest.
+    for descriptor in getattr(scene, "_pauses", None) or []:
+        overlay = descriptor.overlay
+        if overlay is None:
+            continue
+        if hasattr(overlay, "to_drawing"):
+            _check_any_scene(overlay, add)
+        else:
+            _check_element(overlay, add)
 
     for element in scene.elements:
         _check_element(element, add)

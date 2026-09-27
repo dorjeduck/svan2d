@@ -179,10 +179,13 @@ class TestCircularMidpoint:
         result = circular_midpoint(0, 90)
         assert result == pytest.approx(45.0, abs=0.1)
 
-    def test_midpoint_spanning_zero(self):
-        # 350 and 10 should have midpoint at 0 or 360 (equivalent)
-        result = circular_midpoint(350, 10)
-        assert result == pytest.approx(0.0, abs=0.1) or result == pytest.approx(360.0, abs=0.1)
+    @pytest.mark.parametrize("a1,a2", [(350, 10), (10, 350), (359, 1)])
+    def test_midpoint_spanning_zero(self, a1, a2):
+        # The average vector's angle comes out a hair below zero; the result
+        # must still be 0, within [0, 360), not 360.
+        result = circular_midpoint(a1, a2)
+        assert 0 <= result < 360
+        assert result == pytest.approx(0.0, abs=0.1)
 
     def test_midpoint_opposite_sides(self):
         # 0 and 180 should have midpoint at 90 or 270

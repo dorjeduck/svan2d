@@ -98,7 +98,9 @@ def circular_midpoint(a1: float, a2: float) -> float:
     mid_rad = math.atan2(ym, xm)
     mid_deg = math.degrees(mid_rad) % 360
 
-    return mid_deg
+    # A hair below zero (350° and 10° average to about -1.6e-15°) wraps to
+    # 360 - 1.6e-15, which rounds to 360.0: outside [0, 360). It is 0.
+    return 0.0 if mid_deg == 360.0 else mid_deg
 
 
 def _gaussian_smooth(values: list[float], sigma_samples: float) -> list[float]:

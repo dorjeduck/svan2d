@@ -15,6 +15,7 @@ import math
 import skia
 
 from svan2d.path.svg_path import SVGPath
+from svan2d.primitive.renderer.circle_text import _angle_fraction
 from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
 from svan2d.primitive.state.circle_text import CircleTextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
@@ -46,16 +47,17 @@ class CircleTextSkiaRenderer(SkiaRenderer):
                     f"Length of angles ({len(state.angles)}) must be equal or bigger "
                     f"than number of texts ({num})"
                 )
+            # `rotation` is not added here: the element's transform already
+            # turns the whole circle by it.
             for i, content in enumerate(texts):
                 if state.angles is not None:
                     # Cartesian degrees (0=East, CCW) -> path fraction.
-                    angle_fraction = (90 - state.angles[i]) % 360 / 360
-                    position = state.rotation / 360 + angle_fraction
+                    position = _angle_fraction(state.angles[i], state.text_facing_inward)
                 else:
-                    position = state.rotation / 360 + (i / num)
+                    position = i / num
                 self._draw_text(canvas, str(content), position, pm, length, font, fill, state)
         else:
-            self._draw_text(canvas, str(state.text), state.rotation, pm, length, font, fill, state)
+            self._draw_text(canvas, str(state.text), 0.0, pm, length, font, fill, state)
 
     @staticmethod
     def _circle_path(state: CircleTextState) -> str:

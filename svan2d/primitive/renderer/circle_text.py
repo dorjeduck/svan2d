@@ -24,6 +24,18 @@ def _circle_path_id(radius: float, text_facing_inward: bool) -> str:
     return f"circle_path_{facing}_{radius:g}".replace(".", "_").replace("-", "m")
 
 
+def _angle_fraction(angle: float, text_facing_inward: bool) -> float:
+    """Where on the circle path a Cartesian angle (0=East, CCW) lies, as a
+    fraction of one turn from the top.
+
+    The path runs clockwise from the top for inward-facing text and
+    counter-clockwise for outward-facing text.
+    """
+    if text_facing_inward:
+        return (90 - angle) % 360 / 360
+    return (angle - 90) % 360 / 360
+
+
 class CircleTextRenderer(Renderer):
     """Renderer for text laid out along a circular path."""
 
@@ -56,23 +68,26 @@ class CircleTextRenderer(Renderer):
                     f"Length of angles ({len(state.angles)}) must be equal or bigger than number of texts ({num_texts})"
                 )
 
+            # `rotation` is not added here: the element's transform already
+            # turns the whole circle by it.
             for i, text_content in enumerate(texts):
                 if state.angles is not None:
                     # Use custom angle - convert Cartesian degrees (0=East, CCW) to path fraction
-                    angle_fraction = (90 - state.angles[i]) % 360 / 360
-                    text_position = state.rotation / 360 + angle_fraction
+                    text_position = _angle_fraction(
+                        state.angles[i], state.text_facing_inward
+                    )
                 else:
                     # Distribute texts evenly around one full circle (0 to 1 range)
-                    text_position = state.rotation / 360 + (i / num_texts)
+                    text_position = i / num_texts
 
                 text_element = self._create_text_element(
                     text_content, text_position, circle_path, state, drawing
                 )
                 group.append(text_element)
         else:
-            # Handle single text (original behavior)
+            # Handle single text, at the top; the transform applies `rotation`
             text_element = self._create_text_element(
-                state.text, state.rotation, circle_path, state, drawing
+                state.text, 0.0, circle_path, state, drawing
             )
             group.append(text_element)
 

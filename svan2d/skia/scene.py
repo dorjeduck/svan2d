@@ -171,8 +171,8 @@ def _draw_pause_overlays(
                 # renders it.
                 draw_scene(canvas, descriptor.overlay, local_t, ctx, render_scale)
             else:
-                # An element unscaled: to_drawing appends it outside the
-                # render-scale group.
+                # An element at the output scale, as the main element pass.
+                canvas.scale(render_scale, render_scale)
                 _draw_children(canvas, [descriptor.overlay], local_t, ctx)
         finally:
             canvas.restore()

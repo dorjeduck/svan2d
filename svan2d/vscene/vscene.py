@@ -807,8 +807,9 @@ class VScene:
         Sub-scenes (anything with `to_drawing`) are rendered at `frame_time =
         local_t` and their elements are wrapped in an opacity Group. Elements
         (anything with `get_frame` + `render_state`) are queried at `local_t`
-        and rendered directly. The returned Group is the caller's
-        responsibility to append to the parent drawing.
+        and rendered at the output scale, as the main element pass is. The
+        returned Group is the caller's responsibility to append to the parent
+        drawing.
         """
         if hasattr(overlay, "to_drawing"):
             child_drawing = overlay.to_drawing(  # type: ignore[union-attr]
@@ -826,6 +827,10 @@ class VScene:
             rendered = overlay.render_state(state, drawing=drawing)
             if rendered is None:
                 return None
+            if render_scale != 1.0:
+                scaled = dw.Group(transform=f"scale({render_scale})")
+                scaled.append(rendered)
+                rendered = scaled
             wrapper = dw.Group(opacity=opacity)
             wrapper.append(rendered)
             return wrapper

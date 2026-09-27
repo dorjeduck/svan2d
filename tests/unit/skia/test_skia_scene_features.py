@@ -538,6 +538,19 @@ def test_pause_overlay(tmp_path, overlay, t, scale):
     assert_matches_resvg(scene, tmp_path, t=t, w=W * scale, h=H * scale)
 
 
+# Mid-pause the overlay is fully shown, so it must look like the same element
+# added to the scene: scaled with it, not drawn in output pixels.
+@pytest.mark.integration
+@pytest.mark.parametrize("converter", [SkiaSvgConverter, ResvgSvgConverter])
+def test_pause_overlay_element_scales_with_scene(tmp_path, converter):
+    paused = _moving("#203040").add_pause(at=0.5, fraction=0.4,
+                                          overlay=_overlay_element(), fade=0.25)
+    added = _moving("#203040").add_element(_overlay_element())
+    got = _png(converter(), paused, tmp_path, "paused.png", 0.5, W * 2, H * 2)
+    want = _png(converter(), added, tmp_path, "added.png", 0.5, W * 2, H * 2)
+    assert (np.abs(got - want).max(axis=2) > 40).mean() < 0.01
+
+
 def test_check_scene_reports_unsupported_overlay():
     from svan2d.primitive.effect.filter.gaussian_blur import GaussianBlurFilter
 

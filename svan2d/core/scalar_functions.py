@@ -141,11 +141,14 @@ def gaussian_smooth(
         func: Target function to smooth.
         smoothness: 0.0 = no smoothing (original), 1.0 = heavy smoothing.
                     Controls Gaussian kernel width relative to t_range.
-        samples: Number of sample points (higher = more accurate).
+        samples: Number of sample points (higher = more accurate). At least 2:
+                 the smoothed function interpolates between neighbouring samples.
         t_range: Domain to sample over.
     """
+    if samples < 2:
+        raise ValueError(f"samples must be at least 2, got {samples}")
     t_start, t_end = t_range
-    dt = (t_end - t_start) / (samples - 1) if samples > 1 else 0.0
+    dt = (t_end - t_start) / (samples - 1)
     ts = [t_start + i * dt for i in range(samples)]
     raw = [func(t) for t in ts]
 
@@ -180,11 +183,14 @@ def gaussian_smooth_2d(
     Args:
         func: Target function returning (x, y) to smooth.
         smoothness: 0.0 = no smoothing (original), 1.0 = heavy smoothing.
-        samples: Number of sample points (higher = more accurate).
+        samples: Number of sample points (higher = more accurate). At least 2:
+                 the smoothed function interpolates between neighbouring samples.
         t_range: Domain to sample over.
     """
+    if samples < 2:
+        raise ValueError(f"samples must be at least 2, got {samples}")
     t_start, t_end = t_range
-    dt = (t_end - t_start) / (samples - 1) if samples > 1 else 0.0
+    dt = (t_end - t_start) / (samples - 1)
     ts = [t_start + i * dt for i in range(samples)]
     raw = [func(t) for t in ts]
     xs = [p[0] for p in raw]

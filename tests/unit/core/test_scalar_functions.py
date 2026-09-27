@@ -4,7 +4,15 @@ import math
 
 import pytest
 
-from svan2d.core.scalar_functions import angle, circular_midpoint, inbetween, lerp, step
+from svan2d.core.scalar_functions import (
+    angle,
+    circular_midpoint,
+    gaussian_smooth,
+    gaussian_smooth_2d,
+    inbetween,
+    lerp,
+    step,
+)
 
 
 @pytest.mark.unit
@@ -210,3 +218,21 @@ class TestCircularMidpoint:
         # Result should always be in 0-360 range
         result = circular_midpoint(350, 20)
         assert 0 <= result < 360
+
+
+@pytest.mark.unit
+class TestGaussianSmoothSamples:
+    """One sample cannot describe a function over a range."""
+
+    @pytest.mark.parametrize("samples", [1, 0, -3])
+    def test_too_few_samples_rejected_at_the_call(self, samples):
+        with pytest.raises(ValueError, match="samples"):
+            gaussian_smooth(lambda t: t, samples=samples)
+        with pytest.raises(ValueError, match="samples"):
+            gaussian_smooth_2d(lambda t: (t, t), samples=samples)
+
+    def test_two_samples_interpolate_between_them(self):
+        smoothed = gaussian_smooth(lambda t: t, smoothness=0.0, samples=2)
+        assert smoothed(0.25) == pytest.approx(0.25)
+        x, y = gaussian_smooth_2d(lambda t: (t, 2 * t), smoothness=0.0, samples=2)(0.25)
+        assert (x, y) == (pytest.approx(0.25), pytest.approx(0.5))

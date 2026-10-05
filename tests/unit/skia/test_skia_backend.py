@@ -258,6 +258,68 @@ def test_typeface_follows_the_weight():
     assert weights[0] < weights[1] < weights[2]
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize("text, cut", [
+    ("We", ["W", "e"]),
+    ("a❤️b", ["a", "❤️", "b"]),
+    ("\U0001F468‍\U0001F469‍\U0001F467!", ["\U0001F468‍\U0001F469‍\U0001F467", "!"]),
+    ("éx", ["é", "x"]),
+])
+def test_clusters(text, cut):
+    from svan2d.primitive.renderer.skia._common import clusters
+
+    assert clusters(text) == cut
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("cluster, emoji", [
+    ("A", False),
+    ("❤", False),          # heart: text unless asked for
+    ("❤️", True),
+    ("⌚", True),           # watch: emoji by default
+    ("⌚︎", False),
+    ("\U0001F600", True),
+])
+def test_is_emoji_follows_unicode(cluster, emoji):
+    from svan2d.skia.base import _is_emoji
+
+    assert _is_emoji(cluster) is emoji
+
+
+def _emoji_font_installed() -> bool:
+    from svan2d.skia.base import _EMOJI_FAMILIES
+
+    fonts = skia.FontMgr.RefDefault()
+    return any(fonts.matchFamily(family).count() for family in _EMOJI_FAMILIES)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("spacing", [None, 8])
+def test_emoji_drawn_in_colour(tmp_path, spacing):
+    # The text's own font has no emoji; the heart must come from the colour
+    # emoji font, as the browser draws it, not as a white box.
+    if not _emoji_font_installed():
+        pytest.skip("no colour emoji font installed")
+    scene = VScene(width=300, height=120, background=Color("#000000")).add_element(
+        VElement(state=TextState(
+            text="a ❤️ b", font_size=48, letter_spacing=spacing,
+            fill_color=Color("#ffffff"),
+        ))
+    )
+    arr = _render(scene, tmp_path, w=300, h=120).astype(int)
+    colourful = np.ptp(arr[:, :, :3], axis=2) > 100
+    assert colourful.sum() > 200
+
+
+@pytest.mark.integration
+def test_text_without_missing_glyphs_keeps_its_font():
+    from svan2d.skia.base import SkiaContext
+
+    ctx = SkiaContext()
+    font = skia.Font(ctx.typeface("Helvetica", "normal"), 30)
+    assert all(ctx.font_for(c, font) is font for c in "Moon 2026")
+
+
 def _text_states(text):
     from svan2d.primitive.state.circle_text import CircleTextState
     from svan2d.primitive.state.number import NumberState

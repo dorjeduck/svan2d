@@ -8,12 +8,13 @@ individual renderer files in this submodule.
 from __future__ import annotations
 
 import re
+import unicodedata
 
 import skia
 
 from svan2d.path.commands import ClosePath, CubicBezier, MoveTo
 from svan2d.path.svg_path import SVGPath
-from svan2d.skia.base import SkiaRenderer
+from svan2d.skia.base import SkiaContext, SkiaRenderer
 
 _CAP = {
     "butt": skia.Paint.kButt_Cap,
@@ -34,6 +35,46 @@ def svg_whitespace(text: str) -> str:
     are dropped. Newlines are left alone: drawsvg splits text into lines on
     them before any renderer sees it."""
     return re.sub(r" {2,}", " ", text.replace("\t", " ")).strip(" ")
+
+
+_ZWJ = "‍"
+
+
+def _extends(char: str) -> bool:
+    """Whether `char` belongs to the cluster before it rather than starting one."""
+    cp = ord(char)
+    return (
+        char == _ZWJ
+        or 0xFE00 <= cp <= 0xFE0F  # variation selectors
+        or 0x1F3FB <= cp <= 0x1F3FF  # skin tones
+        or 0xE0020 <= cp <= 0xE007F  # tags
+        or cp == 0x20E3  # keycap
+        or unicodedata.combining(char) != 0
+    )
+
+
+def clusters(text: str) -> list[str]:
+    """`text` cut where the browser would put a letter-spacing gap: a character
+    with its selectors, marks and joined emoji stays one."""
+    out: list[str] = []
+    for char in text:
+        if out and (_extends(char) or out[-1].endswith(_ZWJ)):
+            out[-1] += char
+        else:
+            out.append(char)
+    return out
+
+
+def font_runs(text: str, font: skia.Font, ctx: SkiaContext) -> list[tuple[str, skia.Font]]:
+    """`text` in pieces drawn in one font each, in order."""
+    runs: list[tuple[str, skia.Font]] = []
+    for cluster in clusters(text):
+        f = ctx.font_for(cluster, font)
+        if runs and runs[-1][1] is f:
+            runs[-1] = (runs[-1][0] + cluster, f)
+        else:
+            runs.append((cluster, f))
+    return runs
 
 
 def _parse_dash(spec: str) -> list[float]:

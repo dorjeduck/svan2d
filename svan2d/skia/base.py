@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import functools
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 import skia
@@ -33,6 +35,9 @@ class SkiaContext:
     """
 
     typefaces: dict[tuple[str, int], skia.Typeface] = field(default_factory=dict)
+    # What a typeface's clusters are drawn in when not in the typeface itself,
+    # by the typeface and cluster; None when the typeface draws it.
+    fallbacks: dict[tuple[int, str], skia.Typeface | None] = field(default_factory=dict)
     # Decoded images by what they were made from, kept across frames while
     # frames keep drawing them: end_frame() drops those the frame did not use.
     images: dict[object, skia.Image] = field(default_factory=dict)
@@ -73,6 +78,68 @@ class SkiaContext:
             tf = skia.Typeface(family, style)
             self.typefaces[key] = tf
         return tf
+
+    def font_for(self, cluster: str, font: skia.Font) -> skia.Font:
+        """The font `cluster` is drawn in: `font`, unless the browser would
+        reach for another one.
+
+        A cluster asking for emoji presentation goes to the system's colour
+        emoji font, as in the browser whatever `font` holds; any other
+        character `font` lacks goes to whichever installed font has it.
+        """
+        tf = font.getTypeface()
+        key = (tf.uniqueID(), cluster)
+        if key not in self.fallbacks:
+            self.fallbacks[key] = _fallback_typeface(tf, cluster)
+        fallback = self.fallbacks[key]
+        return font if fallback is None else skia.Font(fallback, font.getSize())
+
+
+# The colour emoji fonts of macOS, Linux and Windows, first installed one used.
+_EMOJI_FAMILIES = ("Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji")
+_EMOJI_SELECTOR = "️"
+_TEXT_SELECTOR = "︎"
+# Unicode's emoji properties (UTS #51), as unicode.org publishes them.
+_EMOJI_DATA = Path(__file__).parent / "emoji-data.txt"
+
+
+@functools.cache
+def _emoji_presentation() -> frozenset[int]:
+    """The characters shown as emoji unless a text selector says otherwise."""
+    points: set[int] = set()
+    for line in _EMOJI_DATA.read_text(encoding="utf-8").splitlines():
+        fields = line.split("#", 1)[0].split(";")
+        if len(fields) != 2 or fields[1].strip() != "Emoji_Presentation":
+            continue
+        first, _, last = fields[0].strip().partition("..")
+        points.update(range(int(first, 16), int(last or first, 16) + 1))
+    return frozenset(points)
+
+
+def _is_emoji(cluster: str) -> bool:
+    """Whether `cluster` is shown as emoji: asked for by the emoji selector, or
+    its character's default unless the text selector asks otherwise."""
+    if _EMOJI_SELECTOR in cluster:
+        return True
+    return _TEXT_SELECTOR not in cluster and ord(cluster[0]) in _emoji_presentation()
+
+
+def _fallback_typeface(tf: skia.Typeface, cluster: str) -> skia.Typeface | None:
+    """What draws `cluster` in place of `tf`, or None when `tf` does."""
+    fonts = skia.FontMgr.RefDefault()
+    base = ord(cluster[0])
+    if _is_emoji(cluster):
+        for family in _EMOJI_FAMILIES:
+            if fonts.matchFamily(family).count():
+                emoji = skia.Typeface(family)
+                if emoji.unicharToGlyph(base):
+                    return emoji
+    if tf.unicharToGlyph(base):
+        return None
+    # An empty language list crashes skia-python; "und" names none.
+    return fonts.matchFamilyStyleCharacter(
+        tf.getFamilyName(), tf.fontStyle(), ["und"], base
+    )
 
 
 # Keywords of CSS font-weight. lighter and bolder are relative to the inherited

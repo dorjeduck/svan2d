@@ -98,6 +98,7 @@ class VElement(BaseVElement, KeystateBuilder):
         "_cache_rendered",
         "_frozen_render",
         "_frozen_state",
+        "_element_easing",
     )
 
     def __init__(
@@ -158,6 +159,10 @@ class VElement(BaseVElement, KeystateBuilder):
         self._frozen_render: dw.DrawingElement | None = None
         self._frozen_state: State | None = None
 
+        # Remaps the animation time before the element is evaluated; see
+        # element_easing().
+        self._element_easing: Callable[[float], float] | None = None
+
         # Handle static state convenience parameter
         if state is not None:
             # Chain immutably - replace self with new instance
@@ -178,6 +183,7 @@ class VElement(BaseVElement, KeystateBuilder):
         builder: BuilderState | None = None,
         attribute_easing: dict[str, EasingFunction] | None = None,
         attribute_keystates: AttributeKeyStatesDict | None = None,
+        element_easing: Callable[[float], float] | None | _Unset = _UNSET,
     ) -> "VElement":
         """Return a new VElement with specified attributes replaced.
 
@@ -211,7 +217,19 @@ class VElement(BaseVElement, KeystateBuilder):
         new._cache_rendered = None
         new._frozen_render = None
         new._frozen_state = None
+        new._element_easing = (
+            self._element_easing if element_easing is _UNSET else element_easing
+        )
         return new
+
+    def element_easing(self, easing: Callable[[float], float] | None) -> "VElement":
+        """Remap the animation time this element is evaluated at.
+
+        The element's counterpart of VElementGroup's group_easing: ``easing``
+        takes the scene's t and returns the t the element's keystates or
+        frame_fn see, clips and masks included. None removes it.
+        """
+        return self._replace(element_easing=easing)
 
     def _replace_builder(self, new_builder: BuilderState) -> "VElement":
         """Return a new VElement with the updated builder state."""
@@ -348,6 +366,9 @@ class VElement(BaseVElement, KeystateBuilder):
 
         self._ensure_built()
 
+        if self._element_easing is not None:
+            t = self._element_easing(t)
+
         if self._frame_fn is not None:
             interpolated_state = self._frame_fn(self._frame_base_state, t)
         else:
@@ -367,6 +388,8 @@ class VElement(BaseVElement, KeystateBuilder):
     def get_frame(self, t: float) -> State | None:
         """Get the interpolated state at a specific time."""
         self._ensure_built()
+        if self._element_easing is not None:
+            t = self._element_easing(t)
         # Intra-frame cache: same t requested twice in one scene pass reuses
         # the previously computed state instead of re-running interpolation.
         if self._cache_frame_time is not None and self._cache_frame_time == t:

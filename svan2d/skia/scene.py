@@ -321,7 +321,8 @@ def _draw_group(canvas, group, group_state, frame_time: float, ctx: SkiaContext)
     canvas.save()
     try:
         SkiaRenderer._apply_transform(canvas, group_state)
-        opacity = getattr(group_state, "opacity", 1.0) or 1.0
+        opacity = getattr(group_state, "opacity", None)
+        opacity = 1.0 if opacity is None else opacity
         if opacity < 1.0:
             canvas.saveLayerAlpha(None, int(round(opacity * 255)))
         try:

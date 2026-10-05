@@ -163,6 +163,16 @@ def test_group_clip_attachment(tmp_path):
     assert_matches_resvg(_scene().add_element(group), tmp_path)
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize("opacity", [0.0, 0.5, 1.0])
+def test_group_opacity(tmp_path, opacity):
+    # A group faded all the way out draws nothing, not its children at full.
+    group = VElementGroup(
+        elements=[VElement(state=CircleState(radius=40, fill_color=Color("#0f0")))]
+    ).keystate(VElementGroupState(opacity=opacity))
+    assert_matches_resvg(_scene().add_element(group), tmp_path)
+
+
 # --------------------------------------------------------------------------
 # Scene level
 # --------------------------------------------------------------------------

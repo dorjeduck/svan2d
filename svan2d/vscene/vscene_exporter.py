@@ -900,6 +900,7 @@ class VSceneExporter:
 
         frames_dir = Path(output_dir)
         frames_dir.mkdir(parents=True, exist_ok=True)
+        started = time.time()
 
         # Use parallel rendering for PNG if requested and converter supports it
         # Minimum 2 workers needed for parallelism benefit
@@ -972,7 +973,10 @@ class VSceneExporter:
                 except OSError as e:
                     logger.warning(f"Failed to delete {svg_file}: {e}")
 
-        logger.info(f"Frame generation complete: {total_frames} frames in {frames_dir}")
+        logger.info(
+            f"Frame generation complete: {total_frames} frames in "
+            f"{time.time() - started:.2f}s ({frames_dir})"
+        )
 
     def _to_frames_parallel(
         self,
@@ -1169,7 +1173,9 @@ class VSceneExporter:
 
             # Create video with ffmpeg
             logger.info("Encoding video with ffmpeg...")
+            encoding_started = time.time()
             self._create_video_from_pngs(frames_dir, output_path, framerate, codec)
+            encoding_time = time.time() - encoding_started
 
             # Generate thumbnails if requested
             if num_thumbnails > 0:
@@ -1182,7 +1188,7 @@ class VSceneExporter:
             if temp_context:
                 temp_context.cleanup()
 
-        logger.info(f'Video exported to "{output_path}"')
+        logger.info(f'Video exported to "{output_path}" (encoding {encoding_time:.2f}s)')
         return str(output_path)
 
     def _generate_thumbnails(

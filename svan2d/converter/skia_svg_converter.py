@@ -67,6 +67,22 @@ class SkiaSvgConverter(SVGConverter):
             f.write(bytes(image.encodeToData(skia.kPNG, 100)))
         return {"success": True, "output": output_file}
 
+    def frame_pixels(
+        self, scene: "VScene", frame_time: float, width_px: int, height_px: int
+    ) -> bytearray:
+        """One frame's pixels, for streaming frames into a video instead of
+        writing them out: RGBA, row by row, not premultiplied — what a PNG of
+        the frame would hold, without the cost of compressing it."""
+        self._ensure_supported(scene)
+        image = render_scene_to_image(scene, frame_time, width_px, height_px, self._ctx)
+        info = skia.ImageInfo.Make(
+            width_px, height_px, skia.kRGBA_8888_ColorType, skia.kUnpremul_AlphaType
+        )
+        pixels = bytearray(info.computeMinByteSize())
+        if not image.readPixels(info, pixels, info.minRowBytes(), 0, 0):
+            raise RuntimeError("Skia could not read the frame's pixels")
+        return pixels
+
     def _convert_to_webp(
         self,
         scene: "VScene",

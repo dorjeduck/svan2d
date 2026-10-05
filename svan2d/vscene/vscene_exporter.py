@@ -1117,6 +1117,10 @@ class VSceneExporter:
     ) -> str:
         """Export scene as MP4 video file, with optional thumbnail generation.
 
+        With the Skia converter the frames are streamed into ffmpeg rather than
+        written as PNGs first (unless cleanup_intermediate_files is off, which
+        asks for the frame files); parallel_workers then has nothing to do.
+
         Args:
             filename: Output video filename (without extension)
             total_frames: Number of frames to generate
@@ -1146,6 +1150,22 @@ class VSceneExporter:
         # Setup output path
         output_path = self._generate_output_path(filename, ".mp4")
         base_name = output_path.stem
+
+        # A converter that draws in memory streams its frames into ffmpeg,
+        # unless the frame files themselves are wanted.
+        if cleanup_intermediate_files and hasattr(self.converter, "frame_pixels"):
+            return self._stream_mp4(
+                output_path,
+                base_name,
+                total_frames,
+                framerate,
+                png_width_px,
+                png_height_px,
+                codec,
+                num_thumbnails,
+                progress_callback,
+                time_range,
+            )
 
         # Setup frame directory
         frames_dir, temp_context = self._setup_frame_dir(
@@ -1191,6 +1211,122 @@ class VSceneExporter:
         logger.info(f'Video exported to "{output_path}" (encoding {encoding_time:.2f}s)')
         return str(output_path)
 
+    def _stream_mp4(
+        self,
+        output_path: Path,
+        base_name: str,
+        total_frames: int,
+        framerate: int,
+        png_width_px: int | None,
+        png_height_px: int | None,
+        codec: str,
+        num_thumbnails: int,
+        progress_callback: Callable[[int, int], None] | None,
+        time_range: tuple[float, float],
+    ) -> str:
+        """Draw each frame and hand its pixels straight to ffmpeg.
+
+        For a converter that draws in memory (one with `frame_pixels`): no SVG
+        is made and no PNG written, whose compression alone costs far more
+        than drawing a frame. The video is the one the PNG route makes.
+        Thumbnails are written as their frames come by.
+        """
+        width, height = self.converter._infer_dimensions(
+            self.scene, png_width_px, png_height_px
+        )
+        frames = self._frames_in_range(total_frames, time_range)
+        thumbnails = (
+            set(self._thumbnail_indices(total_frames, num_thumbnails))
+            if num_thumbnails > 0
+            else set()
+        )
+        thumb_dir = self.output_dir / f"{base_name}_thumbnails"
+
+        cmd = [
+            "ffmpeg",
+            "-y",  # Overwrite output file
+            "-loglevel",
+            "error",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgba",
+            "-s",
+            f"{width}x{height}",
+            "-framerate",
+            str(framerate),
+            "-i",
+            "-",
+            *self._ffmpeg_output_args(codec, output_path),
+        ]
+
+        logger.info(f"Generating {len(frames)} frames for video, streamed into ffmpeg...")
+        started = time.time()
+        thumbnails_written = 0
+        with tempfile.TemporaryFile() as stderr_file:
+            ffmpeg = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=stderr_file)
+            assert ffmpeg.stdin is not None
+            try:
+                for output_num, frame_num in enumerate(frames):
+                    reset_point_pool()
+                    t = self._calculate_frame_time(frame_num, total_frames)
+                    if progress_callback:
+                        progress_callback(output_num, len(frames))
+                    else:
+                        self._log_progress(output_num, len(frames))
+
+                    ffmpeg.stdin.write(
+                        self.converter.frame_pixels(self.scene, t, width, height)
+                    )
+                    if output_num in thumbnails:
+                        thumb_dir.mkdir(parents=True, exist_ok=True)
+                        self.converter.convert(
+                            self.scene,
+                            str(thumb_dir / f"thumbnail_{output_num:04d}.png"),
+                            frame_time=t,
+                            formats=["png"],
+                            png_width_px=width,
+                            png_height_px=height,
+                        )
+                        thumbnails_written += 1
+                ffmpeg.stdin.close()
+            except BrokenPipeError:
+                pass  # ffmpeg stopped early; its exit code and stderr say why
+            except BaseException:
+                ffmpeg.kill()
+                ffmpeg.wait()
+                raise
+            generation_time = time.time() - started
+            logger.info(
+                f"Frame generation complete: {len(frames)} frames in "
+                f"{generation_time:.2f}s (streamed into ffmpeg)"
+            )
+
+            ffmpeg.wait()
+            encoding_time = time.time() - started - generation_time
+            if ffmpeg.returncode != 0:
+                stderr_file.seek(0)
+                stderr = stderr_file.read().decode(errors="replace")
+                logger.error(f"ffmpeg failed with return code {ffmpeg.returncode}")
+                logger.error(f"stderr: {stderr}")
+                raise RuntimeError(f"Video encoding failed: {stderr}")
+
+        if thumbnails_written:
+            logger.info(f"{thumbnails_written} thumbnails saved to {thumb_dir}")
+        logger.info(f'Video exported to "{output_path}" (encoding {encoding_time:.2f}s)')
+        return str(output_path)
+
+    @staticmethod
+    def _thumbnail_indices(total_frames: int, num_thumbnails: int) -> list[int]:
+        """Which frames become thumbnails: the middle one, or evenly spaced
+        from start to end."""
+        if num_thumbnails == 1:
+            return [total_frames // 2]
+        return [
+            int(i * (total_frames - 1) / (num_thumbnails - 1))
+            for i in range(num_thumbnails)
+        ]
+
     def _generate_thumbnails(
         self,
         frames_dir: Path,
@@ -1206,15 +1342,7 @@ class VSceneExporter:
             total_frames: Total number of frames
             num_thumbnails: Number of thumbnails to generate
         """
-        # Calculate thumbnail indices
-        if num_thumbnails == 1:
-            thumbnail_indices = [total_frames // 2]
-        else:
-            # Evenly spaced: start, end, and in between
-            thumbnail_indices = [
-                int(i * (total_frames - 1) / (num_thumbnails - 1))
-                for i in range(num_thumbnails)
-            ]
+        thumbnail_indices = self._thumbnail_indices(total_frames, num_thumbnails)
 
         # Create thumbnail directory
         thumb_dir = self.output_dir / f"{base_name}_thumbnails"
@@ -1240,6 +1368,28 @@ class VSceneExporter:
         else:
             logger.warning("No thumbnails were generated")
 
+    @staticmethod
+    def _ffmpeg_output_args(codec: str, output_path: Path) -> list[str]:
+        """How ffmpeg encodes the video, whatever the frames come in as."""
+        return [
+            "-c:v",
+            codec,
+            "-vf",
+            "scale=out_color_matrix=bt709:out_range=tv,"
+            "setparams=range=tv:colorspace=bt709:color_trc=bt709:color_primaries=bt709",
+            "-pix_fmt",
+            "yuv420p",
+            "-color_range",
+            "tv",
+            "-colorspace",
+            "bt709",
+            "-color_trc",
+            "bt709",
+            "-color_primaries",
+            "bt709",
+            str(output_path),
+        ]
+
     def _create_video_from_pngs(
         self,
         png_dir: Path,
@@ -1264,22 +1414,7 @@ class VSceneExporter:
             str(framerate),
             "-i",
             input_pattern,
-            "-c:v",
-            codec,
-            "-vf",
-            "scale=out_color_matrix=bt709:out_range=tv,"
-            "setparams=range=tv:colorspace=bt709:color_trc=bt709:color_primaries=bt709",
-            "-pix_fmt",
-            "yuv420p",
-            "-color_range",
-            "tv",
-            "-colorspace",
-            "bt709",
-            "-color_trc",
-            "bt709",
-            "-color_primaries",
-            "bt709",
-            str(output_path),
+            *self._ffmpeg_output_args(codec, output_path),
         ]
 
         try:

@@ -16,7 +16,7 @@ from typing import Any
 import skia
 
 from svan2d.path.svg_path import SVGPath
-from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
+from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, draw_line, svg_whitespace
 from svan2d.skia.base import SkiaContext, SkiaRenderer, skia_color
 
 
@@ -89,24 +89,8 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
         paint = skia.Paint(AntiAlias=True, Style=skia.Paint.kFill_Style)
         paint.setColor(skia_color(color, state.fill_opacity * state.opacity))
 
-        spacing = state.letter_spacing or 0
-        if spacing:
-            total = sum(font.measureText(c) + spacing for c in text) - spacing
-            x = text_x + self._anchor_offset(total, state.text_align)
-            for c in text:
-                canvas.drawString(c, x, text_y, font, paint)
-                x += font.measureText(c) + spacing
-        else:
-            x = text_x + self._anchor_offset(font.measureText(text), state.text_align)
-            canvas.drawString(text, x, text_y, font, paint)
-
-    @staticmethod
-    def _anchor_offset(width: float, anchor: str) -> float:
-        if anchor == "middle":
-            return -width / 2
-        if anchor == "end":
-            return -width
-        return 0.0  # start / left
+        draw_line(canvas, text, text_x, text_y, font, paint,
+                  state.letter_spacing or 0, state.text_align, ctx)
 
     @staticmethod
     def _scaled(paint, factor: float):

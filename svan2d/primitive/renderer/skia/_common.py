@@ -7,6 +7,7 @@ individual renderer files in this submodule.
 
 from __future__ import annotations
 
+import math
 import re
 import unicodedata
 
@@ -75,6 +76,61 @@ def font_runs(text: str, font: skia.Font, ctx: SkiaContext) -> list[tuple[str, s
         else:
             runs.append((cluster, f))
     return runs
+
+
+def anchor_offset(width: float, anchor: str) -> float:
+    """Where text `width` wide starts, from its anchor point (SVG
+    text-anchor; anything but middle and end anchors at the start)."""
+    if anchor == "middle":
+        return -width / 2
+    if anchor == "end":
+        return -width
+    return 0.0
+
+
+def draw_line(canvas, text: str, x: float, y: float, font: skia.Font, paint,
+              spacing: float, anchor: str, ctx: SkiaContext) -> None:
+    """`text` on a straight baseline at `y`, anchored at `x`, as the browser
+    lays out an SVG <text>: spaces collapsed, each piece in the font that has
+    it, and with letter-spacing the gap after every glyph — the last one too —
+    counted in the width the anchor goes by."""
+    text = svg_whitespace(text)
+    if spacing:
+        glyphs = [(c, ctx.font_for(c, font)) for c in clusters(text)]
+        x += anchor_offset(sum(f.measureText(c) + spacing for c, f in glyphs), anchor)
+        for c, f in glyphs:
+            canvas.drawString(c, x, y, f, paint)
+            x += f.measureText(c) + spacing
+    else:
+        runs = font_runs(text, font, ctx)
+        x += anchor_offset(sum(f.measureText(r) for r, f in runs), anchor)
+        for r, f in runs:
+            canvas.drawString(r, x, y, f, paint)
+            x += f.measureText(r)
+
+
+def draw_along_path(canvas, text: str, start: float, pm: skia.PathMeasure, font: skia.Font,
+                    paint, spacing: float, anchor: str, baseline: float,
+                    ctx: SkiaContext, flip: bool = False) -> None:
+    """`text` along the path `pm` measures, anchored at distance `start`, each
+    piece turned to the path where its middle falls; pieces whose middle falls
+    off the path are left out, as the browser does. Laid out as `draw_line`."""
+    text = svg_whitespace(text)
+    length = pm.getLength()
+    glyphs = [(c, f, f.measureText(c)) for c in clusters(text) for f in [ctx.font_for(c, font)]]
+    cursor = start + anchor_offset(sum(a + spacing for _, _, a in glyphs), anchor)
+    for c, f, advance in glyphs:
+        mid = cursor + advance / 2
+        if 0.0 <= mid <= length:
+            pos, tan = pm.getPosTan(mid)
+            canvas.save()
+            canvas.translate(pos.x(), pos.y())
+            canvas.rotate(math.degrees(math.atan2(tan.y(), tan.x())))
+            if flip:
+                canvas.scale(1.0, -1.0)
+            canvas.drawString(c, -advance / 2, baseline, f, paint)
+            canvas.restore()
+        cursor += advance + spacing
 
 
 def _parse_dash(spec: str) -> list[float]:

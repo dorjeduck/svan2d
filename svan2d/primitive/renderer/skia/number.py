@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import skia
 
-from svan2d.primitive.renderer.skia._common import svg_whitespace
+from svan2d.primitive.renderer.skia._common import draw_line
 from svan2d.primitive.renderer.skia.text import TextSkiaRenderer
 from svan2d.primitive.state.number import NumberState
 from svan2d.skia.base import SkiaContext
@@ -34,24 +34,13 @@ class NumberSkiaRenderer(TextSkiaRenderer):
         )
         y = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
 
+        spacing = state.letter_spacing or 0
+
         int_text = state.prefix + state._integer_part
         # integer part: right edge at x=0
-        self._draw_at(canvas, int_text, "end", y, font, fill, state)
+        draw_line(canvas, int_text, 0.0, y, font, fill, spacing, "end", ctx)
 
         dec_text = (state._decimal_part + state.suffix) if state._has_decimals else state.suffix
         if dec_text:
             # decimal part: left edge at x=0
-            self._draw_at(canvas, dec_text, "start", y, font, fill, state)
-
-    def _draw_at(self, canvas, text, anchor, y, font, paint, state: NumberState) -> None:
-        text = svg_whitespace(text)
-        spacing = state.letter_spacing or 0
-        if spacing:
-            total = sum(font.measureText(c) + spacing for c in text) - spacing
-            x = self._anchor_offset(total, anchor)
-            for c in text:
-                canvas.drawString(c, x, y, font, paint)
-                x += font.measureText(c) + spacing
-        else:
-            x = self._anchor_offset(font.measureText(text), anchor)
-            canvas.drawString(text, x, y, font, paint)
+            draw_line(canvas, dec_text, 0.0, y, font, fill, spacing, "start", ctx)

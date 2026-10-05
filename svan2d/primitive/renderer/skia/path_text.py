@@ -12,12 +12,10 @@ identical to TextSkiaRenderer).
 
 from __future__ import annotations
 
-import math
-
 import skia
 
 from svan2d.path.svg_path import SVGPath
-from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, svg_whitespace
+from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, draw_along_path
 from svan2d.primitive.state.path_text import PathTextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
 
@@ -54,42 +52,15 @@ class PathTextSkiaRenderer(SkiaRenderer):
                 else:
                     text_offset = i / max(1, num - 1) if num > 1 else 0.0
                 final_offset = (state.offset + text_offset) % 1.0
-                self._draw_text(canvas, str(content), final_offset, pm, length, font, fill, state)
+                self._draw_text(canvas, str(content), final_offset, pm, length, font, fill, state, ctx)
         else:
-            self._draw_text(canvas, str(state.text), state.offset, pm, length, font, fill, state)
+            self._draw_text(canvas, str(state.text), state.offset, pm, length, font, fill, state, ctx)
 
-    def _draw_text(self, canvas, text, offset, pm, length, font, paint, state) -> None:
-        text = svg_whitespace(text)
-        spacing = state.letter_spacing or 0
-        advances = [font.measureText(c) for c in text]
-        # CSS letter-spacing counts the trailing gap after the last glyph in the
-        # width used for text-anchor; include it so anchored text matches the browser.
-        total = sum(advances) + spacing * len(text) if text else 0.0
+    def _draw_text(self, canvas, text, offset, pm, length, font, paint, state, ctx) -> None:
         baseline = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
-
-        cursor = offset * length + self._anchor_offset(total, state.text_anchor)
-        for char, advance in zip(text, advances):
-            mid = cursor + advance / 2
-            if 0.0 <= mid <= length:
-                pos, tan = pm.getPosTan(mid)
-                px, py = pos.x(), pos.y()
-                angle = math.degrees(math.atan2(tan.y(), tan.x()))
-                canvas.save()
-                canvas.translate(px, py)
-                canvas.rotate(angle)
-                if state.flip_text:
-                    canvas.scale(1.0, -1.0)
-                canvas.drawString(char, -advance / 2, baseline, font, paint)
-                canvas.restore()
-            cursor += advance + spacing
-
-    @staticmethod
-    def _anchor_offset(width: float, anchor: str) -> float:
-        if anchor == "middle":
-            return -width / 2
-        if anchor == "end":
-            return -width
-        return 0.0  # start
+        draw_along_path(canvas, text, offset * length, pm, font, paint,
+                        state.letter_spacing or 0, state.text_anchor, baseline, ctx,
+                        flip=state.flip_text)
 
     @staticmethod
     def _baseline_offset(metrics, baseline: str) -> float:

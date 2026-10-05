@@ -312,6 +312,45 @@ def test_emoji_drawn_in_colour(tmp_path, spacing):
 
 
 @pytest.mark.integration
+def test_emoji_drawn_in_colour_by_every_text_renderer(tmp_path):
+    if not _emoji_font_installed():
+        pytest.skip("no colour emoji font installed")
+    for i, state in enumerate(_text_states("a❤️b")):
+        arr = _render(
+            VScene(width=300, height=200, background=Color("#000000")).add_element(
+                VElement(state=state)
+            ),
+            tmp_path, w=300, h=200, name=f"emoji{i}.png",
+        ).astype(int)
+        colourful = np.ptp(arr[:, :, :3], axis=2) > 100
+        assert colourful.sum() > 50, type(state).__name__
+
+
+@pytest.mark.integration
+def test_spaced_number_sits_where_spaced_text_does(tmp_path):
+    # The browser counts the gap after the last glyph in the width the anchor
+    # goes by; the aligned number's integer part is end-anchored text.
+    from svan2d.primitive.state.number import NumberState
+
+    white = Color("#ffffff")
+    arrays = [
+        _render(
+            VScene(width=300, height=120, background=Color("#000000")).add_element(
+                VElement(state=state)
+            ),
+            tmp_path, w=300, h=120, name=name,
+        )
+        for state, name in (
+            (NumberState(value=12, format="auto_aligned", font_size=30,
+                         letter_spacing=10, fill_color=white), "number.png"),
+            (TextState(text="12", text_anchor="end", font_size=30,
+                       letter_spacing=10, fill_color=white), "text.png"),
+        )
+    ]
+    assert (arrays[0] == arrays[1]).all()
+
+
+@pytest.mark.integration
 def test_text_without_missing_glyphs_keeps_its_font():
     from svan2d.skia.base import SkiaContext
 

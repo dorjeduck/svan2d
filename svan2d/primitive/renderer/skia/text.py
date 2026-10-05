@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import skia
 
-from svan2d.primitive.renderer.skia._common import clusters, font_runs, svg_whitespace
+from svan2d.primitive.renderer.skia._common import draw_line
 from svan2d.primitive.state.text import TextState
 from svan2d.skia.base import SkiaContext, SkiaRenderer
 
@@ -24,35 +24,8 @@ class TextSkiaRenderer(SkiaRenderer):
         if len(lines) > 1:
             base -= line_h * (len(lines) - 1) / 2
         for i, line in enumerate(lines):
-            self._draw_line(canvas, str(line), base + i * line_h, font, fill, state, ctx)
-
-    def _draw_line(self, canvas, text, y, font, paint, state: TextState, ctx: SkiaContext) -> None:
-        text = svg_whitespace(text)
-        spacing = state.letter_spacing or 0
-        if spacing:
-            # CSS letter-spacing adds spacing after every glyph, including the
-            # last; the browser counts that trailing gap in the text width used
-            # for text-anchor. Mirror that so anchored text aligns identically.
-            glyphs = [(c, ctx.font_for(c, font)) for c in clusters(text)]
-            total = sum(f.measureText(c) + spacing for c, f in glyphs)
-            x = self._anchor_offset(total, state.text_anchor)
-            for c, f in glyphs:
-                canvas.drawString(c, x, y, f, paint)
-                x += f.measureText(c) + spacing
-        else:
-            runs = font_runs(text, font, ctx)
-            x = self._anchor_offset(sum(f.measureText(r) for r, f in runs), state.text_anchor)
-            for r, f in runs:
-                canvas.drawString(r, x, y, f, paint)
-                x += f.measureText(r)
-
-    @staticmethod
-    def _anchor_offset(width: float, anchor: str) -> float:
-        if anchor == "middle":
-            return -width / 2
-        if anchor == "end":
-            return -width
-        return 0.0  # start
+            draw_line(canvas, str(line), 0.0, base + i * line_h, font, fill,
+                      state.letter_spacing or 0, state.text_anchor, ctx)
 
     @staticmethod
     def _baseline_offset(metrics, baseline: str) -> float:

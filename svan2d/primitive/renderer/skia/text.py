@@ -6,7 +6,7 @@ import skia
 
 from svan2d.primitive.renderer.skia._common import draw_line
 from svan2d.primitive.state.text import TextState
-from svan2d.skia.base import SkiaContext, SkiaRenderer
+from svan2d.skia.base import SkiaContext, SkiaRenderer, smooth_font
 
 
 class TextSkiaRenderer(SkiaRenderer):
@@ -16,7 +16,7 @@ class TextSkiaRenderer(SkiaRenderer):
         fill = self.fill_paint(state)
         if fill is None:
             return
-        font = skia.Font(ctx.typeface(state.font_family, state.font_weight), float(state.font_size))
+        font = smooth_font(ctx.typeface(state.font_family, state.font_weight), state.font_size)
         lines = state.text if isinstance(state.text, list) else [state.text]
         metrics = font.getMetrics()
         line_h = (metrics.fDescent - metrics.fAscent) + metrics.fLeading

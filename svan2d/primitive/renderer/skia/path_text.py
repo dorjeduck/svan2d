@@ -17,7 +17,7 @@ import skia
 from svan2d.path.svg_path import SVGPath
 from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, draw_along_path
 from svan2d.primitive.state.path_text import PathTextState
-from svan2d.skia.base import SkiaContext, SkiaRenderer
+from svan2d.skia.base import SkiaContext, SkiaRenderer, smooth_font
 
 
 class PathTextSkiaRenderer(SkiaRenderer):
@@ -34,8 +34,8 @@ class PathTextSkiaRenderer(SkiaRenderer):
         if length <= 0:
             return
 
-        font = skia.Font(
-            ctx.typeface(state.font_family, state.font_weight), float(state.font_size)
+        font = smooth_font(
+            ctx.typeface(state.font_family, state.font_weight), state.font_size
         )
 
         if isinstance(state.text, list):

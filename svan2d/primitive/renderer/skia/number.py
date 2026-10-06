@@ -7,7 +7,7 @@ import skia
 from svan2d.primitive.renderer.skia._common import draw_line
 from svan2d.primitive.renderer.skia.text import TextSkiaRenderer
 from svan2d.primitive.state.number import NumberState
-from svan2d.skia.base import SkiaContext
+from svan2d.skia.base import SkiaContext, smooth_font
 
 
 class NumberSkiaRenderer(TextSkiaRenderer):
@@ -29,8 +29,8 @@ class NumberSkiaRenderer(TextSkiaRenderer):
         fill = self.fill_paint(state)
         if fill is None:
             return
-        font = skia.Font(
-            ctx.typeface(state.font_family, state.font_weight), float(state.font_size)
+        font = smooth_font(
+            ctx.typeface(state.font_family, state.font_weight), state.font_size
         )
         y = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
 

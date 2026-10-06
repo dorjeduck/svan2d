@@ -17,7 +17,7 @@ import skia
 
 from svan2d.path.svg_path import SVGPath
 from svan2d.primitive.renderer.skia._common import _svgpath_to_skia, draw_line, svg_whitespace
-from svan2d.skia.base import SkiaContext, SkiaRenderer, skia_color
+from svan2d.skia.base import SkiaContext, SkiaRenderer, skia_color, smooth_font
 
 
 class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
@@ -83,8 +83,8 @@ class PathAndTextVariantsSkiaRenderer(SkiaRenderer, ABC):
             return
 
         text_x, text_y = variant_data["text_position"]
-        font = skia.Font(
-            ctx.typeface(state.font_family, state.font_weight), float(state.font_size)
+        font = smooth_font(
+            ctx.typeface(state.font_family, state.font_weight), state.font_size
         )
         paint = skia.Paint(AntiAlias=True, Style=skia.Paint.kFill_Style)
         paint.setColor(skia_color(color, state.fill_opacity * state.opacity))

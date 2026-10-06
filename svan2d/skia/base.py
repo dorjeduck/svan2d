@@ -92,7 +92,7 @@ class SkiaContext:
         if key not in self.fallbacks:
             self.fallbacks[key] = _fallback_typeface(tf, cluster)
         fallback = self.fallbacks[key]
-        return font if fallback is None else skia.Font(fallback, font.getSize())
+        return font if fallback is None else smooth_font(fallback, font.getSize())
 
 
 # The colour emoji fonts of macOS, Linux and Windows, first installed one used.
@@ -145,6 +145,22 @@ def _fallback_typeface(tf: skia.Typeface, cluster: str) -> skia.Typeface | None:
 # Keywords of CSS font-weight. lighter and bolder are relative to the inherited
 # weight, which for svan2d text is always the default 400.
 _CSS_FONT_WEIGHTS = {"normal": 400, "bold": 700, "lighter": 100, "bolder": 700}
+
+
+def smooth_font(typeface: skia.Typeface, size: float) -> skia.Font:
+    """A font that moves smoothly from frame to frame.
+
+    Skia's defaults fit glyphs to the pixel grid, which keeps still text crisp
+    but makes turning or drifting text jump between fitted positions, so it
+    shivers. No hinting, subpixel placement, unsnapped baselines and linear
+    metrics let each frame draw the glyphs exactly where they are.
+    """
+    font = skia.Font(typeface, float(size))
+    font.setHinting(skia.FontHinting.kNone)
+    font.setSubpixel(True)
+    font.setBaselineSnap(False)
+    font.setLinearMetrics(True)
+    return font
 
 
 def css_font_weight(weight) -> int:

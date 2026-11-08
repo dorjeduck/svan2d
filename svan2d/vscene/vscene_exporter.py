@@ -42,7 +42,7 @@ class VSceneExporter:
     DEFAULT_FRAME_PATTERN = "frame_{:04d}"
     DEFAULT_FRAMERATE = 30
     DEFAULT_CODEC = "libx264"
-    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb", "webp"}
+    SUPPORTED_FORMATS = {"svg", "png", "pdf", "png_thumb", "webp", "jpg"}
     SUPPORTED_VIDEO_CODECS = {"libx264", "libx265", "vp9"}
 
     @staticmethod
@@ -246,6 +246,8 @@ class VSceneExporter:
             return ["pdf"]
         elif ext == "webp":
             return ["webp"]
+        elif ext in ("jpg", "jpeg"):
+            return ["jpg"]
         else:
             raise ValueError(
                 f"Unsupported file extension '.{ext}'. "
@@ -341,6 +343,7 @@ class VSceneExporter:
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
         webp_quality: int | None = None,
+        jpg_quality: int | None = None,
     ) -> ExportResult:
         """Export scene at specific time point to various formats.
 
@@ -355,6 +358,8 @@ class VSceneExporter:
             pdf_inch_width: Width in inches for PDF export
             pdf_inch_height: Height in inches for PDF export
             webp_quality: WebP quality 0-100 (None = lossless). WebP is only
+                supported by the Skia converter.
+            jpg_quality: JPEG quality 0-100, required for "jpg". JPEG is only
                 supported by the Skia converter.
 
         Returns:
@@ -410,6 +415,7 @@ class VSceneExporter:
                 pdf_inch_width=pdf_inch_width,
                 pdf_inch_height=pdf_inch_height,
                 webp_quality=webp_quality,
+                jpg_quality=jpg_quality,
             )
 
             if conv_results:

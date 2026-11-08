@@ -1,7 +1,7 @@
-"""Skia canvas rendering backend (opt-in, PNG and WebP).
+"""Skia canvas rendering backend (opt-in, PNG, WebP and JPEG).
 
 An alternative to the State -> Renderer -> drawsvg -> SVG -> rasterizer pipeline:
-here State -> SkiaRenderer -> skia.Canvas draw calls -> PNG/WebP, bypassing SVG entirely.
+here State -> SkiaRenderer -> skia.Canvas draw calls -> PNG/WebP/JPEG, bypassing SVG entirely.
 
 This is much faster for image-heavy scenes (resvg-py spends ~1s per embedded image;
 skia draws it in ~2ms). It is selected explicitly via ConverterType.SKIA and is NOT

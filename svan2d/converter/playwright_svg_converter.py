@@ -29,6 +29,7 @@ class PlaywrightSvgConverter(SVGConverter):
         pdf_inch_width: float | None = None,
         pdf_inch_height: float | None = None,
         webp_quality: int | None = None,
+        jpg_quality: int | None = None,
     ) -> dict:
         """
         Export both PNG and PDF in a single Chromium session.
@@ -39,6 +40,11 @@ class PlaywrightSvgConverter(SVGConverter):
             return {
                 "success": False,
                 "error": "PlaywrightSvgConverter does not support WebP; use the Skia converter.",
+            }
+        if "jpg" in formats:
+            return {
+                "success": False,
+                "error": "PlaywrightSvgConverter does not support JPEG; use the Skia converter.",
             }
         if frame_time is None:
             frame_time = 0.0

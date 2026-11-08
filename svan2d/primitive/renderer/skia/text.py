@@ -13,8 +13,9 @@ class TextSkiaRenderer(SkiaRenderer):
     """Mirror of TextRenderer: system-font text with anchor/baseline/spacing."""
 
     def draw_core(self, canvas, state: TextState, ctx: SkiaContext) -> None:
-        fill = self.fill_paint(state)
-        if fill is None:
+        # Fill first and stroke on top, the order SVG paints a <text> in.
+        paints = [p for p in (self.fill_paint(state), self.stroke_paint(state)) if p is not None]
+        if not paints:
             return
         font = smooth_font(ctx.typeface(state.font_family, state.font_weight), state.font_size)
         lines = state.text if isinstance(state.text, list) else [state.text]
@@ -23,9 +24,10 @@ class TextSkiaRenderer(SkiaRenderer):
         base = self._baseline_offset(metrics, state.dominant_baseline)
         if len(lines) > 1:
             base -= line_h * (len(lines) - 1) / 2
-        for i, line in enumerate(lines):
-            draw_line(canvas, str(line), 0.0, base + i * line_h, font, fill,
-                      state.letter_spacing or 0, state.text_anchor, ctx)
+        for paint in paints:
+            for i, line in enumerate(lines):
+                draw_line(canvas, str(line), 0.0, base + i * line_h, font, paint,
+                          state.letter_spacing or 0, state.text_anchor, ctx)
 
     @staticmethod
     def _baseline_offset(metrics, baseline: str) -> float:

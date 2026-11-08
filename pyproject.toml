@@ -63,8 +63,13 @@ svan2d = "svan2d.cli.main:cli"
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["svan2d"]
+[tool.setuptools.packages.find]
+include = ["svan2d*"]
+
+[tool.setuptools.package-data]
+"svan2d.config" = ["defaults.toml"]
+"svan2d.skia" = ["emoji-data.txt"]
+"svan2d.server.dev" = ["templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

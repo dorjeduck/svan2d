@@ -36,7 +36,7 @@ def _render(scene: VScene, tmp_path, w=200, h=200, name="out.png"):
     out = str(tmp_path / name)
     res = SkiaSvgConverter()._convert_to_png(scene, out, 0.0, w, h)
     assert res["success"], res
-    return skia.Image.open(out).toarray()  # H x W x 4, RGBA
+    return skia.Image.open(out).toarray(colorType=skia.kRGBA_8888_ColorType)  # H x W x 4, RGBA
 
 
 # --------------------------------------------------------------------------
@@ -424,7 +424,7 @@ def _resvg_render(scene, tmp_path, w, h, name):
     out = str(tmp_path / name)
     res = ResvgSvgConverter()._convert_to_png(scene, out, 0.0, w, h)
     assert res["success"], res
-    return skia.Image.open(out).toarray()
+    return skia.Image.open(out).toarray(colorType=skia.kRGBA_8888_ColorType)
 
 
 @pytest.mark.integration
@@ -818,4 +818,4 @@ def test_converter_reuses_an_image_across_frames(tmp_path):
     _png_file(picture, skia.ColorBLUE)
     os.utime(picture)
     assert render(1.0) is not first
-    assert skia.Image.open(str(tmp_path / "out.png")).toarray()[50, 50, 2] > 200
+    assert skia.Image.open(str(tmp_path / "out.png")).toarray(colorType=skia.kRGBA_8888_ColorType)[50, 50, 2] > 200

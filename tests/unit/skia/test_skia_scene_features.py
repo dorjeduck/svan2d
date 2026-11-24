@@ -32,7 +32,7 @@ def _png(converter, scene, tmp_path, name, t, w, h):
     out = str(tmp_path / name)
     res = converter._convert_to_png(scene, out, t, w, h)
     assert res["success"], res
-    return skia.Image.open(out).toarray().astype(int)  # H x W x 4
+    return skia.Image.open(out).toarray(colorType=skia.kRGBA_8888_ColorType).astype(int)  # H x W x 4
 
 
 def assert_matches_resvg(scene, tmp_path, t=0.0, w=W, h=H):

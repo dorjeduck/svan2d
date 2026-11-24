@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Callable
 import skia
 
 from svan2d.skia.clipping import clip_states_of, draw_clipped, mask_states_of
+from svan2d.skia.filters import image_filter
 
 if TYPE_CHECKING:
     from svan2d.core.color import Color
@@ -189,10 +190,11 @@ class SkiaRenderer(ABC):
     """
 
     def draw(self, canvas: skia.Canvas, state: "State", ctx: SkiaContext) -> None:
-        """Apply transform + opacity, then draw the geometry, clipped and masked.
+        """Apply transform + opacity, then draw the geometry, clipped, masked
+        and filtered.
 
         The clip and mask sit inside the transform and opacity, as in
-        Renderer.render. No capability checks here: the scene was validated once
+        Renderer.render; a filter works on the clipped geometry. No capability checks here: the scene was validated once
         up front (svan2d.skia.support.check_scene), so the render loop is
         check-free.
         """
@@ -202,6 +204,8 @@ class SkiaRenderer(ABC):
             opacity = state.opacity if state.opacity is not None else 1.0
             if opacity < 1.0:
                 canvas.saveLayerAlpha(None, int(round(opacity * 255)))
+            if state.filter is not None:
+                canvas.saveLayer(None, skia.Paint(ImageFilter=image_filter(state.filter)))
             try:
                 draw_clipped(
                     canvas,
@@ -211,6 +215,8 @@ class SkiaRenderer(ABC):
                     ctx,
                 )
             finally:
+                if state.filter is not None:
+                    canvas.restore()
                 if opacity < 1.0:
                     canvas.restore()
         finally:

@@ -568,3 +568,42 @@ def test_check_scene_reports_unsupported_overlay():
                                          filter=GaussianBlurFilter(std_deviation=2)))
     scene = _scene().add_pause(at=0.5, fraction=0.2, overlay=blurred)
     assert any("filter" in r for r in check_scene(scene))
+
+
+# --------------------------------------------------------------------------
+# Filters
+# --------------------------------------------------------------------------
+
+
+def _glowing_circle(**kwargs) -> VElement:
+    from svan2d.primitive.effect.filter.glow import GlowFilter
+
+    return VElement(state=CircleState(
+        radius=20, fill_color=Color("#ffe080"),
+        filter=GlowFilter(std_deviation=12, color=Color("#ff6020"),
+                          intensity=3.0, opacity=0.8,
+                          x="-300%", y="-300%", width="700%", height="700%"),
+        **kwargs,
+    ))
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("size", [1, 2])
+def test_glow_matches_resvg(tmp_path, size):
+    # At twice the scene's size the halo must widen with the picture.
+    scene = _scene().add_element(_glowing_circle())
+    assert_matches_resvg(scene, tmp_path, w=W * size, h=H * size)
+
+
+@pytest.mark.integration
+def test_glow_under_element_opacity_matches_resvg(tmp_path):
+    scene = _scene().add_element(_glowing_circle(opacity=0.5))
+    assert_matches_resvg(scene, tmp_path)
+
+
+def test_check_scene_reports_glow_on_group():
+    from svan2d.primitive.effect.filter.glow import GlowFilter
+
+    group = VElementGroup(elements=[VElement(state=_rect())]).keystate(
+        VElementGroupState(filter=GlowFilter()))
+    assert any("filter" in r for r in check_scene(_scene().add_element(group)))

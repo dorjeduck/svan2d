@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from svan2d.primitive.registry import get_skia_renderer_class_for_state
 from svan2d.skia.clipping import clip_states_of, mask_states_of
+from svan2d.skia.filters import supports_filter
 
 if TYPE_CHECKING:
     from svan2d.primitive.state.base import State
@@ -85,6 +86,9 @@ def _check_element(element, add) -> None:
     if hasattr(element, "elements"):
         group_state = _safe_frame(element)
         if group_state is not None:
+            # A group's drawing applies no filter, not even one Skia has.
+            if group_state.filter is not None:
+                add(f"{type(group_state).__name__}: filter")
             _check_state_features(group_state, add)
         _check_attachments(element, add)
         for child in element.elements:
@@ -114,8 +118,9 @@ def _check_state(state: "State", add, has_renderer: bool = False) -> None:
 
 
 def _check_state_features(state: "State", add) -> None:
-    if getattr(state, "filter", None) is not None:
-        add(f"{type(state).__name__}: filter")
+    filter_ = getattr(state, "filter", None)
+    if filter_ is not None and not supports_filter(filter_):
+        add(f"{type(state).__name__}: filter {type(filter_).__name__}")
     _check_clips_and_masks(clip_states_of(state), mask_states_of(state), add)
     if getattr(state, "fill_gradient", None) is not None or getattr(state, "stroke_gradient", None) is not None:
         add(f"{type(state).__name__}: gradient")

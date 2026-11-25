@@ -27,7 +27,7 @@ class TextSkiaRenderer(SkiaRenderer):
         for paint in paints:
             for i, line in enumerate(lines):
                 draw_line(canvas, str(line), 0.0, base + i * line_h, font, paint,
-                          state.letter_spacing or 0, state.text_anchor, ctx)
+                          state.letter_spacing_px, state.text_anchor, ctx)
 
     @staticmethod
     def _baseline_offset(metrics, baseline: str) -> float:

@@ -3,12 +3,14 @@
 Provides fundamental types and utilities:
 - Color: Immutable RGB color with interpolation and format conversion
 - Point2D / MutablePoint2D: 2D point types (immutable and pooled-mutable)
+- Em: a length as a share of the font size
 - Logging: Configurable logging system
 - Scalar functions: lerp, log_lerp, angle, step, inbetween, circular_midpoint,
   gaussian_smooth, gaussian_smooth_2d
 """
 
 from .color import Color, ColorSpace, ColorTuple,color_to_oklab, oklab_to_color
+from .em import Em, letter_spacing_px, scale_letter_spacing
 from .enums import Origin
 from .logger import (
     configure_logging,
@@ -37,6 +39,9 @@ __all__ = [
     "Color",
     "ColorTuple",
     "ColorSpace",
+    "Em",
+    "letter_spacing_px",
+    "scale_letter_spacing",
     "Origin",
     "configure_logging",
     "get_logger",

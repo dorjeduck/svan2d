@@ -62,7 +62,7 @@ class NumberRenderer(Renderer):
             "font_size": state.font_size,
             "font_weight": state.font_weight,
             "text_anchor": state.text_anchor,
-            "letter_spacing": state.letter_spacing,
+            "letter_spacing": state.letter_spacing_px,
             "dominant_baseline": state.dominant_baseline,
         }
         self._set_fill_and_stroke_kwargs(state, text_kwargs, drawing)
@@ -93,7 +93,7 @@ class NumberRenderer(Renderer):
             "font_family": state.font_family,
             "font_size": state.font_size,
             "font_weight": state.font_weight,
-            "letter_spacing": state.letter_spacing,
+            "letter_spacing": state.letter_spacing_px,
             "dominant_baseline": state.dominant_baseline,
         }
 

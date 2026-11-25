@@ -399,6 +399,13 @@ class InterpolationEngine:
                 self._type_interpolators._extract_scalar_t(eased_t),
             )
 
+        # A field the state blends itself
+        result = start_state.interpolate_field(
+            end_state, field_name, start_value, end_value, scalar_t
+        )
+        if result is not NotImplemented:
+            return result
+
         # Effect interpolation (Gradient, Pattern, Filter)
         result = self._interpolate_effect(start_value, end_value, scalar_t)
         if result is not _NOT_HANDLED:

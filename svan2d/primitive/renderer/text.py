@@ -26,7 +26,7 @@ class TextRenderer(Renderer):
             "font_size": state.font_size,
             "font_weight": state.font_weight,
             "text_anchor": state.text_anchor,
-            "letter_spacing": state.letter_spacing,
+            "letter_spacing": state.letter_spacing_px,
             "dominant_baseline": state.dominant_baseline,
             "text_rendering": state.text_rendering.value,
         }

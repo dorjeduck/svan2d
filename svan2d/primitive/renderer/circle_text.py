@@ -148,7 +148,7 @@ class CircleTextRenderer(Renderer):
             "font_family": state.font_family,
             "font_size": state.font_size,
             "font_weight": state.font_weight,
-            "letter_spacing": state.letter_spacing,
+            "letter_spacing": state.letter_spacing_px,
             "path": circle_path,
             "start_offset": f"{mapped_offset*100}%",
             "text_anchor": state.text_anchor,
@@ -158,7 +158,7 @@ class CircleTextRenderer(Renderer):
         self._set_fill_and_stroke_kwargs(state, text_kwargs, drawing)
 
         # Add letter spacing if specified
-        if abs(state.letter_spacing) > 1e-10:
-            text_kwargs["letter_spacing"] = state.letter_spacing
+        if abs(state.letter_spacing_px) > 1e-10:
+            text_kwargs["letter_spacing"] = state.letter_spacing_px
 
         return dw.Text(**text_kwargs)  # type: ignore[return-value]

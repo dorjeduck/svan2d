@@ -34,7 +34,7 @@ class NumberSkiaRenderer(TextSkiaRenderer):
         )
         y = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
 
-        spacing = state.letter_spacing or 0
+        spacing = state.letter_spacing_px
 
         int_text = state.prefix + state._integer_part
         # integer part: right edge at x=0

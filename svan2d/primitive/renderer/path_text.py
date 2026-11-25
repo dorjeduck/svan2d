@@ -112,8 +112,8 @@ class PathTextRenderer(Renderer):
         self._set_fill_and_stroke_kwargs(state, text_kwargs, drawing)
 
         # Add letter spacing if specified
-        if abs(state.letter_spacing) > 1e-10:
-            text_kwargs["letter_spacing"] = state.letter_spacing
+        if abs(state.letter_spacing_px) > 1e-10:
+            text_kwargs["letter_spacing"] = state.letter_spacing_px
 
         # Create text element
         text_element = dw.Text(**text_kwargs)

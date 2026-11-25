@@ -13,7 +13,7 @@ from svan2d.transition import curve, easing
 from svan2d.transition.easing import easing2D
 
 # --- Core ---
-from svan2d.core import Color, Point2D, configure_logging, get_logger
+from svan2d.core import Color, Em, Point2D, configure_logging, get_logger
 
 # --- Converter ---
 from svan2d.converter import ConverterType
@@ -201,6 +201,7 @@ __all__ = [
     "curve",
     # Core
     "Color",
+    "Em",
     "Point2D",
     "configure_logging",
     "get_logger",

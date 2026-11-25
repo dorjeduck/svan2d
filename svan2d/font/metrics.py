@@ -20,6 +20,8 @@ from pathlib import Path
 
 from fontTools.ttLib import TTFont
 
+from svan2d.core.em import Em, letter_spacing_px
+
 
 @lru_cache(maxsize=None)
 def _font_file(font_family: str, font_weight: str) -> Path:
@@ -68,7 +70,7 @@ def text_width(
     text: str,
     font_family: str,
     font_size: float,
-    letter_spacing: float = 0.0,
+    letter_spacing: float | Em = 0.0,
     font_weight: str = "normal",
 ) -> float:
     """Rendered advance width of `text`, in pixels.
@@ -80,4 +82,6 @@ def text_width(
     """
     widths, upm, fallback = _advances(font_family, font_weight)
     units = sum(widths.get(ord(ch), fallback) for ch in text)
-    return units / upm * font_size + letter_spacing * len(text)
+    return units / upm * font_size + letter_spacing_px(
+        letter_spacing, font_size
+    ) * len(text)

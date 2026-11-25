@@ -68,6 +68,14 @@ class State(ABC):
     # Subclasses can override is_angle() to mark additional fields as angles,
     # which enables shortest-path interpolation for those fields.
 
+    def interpolate_field(
+        self, end: State, field_name: str, start_value: Any, end_value: Any, t: float
+    ) -> Any:
+        """A field this kind of state blends itself, from `start_value` here to
+        `end_value` in `end`, `t` of the way; NotImplemented leaves it to the
+        interpolation engine."""
+        return NotImplemented
+
     def __post_init__(self):
         """Apply configuration defaults for common attributes if not explicitly set."""
         from svan2d.config import ConfigKey, get_config

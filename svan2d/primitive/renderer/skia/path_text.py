@@ -59,7 +59,7 @@ class PathTextSkiaRenderer(SkiaRenderer):
     def _draw_text(self, canvas, text, offset, pm, length, font, paint, state, ctx) -> None:
         baseline = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
         draw_along_path(canvas, text, offset * length, pm, font, paint,
-                        state.letter_spacing or 0, state.text_anchor, baseline, ctx,
+                        state.letter_spacing_px, state.text_anchor, baseline, ctx,
                         flip=state.flip_text)
 
     @staticmethod

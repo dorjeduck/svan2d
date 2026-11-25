@@ -75,7 +75,7 @@ class CircleTextSkiaRenderer(SkiaRenderer):
         mapped = 0.25 + offset * 0.5
         baseline = self._baseline_offset(font.getMetrics(), state.dominant_baseline)
         draw_along_path(canvas, text, mapped * length, pm, font, paint,
-                        state.letter_spacing or 0, state.text_anchor, baseline, ctx)
+                        state.letter_spacing_px, state.text_anchor, baseline, ctx)
 
     @staticmethod
     def _baseline_offset(metrics, baseline: str) -> float:

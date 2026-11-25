@@ -1,17 +1,18 @@
 """Polygon layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def polygon(
-    states: States,
+    states: list[StateT],
     sides: int = 5,
     radius: float = 100,
     rotation: float = 0,
@@ -19,7 +20,7 @@ def polygon(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states evenly distributed around a regular polygon.
     Elements are placed at vertices and along edges based on distribution.
@@ -107,7 +108,7 @@ def polygon(
             )
             element_angle = additional_rotation
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
@@ -116,7 +117,7 @@ def polygon(
 
 
 def polygon_in_bbox(
-    states: States,
+    states: list[StateT],
     x: float,
     y: float,
     width: float,
@@ -126,7 +127,7 @@ def polygon_in_bbox(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states around a regular polygon inscribed in a bounding box.
 

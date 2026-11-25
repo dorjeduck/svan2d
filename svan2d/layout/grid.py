@@ -1,14 +1,16 @@
 """Grid layout state function"""
 
 from dataclasses import replace
-from svan2d.primitive.state.base import States
+from typing import assert_never
+
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def grid(
-    states: States,
+    states: list[StateT],
     rows: int | None = None,
     cols: int | None = None,
     spacing_h: float = 100,
@@ -16,7 +18,7 @@ def grid(
     center: Point2D = Point2D(0, 0),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a rectangular grid formation.
 
@@ -71,7 +73,7 @@ def grid(
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = 0
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
@@ -80,7 +82,7 @@ def grid(
 
 
 def grid_in_bbox(
-    states: States,
+    states: list[StateT],
     x: float,
     y: float,
     width: float,
@@ -89,7 +91,7 @@ def grid_in_bbox(
     cols: int | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a rectangular grid that fits within a bounding box.
 

@@ -1,17 +1,18 @@
 """Circle layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def circle(
-    states: States,
+    states: list[StateT],
     radius: float = 100,
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
@@ -21,7 +22,7 @@ def circle(
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
     radius_fn: Callable[[int, float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a circular formation.
 
@@ -95,7 +96,7 @@ def circle(
             # Start from upright position + additional rotation
             element_angle = additional_rotation
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         # Create new state with circular position and rotation, preserving all other attributes
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
@@ -105,7 +106,7 @@ def circle(
 
 
 def circle_between_points(
-    states: States,
+    states: list[StateT],
     p1: Point2D,
     p2: Point2D,
     rotation: float = 0,
@@ -115,7 +116,7 @@ def circle_between_points(
     angles: list[float] | None = None,
     radius_fn: Callable[[int, float], float] | None = None,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a circular formation with diameter defined by two points.
 
@@ -182,7 +183,7 @@ def circle_between_points(
 
 
 def circle_through_points(
-    states: States,
+    states: list[StateT],
     p1: Point2D,
     p2: Point2D,
     p3: Point2D,
@@ -193,7 +194,7 @@ def circle_through_points(
     angles: list[float] | None = None,
     radius_fn: Callable[[int, float], float] | None = None,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a circular formation passing through three given points.
 

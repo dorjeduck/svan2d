@@ -1,17 +1,18 @@
 """Pure functional wave layout for arranging elements along a sine wave"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def wave(
-    states: States,
+    states: list[StateT],
     amplitude: float = 20,
     wavelength: float = 100,
     spacing: float = 50,
@@ -22,7 +23,7 @@ def wave(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     distances: list[float] | None = None,
-) -> States:
+) -> list[StateT]:
     """Arrange elements along a sine wave.
 
     Creates a new list of states with elements positioned along a sine wave,
@@ -122,7 +123,7 @@ def wave(
             # Start from upright position + additional rotation
             element_angle = element_rotation_offset
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         # Create new state with wave position and rotation, preserving all other attributes
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
@@ -132,7 +133,7 @@ def wave(
 
 
 def wave_between_points(
-    states: States,
+    states: list[StateT],
     x1: float,
     y1: float,
     x2: float,
@@ -144,7 +145,7 @@ def wave_between_points(
     element_rotation_offset: float = 0,
     distances: list[float] | None = None,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states along a sine wave from point A to point B.
 

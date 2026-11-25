@@ -1,17 +1,17 @@
 """Ellipse layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def ellipse(
-    states: States,
+    states: list[StateT],
     rx: float = 100,
     ry: float = 50,
     rotation: float = 0,
@@ -22,7 +22,7 @@ def ellipse(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in an elliptical formation.
 
@@ -105,7 +105,7 @@ def ellipse(
 
 
 def ellipse_in_bbox(
-    states: States,
+    states: list[StateT],
     center: Point2D,
     width: float,
     height: float,
@@ -116,7 +116,7 @@ def ellipse_in_bbox(
     element_rotation_offset: float = 0,
     angles: list[float] | None = None,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in an elliptical formation within a bounding box.
 

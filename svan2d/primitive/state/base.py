@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import Field, dataclass, field, replace
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeVar
 
-from svan2d.primitive.effect.filter import Filter
 from svan2d.core.color import Color
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.effect.filter import Filter
 
 
 @dataclass(frozen=True)
@@ -174,3 +174,6 @@ class State(ABC):
 
 
 States = list[State]
+
+# A layout hands back the same kind of state it was given
+StateT = TypeVar("StateT", bound=State)

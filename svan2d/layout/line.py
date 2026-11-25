@@ -2,22 +2,23 @@
 
 import math
 from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def line(
-    states: States,
+    states: list[StateT],
     spacing: float = 100,
     rotation: float = 0,
     center: Point2D = Point2D(0, 0),
     distances: list[float] | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a straight line formation.
 
@@ -99,7 +100,7 @@ def line(
             # Start from upright position + additional rotation
             element_rot = element_rotation_offset
         else:
-            element_rot = state.rotation
+            assert_never(alignment)
 
         # Create new state with line position and rotation
         new_state = replace(state, pos=Point2D(x, y), rotation=element_rot)

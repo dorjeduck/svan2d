@@ -2,21 +2,22 @@
 
 import random
 from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def scatter(
-    states: States,
+    states: list[StateT],
     x_range: tuple[float, float] = (-100, 100),
     y_range: tuple[float, float] = (-100, 100),
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     seed: int | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states randomly (scatter) within a bounding box.
 
@@ -53,7 +54,7 @@ def scatter(
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = 0
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
@@ -62,7 +63,7 @@ def scatter(
 
 
 def scatter_in_bbox(
-    states: States,
+    states: list[StateT],
     x: float,
     y: float,
     width: float,
@@ -70,7 +71,7 @@ def scatter_in_bbox(
     seed: int | None = None,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states randomly within a bounding box.
 

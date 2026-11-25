@@ -1,17 +1,18 @@
 """Radial (polar) grid layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def radial_grid(
-    states: States,
+    states: list[StateT],
     rings: int = 3,
     segments: int = 8,
     ring_spacing: float = 50,
@@ -23,7 +24,7 @@ def radial_grid(
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[int, int, float], float] | None = None,
     include_center: bool = False,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a radial (polar coordinate) grid with rings and segments.
 
@@ -80,7 +81,7 @@ def radial_grid(
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=center, rotation=element_angle)
         result.append(new_state)
@@ -123,7 +124,7 @@ def radial_grid(
             elif alignment == ElementAlignment.UPRIGHT:
                 element_angle = additional_rotation
             else:
-                element_angle = state.rotation
+                assert_never(alignment)
 
             new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
             result.append(new_state)
@@ -133,7 +134,7 @@ def radial_grid(
 
 
 def radial_grid_between_radii(
-    states: States,
+    states: list[StateT],
     center: Point2D = Point2D(0, 0),
     inner_radius: float = 50,
     outer_radius: float = 200,
@@ -143,7 +144,7 @@ def radial_grid_between_radii(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[int, int, float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a radial grid with specified inner and outer radii.
 

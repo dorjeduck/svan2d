@@ -1,17 +1,18 @@
 """Spiral layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def spiral(
-    states: States,
+    states: list[StateT],
     center: Point2D = Point2D(0, 0),
     start_radius: float = 20,
     radius_step: float = 20,
@@ -21,7 +22,7 @@ def spiral(
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
     angles: list[float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a spiral formation (Archimedean spiral).
 
@@ -70,7 +71,7 @@ def spiral(
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
@@ -79,7 +80,7 @@ def spiral(
 
 
 def spiral_between_radii(
-    states: States,
+    states: list[StateT],
     center: Point2D,
     start_radius: float = 50,
     end_radius: float = 200,
@@ -88,7 +89,7 @@ def spiral_between_radii(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states in a spiral from start radius to end radius.
 
@@ -149,7 +150,7 @@ def spiral_between_radii(
 
 
 def spiral_equidistant(
-    states: States,
+    states: list[StateT],
     center: Point2D = Point2D(0, 0),
     start_radius: float = 50,
     end_radius: float = 200,
@@ -158,7 +159,7 @@ def spiral_equidistant(
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     samples: int = 2000,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states along an Archimedean spiral with equal spacing by arc length.
 

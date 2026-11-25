@@ -1,23 +1,24 @@
 """Bezier/path layout state function"""
 
 import math
-from dataclasses import replace
 from collections.abc import Callable
+from dataclasses import replace
+from typing import assert_never
 
-from svan2d.primitive.state.base import States
 from svan2d.core.point2d import Point2D, Points2D
+from svan2d.primitive.state.base import StateT
 
 from .enums import ElementAlignment
 
 
 def bezier(
-    states: States,
+    states: list[StateT],
     control_points: Points2D,
     alignment: ElementAlignment = ElementAlignment.PRESERVE,
     element_rotation_offset: float = 0,
     element_rotation_offset_fn: Callable[[float], float] | None = None,
     arc_length_spacing: bool = True,
-) -> States:
+) -> list[StateT]:
     """
     Arrange states along a Bezier curve (quadratic or cubic).
 
@@ -169,7 +170,7 @@ def bezier(
         elif alignment == ElementAlignment.UPRIGHT:
             element_angle = additional_rotation
         else:
-            element_angle = state.rotation
+            assert_never(alignment)
 
         new_state = replace(state, pos=Point2D(x, y), rotation=element_angle)
         result.append(new_state)
